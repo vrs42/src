@@ -1,0 +1,179 @@
+
+
+
+/DIGITAL-8-13-F
+/SIGNED DOUBLE PRECISION MULTIPLY ROUTINE
+/CALLING SEQUENCE:
+/       JMS DMUL
+/       ADDRESS OF MULTIPLICAND(HIGH ORDER)
+/       ADDRESS OF MULTIPLIER(HIGH ORDER)
+/       RETURN, HIGH ORDER PRODUCT IN AC
+/       NEXT HIGH TO LOW IN B,C,D
+/PAGE 1
+DMUL,     0
+          CLL CLA
+          TAD REST              /-2
+          DCA SIGNSW            /SET SIGN SWITCH
+          JMS TSIGN             /FETCH AND SET SIGN
+          TAD MLTH              /RESULT IN MLTH,MLTL
+          DCA MULTH             /HIGH ORDER MULTIPLICAND
+          TAD MLTL
+          DCA MULTL             /LOW ORDER MULTIPLICAND
+          JMS TSIGN             /FETCH AND SET SIGN
+          TAD MULTL             /LOW ORDER MULTIPLICAND
+          DCA MP2
+          TAD MLTL              /LOW ORDER MULTIPLIER
+          JMS MP4               /MULTIPLY
+          DCA D                 /LOW ORDER
+          TAD MP5
+          DCA C                 /HIGH ORDER
+          TAD MULTH             /HIGH ORDER MULTIPLICAND
+          DCA MP2
+          TAD MLTL              /LOW ORDER MULTIPLIER
+          JMS MP4               /MULTIPLY
+          TAD C
+          DCA C
+          RAL                   /GET CARRY
+          TAD MP5
+          DCA B
+          RAL                   /GET CARRY
+          DCA A
+          TAD MULTL             /LOW ORDER MULTIPLICAND
+          DCA MP2
+          TAD MLTH              /HIGH ORDER MULTIPLIER
+          JMS MP4               /MULTIPLY
+          TAD C
+          DCA C                 /ADD
+
+
+
+
+
+
+/DIGITAL-8-13-F
+/PAGE 2
+
+          RAL                   /GET CARRY
+          TAD MP5
+          TAD B
+          DCA B
+          RAL                   /GET CARRY
+          TAD A
+          DCA A                 /ADD
+          TAD MULTH             /HIGH ORDER MULTIPLICAND
+          DCA MP2
+          TAD MLTH              /HIGH ORDER MULTIPLIER
+          JMS MP4
+          TAD B
+          DCA B
+          RAL
+          TAD MP5
+          TAD A
+          ISZ SIGNSW            /ANSWER <0??
+          JMP I DMUL            /NO: EXIT
+          DCA A                 /YES
+          TAD D
+          CMA CLL IAC           /NEGATE
+          DCA D
+          TAD C                 /NEGATE
+          JMS COM
+          DCA C
+          TAD B
+          JMS COM               /NEGATE
+          DCA B
+          TAD A
+          JMS COM
+          JMP I DMUL            /EXIT
+
+MP2,
+COM,      0
+          CMA
+          SZL
+          CLL IAC
+          JMP I COM
+
+
+
+
+
+
+
+/DIGITAL-8-13-F
+/PAGE 3
+MP1,
+TSIGN,    0
+          TAD I DMUL            /FETCH ADDRESS
+          DCA ADDRS
+          TAD I ADDRS           /FETCH HIGH ORDER
+          CLL
+          SPA                   /IS IT <0?
+          CMA CML               /YES: COMPLEMENT, SET LINK
+          DCA MLTH
+          ISZ ADDRS
+          TAD I ADDRS           /FETCH LOW ORDER
+          SZL                   /WAS IT <0?
+          ISZ SIGNSW            /YES, ADD 1 TO SWITCH
+          NOP
+          SZL
+          CMA CLL IAC           /COMPLEMENT, CLEAR LINK
+          DCA MLTL
+          SZL                   /CARRY?
+          ISZ MLTH              /YES
+          ISZ DMUL
+          JMP I TSIGN           /EXIT ROUTINE
+
+SIGNSW,   0
+REST,     -2
+MULTH,    0
+MULTL,    0
+MLTL,     0
+MLTH,     0
+ADDRS,
+A,        0
+B,        0
+C,        0
+D,        0
+
+
+
+
+
+
+
+/DIGITAL-8-13-F
+/PAGE 4
+
+MP4,      0                     /UNSIGNED MULTIPLY
+          DCA MP1
+          DCA MP5
+          TAD M12               /COUNT 12 BITS
+          DCA MP3
+          CLL
+          TAD MP1               /CARRY GOES INTO
+          RAR                   /LEFT OF MP1
+          DCA MP1               /TEST MULTIPLIER BIT
+          TAD MP5
+          SNL                   /A 1?
+          JMP .+3               /NO: DON'T ADD
+          CLL                   /YES: ADD
+          TAD MP2
+          RAR
+          DCA MP5
+          ISZ MP3               /DONE 12 BITS?
+          JMP MP4+6             /NO: CARRY IS IN C(L)
+          TAD MP1               /YES: DONE
+          RAR
+          CLL
+          JMP I MP4             /EXIT
+
+MP3,      0
+MP5,      0
+M12,      -14
+
+
+$
+
+
+
+
+

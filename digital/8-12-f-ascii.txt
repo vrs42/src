@@ -1,0 +1,94 @@
+
+
+/DIGITAL-8-12-F
+/SIGNED SINGLE PRECISION DIVIDE SUBROUTINE
+/CALLING SEQUENCE:
+/         C(AC) CONTAINS HIGH ORDER DIVIDEND
+/         JMS DIVIDE
+/         LOW ORDER DIVIDEND
+/         DIVISOR
+/         RETURN: C(AC)=QUOTIENT; REMAINDER IN  HDIVND
+/IF HIGH ORDER DIVIDEND IS EQUAL TO OR GREATER
+/THAN THE DIVISOR; NO DIVISION TAKES PLACE AND C(L)=1
+
+/PAGE 1
+
+DIVIDE,   0
+          CLL
+          SPA                   /DIVIDEND<0?
+          CMA CML               /YES COMPLEMENT AND SET C(L)
+          DCA HDIVND            /HIGH ORDER DIVIDEND
+          SNL
+          CMA
+          DCA SDVND             /SET DIVIDEND SIGN SWITCH
+          TAD I DIVIDE          /FETCH LOW ORDER DIVIDEND
+          SZL
+          CMA CLL IAC           /YES: COMPLEMENT
+          DCA LDIVND            /LOW ORDER DIVIDEND
+          SZL                   /CARRY?
+          ISZ HDIVND            /YES
+          ISZ DIVIDE
+          TAD I DIVIDE          /FETCH DIVISOR
+          CLL
+          SMA
+          CMA CML IAC           /NEGATE IT
+          DCA DIVSOR            /SAVE DIVISOR
+          SNL                   /WAS IT <0?
+          CMA                   /YES: AC=-1
+          TAD SDVND
+          DCA SNSWER            /ANSWER SIGN SWITCH
+          CLL
+          TAD DIVSOR            /COMPARE DIVISOR
+          TAD HDIVND            /WITH DIVIDEND
+          ISZ DIVIDE
+          SZL CLA               /OVER FLOW?
+          JMP I DIVIDE          /YES: DIVISOR<DIVIDEND
+
+
+
+
+/DIGITAL-8-12-F
+/PAGE 2
+
+          TAD M13               /13 SHIFTS
+          DCA DIVCNT
+          JMP DV2
+
+/DIVIDE LOOP
+
+DV3,      TAD HDIVND
+          RAL
+          DCA HDIVND            /DIVIDEND LEFT SHIFT
+          TAD HDIVND
+          TAD DIVSOR            /COMPARE DIVISOR;DIVIDEND
+          SZL
+          DCA HDIVND            /REMAINDER AFTER SUBTRACT
+          CLA
+DV2,      TAD LDIVND            /QUOTIENT BITS 
+          RAL                   /ENTER HERE
+          DCA LDIVND
+          ISZ DIVCNT            /DONE 12?
+          JMP DV3               /NO: CONTINUE
+          TAD HDIVND            /REMAINDER
+          ISZ SDVND             /DIVIDEND<0?
+          CMA IAC               /YES
+          DCA HDIVND
+          TAD LDIVND            /QUOTIENT 
+          ISZ SNSWER            /ANSWER<0?
+          CMA IAC               /YES: NEGATE
+          CLL
+          JMP I DIVIDE          /EXIT
+
+HDIVND,   0
+LDIVND,   0
+DIVSOR,   0
+SDVND,    0
+SNSWER,   0
+DIVCNT,   0
+M13,      -15                   /-13(10)
+
+
+$
+
+
+

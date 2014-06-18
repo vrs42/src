@@ -1,0 +1,200 @@
+/LEAST SQUARES SUBROUTINE
+IX=10
+IY=11
+ICALC=12
+IDIF=13
+S=100
+B=103
+R=106
+ERROR=111
+G=114
+N=117
+LX=120
+LY=121
+LCALC=122
+LDIF=123
+SUMYY=153
+TEM2=156
+TEM3=161
+SUMX=164
+SUMY=167
+SUMXY=172
+SUMXX=175
+CALL=4400
+RETURN=5400
+FLOAT=4355
+FSQRT=2
+FLPT=4407
+*3400
+LSQ,      0
+          CLA
+          TAD N
+          CIA
+          DCA NEGN              /INDEX
+          TAD LX                /SET UP REGISTERS
+          DCA IX
+          TAD LY
+          DCA IY
+          FLPT
+          FGET ZERO
+          FPUT SUMX
+          FPUT SUMY
+          FPUT SUMXX
+          FPUT SUMXY
+          FPUT SUMYY
+          FEXT
+BEGIN,    FLPT
+          FGET SUMY
+          FADD I IY
+          FPUT SUMY             /STORE SUM Y
+          FGET I IX             /GET X
+          FADD SUMX
+          FPUT SUMX             /STORE SUM X
+          FGET I IX
+          FMPY I IX
+          FADD SUMXX
+          FPUT SUMXX            /STORE SUM X*X
+          FGET I IX
+          FMPY I IY
+          FADD SUMXY
+          FPUT SUMXY            /STORE SUM X*Y
+          FGET I IY
+          FMPY I IY
+          FADD SUMYY
+          FPUT SUMYY            /STORE SUM Y*Y
+          FEXT                  /FINISHED SUMMATIONS
+          ISZ IY
+          ISZ IY
+          ISZ IY
+          ISZ IX
+          ISZ IX
+          ISZ IX
+          ISZ NEGN
+          JMP BEGIN             /CONTINUE SUMMATION LOOP
+          CLA
+          TAD N                 /FLOAT N
+          CALL FLOAT
+          FLPT
+          FPUT G
+          FGET SUMXX            /CALC S AND B
+          FMPY G
+          FPUT TEM2
+          FGET SUMX
+          FMPY SUMX
+          FSUB TEM2
+          FPUT TEM2             /DENOMINATOR
+          FGET SUMXY
+          FMPY G
+          FPUT TEM3
+          FGET SUMX
+          FMPY SUMY
+          FSUB TEM3
+          FPUT ERROR            /NUMERATOR, TEMP STORAGE
+          FDIV TEM2             /SLOPE
+          FPUT S
+          FGET SUMXX
+          FMPY SUMY
+          FPUT TEM3
+          FGET SUMX
+          FMPY SUMXY
+          FSUB TEM3
+          FDIV TEM2
+          FPUT B                /INTERCEPT
+          FGET SUMYY            /CALCULATE R
+          FMPY G
+          FPUT TEM3
+          FGET SUMY
+          FMPY SUMY
+          FSUB TEM3
+          FMPY TEM2
+          FSQRT
+          FPUT TEM3
+          FGET ERROR
+          FDIV TEM3
+          FPUT R
+          FEXT
+          CLA                   /SET UP REGISTERS
+          TAD LX
+          DCA IX
+          TAD LY
+          DCA IY
+          TAD LCALC
+          DCA ICALC
+          TAD LDIF
+          DCA IDIF
+          TAD N
+          CIA
+          DCA NEGN2             /INDEX
+          FLPT
+          FGET ERROR
+          FPUT TEM3             /NUMERATOR
+          FGET ZERO
+          FPUT ERROR
+          FPUT SUMXY
+          FPUT SUMY             /ERROR SUMS
+          FEXT
+          CALL CONT
+          RETURN LSQ
+CONT,     3600
+ONE,      FLTG 1.0
+ZERO,     FLTG 0.0
+M1,       -1
+M2,       -2
+NEGN,     0
+/PG 2 OF LEAST SQUARES PROGRAM
+*3600
+LSQ2,     0
+          FLPT
+          FGET SUMX
+          FDIV G
+          FPUT SUMX
+          FEXT
+LOOP,     FLPT
+          FGET I IX             /CALC RMS ERROR
+          FMPY S                /AND ERROR IN SLOPE
+          FADD B
+          FPUT I ICALC
+          FSUB I IY
+          FPUT I IDIF
+          FMPY I IDIF
+          FADD ERROR
+          FPUT ERROR            /SUM (ERROR)**2
+          FGET I IX
+          FSUB SUMX
+          FMPY I IDIF
+          FPUT TEM2
+          FMPY TEM2
+          FADD SUMXY
+          FPUT SUMXY            /SUM (X-XAVE)*(ERROR)**2
+          FEXT
+          ISZ IX
+          ISZ IX
+          ISZ IX
+          ISZ IY
+          ISZ IY
+          ISZ IY
+          ISZ ICALC
+          ISZ ICALC
+          ISZ ICALC
+          ISZ IDIF
+          ISZ IDIF
+          ISZ IDIF
+          ISZ NEGN2
+          JMP LOOP
+          FLPT
+          FGET ERROR
+          FDIV G
+          FSQRT
+          FPUT ERROR            /ERROR CALCULATED
+          FGET SUMXY
+          FSQRT
+          FMPY G
+          FDIV TEM3
+          FMPY HUNDRED
+          FPUT TEM2             /% ERROR IN SLOPE
+          FEXT
+          RETURN LSQ2
+HUNDRED,  FLTG 100.0
+NEGN2,    0
+$
+

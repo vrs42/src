@@ -1,0 +1,450 @@
+
+*1
+          JMP I   .+1
+          FIND
+PROHIB,    0
+*20
+   CDT,    0
+          CLA CLL
+          TAD     .+5
+          DTXA
+          TAD     .+3
+          DTXA
+          JMP I   CDT
+          200
+   CPF,    0
+          RPL
+          RPM
+          RPL
+          RPM
+          CLA CLL
+          JMP I   CPF
+  REST,   RESTART
+*200
+          CLA CLL
+          DCA I   WSPT
+          DCA I   KQUE
+          DCA   Z PROHIB
+          RRB
+          PCF
+          KCC
+          TCF
+          DCMA
+          JMS   Z CDT
+          JMS   Z CPF
+          ION
+          JMP     .+0
+  WSPT,   PSTW
+  KQUE,   QUEUE
+*400
+          KRB
+          ION
+          TLS
+          JMP I Z REST
+*600
+          TCF
+          ION
+          JMP I Z REST
+
+PAUSE
+
+SKP1=6031
+SKP2=6041
+SKP3=7000
+SKP4=7000
+SKP5=7000
+SKP6=7000
+SKP7=7000
+SKP8=7000
+SKP9=7000
+SKPA=7000
+SKPB=7000
+SKPC=7000
+/               HIGH SPEED INTERRUPT EXECUTIVE
+/WRITTEN BY              BOB STEEL                 5TH JULY 1968
+/
+*4000
+FIND,     DCA    SAVEAC     /INITIAL PSW STORAGE
+          RAL
+          DCA    SAVELK
+          MQA
+          DCA    SAVEMQ
+          TAD Z  0
+          DCA    SAVEPC
+          TAD    PSTW       /INITIALLY SET PSTW TO ZERO
+          DCA    PSTS
+          JMP I  .+1
+          SEARCH
+FSET,     TAD    PSTS        /RESTORE PSW AND RESUME
+          DCA    PSTW
+          TAD    SAVEPC
+          DCA Z  0
+          TAD    SAVEMQ
+          MQL
+          TAD    SAVELK
+          RAR
+          TAD    SAVEAC
+          ION
+          JMP I Z 0
+SAVEAC,   0
+SAVELK,   0
+SAVEMQ,   0
+SAVEPC,   0
+  PSTS,   0
+  PSTW,   0
+ QUEUE,   0
+RESTART,  IOF
+          CLA CLL
+          TAD    PSTW      / DETERMINE PRESENT STATUS OF
+          RAR               /MACHINE TO RETRIEVE PSW'S
+          SZL
+          JMP    .+3
+          ISZ    RSTATW
+          JMP    .-4
+          CLA    CLL
+          TAD    RSTATW
+          DCA    .+3        /SET UP INSTRUCTIONS FOR RETRIEVING
+          TAD    RSTATW+1   /OLD PSW'S
+          DCA    RSTATW
+          NOP
+          DCA    RSTATW+2
+          TAD I  RSTATW+2   /RETRIEVE OLD PSW'S
+          DCA    PSTS
+          ISZ    RSTATW+2
+          TAD I  RSTATW+2
+          DCA    SAVEPC
+          ISZ    RSTATW+2
+          TAD I  RSTATW+2
+          DCA    SAVEMQ
+          ISZ    RSTATW+2
+          TAD I  RSTATW+2
+          DCA    SAVELK
+          ISZ    RSTATW+2
+          TAD I  RSTATW+2
+          DCA    SAVEAC
+          DCA    QUECON     /CLEAR QUEUE COUNTER
+          TAD    QUEUE      /ARE THERE ANY QUEUED INTERRUPTS?
+          SNA
+          JMP    FSET       /NO, RESUME WITH LAST STATUS
+          RAR               /YES, DETERMINE HIGHEST LEVEL OF
+          SZL               /QUEUED INTERRUPT
+          JMP    .+3
+          ISZ    QUECON
+          JMP    .-4
+          CLA CLL
+          DCA    PSTC       /CLEAR PROGRAM STATUS COUNTER
+          TAD    PSTS       /ARE THERE ANY WAITING INTERRUPTS?
+          SNA    
+          JMP    RPROG      /NO, INITIATE HIGHEST QUEUED INTERRUPT
+          RAR               /YES, DETERMINE WHETHER HIGHEST QUEUED
+          SZL               /INTERRUPT IS AT A HIGHER LEVEL THAN
+          JMP    .+3        /THE WAITING INTERRUPTS
+          ISZ    PSTC
+          JMP    .-4
+          TAD    QUECON
+          CMA    IAC
+          TAD    PSTC
+          SMA    KLA
+          JMP    RPROG      /QUEUED INTERRUPT > WAITING INTERRUPT,
+          JMP    FSET       /INITIATE QUEUED INTERRUPT
+                            /WAITING INTERRUPT > QUEUED INTERRUPT
+                            /RESUME WAITING INTERRUPT
+RPROG,    TAD    QUECON     /SET UP JUMP INSTRUCTION TO APPROPRIATE
+          TAD    QUECON+1   /PLACE TO SERVICE QUEUED INTERRUPT
+          DCA    .+13
+          TAD    QUECON     /MASK OUT BIT IN QUEUE
+          CMA  
+          DCA    QUECON
+          CLL CML
+          RAL
+          ISZ    QUECON
+          JMP    .-2
+          CMA
+          AND    QUEUE
+          DCA    QUEUE
+          NOP
+RSTATW,   TAD    PSWDS
+          TAD    PSWDS
+          0
+  PSTC,   0
+QUECON,   0
+          JMP I  SIMINT
+SIMINT,   TEST1
+          TEST2
+          TEST3
+          TEST4
+          TEST5
+          TEST6
+          TEST7
+          TEST8
+          TEST9
+          TESTA
+          TESTB
+          TESTC
+ PSWDS,   PSW1
+          PSW2
+          PSW3
+          PSW4
+          PSW5
+          PSW6
+          PSW7
+          PSW8
+          PSW9
+          PSWA
+          PSWB
+          PSWC
+*4200
+STOLD,    0
+          TAD I  STOLD      /GET PSW STORAGE ADDRESS
+          ISZ    STOLD
+          DCA    ASTPSW
+          TAD I  STOLD      /GET PRIORITY LEVEL
+          MQL
+          MQA
+          AND  Z PROHIB
+          SZA
+          JMP    .+14
+          TAD I  IPSTW      /DETERMINE IF PRESENT STATUS > NEW STATUS
+          SNA
+          JMP    .+32
+          CMA   IAC
+          TAD I  STOLD
+          SPA    KLA
+          JMP    .+26
+          TAD I  IQUEUE     /PRESENT STATUS > NEW STATUS
+          MQA               /QUEUE NEW STATUS AND CLEAR FLAG
+          DCA I  IQUEUE
+          TAD I  STOLD
+          ISZ    STOLD
+          CLL
+          RAR
+          SZL
+          JMP    .+3
+          ISZ    IFLAGOF
+          JMP    .-4
+          CLA    CLL
+          TAD    ASTPSW+1
+          DCA    .+1
+          NOP
+          DCA    .+1
+          NOP
+          CLA    CLL
+          TAD    IFLAGOF+1
+          DCA    IFLAGOF
+          JMP I  IFSET      /RESUME PRESENT STATUS
+          TAD I  IPSTW      /NEW STATUS > PRESENT STATUS
+          DCA I  ASTPSW     /SAVE PRESENT PSW
+          ISZ    ASTPSW     /INITIATE NEW STATUS
+          TAD I  ISAVPC
+          DCA I  ASTPSW
+          ISZ    ASTPSW
+          TAD I  ISAVMQ
+          DCA I  ASTPSW
+          ISZ    ASTPSW
+          TAD I  ISAVLK
+          DCA I  ASTPSW
+          ISZ    ASTPSW
+          TAD I  ISAVAC
+          DCA I  ASTPSW
+          TAD I  STOLD
+          ISZ    STOLD
+          DCA I  IPSTW
+          JMP I  STOLD
+ASTPSW,   0
+          TAD I  IFLAGOF
+ISAVAC,   SAVEAC
+ISAVLK,   SAVELK
+ISAVMQ,   SAVEMQ
+ISAVPC,   SAVEPC
+ IPSTW,   PSTW
+ IFSET,   FSET
+IQUEUE,   QUEUE
+PSW1,     0
+          0
+          0
+          0
+          0
+PSW2,     0
+          0
+          0
+          0
+          0
+PSW3,     0
+          0
+          0
+          0
+          0
+PSW4,     0
+          0
+          0
+          0
+          0
+PSW5,     0
+          0
+          0
+          0
+          0
+PSW6,     0
+          0
+          0
+          0
+          0
+PSW7,     0
+          0
+          0
+          0
+          0
+PSW8,     0
+          0
+          0
+          0
+          0
+PSW9,     0
+          0
+          0
+          0
+          0
+PSWA,     0
+          0
+          0
+          0
+          0
+PSWB,     0
+          0
+          0
+          0
+          0
+PSWC,     0
+          0
+          0
+          0
+          0
+IFLAGOF,  FLAGOFF
+          FLAGOFF
+*4400
+SEARCH,   SKP1
+          JMP    .+7
+TEST1,    JMS I  ISTOLD
+          PSW1
+          1
+          TAD    NPSW
+          DCA Z  0
+          JMP I  Z 0
+          SKP2
+          JMP    .+7
+TEST2,    JMS I  ISTOLD
+          PSW2
+          2
+          TAD    NPSW+1
+          DCA Z  0
+          JMP I  Z 0
+          SKP3
+          JMP    .+7
+TEST3,    JMS I  ISTOLD
+          PSW3
+          4
+          TAD    NPSW+2
+          DCA Z  0
+          JMP I  Z 0
+          SKP4
+          JMP    .+7
+TEST4,    JMS I  ISTOLD
+          PSW4
+          10
+          TAD    NPSW+3
+          DCA Z  0
+          JMP I  Z 0
+          SKP5
+          JMP    .+7
+TEST5,    JMS I  ISTOLD
+          PSW5
+          20
+          TAD    NPSW+4
+          DCA    Z 0
+          JMP I  Z 0
+          SKP6
+          JMP    .+7
+TEST6,    JMS I  ISTOLD
+          PSW6
+          40
+          TAD    NPSW+5
+          DCA    Z 0
+          JMP I  Z 0
+          SKP7
+          JMP    .+7
+TEST7,    JMS I  ISTOLD
+          PSW7
+          100
+          TAD    NPSW+6
+          DCA Z  0
+          JMP I  Z 0
+          SKP8
+          JMP    .+7
+TEST8,    JMS I  ISTOLD
+          PSW8
+          200
+          TAD    NPSW+7
+          DCA Z  0
+          JMP I  Z 0
+          SKP9
+          JMP    .+7
+TEST9,    JMS I ISTOLD
+          PSW9
+          400
+          TAD    NPSW+10
+          DCA Z  0
+          JMP I  Z 0
+          SKPA
+          JMP    .+7
+TESTA,    JMS I ISTOLD
+          PSWA
+          1000
+          TAD    NPSW+11
+          DCA Z  0
+          JMP I  Z 0
+          SKPB
+          JMP    .+7
+TESTB,    JMS I  ISTOLD
+          PSWB
+          2000
+          TAD    NPSW+12
+          DCA Z  0
+          JMP I  Z 0
+          SKPC
+          JMP I  .+7
+TESTC,    JMS I  ISTOLD
+          PSWC
+          4000
+          TAD    NPSW+13
+          DCA Z  0
+          JMP I  Z 0
+          FSET
+ISTOLD,   STOLD
+NPSW,     400
+          600
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+FLAGOFF,  KCC
+          TCF
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+
+PAUSE
+
+

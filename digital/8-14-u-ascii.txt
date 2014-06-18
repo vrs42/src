@@ -1,0 +1,51 @@
+/BINARY TO BCD CONVERSION 3/6/65-HB-DEC
+/ENTER WITH BINARY NUMBER (<999(10))
+/IN ACCUMULATOR; EXIT WITH THREE CHARACTER
+/BCD NUMBER IN ACCUMULATOR
+/AC 0-3; AC 4-7; AC 8-11 WILL CONTAIN
+/THE BCD CHARACTER ON EXIT
+/WEIGHTING:          AC 0-3  100
+/                    AC 4-7   10
+/                    AC 8-11   1
+/STORAGE    33(10) REGISTERS
+/TIME=216.0-235.2 MICRO-SECONDS PDP-8
+/IF INPUT >999 (10) RESULT IS UNSPECIFIED
+BCD,      0
+          DCA INPUT             /STORE BINARY
+          TAD CONTRL            /SET UP TABLE
+          DCA POINTR            /POINTERS
+          CLL
+          TAD COUNT             /SET BIT 7=1; 8RAL'S
+          DCA NUMBER            /WILL PUT IT IN LINK
+          TAD INPUT
+POINTR,   TAD TABLE             /OR TABLE+1, TABLE+2, ETC.
+          SZL                   /IF C(L)=1, INPUT>-TABLE
+          DCA INPUT             /IF SO: INPUT=INPUT+TABLE
+          CLA
+          TAD NUMBER
+          RAL                   /PUT THIS BIT IN ANSWER
+          ISZ POINTR            /UPDATE TABLE POINTER
+          SNL                   /IF LINK=1, ALL DONE
+          JMP POINTR-2
+          CLL RTL               /CONVERTED 2 BCD
+          RTL                   /CHARACTERS
+          TAD INPUT             /SHIFT LEFT AND ADD
+          JMP I BCD             /THE THIRD
+CONTRL,   TAD TABLE
+INPUT,    0
+NUMBER,   0
+COUNT,    0020
+TABLE,    -1440                 /-800(10)
+          -0620                 /-400
+          -0310                 /-200
+          -0144                 /-100
+          -0120                 /-80
+          -0050                 /-40
+          -0024                 /-20
+          -0012                 /-10
+/EXAMPLE: INPUT  0726  (8)
+/         OUTPUT   0100/0111/0000   = 470 (10)
+
+
+$
+

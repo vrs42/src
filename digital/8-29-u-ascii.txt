@@ -1,0 +1,121 @@
+/DOUBLE PRECISION DECIMAL-TO-BINARY CONVERSION AND INPUT
+/CALLING SEQUENCE:              /AC IGNORED
+/                    JMS DICONV /SUBROUTINE CALLED
+/                    ADDRES     /ADRESS TO STORE HIGH-ORDER WORD
+/                               /LOW -ORDER WORD IN ADDRESS+1
+DICONV,   0
+          CLA CLL               /INITIALIZE PROGRAM SWITCHES
+          TAD DISET1+1
+          DCA DICTRL
+          TAD DISET1+1
+          DCA DIXSW1
+          TAD I DICONV          /PICK UP ADDRESS TO STORE HIGH-ORD. WORD
+          DCA DIGET
+          DCA DIHIHD            /CLEAR LOCATIONS USED TO HOLD INCOMING
+          DCA DILOHD            /NUMBER
+          DCA DINEG1            /CLEAR NEGATIVE SWITCH
+          JMP DIIN
+DIPROC,   DCA DIDSAV            /STORE CHARACTER
+          TAD DIDSAV
+          TAD DIRBUT
+          SNA                   /IS IT A "BACK-ARROW"(IE. ERASE) KEY?
+          JMP DICONV+1          /YES, REINITIALIZE
+          TAD DIM260
+          SPA                   /IS IT LESS THAN 260 (IE. "0")?
+          JMP DICTRL            /YES, TRANSFER TO SEE WHAT CHARACTER IT IS
+          TAD DIM271
+          SMA SZA CLA           /IS IT GREATER THAN 271 (IE. "9")?
+          JMP DICTRL            /YES, TRANSFER TO SEE WHAT CHARACTER IT IS
+DIXSW1,   CLA CLL               /NO, FIRST CHARACTER WAS A DECIMAL DIGIT
+          TAD .+4               /CLOSE SWITCH TO GO TO "DINMBR" NEXT
+          DCA .-2
+          TAD DINMBR-1          /SET SWITCH TO SENSE TERMINATING CHAR.
+          DCA DICTRL
+          JMP DINMBR
+DICTRL,   CLA                   /CONTINUE CHECKING TO DETERMINE CHAR.
+          TAD DIDSAV
+          TAD DIMSPC
+          SNA                   /IS IT A "SPACE"?
+          JMP DISET1+1          /YES, SET SWITCH TO SENSE TERM. CHAR.
+          TAD DIMPLS
+          SNA                   /IS IT A "PLUS"?
+          JMP DISET1+1          /YES, SET SWITCH TO SENSE TERM. CHAR.
+          TAD DIMMNS
+          SNA CLA               /IS IT A "MINUS"?
+          JMP DISET1            /YES,SET NEGATIVE SWITCH AND TERM.SWITCH
+          JMP DIEND             /NO, IT WAS A TERMINATING CHARACTER
+DINMBR,   TAD DILOHD            /STORE ASSEMBLED NUMBER TEMPORARILY
+          DCA DIXTM1
+          TAD DIHIHD
+          DCA DIXTM2
+          JMS DIDSPL            /MULTIPLY CURRENT BY "10"
+          JMS DIDSPL
+          TAD DILOHD
+          TAD DIXTM1
+          DCA DILOHD
+          RAL
+          TAD DIHIHD
+          TAD DIXTM2
+          DCA DIHIHD
+          JMS DIDSPL
+          TAD DIDSAV            /PICK UP CURRENT DIGIT
+          AND DIXMSK            /MASK OFF HIGH-ORDER BITS
+          TAD DILOHD            /ADD REMAINDER TO CURRENT NUMBER
+          DCA DILOHD
+          SZL                   /DID IT OVERFLOW?
+          ISZ DIHIHD            /YES, CORRECT HIGH-ORDER WORD
+/INPUT ROUTINE
+DIIN,     KSF
+          JMP .-1
+          KRB
+          TLS
+          JMP DIPROC
+/TERMINATING ROUTINE
+DIEND,    CLA
+          TAD DINEG1            /PICK UP NEGATIVE NUMBER
+          CLL RAR               /PUT IT INTO LINK. ("1" IF NEGATIVE)
+          TAD DIHIHD            /PICK UP HIGH ORDER PORTION
+          SZL                   /IS LINK "1"?
+          CMA                   /YES, NUMBER NEGATIVE. COMPLEMENT IT
+          DCA I DIGET           /STORE IT
+          TAD DILOHD            /PICK UP LOW-ORDER PORTION
+          SZL                   /IS LINK "1"?
+          CLL CMA IAC           /YES, TWO'S COMP.IT. IF OVERFLOW,LINK=1
+          SZL                   /IS LINK "1"?
+          ISZ I DIGET           /INDEX HIGH-ORDER PRTION
+          NOP                   /TAKES CARE WHEN HIGH-ORDER PORTION =0
+          ISZ DIGET             /INDEX POINTER FOR LOW-ORDER PORTION
+          DCA I DIGET           /STORE LOW-ORDER POTION OF NUMBER
+          ISZ DICONV            /INDEX FOR CORRECT RETURN
+          JMP I DICONV          /RETURN
+DISET1,   ISZ DINEG1            /SET NEGATIVE SWITCH
+          CLA CLL               /CLOSE SWITCH TO TRANSFER TO TERMINATION
+          TAD DINMBR-1
+          DCA DICTRL
+          JMP DIIN              /JUMP TO WAIT FOR NEXT CHARACTER
+/DOUBLE PRECISION LEFT SHIFT (X2)
+DIDSPL,   0
+          TAD DILOHD
+          CLL RAL
+          DCA DILOHD
+          TAD DIHIHD
+          RAL
+          DCA DIHIHD
+          JMP I DIDSPL
+/CONSTANTS AND VARIABLES
+DIXMSK,   17                    /MASK FOR LAST FOUR BITS
+DIRBUT,   -337                  /CODE FOR ERASE
+DIM260,   57                    /NUMBER USED TO GENERATE CODE "260"
+DIM271,   -11                   /NUMBER USED TO GENERATE CODE "271"
+DIMSPC,   -240                  /CODE FOR SPACE
+DIMPLS,   -13                   /NUMBER USED TO GENERATE CODE "253" (+)
+DIMMNS,   -2                    /NUMBER USED TO GENERATE CODE "255" (-)
+DINEG1,   0                     /STORAGE LOCATIONS
+DIDSAV,   0
+DIGET,    0
+DIHIHD,   0
+DILOHD,   0
+DIXTM1,   0
+DIXTM2,   0
+PAUSE
+

@@ -1,0 +1,78 @@
+/BINARY TO BCD CONVERSION 3/7/65-HB-DEC
+/ENTER WITH BINARY NUMBER IN ACCUMULATOR
+/EXIT WITH 4 SIX-BIT BCD CHARACTERS
+/PACKED TWO TO A WORD IN REGISTERS
+/ONE AND TWO OR IN A BUFFER.
+/USED FOR WRITING MAG-TAPE IN BCD FORMAT
+/IN ADDITION TO BCD PARITY
+/OUTPUT FORMAT:
+/         ONE  0-1   A,B BITS
+/         ONE  2-5   1000 DECADE
+/         ONE  6-7   A,B BITS
+/         ONE 8-11    100 DECADE
+/         TWO  0-1   A,B BITS
+/         TWO  2-5     10 DECADE
+/         TWO  6-7   A,B BITS
+/         TWO 8-11      1 DECADE
+/STORAGE   -53 (10) REGISTERS
+/TIME    324.8-350.4 MICRO-SECONDS PDP-8
+
+BCD,      0
+          DCA INPUT             /STORE BINARY
+          TAD CONTRL            /SET UP TABLE
+          DCA POINTR            /POINTER
+          TAD COUNT1            /SET COUNT
+          JMS STEP              /CONVERT
+          CLL RTL
+          JMS STEP              /CONVERT NEXT
+          TAD BITS1             /A,B BIT PATTERNS
+          DCA ONE               /OR DCA I AUTO (10-17)
+          TAD COUNT2            /SET-UP COUNT
+          JMS STEP
+          CLL RTL
+          RTL
+          RTL
+          TAD INPUT             /LEAST SIGNIFICANT BITS
+          TAD BITS2             /A,B BIT PATTERMS
+          DCA TWO               /OR DCA I AUTO (10-17)
+          JMP I BCD             /EXIT
+INPUT,    0
+NUMBER,   0
+CONTRL,   TAD TABLE
+COUNT1,   1010
+COUNT2,   0400
+ONE,      0
+TWO,      0
+BITS1,    0                     /OR ANY BIT PATTERN
+BITS2,    0                     /OR ANY BIT PATTERN
+STEP,     0                     /ACTUAL CONVERSION SUBROUTINE
+          CLL
+          DCA NUMBER
+          TAD INPUT
+POINTR,   TAD TABLE             /OR TABLE+1, TABLE+2, ETC.
+          SZL                   / IF C(L)=1; INPUT>-TABLE
+          DCA INPUT             /IF SO: INPUT=INPUT+TABLE
+          CLA
+          TAD NUMBER            /ROTATES WILL BRING
+          RAL                   /COUNT BIT INTO LINK
+          ISZ POINTR
+          SZL
+          JMP I STEP            /STEP DONE
+          JMP POINTR-2
+TABLE,    -7640                 /-4000 (10)
+          -3720
+          -1750
+          -1440
+          -0620
+          -0310
+          -0144
+          -0120
+          -0050
+          -0024
+          -0012
+/EXAMPLE: INPUT      7777  (8)
+/         OUTPUT:  ONE    00 0100/ 00 0000   =4095 (10)
+/                  TWO    00 1001/ 00 0101
+
+$
+

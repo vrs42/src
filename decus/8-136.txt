@@ -1,0 +1,67 @@
+C         ;FOURIER TRANSFORM PROGRAM IN PDP-8 FORTRAN II
+C         ;NTWO IS THE NUMBER OF FUNCTION POINTS
+C         ;FNTWO IS NTWO IN FLOATING POINT
+C         ;N IS NTWO/2 (FRACTIONAL PART IS TRUNCATED)
+C         ;M INDEXES THE HARMONICS
+C         ;IX INDEXES THE FUNCTION VALUES
+C         ;K (=IX+1) INDEXES THE STORAGE OF FUNCTION VALUES
+C         ;FX IS IX IN FLOATING POINT
+C         ;A IS THE COSINE TERM COEFFICIENT
+C         ;B IS THE SINE TERM COEFFICIENT
+C         ;U (=S*FX*T) IS THE ARGUMENT OF THE SINE AND COSINE
+C         ;FUNCTIONS. IT  IS COMPUTED IN THREE STEPS TO MINIMIZE
+C         ;UNNECESSARY COMPUTATIONS
+C         ;
+C         ;READ NUMBER OF FUNCTION POINTS AND CHECK THAT NUMBER
+C         ;LESS THAN 201
+5         ;TYPE 105
+          ;ACCEPT 110,NTWO
+          ;IF (NTWO-200) 15,15,10
+10        ;TYPE 115
+          ;GO TO 5
+15        ;N=NTWO/2
+          ;FNTWO=NTWO
+          ;DIMENSION F(200)
+C         ;READ IN FUNCTION VALUES
+          ;DO 20 K=1,NTWO
+          ;IX=K-1
+          ;TYPE 120,IX
+          ;ACCEPT 125,F(K)
+20        ;CONTINUE
+          ;TYPE 130
+          ;S=2.0*3.141593/FNTWO
+C         ;ITERATE OVER HARMONIC VALUES
+21        ;DO 35 M=0,N
+          ;A=B=0.0
+          ;FM=M
+          ;T=FM*S
+          ;J=NTWO-1
+C         ;SUM OVER FUNCTION VALUES
+22        ;DO 30 IX=0,J
+          ;FX=IX
+          ;U=T*FX
+          ;K=IX+1
+          ;A=A+F(K)*COSF(U)
+          ;B=B+F(K)*SINF(U)
+30        ;CONTINUE
+          ;IF (M) 305,32,305
+305       ;IF (NTWO-2*M) 31,32,31
+31        ;A=2.0*A/FNTWO
+          ;B=2.0*B/FNTWO
+          ;TYPE 135,M,A,B
+          ;GO TO 35
+32        ;A=A/FNTWO
+          ;B=0.0
+          ;TYPE 135,M,A,B
+35        ;CONTINUE
+          ;PAUSE
+C         ;HIT CONTINUE KEY TO RESTART PROGRAM
+          ;GO TO 5
+105       ;FORMAT(/,"NUMBER OF DATA POINTS =")
+110       ;FORMAT(I)
+115       ;FORMAT("NUMBER TOO LARGE")
+120       ;FORMAT("DATA POINT ",I," = ")
+125       ;FORMAT(E)
+130       ;FORMAT(/,"HARMONIC    COSINE            SINE",/)
+135       ;FORMAT(I,"    ",E,E,/)
+          ;END

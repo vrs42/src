@@ -1,0 +1,157 @@
+
+            / PDP-8 DISK MONITOR SYSTEM RESTORE PROGRAM
+            / SINGLE DISK DF32 VERSION (OCT. 15, 1969)
+            /
+            / COPYRIGHT 1969, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.
+            /
+            *200
+            /
+0200  7300  START,  CLA CLL
+0201  1377          TAD     (7576           /READ MONITOR HEAD INTO 7600
+0202  3776          DCA I   (7750
+0203  1377          TAD     (7576
+0204  3775          DCA I   (7751
+0205  6603          DMAR
+0206  6622          DFSC
+0207  5206          JMP     .-1
+0210  6621          DFSE
+0211  7402          HLT
+0212  4774          JMS I   (7642           /GET DN1 BACKUP
+0213  0003                  3
+0214  0003                  3
+0215  0400  DN1,            DNBUF
+0216  0000                  0
+0217  7402          HLT
+0220  4774          JMS I   (7642           /GET SAM1 BACKUP
+0221  0003                  3
+0222  0004                  4
+0223  0600                  DNBUF+200
+0224  0000  SMLINK,         0
+0225  7402          HLT
+0226  1224          TAD     SMLINK
+0227  3242          DCA     NUSMLK
+0230  4774          JMS I   (7642           /RESTORE DN1
+0231  0005                  5
+0232  0177                  177
+0233  0400                  DNBUF
+0234  0201                  201
+0235  7402          HLT
+0236  4774          JMS I   (7642           /RESTORE SAM1
+0237  0005                  5
+0240  0200                  200
+0241  0600                  DNBUF+200
+0242  0000  NUSMLK,         0
+0243  7402          HLT
+0244  1373          TAD     (-200           /REFRESH DN2
+0245  3200          DCA     CTR
+0246  1215          TAD     DN1
+0247  3201          DCA     PTR
+0250  3601          DCA I   PTR
+0251  2201          ISZ     PTR
+0252  2200          ISZ     CTR
+0253  5250          JMP     .-3
+0254  4774          JMS I   (7642
+0255  0005                  5
+0256  0201                  201
+0257  0400                  DNBUF
+0260  0202                  202
+0261  7402          HLT
+            /
+            /INCLUDE NEXT 2 LINES IF YOU HAVE A 2, 3, OR 4 UNIT DF32
+            /XTRA,  IAC                     /MARK SAMBLOCK SLOT
+            /       DCA I   (DNBUF+1
+            /
+            /INCLUDE NEXT 6 LINES IF YOU HAVE A 4 UNIT DF32
+            /       JMS I   (7642           /REFRESH SAM3
+            /               5
+            /               1001
+            /               DNBUF
+            /               1401
+            /       HLT
+            /
+            /INCLUDE NEXT 12 LINES IF YOU HAVE A 3 OR 4 UNIT DF32
+            /       JMS I   (7642           /REFRESH SAM2
+            /               5
+            /               401
+            /               DNBUF
+            /               1001
+            /       HLT
+            /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+            /       DCA I   (DNBUF+172
+            /       TAD     (100
+            /       DCA I   (DNBUF+173
+            /       TAD     XTRA+6          /SET LAST SAMBLOCK NUMBER
+            /       DCA     LASTSM
+            /
+            /INCLUDE NEXT 4 LINES IF YOU HAVE A 4 UNIT DF32
+            /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+            /       DCA I   (DNBUF+170
+            /       TAD     (100
+            /       DCA I   (DNBUF+171
+            /
+            /INCLUDE NEXT 15 LINES IF YOU HAVE A 2, 3, OR 4 UNIT DF32
+            /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+            /       DCA I   (DNBUF+174
+            /       TAD     (100
+            /       DCA I   (DNBUF+175
+            /       TAD     (100
+            /       DCA I   (DNBUF+176
+            /       TAD     (100
+            /       DCA I   (DNBUF+177
+            /       JMS I   (7642           /REFRESH LAST SAMBLOCK
+            /               5
+            /LASTSM,        401
+            /               DNBUF
+            /               0
+            /       HLT
+            /       DCA I   (DNBUF+1        /CLEAR
+            /
+            /END OF DF32 CONDITIONAL CODE
+            /
+0262  1372          TAD     (-74            /REFRESH DN3
+0263  3200          DCA     CTR
+0264  1371          TAD     (DNBUF+104
+0265  3201          DCA     PTR
+0266  1370          TAD     (100
+0267  3601          DCA I   PTR
+0270  2201          ISZ     PTR
+0271  2200          ISZ     CTR
+0272  5266          JMP     .-4
+0273  4774          JMS I   (7642
+0274  0005                  5
+0275  0202                  202
+0276  0400                  DNBUF
+0277  0000                  0
+0300  7402          HLT
+0301  5773          JMP I   (7600           /GO TO MONITOR
+            /
+            /END
+            /
+            /
+            /DEFINITIONS
+            /
+            DMAR=6603
+            DSFE=6621
+            DFSC=6622
+            CTR=START
+            PTR=START+1
+            DNBUF=400
+            /
+0370  0100  
+0371  0504  
+0372  7704  
+0373  7600  
+0374  7642  
+0375  7751  
+0376  7750  
+0377  7576  
+
+CTR    0200
+DNBUF  0400
+DN1    0215
+DSFE   6621
+NUSMLK 0242
+PTR    0201
+SMLINK 0224
+START  0200
+

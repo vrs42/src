@@ -1,0 +1,151 @@
+
+
+
+/DIGITAL-8-14-F
+/DOUBLE PRECISION DIVIDE SUBROUTINE
+/CALLING SEQUENCE:
+/         C(AC)=ADDRESS OF HIGH ORDER DIVIDEND
+/         JMS DUBDIV
+/         ADDRESS OF HIGH ORDER DIVISOR
+/         RETURN: C(AC)=HIGH ORDER QUOTIENT
+/                 C(DIVND4)=LOW ORDER QUOTIENT
+/                 C(DIVND1)=HIGH ORDER REMAINDER
+/                 C(DIVND2)=LOW ORDER REMAINDER
+/IF DIVISOR<DIVIDEND; RESULTS UNSPECIFIED
+
+/PAGE 1
+
+DUBDIV,   0
+          DCA ADDRS             /DIVIDEND ADDRESS
+          TAD REST              /-2
+          DCA SIGNSW            /SET SIGN SWITCH
+          TAD I ADDRS           /HIGH-ORDER DIVIDEND
+          DCA DIVND1
+          ISZ ADDRS
+          TAD I ADDRS           /DIVIDEND
+          DCA DIVND2
+          ISZ ADDRS
+          TAD I ADDRS           /DIVIDEND
+          DCA DIVND3
+          ISZ ADDRS
+          TAD I ADDRS           /DIVIDEND
+          DCA DIVND4
+          TAD DIVND1            /DIVIDEND<0?
+          SMA CLA
+          JMP DIVGO1            /NO: CONTINUE
+          ISZ SIGNSW            /YES: ADD 1 TO SWITCH
+          TAD DIVND4
+          CMA IAC CLL           /NEGATE DIVIDEND
+          DCA DIVND4
+          TAD DIVND3
+          JMS COM
+          DCA DIVND3
+          TAD DIVND2
+          JMS COM
+          DCA DIVND2
+          TAD DIVND1
+          JMS COM
+          DCA DIVND1
+
+
+
+/DIGITAL-8-14-F
+/PAGE 2
+
+/FETCH DIVISOR
+DIVGO1,   TAD I DUBDIV
+          ISZ DUBDIV
+          DCA ADDRS             /ADDRESS OF DIVISOR
+          TAD I ADDRS           /HIGH ORDER DIVISOR
+          CLL
+          SMA                   /DIVISOR>0?
+          CMA CML               /YES:NEGATE AND SET C(L)
+          DCA HDIVSR
+          ISZ ADDRS
+          TAD I ADDRS           /LOW ORDER DIVISOR
+          SNL
+          ISZ SIGNSW            /ADD 1 TO SIGN SWITCH
+          NOP
+          SZL
+          CMA IAC CLL           /COMPLEMENT
+          DCA LDIVSR            /LOW ORDER DIVISOR
+          SZL                   /CARRY?
+          ISZ HDIVSR            /YES
+          TAD M25
+          DCA DIVCNT            /SET DIVIDE COUNT=24
+          CLL
+          JMP DIV2
+
+
+
+
+/DIGITAL-8-14-F
+/PAGE 3
+
+DIV3,     TAD DIVND2            /SHIFT HIGH DIVIDEND
+          RAL                   /LEFT
+          DCA DIVND2
+          TAD DIVND1
+          RAL
+          DCA DIVND1
+          TAD DIVND2            /COMPARE DIVISOR;
+          TAD LDIVSR            /WITH DIVISOR
+          DCA ADDRS
+          RAL                   /GET CARRY
+          TAD DIVND1
+          TAD HDIVSR
+          SNL
+          JMP DIV2-1
+          DCA DIVND1
+          TAD ADDRS
+          DCA DIVND2
+          CLA
+DIV2,     TAD DIVND4            /ROTATE LOW ORDER
+          RAL                   /WORDS LEFT
+          DCA DIVND4
+          TAD DIVND3            /QUTOIENT BITS
+          RAL
+          DCA DIVND3            /ENTER FROM C(L)
+          ISZ DIVCNT            /DONE 24?
+          JMP DIV3              /NO: CONTINUE
+          ISZ SIGNSW            /ANSWER<0?
+          JMP OUT               /NO: EXIT
+          TAD DIVND4            /YES
+          CMA CLL IAC
+          DCA DIVND4
+          TAD DIVND3
+          JMS COM
+          JMP I DUBDIV
+OUT,      TAD DIVND3
+          JMP I DUBDIV
+
+
+
+
+/DIGITAL-8-14-F
+/PAGE 4
+
+ADDRS,    0
+DIVND1,   0
+DIVND2,   0
+DIVND3,   0
+DIVND4,   0
+HDIVSR,   0
+LDIVSR,   0
+SIGNSW,   0
+DIVCNT,   0
+M25,      -31                   /-25(10)
+REST,     -2
+
+COM,      0
+          CMA
+          SZL
+          CLL IAC
+          JMP I COM
+
+
+$
+
+
+
+

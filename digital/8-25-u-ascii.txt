@@ -1,0 +1,93 @@
+
+/SIGNED DECIMAL PRINT, DOUBLE PRECISION
+/CALLING SEQUENCE:   JMS SDPRNT /SUBROUTINE CALLED
+/                    HIADDR     /ADDRESS OF HIGH ORDER WORD
+/                    RETURN     /RETURN WITH AC AND L CLEAR
+SDPRNT,   0
+          CLA CLL
+          TAD I SDPRNT          /PICK UP ADDRESS OF HIGH-ORDER WORD
+          DCA SDGET
+          TAD I SDGET           /PICK UP HIGH-ORER WORD
+          SMA CLA               /IS IT NEGATIVE?
+          TAD SDPLUS            /NO, GENERATE CODE FOR SPACE
+          TAD SDMNS             /YES, GENERATE CODE FOR "MINUS"
+          JMS SDTYPE            /TYPE IT OUT
+          TAD I SDGET           /PICK UP HIGH-ORDER WORD AGAIN
+          SPA                   /IS IT POSITIVE?
+          CMA CML               /NO, COMPLEMENT IT. SET LINK
+          DCA SDHIGH            /STORE POSITIVE WORD FOR USE IN SUBROUTINE
+          ISZ SDGET
+          TAD I SDGET           /PICK UP LOW-ORDER WORD
+          SZL                   /IS LINK SET?
+          CMA CLL IAC           /YES, FORM TWO'S COMPLEMENT
+          SZL                   /DID AC OVERFLOW FROM "IAC"?
+          ISZ SDHIGH            /YES, CORRECT HIGH-ORDER WORD
+          DCA SDLOW             /STORE POSITIVE LOW-ORDER WORD
+          TAD SDLOOP            /INITIALIZE DIGIT COUNTER TO "7"
+          DCA SDCNT
+          TAD SDADDR            /INITIALIZE POINTER TO TABLE OF POWERS OF TEN
+          DCA SDPTR
+          ISZ SDPRNT            /INDEX LINKAGE FOR CORRECT RETURN
+SDARND,   TAD I SDPTR           /PICK UP POWER OF TEN FOR USE IN SUBTRACT
+          ISZ SDPTR
+          DCA SDHSUB
+          TAD I SDPTR
+          ISZ SDPTR
+          DCA SDLSUB
+SDDO,     CLL                   /DOUBLE PRECISION SUBTRACTION
+          TAD SDLSUB
+          TAD SDLOW
+          DCA SDTEML
+          RAL
+          TAD SDHSUB
+          TAD SDHIGH
+          SPA                   /DID IT UNDERFLOW?
+          JMP SDOUT             /NO, COUNT IS DONE
+          ISZ SDBOX             /YES, COUNT NOT DONE. INDEX DIGIT
+          DCA SDHIGH            /DEPOSIT REMAINING HIGH-ORDER PORTION
+          TAD SDTEML            /RESTORE REMAINING LOW-ORDER PORTION
+          DCA SDLOW
+          JMP SDDO              /GO BACK AND SUBTRACT AGAIN
+SDOUT,    CLA
+          TAD SDBOX             /PICK UP RESULTING DIGIT
+          JMS SDTYPE            /TYPE IT OUT
+          DCA SDBOX             /INITIALIZE DIGIT TO "0"
+          ISZ SDCNT             /HAVE WE TYPED "7" DIGITS
+          JMP SDARND            /NO, DETERMINE NEXT DIGIT
+          JMP I SDPRNT          /YES, SUBROUTINE DONE. RETURN
+SDTYPE,   0                     /TYPEOUT ROUTINE
+          TAD SDTWO
+          TLS
+          TSF
+          JMP .-1
+          CLA CLL
+          JMP I SDTYPE
+SDLOOP,   -7                    /COUNT OF SEVEN DIGITS
+SDADDR,   SDCONL                /INITAL ADDRESS OF POWERS OF TEN
+SDTWO,    260                   /BASIC CODE FOR DIGITS
+SDPLUS,   -15                   /"SPACE". TO TYPE "+",REPLACE BY "-2"
+SDMNS,    -3                    /"MINUS"
+SDCNT,    0                     /STORAGE LOCATIONS
+SDHIGH,   0
+SDLOW,    0
+SDHSUB,   0
+SDLSUB,   0
+SDBOX,    0
+SDTEML,   0
+SDGET,    0
+SDPTR,    0
+SDCONL,   7413                  /TABLE OF POWERS OF TEN
+          6700                  /-1,000,000
+          7747                  /-100,000
+          4540
+          7775                  /-10,000
+          4360
+          7777                  /-1,000
+          6030
+          7777                  /-100
+          7634
+          7777                  /-10
+          7766
+          7777                  /-1
+          7777
+PAUSE

@@ -1,0 +1,81 @@
+
+
+/DIGITAL-8-18-F
+/DOUBLE PRECISION COSINE SUBROUTINE
+/CALLS DIGITAL-8-16-F
+/POINTERS TO DIGITAL-8-16-F
+ARG=741
+DSIN=400
+
+*1000
+DCOS,     0
+          TAD I DCOS            /FETCH ADDRESS OF
+          DCA ADDRSS            /ARGUMENT
+          TAD I ADDRSS          /FETCH HIGH ORDER
+          DCA X                 /ARGUMENT
+          ISZ ADDRSS            /INCREMENT ADDRESS POINTER
+          TAD I ADDRSS          /FETCH LOW ORDER
+          DCA X+1               /ARGUMENT
+          TAD X                 /IS ARGUMENT EQUAL
+          SZA CLA               /TO ZERO
+          JMP TSIGN             /NO: TEST THE SIGN
+          TAD X+1               /TEST LOW ORDER BITS
+          SZA CLA               /FOR ZERO
+          JMP TSIGN             /NOT EQUAL TO ZERO
+          CMA
+          RAR
+          DCA I ARGPNT
+          CMA
+          DCA I ARGPNT+1        /SET ANSWER TO 1
+          JMP EXIT
+TSIGN,    TAD X                 /SEE IF X>0
+          SMA CLA
+          JMP ARGPOS            /ARGUMENT IS >0
+          TAD X+1               /ARGUMENT IS <0
+          CLL CMA IAC           /NEGATE IT
+          DCA X+1
+          TAD X
+          CMA
+          SZL
+          IAC
+          DCA X
+
+
+
+
+
+
+
+
+
+/DIGITAL-8-18-F
+/PAGE 2
+ARGPOS,   CLL CLA
+          TAD X+1
+          CMA IAC
+          TAD PIOT+1            /SUBTRACT X FROM
+          DCA X+1               /PI/2
+          TAD X
+          CMA
+          SZL
+          IAC
+          TAD PIOT
+          DCA X
+          JMS I DSINPT          /CALL SINE SUBROUTINE
+          X                     /ARGUMENT ADDRESS
+EXIT,     ISZ DCOS              /RETURN TO CALL+1
+          JMP I DCOS            /ANSWER IN ARG,ARG+1
+X,        0
+          0
+ARGPNT,   ARG
+          ARG+1
+ADDRSS,   0
+DSINPT,   DSIN
+PIOT,     1444
+          1767
+
+$
+
+
+
+
