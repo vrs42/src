@@ -1,0 +1,61 @@
+/
+/ This patch converts djkka-c to djkka-8.
+/ My theory about what this is for is so that you can run it on
+/ an 8/I with a DW08E.
+/
+CAF=6007
+START=0200
+
+*4
+        CAF
+        JMP I .+1
+        START
+        
+        *0205
+        NOP/ION         /Don't enable interrupts for possible power fail.
+
+        *1172
+        RAR/GTF         /Get link
+
+        *1211
+        CLA CLL CML/RTF /Restore link to 1
+
+        *1217
+        CLA/GTF         /Get flags, link to AC0
+
+        *1226
+        NOP/ION         /Don't enable interrupts
+                        /This won't check that CAF clears ION.
+
+        *1235
+        NOP/SKON        /Don't check "SKON with interrupts off".
+
+        *1240
+        NOP/ION         /Don't enable interrupts.
+        *1242
+        SKP/SKON        /Don't check "SKON with interrupts on".
+        *1244
+        NOP/SKON        /Don't check "SKON turns interrupts off".
+
+        *1247
+        NOP/ION         /Don't enable interrupts.
+                        /This disables "IOF clears interrupt enable" test.
+        *1252
+        NOP/SKON        /Don't check "IOF clears interrupt enable".
+
+        *1255
+        NOP/ION         /Don't enable interrupts.
+        CLA CMA/GTF     /Set "int. enable" and "int. delay" bits.
+
+        *1266
+        CLA CLL/RTF     /Don't attempt to restore flags, link, int. enable
+        *1272
+        SKP/SKON        /Don't check "RTF enabled interrupts".
+
+        *1274
+        NOP/ION         /Don't enable interrupts.
+                        /This disables a window for power fail interrupt.
+        *1276
+        NOP/SRQ         /Don't skip if interrupt request.
+
+$

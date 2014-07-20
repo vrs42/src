@@ -1,0 +1,61 @@
+   1            /
+   2            / This patch converts djkka-c to djkka-8.
+   3            / My theory about what this is for is so that you can run it on
+   4            / an 8/I with a DW08E.
+   5            /
+   6            CAF=6007
+   7            START=0200
+   8            
+   9            *4
+  10 00004 6007         CAF
+  11 00005 5406         JMP I .+1
+  12 00006 0200         START
+  13                    
+  14                    *0205
+  15 00205 7000         NOP/ION         /Don't enable interrupts for possible power fail.
+  16            
+  17                    *1172
+  18 01172 7010         RAR/GTF         /Get link
+  19            
+  20                    *1211
+  21 01211 7320         CLA CLL CML/RTF /Restore link to 1
+  22            
+  23                    *1217
+  24 01217 7200         CLA/GTF         /Get flags, link to AC0
+  25            
+  26                    *1226
+  27 01226 7000         NOP/ION         /Don't enable interrupts
+  28                                    /This won't check that CAF clears ION.
+  29            
+  30                    *1235
+  31 01235 7000         NOP/SKON        /Don't check "SKON with interrupts off".
+  32            
+  33                    *1240
+  34 01240 7000         NOP/ION         /Don't enable interrupts.
+  35                    *1242
+  36 01242 7410         SKP/SKON        /Don't check "SKON with interrupts on".
+  37                    *1244
+  38 01244 7000         NOP/SKON        /Don't check "SKON turns interrupts off".
+  39            
+  40                    *1247
+  41 01247 7000         NOP/ION         /Don't enable interrupts.
+  42                                    /This disables "IOF clears interrupt enable" test.
+  43                    *1252
+  44 01252 7000         NOP/SKON        /Don't check "IOF clears interrupt enable".
+  45            
+  46                    *1255
+  47 01255 7000         NOP/ION         /Don't enable interrupts.
+  48 01256 7240         CLA CMA/GTF     /Set "int. enable" and "int. delay" bits.
+  49            
+  50                    *1266
+  51 01266 7300         CLA CLL/RTF     /Don't attempt to restore flags, link, int. enable
+  52                    *1272
+  53 01272 7410         SKP/SKON        /Don't check "RTF enabled interrupts".
+  54            
+  55                    *1274
+  56 01274 7000         NOP/ION         /Don't enable interrupts.
+  57                                    /This disables a window for power fail interrupt.
+  58                    *1276
+  59 01276 7000         NOP/SRQ         /Don't skip if interrupt request.
+  60            
+  61            $
