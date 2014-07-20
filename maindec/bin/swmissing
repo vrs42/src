@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+sub process {
+  local($d) = @_;
+  opendir(DIR, $d) || die "$d: $!";
+  foreach $f (readdir(DIR)) {
+    next if $f =~ /^\..*$/;
+    if ($f !~ /^([-\w]+)-(\w+)([.\w]+)*$/) {
+      warn "Skipping '$f'\n";
+      next;
+    }
+    ($base, $ext, $ext2) = ($1, $2, $3);
+    if ($ext2 =~ /[.]{bin|pal|lst}/) {
+#     warn "$f:$base:$ext:$ext2:\n";
+      ($base, $ext, $ext2) = ("$base-$ext", $ext2, "");
+#     warn "Got here $base:$ext:$ext2\n";
+    }
+    $ext .= $ext2 if $ext2;
+    $ext =~ s/[.]/_/g; $ext =~ s/^_//;
+    if ($base !~ /^[-A-Za-z0-9]+$/) {
+      warn "Skipping $base ($f)\n";
+      next;
+    }
+    $files{$base} = 0 unless defined $files{$base};
+    $files{$base}++;
+    $eval =  '$' . $ext . '{$base} = 1;';
+    # print "$eval\n";
+    eval "$eval";
+  }
+  foreach $k (sort keys %files) {
+    if (!defined $pb{$k} && !defined $pm{$k}) {
+      print "binary (-pb) is missing for $k\n";
+    } else {
+      print "tape label (-pb.lbl) is missing for $k\n"
+        unless defined $pb_lbl{$k} || defined $pm_lbl{$k};
+      print "od (-pb.od) is missing for $k\n"
+        unless defined $pb_od{$k} || defined $pm_od{$k};
+    }
+    print "write-up (-d.pdf) is missing for $k\n" unless defined $d_pdf{$k};
+  }
+}
+
+&process(".");

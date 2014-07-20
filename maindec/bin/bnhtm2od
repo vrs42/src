@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+#
+# Convert a text version of a .BN file into a -pb.od file
+
+# Basically, it's just a "text" file with the standard
+# 3 bytes in 2 words format.
+
+@todo = @ARGV;
+foreach $f (@todo) {
+  $of = $f; $of =~ y/A-Z/a-z/;
+  $of =~ s/\.htm$//;
+  $of =~ s/-bn$/-pb.od/;
+  if (-f $of) {
+    warn "Skipping $of: exists\n";
+    next;
+  }
+  open(OUTPUT, ">$of") || die "$of: $!";
+  print "Writing $of\n";
+  open(INPUT, $f) || die "$f: $!";
+  $eof = 0;
+  while (<INPUT>) {
+    # The lines we care about have an octal offset, colon, then 16 values.
+    if (s/^(\d+): //) {
+      # Pick up the words, two at a time.
+      while (s/^(\d+)\s+(\d+)\s+//) {
+        @w = (oct($1), oct($2)); 
+        push(@w, (($w[0]&07400)>>4) + ($w[1]>>8));
+        $w[0] &= 0377;
+        $w[1] &= 0377;
+        # Now output 3 bytes, or until \0232 is found.
+        $eof = 1 if $w[0] == 0232;
+        printf OUTPUT "%04o\n", $w[0] unless $eof;
+        $eof = 1 if $w[1] == 0232;
+        printf OUTPUT "%04o\n", $w[1] unless $eof;
+        $eof = 1 if $w[2] == 0232;
+        printf OUTPUT "%04o\n", $w[2] unless $eof;
+      }
+    }
+  }
+  close(OUTPUT) || die "$of: $!";
+}
+exit 0;

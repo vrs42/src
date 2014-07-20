@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+# Look for files that start with something like:
+#    digital
+#    MAINDEC-08-DHRKA-B-PB  4/19/73
+#    RK8E DISKLESS CONTROL TEST
+#    ^Z
+# followed by a valid BIN format image.
+
+@todo = @ARGV;
+for $f (@todo) {
+  if (!open(INPUT, $f)) {
+    warn "$f: $!\n";
+    next;
+  }
+  binmode(INPUT);
+  undef $/; # Read the whole file.
+  $_ = <INPUT>;
+  # Look for the Control-Z.
+  if (/^([^\200\032]+)\032(.+)$/s) {
+    # Found it
+    $lbl = $1;
+    $bn = $2;
+#   warn "Got here: $f\n";
+    if ($lbl =~ /maindec-(..)-([\w-]+)-pb/i) {
+      ($type, $name) = ($1, $2);
+      $name =~ y/A-Z/a-z/;
+      warn "$name: type $type\n";
+      if ($bn !~ /^\200+[^\200]+\200+$/s) {
+        warn "$name: not a BIN tape!\n";
+        next;
+      }
+      if (-f "$name-pb.lbl") {
+        warn "Skipping $name in $f: $name-pb.lbl exists!\n";
+        next;
+      }
+      if (-f "$name-pb") {
+        warn "Skipping $name in $f: $name-pb exists!\n";
+        next;
+      }
+      if (-f "$name-pb.od") {
+        warn "Skipping $name in $f: $name-pb.od exists!\n";
+        next;
+      }
+      # Write the label info
+      open(OUTPUT, ">$name-pb.lbl") || die "$name-pb.lbl: $!";
+      print OUTPUT $lbl;
+      close(OUTPUT) || die die "$name-pb.lbl: $!";
+      # Write the -pb file
+      open(OUTPUT, ">$name-pb") || die "$name-pb: $!";
+      binmode(OUTPUT);
+      print OUTPUT $bn;
+      close(OUTPUT) || die die "$name-pb: $!";
+      # Write the label info
+      open(OUTPUT, ">$name-pb.od") || die "$name-pb.od: $!";
+      for $b (unpack("C*", $bn)) {
+        printf OUTPUT "%03o\n", $b;
+      }
+      close(OUTPUT) || die die "$name-pb.od: $!";
+    } else {
+      warn "$f: Unparsed label:\n$lbl\n";
+    }
+  }
+}
