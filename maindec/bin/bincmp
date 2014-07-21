@@ -38,7 +38,7 @@ while (read(INPUT, $top, 1)) {
     $loc = ($loc + 1) & 07777;
     $sum += $add;
   }
-  read(INPUT, $bot, 1) || die "read: $!";
+  read(INPUT, $bot, 1) || die "$ARGV[0] read: $!";
   $bot = unpack("c", $bot);
   die "$ARGV[0]: ".$bot." not in bin format ". tell(INPUT) unless $bot <= 077;
   $word = ($top << 6) + $bot;
@@ -83,7 +83,7 @@ while (read(INPUT, $top, 1)) {
     $field = ($top & 070) >> 3;
     next;
   }
-  read(INPUT, $bot, 1) || die "read: $!";
+  read(INPUT, $bot, 1) || die "$ARGV[1] read: $!";
   $bot = unpack("c", $bot);
   die "$ARGV[0]: ".$bot." not in bin format ". tell(INPUT) unless $bot <= 077;
   $word = ($top << 6) + $bot;
@@ -103,6 +103,7 @@ $sum &= 07777;
 printf "$ARGV[1]: Checksum is %04o, not %04o\n", $sum, $store if $sum != $store;
 #printf STDERR "$ARGV[1]: Checksum is %04o, not %04o\n", $sum, $store if $sum != $store;
 
+$status = 0;
 for ($loc = 0; $loc <= $max; $loc++) {
   next unless defined($core1[$loc]) || defined($core2[$loc]);
   if ($core1[$loc] != $core2[$loc]) {
@@ -110,8 +111,10 @@ for ($loc = 0; $loc <= $max; $loc++) {
                   $loc, $core1[$loc], $core2[$loc];
 #   printf STDERR "%04o: %04o != %04o\n",
 #                 $loc, $core1[$loc], $core2[$loc];
+    $status = 1;
   }
 }
+exit $status;
 
 __END__
 :endofperl
