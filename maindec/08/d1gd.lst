@@ -1,0 +1,1333 @@
+   1            /PDP-8, 8I, 8S EXTENDED MEMORY CONTROL TEST.
+   2            /
+   3            /COPYRIGHT 1969-1970, DIGITAL EQUIPMENT CORP.,MAYNARD,MASS.
+   4            /
+   5            /PLACE NUMBER OF EXTENDED 4K FIELDS AVAILABLE IN SR9 TO 11, (UP TO 7)
+   6            /IF USING AN 8I, PLACE SR8 ON A-1, OTHERWISE LEAVE 0.
+   7            /START PROGRAM AT 0200
+   8            /
+   9            /CONSTANTS
+  10            /
+  11            CDF=6201
+  12            CIF=6202
+  13            RDF=6214
+  14            RIF=6224
+  15            RMF=6244
+  16            RIB=6234
+  17            *1
+  18            /
+  19 00001 5001         JMP 1
+  20 00002 0002         0002
+  21 00003 0003         0003
+  22            /
+  23            *20
+  24            /
+  25 00020 5400 JMPI0,  JMP I 0
+  26 00021 2000 ISZ0,   ISZ 0
+  27 00022 2342 XTFLG,  TFLG
+  28 00023 2334 XSTKS,  NSTKS
+  29 00024 1047 XRMF,   TRMF
+  30 00025 1321 XRANS,  TRANS
+  31 00026 1432 XAUTO,  TAUTO
+  32 00027 0000 LOOP,   0
+  33 00030 0000 NDF,    0
+  34 00031 0000 STKS,   0
+  35 00032 0000 DAT,    0
+  36 00033 0000 NOSTAK, 0
+  37 00034 0000 NOFLD,  0
+  38 00035 1131 KE40M,  E40-1
+  39 00036 1132 KE40,   E40
+  40 00037 7402 KHLT,   HLT
+  41 00040 6201 KCDF,   6201
+  42 00041 6202 KCIF,   6202
+  43 00042 1316 XFD,    EXFD
+  44 00043 0001 K1,     1
+  45 00044 0007 K7,     7
+  46 00045 0010 K10,    10
+  47 00046 7777 K7777,  7777
+  48 00047 7000 K7000,  7000
+  49 00050 7707 K7707,  7707
+  50 00051 7767 K7767,  7767
+  51 00052 7757 K7757,  7757
+  52 00053 7747 K7747,  7747
+  53 00054 7737 K7737,  7737
+  54 00055 7727 K7727,  7727
+  55 00056 7717 K7717,  7717
+  56 00057 7776 K7776,  7776
+  57 00060 7775 K7775,  7775
+  58 00061 7774 K7774,  7774
+  59 00062 7773 K7773,  7773
+  60 00063 7772 K7772,  7772
+  61 00064 7771 K7771,  7771
+  62 00065 7770 K7770,  7770
+  63 00066 0070 POINT,  .+2
+  64            
+  65            
+  66 00067 0070 K7S,    .+1
+  67 00070 7766 K7766,  7766
+  68 00071 7755         7755
+  69 00072 7744 K7744,  7744
+  70 00073 7733         7733
+  71 00074 7722         7722
+  72 00075 7711         7711
+  73 00076 7700         7700
+  74 00077 1126 XTDF,   STDF
+  75 00100 1127 XTDF1,  STDF+1
+  76 00101 1302 KXFLD,  EXFLD
+  77 00102 5402 KJMP,   JMP I 2
+  78 00103 1200 KNTR,   ENTER
+  79 00104 0020 K20,    20
+  80 00105 5506 JMP2,   JMP I KFLD0
+  81 00106 1427 KFLD0,  RTRN
+  82 00107 1422 KRTN,   E45A+2
+  83 00110 1400 XFIB,   SFIB
+  84            
+  85            
+  86            /TEST CDF AND RDF
+  87            /
+  88            *200
+  89            /
+  90 00200 7200 BEGIN,  CLA
+  91 00201 3027         DCA LOOP                /LOOP COUNTER
+  92            /
+  93 00202 6201 DF0,    CDF 00          /DF 0
+  94 00203 6214         RDF
+  95 00204 7450         SNA             /SHOULD NOT SKIP
+  96 00205 5211         JMP DF7
+  97 00206 7402 E1,     HLT             /ERROR. CDF OR RDF FAILED
+  98 00207 7200         CLA
+  99 00210 5202         JMP DF0         /REPEAT
+ 100            /
+ 101 00211 1050 DF7,    TAD K7707               /7707
+ 102 00212 6271         CDF 70          /DF 7
+ 103 00213 6214         RDF
+ 104 00214 7040         CMA             /AC = 0
+ 105 00215 7450         SNA             /SHOULD NOT SKIP
+ 106 00216 5222         JMP OK1
+ 107 00217 7402 F2,     HLT             /CDF OR RDF FAILED
+ 108 00220 7200         CLA
+ 109 00221 5211         JMP DF7
+ 110            /
+ 111 00222 2027 OK1,    ISZ LOOP                /CHECK DONE
+ 112 00223 5202         JMP DF0
+ 113            /
+ 114 00224 7200         CLA
+ 115 00225 3027         DCA LOOP                /LOOP GOUNVER
+ 116            /
+ 117 00226 1051 DF1,    TAD K7767               /7767
+ 118 00227 6211         CDF 10          /DF 10
+ 119 00230 6214         RDF
+ 120 00231 7040         CMA             /AC=0
+ 121 00232 7450         SNA
+ 122 00233 5237         JMP DF2
+ 123 00234 7402 E3,     HLT             /CDF1 OR RDF FAILED
+ 124 00235 7200         CLA
+ 125 00236 5226         JMP DF1
+ 126            /
+ 127 00237 1052 DF2,    TAD K7757               /7757
+ 128 00240 6221         CDF 20          /DF2
+ 129 00241 6214         RDF
+ 130 00242 7040         CMA             /AC=0
+ 131 00243 7450         SNA
+ 132 00244 5250         JMP OK2
+ 133            
+ 134 00245 7402 E4,     HLT             /CDF2 OR RDF FAILED
+ 135 00246 7200         CLA
+ 136 00247 5237         JMP DF2
+ 137            /
+ 138 00250 2027 OK2,    ISZ LOOP                /DONE IF SKIP
+ 139 00251 5226         JMP DF1
+ 140 00252 7200         CLA
+ 141 00253 3027         DCA LOOP
+ 142            /
+ 143 00254 1053 DF3,    TAD K7747               /7747
+ 144 00255 6231         CDF 30          /DF 3
+ 145 00256 6214         RDF
+ 146 00257 7040         CMA             /AC=0
+ 147 00260 7450         SNA
+ 148 00261 5265         JMP DF4
+ 149 00262 7402 E5,     HLT             /CDF 3 OR RDF FAILED
+ 150 00263 7200         CLA
+ 151 00264 5254         JMP DF3
+ 152            /
+ 153 00265 1054 DF4,    TAD K7737               /7737
+ 154 00266 6241         CDF 40          /DF 4
+ 155 00267 6214         RDF
+ 156 00270 7040         CMA             /AC=0
+ 157 00271 7450         SNA
+ 158 00272 5276         JMP OK3
+ 159 00273 7402 E6,     HLT             /CDF 4 OR RDF FAILED
+ 160 00274 7200         CLA
+ 161 00275 5265         JMP DF4
+ 162            /
+ 163 00276 2027 OK3,    ISZ LOOP                /DONE IF SKIP
+ 164 00277 5254         JMP DF3
+ 165            /
+ 166 00300 7200         CLA
+ 167 00301 3027         DCA LOOP
+ 168            /
+ 169 00302 1055 DF5,    TAD K7727               /7727
+ 170 00303 6251         CDF 50          /DF5
+ 171 00304 6214         RDF
+ 172 00305 7040         CMA             /AC=0
+ 173 00306 7450         SNA
+ 174 00307 5313         JMP DF6
+ 175 00310 7402 E7,     HLT             /CDF 5 OR RDF FAILED,
+ 176 00311 7200         CLA
+ 177 00312 5302         JMP DF5
+ 178            /
+ 179 00313 1056 DF6,    TAD K7717               /7717
+ 180 00314 6261         CDF 60          /DF 6
+ 181 00315 6214         RDF
+ 182 00316 7040         CMA             /AC=0
+ 183 00317 7450         SNA
+ 184 00320 5324         JMP OK4
+ 185            
+ 186 00321 7402 E8,     HLT             /CDF 6 OR RDF FAILED
+ 187 00322 7200         CLA
+ 188 00323 5313         JMP DF6
+ 189            /
+ 190 00324 2027 OK4,    ISZ LOOP        /DONE   WHEN    SKIP
+ 191 00325 5302         JMP DF5
+ 192            /
+ 193            /NOW TEST INTERRUPT BUFFER (IB) BITS 9-11 WITH
+ 194            /RIB, PI IS ENABLED, TELEPRINTER FLAG IS
+ 195            /USED FOR INTERRUPT,
+ 196            /
+ 197 00326 6201         CDF 00          /DF0
+ 198 00327 1020         TAD JMPI0               /JMP I0=JMP I 0
+ 199 00330 3001         DCA 1           /C(1)=JMP I 0
+ 200 00331 3027         DCA LOOP
+ 201 00332 6041         TSF             /TEST TTY FLAG
+ 202 00333 4422         JMS I XTFLG     /SET FLAG
+ 203            /
+ 204 00334 6001 IB0,    ION             /ENABLE PI
+ 205 00335 7200         CLA
+ 206 00336 6234         RIB             /READ SF
+ 207 00337 7450         SNA
+ 208 00340 5343         JMP IB1
+ 209 00341 7402 E9,     HLT             /RIB FAILED
+ 210 00342 5334         JMP IB0
+ 211            /
+ 212 00343 6211 IB1,    CDF 10          /DF 1
+ 213 00344 6001         ION
+ 214 00345 7200         CLA
+ 215 00346 6214         RDF             /DF SHOULD BE AFTER A PI
+ 216 00347 7450         SNA
+ 217 00350 5353         JMP .+3
+ 218 00351 7402 E10,    HLT
+ 219 00352 5343         JMP IB1         /DF NOT CLEARED, OR NO PI
+ 220            /
+ 221 00353 1057         TAD K7776
+ 222 00354 6234         RIB             /READ SF
+ 223 00355 7040         CMA             /AC=0
+ 224 00356 7450         SNA
+ 225 00357 5362         JMP OK5
+ 226 00360 7402 E11,    HLT             /RIB OR SF FAILED
+ 227 00361 5343         JMP IB1
+ 228 00362 2027 OK5,    ISZ LOOP                /DONE WHEN SKIP
+ 229 00363 5334         JMP IB0
+ 230 00364 5765         JMP I .+1
+ 231 00365 0400         IB2-2
+ 232            
+ 233            *400
+ 234 00400 7200         CLA
+ 235 00401 3027         DCA     LOOP
+ 236            
+ 237            /
+ 238 00402 6221 IB2,    CDF 20          /DF 2
+ 239 00403 6001         ION
+ 240 00404 7200         CLA
+ 241 00405 6214         RDF             /SHOULD BE 0 AFTER PI
+ 242 00406 7450         SNA
+ 243 00407 5212         JMP .+3
+ 244 00410 7402 E12,    HLT             /DF NOT CLEARED, OR NO PI
+ 245 00411 5202         JMP IB2
+ 246            /
+ 247 00412 1060         TAD K7775
+ 248 00413 6234         RIB             /AC=7777
+ 249 00414 7040         CMA             /=0
+ 250 00415 7450         SNA
+ 251 00416 5221         JMP IB3
+ 252 00417 7402 E13,    HLT             /RIB OR SF FAILED
+ 253 00420 5202         JMP IB2
+ 254            /
+ 255 00421 6231 IB3,    CDF 30          /DF3
+ 256 00422 6001         ION
+ 257 00423 7200         CLA
+ 258 00424 6214         RDF             /DF SHOULD BE CLEARED
+ 259 00425 7450         SNA
+ 260 00426 5231         JMP .+3
+ 261 00427 7402 E14,    HLT             /DF NOT CLEARED
+ 262 00430 5221         JMP IB3
+ 263            /
+ 264 00431 1061         TAD K7774
+ 265 00432 6234         RIB             /AC=7777
+ 266 00433 7040         CMA             /AC=0
+ 267 00434 7450         SNA
+ 268 00435 5240         JMP OK6
+ 269 00436 7402         HLT             /RIB OR SF FAILED
+ 270 00437 5221         JMP IB3
+ 271            /
+ 272 00440 2027 OK6,    ISZ LOOP        /DONE IF SKIP
+ 273 00441 5202         JMP IB2
+ 274            /
+ 275 00442 7200         CLA
+ 276 00443 3027         DCA LOOP
+ 277            /
+ 278 00444 6241 IB4,    CDF 40          /DF 3
+ 279 00445 6001         ION
+ 280 00446 7200         CLA
+ 281 00447 6214         RDF             /DF MUST BE 000 AFTER A PI
+ 282 00450 7450         SNA             /ERROR  IF SKIP
+ 283 00451 5254         JMP .+3
+ 284            
+ 285 00452 7402 E16,    HLT             /DF NOT 0 AFTER PI
+ 286 00453 5244         JMP IB4
+ 287            /
+ 288 00454 1062         TAD K7773               /AC=7773
+ 289 00455 6234         RIB             /AC=7777
+ 290 00456 7040         CMA             /AC:0/AC=0
+ 291 00457 7450         SNA
+ 292 00460 5263         JMP IB5
+ 293 00461 7402 E17,    HLT             /RIB OR SF FAILED
+ 294 00462 5244         JMP IB4
+ 295            /
+ 296 00463 6251 IB5,    CDF 50          /DF5
+ 297 00464 6001         ION
+ 298 00465 7200         CLA
+ 299 00466 6214         RDF             /DF SHOULD=000
+ 300 00467 7450         SNA
+ 301 00470 5273         JMP .+3
+ 302 00471 7402 E18,    HLT             /DF NOT 0 AFTER PI
+ 303 00472 5263         JMP IB5
+ 304            /
+ 305 00473 1063         TAD K7772               /AC= 7772
+ 306 00474 6234         RIB             /   = 7777
+ 307 00475 7040         CMA             /   = 0
+ 308 00476 7450         SNA
+ 309 00477 5302         JMP OK7
+ 310 00500 7402 E19,    HLT             /RIB OR SF FAILED
+ 311 00501 5263         JMP IB5
+ 312            /
+ 313 00502 2027 OK7,    ISZ LOOP        /DONE IF 0 AND SKIP
+ 314 00503 5244         JMP IB4
+ 315            /
+ 316 00504 7200         CLA
+ 317 00505 3027         DCA LOOP
+ 318            /
+ 319 00506 6261 IB6,    CDF 60          /DF6
+ 320 00507 6001         ION
+ 321 00510 7200         CLA
+ 322 00511 6214         RDF             /DF MUST=0 AFTER PI
+ 323 00512 7450         SNA
+ 324 00513 5316         JMP .+3
+ 325 00514 7402 E20,    HLT             /DF NOT 0 AFTER PI
+ 326 00515 5306         JMP IB6
+ 327            
+ 328            /
+ 329 00516 1064         TAD K7771               /,7771
+ 330 00517 6234         RIB             /AC=7777
+ 331 00520 7040         CMA
+ 332 00521 7450         SNA
+ 333 00522 5325         JMP IB7
+ 334 00523 7402 E21,    HLT             /RIB OR SF FAILED
+ 335 00524 5306         JMP IB6
+ 336            /
+ 337 00525 6271 IB7,    CDF 70          /DF 7
+ 338 00526 6001         ION
+ 339 00527 7200         CLA
+ 340 00530 6214         RDF             /DF MUST = 0 AFTER PI
+ 341 00531 7450         SNA
+ 342 00532 5335         JMP .+3
+ 343 00533 7402 E22,    HLT             /DF NOT 0
+ 344 00534 5325         JMP IB7
+ 345            /
+ 346 00535 1065         TAD K7770
+ 347 00536 6234         RIB             /AC=7777
+ 348 00537 7040         CMA
+ 349 00540 7450         SNA
+ 350 00541 5344         JMP OK8
+ 351 00542 7402 E23,    HLT             /RIB OR SF FAILED
+ 352 00543 5325         JMP IB7
+ 353            /
+ 354 00544 2027 OK8,    ISZ LOOP                /DONE IF 0
+ 355 00545 5306         JMP IB6
+ 356 00546 5747         JMP I .+1       /NEW PAGE
+ 357 00547 0600         600
+ 358            
+ 359            *600
+ 360            /NOW TEST DCA I AND TAD I TO ALL STACKS, NUMBER OF
+ 361            /EXTENDED STACKS SHOULD BE IN SR9 TO 11, EACH STACK WILL
+ 362            /CONTAIN ITS DF# IN LOCATION 7000.
+ 363 00600 3027         DCA LOOP
+ 364 00601 4423 DCAI,   JMS I XSTKS     /READ SR 9-11
+ 365 00602 7001         IAC
+ 366 00603 3030         DCA NDF         /DF NUMBER = 1 TO START
+ 367 00604 1040         TAD KCDF                /6201
+ 368 00605 1045         TAD K10
+ 369 00606 3207         DCA .+1         /DF 001 TO START WITH
+ 370 00607 6201 DFLD,   CDF 00          /WILL BE INCREMENTED
+ 371 00610 1030         TAD NDF         /DF#
+ 372 00611 3447         DCA I K7000     /PUT IN 7000 OF STACK
+ 373 00612 2031         ISZ STKS                /ALL STACKS WHEN 0
+ 374 00613 7410         SKP
+ 375 00614 5222         JMP TADI                /TEST TAD I
+ 376 00615 1045         TAD K10
+ 377 00616 1207         TAD DFLD                /INCR, CDF IOT
+ 378 00617 3207         DCA DFLD
+ 379 00620 2030         ISZ NDF
+ 380 00621 5207         JMP DFLD                /-
+ 381            /
+ 382 00622 4423 TADI,   JMS I   XSTKS   /SR9=11 AGAIN
+ 383 00623 7001         IAC
+ 384 00624 3030         DCA NDF         /DF#=1 AGAIN
+ 385 00625 1040         TAD KCDF                /6201
+ 386 00626 1045         TAD K10
+ 387 00627 3230         DCA .+1
+ 388 00630 6201 TFLD,   CDF 00
+ 389 00631 1447         TAD I K7000     /AC=DF CONTENTS NOW
+ 390 00632 3032         DCA DAT         /SAVE TEMP
+ 391 00633 1032         TAD DAT
+ 392 00634 7041         CIA             /2'S COMP
+ 393 00635 1030         TAD NDF         /BETTER BE EQUAL
+ 394 00636 7640         SZA CLA
+ 395 00637 5252         JMP E24-1               /ERROR PATH
+ 396 00640 2031         ISZ STKS                /ALL WHEN 0
+ 397 00641 5245         JMP .+4
+ 398 00642 2027         ISZ LOOP                /DONE WHEN 0
+ 399 00643 5201         JMP DCAI
+ 400 00644 5256         JMP IBSF                /NEXT TEST
+ 401 00645 1045         TAD K10
+ 402 00646 1230         TAD TFLD                /CDF IOT + 10
+ 403 00647 3230         DCA TFLD
+ 404 00650 2030         ISZ NDF
+ 405 00651 5230         JMP TFLD
+ 406            /
+ 407 00652 1032         TAD DAT         /DATA AS READ
+ 408 00653 7402 E24,    HLT             /AC=DATA READ. DF INDICATORS
+ 409                                    /EQUAL FIELD WHERE GOT DATA,
+ 410                                    /BOTH SHOULD BE EQUAL
+ 411 00654 7200         CLA
+ 412 00655 5230         JMP TFLD
+ 413            
+ 414            /CIF TEST, CHECKS THE ABILITY OF A CIF-ION-NOP-JMP OR
+ 415                    /CIF-ION-NOP-JMS SEQUENCE TO DO THE FOLLOWING:
+ 416                            /1.  CIF ENABLE MB TO IB TRANSFER.
+ 417                            /2.  INHIBIT INTERRUPT TIL JMP OR JMS EXECUTED.
+ 418                            /3.  INTERRUPT AFTER JMP OR JMS EXECUTED.
+ 419                            /4.  JMP OR JMS ENABLES IB TO IF TRANSFER.
+ 420                            /5.  INTERRUPT ENABLES IF TO SF TRANSFER.
+ 421            
+ 422            /SET UP FOR CIF-ION-NOP-JMP CHECK.
+ 423 00656 6201 IBSF,   CDF 00          /SET LOCS 1-2 TO ISZ 0,
+ 424 00657 1021         TAD ISZ0        /JMP I 0 RESPECTIVELY.
+ 425 00660 3001         DCA 1
+ 426 00661 1352         TAD KNOP
+ 427 00662 3002         DCA 2
+ 428 00663 1020         TAD JMPI0
+ 429 00664 3003         DCA 3
+ 430            /
+ 431            /NOW STORE HALTS IN LOC1, CIFJMP+1,
+ 432            /AND CIFJMS+1 OF ALL EXTENDED FIELDS,
+ 433            /
+ 434 00665 4423         JMS I XSTKS
+ 435 00666 1040         TAD KCDF
+ 436 00667 1045         TAD K10
+ 437 00670 3271         DCA .+1
+ 438 00671 6211 HLTS,   CDF 10
+ 439 00672 1037         TAD KHLT
+ 440 00673 3443         DCA I K1
+ 441 00674 1037         TAD KHLT
+ 442 00675 3754         DCA I E31
+ 443 00676 1037         TAD KHLT
+ 444 00677 3755         DCA I E32
+ 445 00700 2031         ISZ STKS
+ 446 00701 7410         SKP
+ 447 00702 5305         JMP .+3
+ 448 00703 1271         TAD HLTS
+ 449 00704 5267         JMP HLTS-2
+ 450 00705 6201         CDF 00
+ 451 00706 6041         TSF             /ENSURE TTO FLAG SET.
+ 452 00707 4422         JMS I XTFLG
+ 453 00710 3027         DCA LOOP        /SET COUNTER FOR 4096 PASSES.
+ 454 00711 1041 AGAIN1, TAD KCIF        /INITIALIZE TO CIF 00.
+ 455 00712 3323         DCA CIFJMP
+ 456 00713 3353         DCA CIFCK       /INITIALIZE I.F. CHECK TO 0.
+ 457 00714 4423         JMS I XSTKS     /READ SR 9-11.
+ 458 00715 1323 CIFJPL, TAD CIFJMP
+ 459 00716 1045         TAD K10
+ 460 00717 3323         DCA CIFJMP
+ 461 00720 1353         TAD CIFCK
+ 462 00721 1045         TAD K10
+ 463 00722 3353         DCA CIFCK
+ 464 00723 6202 CIFJMP, CIF 00          /MODIFIED TO CURRENT FIELD
+ 465                                    /UNDER TEST.
+ 466            
+ 467 00724 6001         ION
+ 468 00725 7000         NOP
+ 469 00726 5327         JMP .+1
+ 470 00727 7402 E25,    HLT             /ERROR, NO PI OR INHIBIT PI.
+ 471 00730 6234         RIB
+ 472 00731 7041         CIA
+ 473 00732 1353         TAD CIFCK
+ 474 00733 7650         SNA CLA
+ 475 00734 5344         JMP E26+3
+ 476 00735 1353         TAD CIFCK
+ 477 00736 7110         CLL RAR
+ 478 00737 7012         RTR
+ 479 00740 6234         RIB
+ 480 00741 7402 E26,    HLT             /ERROR, I.B. TO I.F. TRANSFER
+ 481 00742 7200         CLA             /FAILED AFTER CIF-JMP. BAD
+ 482 00743 5323         JMP CIFJMP      /I.F. IN AC6-8, GOOD I.F. IN
+ 483                                    /AC9-11.  REPEAT UPON CONTINUE.
+ 484 00744 2031         ISZ STKS        /DONE?
+ 485 00745 5315         JMP CIFJPL      /NO, DO NEXT FIELD
+ 486 00746 2027         ISZ LOOP        /4096 TIMES?
+ 487 00747 5311         JMP AGAIN1      /NO, DO IT ALL AGAIN.
+ 488 00750 5751         JMP I .+1       /YES, GO TEST CIF-JMS.
+ 489 00751 1000         IBSF1
+ 490 00752 7000 KNOP,   NOP
+ 491 00753 0000 CIFCK,  0
+ 492 00754 0724 E31,    CIFJMP+1
+ 493 00755 1020 E32,    CIFJMS+1
+ 494            
+ 495            *1000
+ 496 01000 7200 IBSF1,  CLA
+ 497 01001 6201         CDF 00
+ 498 01002 6041         TSF             /ENSURE TTO FLAG SET.
+ 499 01003 4422         JMS I XTFLG
+ 500 01004 3027         DCA LOOP        /SET UP FOR 4096 PASSES.
+ 501 01005 1041 AGAIN2, TAD KCIF        /INIT. TO CIF 00.
+ 502 01006 3217         DCA CIFJMS
+ 503 01007 3246         DCA CIFCK1      /INIT. I.F. CHECK TO 0.
+ 504 01010 4423         JMS I XSTKS     /READ SR9-11.
+ 505 01011 1217 CIFJSL, TAD CIFJMS
+ 506 01012 1045         TAD K10
+ 507 01013 3217         DCA CIFJMS
+ 508 01014 1246         TAD CIFCK1
+ 509 01015 1045         TAD K10
+ 510 01016 3246         DCA CIFCK1
+ 511 01017 6202 CIFJMS, CIF 00          /MODIFIED TO CURRENT FIELD
+ 512                                    /UNDER TEST.
+ 513 01020 6001         ION
+ 514 01021 7000         NOP
+ 515 01022 4223         JMS .+1
+ 516 01023 0000         0
+ 517 01024 7402 E27,    HLT             /ERROR.  NO PI OR INHIBIT PI
+ 518 01025 6234         RIB
+ 519 01026 7041         CIA
+ 520 01027 1246         TAD CIFCK1
+ 521 01030 7650         SNA CLA
+ 522 01031 5241         JMP E30+3
+ 523 01032 1246         TAD CIFCK1
+ 524 01033 7110         CLL RAR
+ 525 01034 7012         RTR
+ 526 01035 6234         RIB
+ 527 01036 7402 E30,    HLT             /ERROR.  I.B. TO I.F. TRANSFER
+ 528 01037 7200         CLA             /FAILED AFTER CIF-JMS. BAD
+ 529 01040 5217         JMP CIFJMS      /I.F. IN AC6-8, GOOD I.F.
+ 530                                    /IN AC9-11.  REPEAT UPON CONTINUE
+ 531 01041 2031         ISZ STKS        /DONE?
+ 532 01042 5211         JMP CIFJSL      /NO.  DO NEXT FIELD.
+ 533 01043 2027         ISZ LOOP        /4096 TIMES?
+ 534 01044 5205         JMP AGAIN2      /NO, DO IT ALL AGAIN.
+ 535 01045 5247         JMP TRMF        /YES.  GO IN TO NEXT TEST
+ 536 01046 0000 CIFCK1, 0
+ 537            /
+ 538            /TEST INTERRUPT INHIBIT
+ 539            /FROM EACH FIELD, REFER TO HEADING TITLED "EXTENDED
+ 540            /FIELD TEST RDUTINE", THIS ROUTINE IS PLACED IN
+ 541            /EACH TESTED FIELD AT THE ADDRESSES SPECIFIED, THE
+ 542            /INDICATED ERROR HALTS WILL BE IN THE EXTENDED
+ 543            /FIELD, PRESS CONT, TO RECOVER, ONLY 1 FIELD WILL
+ 544            /CONTAIN THE ROUTINE AT ANY ONE TIME, OTHER FIELDS
+ 545            /HILL CONTAIN ALLO'S, THE ROUTINE IS REPLACED WITH
+ 546            /HALTS AFTER COMPLETION, THE PORTIONS OF THE FIELD
+ 547            /WHICH DO NOT CONTAIN THE ROUTINE ARE SET TO 0000
+ 548            /BEFOREHAND.
+ 549            /
+ 550            /
+ 551            /SETUP FIELDS TO TEST, POINTERS, ETC,,
+ 552            /
+ 553 01047 4423 TRMF,   JMS I XSTKS     /READ   SR9-11
+ 554 01050 1040         TAD KCDF                /6201
+ 555 01051 3257         DCA .+6
+ 556 01052 1257         TAD .+5
+ 557 01053 1045         TAD K10
+ 558 01054 3257         DCA .+3
+ 559 01055 7040         CMA
+ 560 01056 3010         DCA 10
+ 561 01057 6201         CDF 00
+ 562 01060 3410         DCA I 10                /PLACE  0'S     IN      EACH FIELD FROM
+ 563 01061 1010         TAD 10          /LOC,   0       TO      7777,
+ 564 01062 7040         CMA
+ 565 01063 7640         SZA CLA
+ 566 01064 5260         JMP .-4
+ 567 01065 2031         ISZ STKS
+ 568 01066 5252         JMP TRMF+3
+ 569            
+ 570            /
+ 571            /NOW PUT A HLT IN EACH FIELD THE SAME
+ 572            /LOCATION AS E40, BELOW.
+ 573            /
+ 574 01067 4423         JMS I XSTKS     /READ SR 9-11
+ 575 01070 1040         TAD KCDF
+ 576 01071 1045         TAD K10
+ 577 01072 3273         DCA .+1
+ 578 01073 6201 CHDF,   CDF 00
+ 579 01074 1036         TAD KE40                /KE40 = ADDRESS OF E40.
+ 580 01075 3027         DCA LOOP                /SAVE TEMPORARILY
+ 581 01076 1037         TAD KHLT                /KHLT = 7402 (HLT)
+ 582 01077 3427         DCA I   LOOP
+ 583 01100 2031         ISZ STKS                /DONE ALL STACKS WHEN SKIP
+ 584 01101 7410         SKP
+ 585 01102 5305         JMP .+3
+ 586 01103 1273         TAD CHDF
+ 587 01104 5271         JMP CHDF-2
+ 588            /
+ 589 01105 6201         CDF 00
+ 590 01106 6041 STRMF,  TSF             /CHECK  TTY FNAG
+ 591 01107 4422         JMS I XTFLG     /GO     SET     IT
+ 592 01110 1050         TAD K7707
+ 593 01111 3027         DCA LOOP
+ 594 01112 1066         TAD POINT
+ 595 01113 3067         DCA K7S         /POINTER FOR K7700 TO K7766
+ 596 01114 4423         JMS I   XSTKS   /READ SR 9-11
+ 597 01115 1040         TAD KCDF                /6201
+ 598 01116 1045         TAD K10         /10
+ 599 01117 3326         DCA STDF
+ 600 01120 1041         TAD KCIF                /6202
+ 601 01121 1045         TAD K10         /10
+ 602 01122 3327         DCA STDF+1
+ 603 01123 1327         TAD STDF+1
+ 604 01124 3442         DCA I XFD
+ 605 01125 4425         JMS I XRANS     /PUT TEST ROUTINE INTO FIELD X
+ 606            /
+ 607 01126 6211 STDF,   CDF 10          /FIELD 1 TO START WITH
+ 608 01127 6212         CIF 10
+ 609 01130 5331         JMP .+1         /SHOULD ENTER EXTENDED FIELD
+ 610                                    /AFTER THIS JMP, HLT IF NOT
+ 611 01131 7000         NOP
+ 612 01132 7402 E40,    HLT             /ERROR, PI FAILED
+ 613                                    /C(AC) = C(I.B.)
+ 614 01133 5326         JMP     STDF            /REPEAT SAME TEST.
+ 615            /
+ 616            
+ 617            /ENTER HERE AFTER P1 FROM EXTENDED BANK
+ 618            *1200
+ 619            /
+ 620 01200 6214 ENTER,  RDF             /DF SHOULD BE 000
+ 621 01201 7450         SNA             /ERROR IF SKIP
+ 622 01202 5206         JMP .+4         /CHECK C(SF)
+ 623 01203 7402 E41,    HLT             /AC=C(DF)
+ 624 01204 7200         CLA
+ 625 01205 5477         JMP I XTDF      /REPEAT TEST
+ 626 01206 6212         CIF 10          /SET I.B. TO FIELD 1
+ 627 01207 6244         RMF             /I.B. NOW EQUAL TO SF
+ 628 01210 6234         RIB             /READ IB
+ 629 01211 6202         CIF 00
+ 630 01212 6201         CDF 00
+ 631 01213 1467         TAD I K7S
+ 632 01214 7040         CMA
+ 633 01215 7650         SNA CLA         /ERROR IF SKIP
+ 634 01216 5226         JMP CKPC
+ 635 01217 6244         RMF
+ 636 01220 6234         RIB
+ 637 01221 7402 E42,    HLT             /ERROR RMF AND PI WORKED, BUT
+ 638 01222 7200         CLA             /I,B, NOT CORRECT AFTER RMF,
+ 639                                    /AC=C(IB)
+ 640 01223 6201         CDF 00
+ 641 01224 6202         CIF 00
+ 642 01225 5477         JMP I XTDF      /BACKUP A PAGE AND REPEAT
+ 643            /
+ 644 01226 1036 CKPC,   TAD KE40                /KE40=ADDRESS OF E40
+ 645 01227 7001         IAC             /MAKE E40+1
+ 646 01230 7041         CIA
+ 647 01231 1000         TAD 0           /COMPARE TO C(0)
+ 648 01232 7650         SNA CLA         /SHOULD NOT SKIP
+ 649 01233 5240         JMP .+5         /ALL OK SETUP FOR NEXT FIELD
+ 650 01234 1000         TAD 0
+ 651 01235 7402 E43,    HLT             /ERROR, ALL WORKED, BUT
+ 652                                    /C(PC) WAS NOT=TO E40+1
+ 653                                    /AFTER PI IN EXTENDED
+ 654                                    /FIELD, C(AC)=C(0),F0,
+ 655                                    /CHECK FOR P1 NOT INHIBITED,
+ 656                                    /OR AUTO-INDEX REG,
+ 657                                    /12 FAILING IN THE EXTENDED FIELD.
+ 658 01236 7200         CLA
+ 659 01237 5477         JMP I XTDF              /BACKUP AND REPEAT
+ 660            /
+ 661            /SETUP  FOR NEXT FIELD
+ 662            /
+ 663 01240 2031         ISZ STKS                /DONE ALL IF SKIP
+ 664 01241 5246         JMP .+5
+ 665 01242 2027         ISZ LOOP                /DONE LOOPING IF SKIP
+ 666 01243 5645         JMP I .+2               /REPEAT ALL AGAIN
+ 667 01244 5510         JMP I XFIB      /EXIT TO NEXT TEST
+ 668 01245 1112         STRMF+4         /BACK TO LAST PAGE
+ 669            
+ 670            /
+ 671            /SET LAST TESTED FIELD TO ALL 0'S AND PUT A
+ 672            /HLT IN RESPECTIVE ADDRESS OF E40
+ 673            /
+ 674 01246 7240         CLA CMA
+ 675 01247 3010         DCA 10
+ 676 01250 1477         TAD I XTDF      /CODF X/DF SIDE
+ 677 01251 3252         DCA .+1
+ 678 01252 6211         CDF 10          /F1 TO START WITH
+ 679 01253 3410         DCA I 10
+ 680 01254 1010         TAD 10
+ 681 01255 7040         CMA
+ 682 01256 7640         SZA CLA         /CLEARD IF SKIP
+ 683 01257 5253         JMP .-4
+ 684 01260 6201         CDF 00
+ 685 01261 1477         TAD I XTDF      /CDF X0 AT STDF
+ 686 01262 3263         DCA .+1
+ 687 01263 6211         CDF 10
+ 688 01264 1037         TAD KHLT                /=7402 (HLT)
+ 689 01265 3436         DCA I KE40      /KF40=ADDRESS OF E40
+ 690 01266 6201         CDF 00          /RESTORE DF
+ 691            /
+ 692            /INCREMENT CDF AND CIF IOT'S AT STDF, STDF+1
+ 693            /TO NEXT FIELD.
+ 694            /
+ 695 01267 1477         TAD I XTDF      /TDF X0 AT STDF
+ 696 01270 1045         TAD K10
+ 697 01271 3477         DCA I XTDF
+ 698 01272 1500         TAD I XTDF1     /CIF XP AT STDF
+ 699 01273 1045         TAD K10
+ 700 01274 3500         DCA I XTDF1
+ 701 01275 1500         TAD I XTDF1
+ 702 01276 3316         DCA EXFD
+ 703 01277 2067         ISZ K7S
+ 704 01300 4321         JMS TRANS               /PUT ROUTINE IN NEW FIELD
+ 705 01301 5477         JMP I XTDF      /TEST NEW FIELD
+ 706            
+ 707                    /EXTENDED FIELD TEST ROUTINE
+ 708            /
+ 709            
+ 710            /THE FOLLOWING INSTRUCTIONS ARE PLACED IN
+ 711            /EACH EXTENDED FIELD TESTED, THE NUMBERS IN THE
+ 712            /COMMENTS FIELD CORRESPOND TO THE
+ 713            /MEMORY LOCATIONS IN THE TESTED FIELLD, LOCATIONS
+ 714            /0 THRU 11 ARE USED FOR AN ERROR ROUTINE
+ 715            /IN CASE FIELD 0 IS NOT ENTERED AFTER AN
+ 716            /INTERRUPT, THE EXTENDED FIELD SHOULD BE
+ 717            /ENTERED AT LOCATION E40-1 WHICH CORRESPONDS
+ 718            /TO F40-1 IN FIELD 0.
+ 719            /
+ 720            /EXTENDED FIELD INSTRUCTIONS:
+ 721            /
+ 722 01302 0000 EXFLD,  0       /0
+ 723 01303 1000         TAD 0   /1
+ 724 01304 7450         SNA     /IF LOC. 0 NOT :0 PI DIDN'T
+ 725                            /ENTER FIELD 0
+ 726 01305 5312         JMP .+5 /3
+ 727 01306 7402 E44,    HLT     /4, INTERRUPTED TO THIS FIELD
+ 728                            /INSTEAD OF FIELD 0,C(AC)=C(0)0,C(AC)=C(0)
+ 729                            /WHICH SHOULD BE E40+1
+ 730                            /IF NOT, CHECK LOC, 7777,IT
+ 731                            /MUST =: 5412 (JMP I12).
+ 732 01307 7200         CLA     /5
+ 733 01310 3000         DCA 0   /6
+ 734 01311 5420         JMP I 20        /7, C(20) :E40
+ 735 01312 7402 E45,    HLT     /10, THE JMP I 12 AT LOC,
+ 736                            /7777 WAS NOT EXECUTED,
+ 737                            /OR INTERRUPT FAILED, IF
+ 738                            /NO INTERRUPT, LOCATION 12
+ 739                            /NOW CONTAINS 0 INSTEAD
+ 740                            /OF ADDRESS E40,
+ 741 01313 5307         JMP .-4 /11, REPEAT IN THIS FIELD
+ 742 01314 1132         E40     /12, AUTO-INDEXS TAUTO-INDEXS
+ 743                            /IN F 0 IF THE JMP I 12
+ 744                            /WORKS,
+ 745            /LOCS. 13 TO 17 ARE ALL 0'S
+ 746            /
+ 747 01315 1132         E40     /20, EQUALS E40 IN F0,
+ 748            /
+ 749            /LOCS,  21 TO E40-2 ARE ALL 0'S
+ 750            /
+ 751 01316 6212 EXFD,   CIF 10  /FIELD  1       TO      START   WITH
+ 752 01317 6001         ION     /LOC,   E40,    SEE     SYMBOL  TABLE
+ 753                            /FOR    E40.
+ 754            /L0CS, E40+1 TO 7776 ARE ALL 0'S
+ 755            /
+ 756 01320 5412         JMP I 12        /7777,  PI      SHOULD  OCCUR,
+ 757                                    /AFTER  THIS    INSTRUCTION,
+ 758                                    /TO FIELD 0,
+ 759            
+ 760            /
+ 761            /ROUTINE TO TRANSFER TEST ROUTINE TO PROPER FIELD
+ 762            /
+ 763 01321 0000 TRANS,  0
+ 764 01322 1102         TAD KJMP                /KJMP=JMP I 2
+ 765 01323 3001         DCA 1           /IN FIELD 0
+ 766 01324 1103         TAD KNTR                /KNTR = LOC, ENTER
+ 767 01325 3002         DCA 2           /OF FIELD 0
+ 768 01326 1101         TAD KXFLD               /KXFLD = LOC, EXFLD
+ 769 01327 3010         DCA 10
+ 770 01330 3011         DCA 11
+ 771 01331 1070         TAD K7766               /1-10 DECIMAL
+ 772 01332 3000         DCA 0           /SAVE
+ 773 01333 1477         TAD I XTDF      /CDF X0 IN STDF
+ 774 01334 3337         DCA .+3
+ 775 01335 6201         CDF 00
+ 776 01336 1410         TAD I 10
+ 777 01337 6211 TRFLD,  CDF 10          /F1 TO START WITH
+ 778 01340 3411         DCA I 11                /PUT IN EXTENDED FIELD
+ 779 01341 2000         ISZ 0           /DONE LOCS 1 TO 12 IF SKIP
+ 780 01342 5335         JMP .-5
+ 781 01343 1337         TAD TRFLD
+ 782 01344 3347         DCA .+3
+ 783 01345 6201         CDF 00
+ 784 01346 1410         TAD I 10
+ 785 01347 6211         CDF 10
+ 786 01350 3504         DCA I K20               /PUT E40 IN LOC. 20
+ 787 01351 6201         CDF 00
+ 788 01352 1337         TAD TRFLD
+ 789 01353 3355         DCA .+2
+ 790 01354 1410         TAD I 10
+ 791 01355 6211         CDF 10
+ 792 01356 3435         DCA I KE40M     /PUT CIF X0 IN E40-1
+ 793 01357 6201         CDF 00
+ 794 01360 1337         TAD TRFLD
+ 795 01361 3363         DCA .+2
+ 796 01362 1410         TAD I 10
+ 797 01363 6211         CDF 10
+ 798 01364 3436         DCA I KE40      /ION TO LOC, E40
+ 799 01365 6201         CDF 00
+ 800 01366 1337         TAD TRFLD
+ 801 01367 3371         DCA .+2
+ 802 01370 1410         TAD I 10
+ 803 01371 6211         CDF 10
+ 804 01372 3446         DCA I K7777     /PUT JMP 112 IN 7777
+ 805 01373 6201         CDF 00
+ 806 01374 5721         JMP I TRANS     /EXIT
+ 807            
+ 808            *1400
+ 809            /
+ 810            /TEST SF WITH AN RMF TOT, AN INTERRUPT IN FIELD 0 IS CREATED, AFTER
+ 811            /WHICH, THE DF AND IB REGISTERS ARE SET TO FIELD 1.
+ 812            /THE SF SHOULD CONTAIN FIELD 0, THE TEST
+ 813            /THEN MAKES SURE THE IB TS CLEARED, THEN SET BY ISSUTNG AN RMF,
+ 814            /FOLLOWED BY A JMP I K7000. IF THE IB TS CLEARED, THE JMP GOES TO 7000 IN FIELD 0
+ 815            /IF THE IB AND SF ARE INCLUSIVE OR'D, THE JMP GOTS TO 7000 IN FIELD 1, AND
+ 816            /A HALT OCCURS THERE. RESTART FROM 1400 AFTER AN ERROR, THE TEST IS LOOPED
+ 817            /512 TIMES.
+ 818            /
+ 819 01400 6041 SFIB,   TSF             /SEE IF FLAG IS SET,
+ 820 01401 4422         JMS I XTFLG     /SET IT
+ 821 01402 1047         TAD K7000       /7000
+ 822 01403 3027         DCA LOOP
+ 823 01404 6211         CDF 10          /DF=FIFLD 1
+ 824 01405 1037         TAD KHLT        /HLT
+ 825 01406 3447         DCA I K7000     /7000, FIELD 1=HLT
+ 826 01407 6201         CDF 00          /DF=0
+ 827 01410 1105         TAD JMP2                /JMP2=JMP I KFLD0
+ 828 01411 3447         DCA I K7000     /7000, FIELD 0=JMP I KFLD0
+ 829                                    /KFLDO=LOC, RTRN
+ 830 01412 1102         TAD KJMP                /KJMP=JMP 12
+ 831 01413 3001         DCA 1
+ 832 01414 1107         TAD KRTN        /KRTN=LOC, E45A+2
+ 833 01415 3002         DCA 2
+ 834            /
+ 835            /BEGIN TEST
+ 836            /
+ 837 01416 6001         ION             /ENABLE PI
+ 838 01417 7000         NOP
+ 839 01420 7402 E45A,   HLT             /ERROR NO PI
+ 840 01421 5200         JMP SFIB                /REPEAT TEST
+ 841            /
+ 842            /RETURNS HERE AFTER PI
+ 843            /
+ 844 01422 7200         CLA
+ 845 01423 6211         CDF 10          /DF=FIELD1
+ 846 01424 6212         CIF 10          /IB=FIELD1
+ 847 01425 6244         RMF             /IB SHOULD=FIELD0
+ 848 01426 5447         JMP I K7000     /IF SHOULD=FIELD0
+ 849            /
+ 850 01427 2027 RTRN,   ISZ LOOP                /WORKED OK
+ 851 01430 5216         JMP E45A-2      /LOOP
+ 852 01431 5232         JMP TAUTO               /DONE, GO TO NEXT TEST
+ 853            
+ 854            /
+ 855            /
+ 856            /TEST ALL AUTO-INDEX REGISTERS IN EACH EXTENDED FIELD,
+ 857            /IDENTICAL TEST ROUTINES ARE PERFORMED FROM EACH FIELD,
+ 858            /AND ERROR HALTS OCCUR IN THE FIELD CURRENTLY RUNNING
+ 859            /THE ROUTINE. PRESS CONT, TO RESUME TESTING. EACH
+ 860            /FIELD CONTAINS ALL 2'S EXCEPT FOR THE AREA OCCUPIED
+ 861            /BY THE TEST ROUTINE. FIELD 0 IS RE-ENTERED
+ 862            /EACH TEST, AND THE NEXT SEQUENTIAL FIELD
+ 863            /THEN ENTERED, REFER TO THE HEADING "AUTO-
+ 864            /INDEX TEST" FOR THE SEQUENCE OF OPERATIONS.
+ 865            /
+ 866 01432 6201 TAUTO,  CDF 00
+ 867 01433 1050         TAD K7707
+ 868 01434 3027         DCA LOOP        /LOOP COUNTER
+ 869 01435 4423         JMS I XSTKS     /READ SR 9-11
+ 870 01436 1040         TAD KCDF              /6201
+ 871 01437 3246         DCA DFN
+ 872 01440 1246 NEWDF,  TAD DFN
+ 873 01441 1045         TAD K10         /INCREMENT DF
+ 874 01442 3246         DCA DFN
+ 875            /
+ 876            / CLEAR ONE FIELD TO 0
+ 877            /
+ 878 01443 7040         CMA
+ 879 01444 3010         DCA 10
+ 880 01445 3000         DCA 0           /USE LOC, 0 FOR A COUNTER
+ 881 01446 6211 DFN,    CDF 10          /FTELD 1 TO START WITH
+ 882 01447 3410         DCA I 10
+ 883 01450 2000         ISZ 0
+ 884 01451 5247         JMP .-2
+ 885 01452 6201         CDF 00
+ 886            /
+ 887            /NOW PUT TEST ROUTINE IN THE EXTENDED FIELD
+ 888            /
+ 889 01453 1317         TAD DOAUTO      /1ST LOC. OF ROUTINE MINUS 1
+ 890 01454 3010         DCA 10          /SOURCE
+ 891 01455 1072         TAD K7744               /=28 DECIMAL
+ 892 01456 3000         DCA 0           /USE. LOC. 0 AS COUNTER
+ 893 01457 1317         TAD DOAUTO
+ 894 01460 3011         DCA 11          /DESTINATION
+ 895 01461 1246         TAD DFN         /CDF X0
+ 896 01462 3265         DCA .+3
+ 897 01463 6201 MOVE,   CDF 00
+ 898 01464 1410         TAD I 10
+ 899 01465 6211         CDF 10          /FIELD 1 TO START
+ 900 01466 3411         DCA I 11
+ 901 01467 2000         ISZ 0           /MOVE WHEN SKIP
+ 902 01470 5263         JMP MOVE
+ 903            
+ 904            /
+ 905            /NOW SET AUTO-I REGS 10 TO 17 TO 7777,
+ 906            /
+ 907 01471 1065         TAD K7770               /-8 DECIMAL
+ 908 01472 3000         DCA 0
+ 909 01473 1044         TAD K7          /7
+ 910 01474 3010         DCA 10
+ 911 01475 7040         CMA             /7777
+ 912 01476 3410         DCA I 10
+ 913 01477 2000         ISZ 0           /10 TO 17 = 7777 WHEN SKIP
+ 914 01500 5275         JMP .-3
+ 915 01501 7040         CMA
+ 916 01502 3446         DCA I K7777     /PUT 7777 IN LOC, 7777 OF EXTENDED
+ 917 01503 6214         RDF             /READ D.F.
+ 918 01504 1041         TAD KCIF                /6202
+ 919 01505 3306         DCA .+1
+ 920 01506 6212         CIF 10          /FIELD 1 TO START
+ 921 01507 4716         JMS I FILDX     /ENTER EXTENDED FIELD
+ 922                                    /515 OCTAL LOCS, BEFORE THE
+ 923                                    /TAD I 10 INSTRUCTION.
+ 924                                    /THIS IS A TEST OF THE
+ 925                                    /DEFER BIT, 500 US DELAY
+ 926            /
+ 927            /ENTER FIELD 0 FROM EXTENDED FIELD HERE,
+ 928            /
+ 929 01510 2031 GOTO0,  ISZ STKS        /DONE ALL WHEN SKIP
+ 930 01511 5240         JMP NEWDF               /SETUP FOR NEXT
+ 931 01512 2027         ISZ LOOP                /ALL DONE IF SKIP
+ 932 01513 5235         JMP NEWDF-3     /REPEAT ALL
+ 933 01514 5715         JMP I LBTP
+ 934 01515 1600 LBTP,   RMFTST
+ 935            /
+ 936 01516 1002 FILDX,  DOAUTO-515
+ 937            
+ 938            /
+ 939            /       AUTO-INDEXED TEST
+ 940            /
+ 941            /THE ROUTINE WILL PE PLACED IN THE SAME RESPECTIVE
+ 942            /LOCATIONS IN EACH EXTENDED FIELD, ANY ERROR
+ 943            //HALTS WILL OCCUR IN THE EXTENDED FIELD, PRESS
+ 944            /CONTINUE TO PROCEED WITH TESTING. THE INDEX
+ 945            /REGISTERS 10 TO 17 INITIALLY CONTAIN 7777, AND
+ 946            /ARE AUTO-INDEXED TO 0000 BY A TAD I INSTRUCTION,
+ 947            /A HALT OCCURS IF THE REG. IS NOT INCREMENTED TO 0.
+ 948            /THE TAD I WOULD HAVE THEN REFERENCED LOC, 7777,
+ 949            /CONTAINS 7777.
+ 950            /
+ 951            
+ 952 01517 1517 DOAUTO, .               /THIS LOC. IS NOT MOVED TO
+ 953                                    /THE EXTENDED FIELD,
+ 954 01520 7200         CLA
+ 955 01521 1410         TAD I 10
+ 956 01522 7440         SZA
+ 957 01523 7402 F46,    HLT             /ERROR, INDEX REG, 10 FAILED
+ 958 01524 1411         TAD I 11
+ 959 01525 7440         SZA
+ 960 01526 7402 F47,    HLT             /INDEX REG, 11 FAILED
+ 961 01527 1412         TAD I 12
+ 962 01530 7440         SZA
+ 963 01531 7402 E48,    HLT             /12 FAILED
+ 964 01532 1413         TAD I 13
+ 965 01533 7440         SZA
+ 966 01534 7402 F49,    HLT             /13 FAILED
+ 967 01535 1414         TAD I 14
+ 968 01536 7440         SZA
+ 969 01537 7402 E50,    HLT             /14 FAILED
+ 970 01540 1415         TAD I 15
+ 971 01541 7440         SZA
+ 972 01542 7402 E51,    HLT             /15 FAILED
+ 973 01543 1416         TAD I 16
+ 974 01544 7440         SZA
+ 975 01545 7402 E52,    HLT             /16 FAILED
+ 976 01546 1417         TAD I 17
+ 977 01547 7440         SZA
+ 978 01550 7402 E53,    HLT             /17 FAILED
+ 979 01551 6201         CDF 00          /SET DF TO FIELD 0
+ 980 01552 6202         CIF 00          /SET I.B., TO FIELD 0
+ 981 01553 5310         JMP GOTO0               /EXIT TO FIELD 0
+ 982            /END OF TEST ROUTINE
+ 983            /
+ 984            /
+ 985            
+ 986            /CHECK SR 8. IF AN 8I IS BEING USED SR 8 MUST BE
+ 987            /ON A 1, OTHERWISE 0.
+ 988 01554 7604 CSR8,   LAS
+ 989 01555 0045         AND K10
+ 990 01556 7640         SZA CLA
+ 991 01557 5767         JMP I XMEM              /NEXT TEST
+ 992 01560 0007         AND 7
+ 993 01561 1360 BELL,   TAD .-1
+ 994 01562 6046         TLS             /RING BELL
+ 995 01563 6041         TSF
+ 996 01564 5363         JMP .-1
+ 997 01565 5766         JMP I XBGN      /START OVER AT 200
+ 998            /
+ 999 01566 0200 XBGN,   BEGIN
+1000 01567 2200 XMEM,   NOMEM
+1001            
+1002            /DYNAMIC RMF TEST.
+1003            /TESTS ALL SF TO DF TRANSFERS AND THOSE SF TO IB TRANSFERS
+1004            /AS APPLICABLE TO THE NUMBER OF EXTENDED FIELDS PRESENT.
+1005            /THE GENERAL METHOD IS TO INTERRUPT FROM EACH EXTENDED FIELD
+1006            /WITH THE DF=FROM 0 THROUGH 7.  AN RMF INSTRUCTION IS THEN ISSUED
+1007            /AND CONTROL TRANSFERRED TO AN EXTENDED FIELD.  THE RMFDY ROUTINE
+1008            /IN THAT FIELD THEN CHECKS THAT THE IF AND DF ARE CORRECT.  IF NOT,
+1009            /THE FAILING IF OR DF IS IN THE IF OR DF REG. AND THE CORRECT FIELD
+1010            /NUMBER IS IN THE AC BITS 6 THRU 8.
+1011            /
+1012            /
+1013            /
+1014            *1600
+1015            /
+1016            /
+1017 01600 7604 RMFTST, LAS             /CHECK HOW MANY EXTENDED FIELDS
+1018 01601 0044         AND K7          /ARE PRESENT
+1019 01602 7041         CIA             /NEGATE AND SAVE.
+1020 01603 3205         DCA IFCN
+1021 01604 4700         JMS I XFERP     /TRANSFER RMFDY ROUTINE TO ALL
+1022 01605 0000 IFCN,   0               /EXTENDED FIELDS.
+1023 01606 7744         -34
+1024 01607 1702         RMFDY-1
+1025 01610 3275         DCA LBTSTC      /SET RMFTST COUNTER FOR 4096 PASSES
+1026 01611 1302         TAD JMPI4       /SET INTERRUPT LINK.
+1027 01612 3001         DCA 1
+1028 01613 1274         TAD INTEP
+1029 01614 3004         DCA 4
+1030 01615 6201 RMFL3,  CDF 00          /INITIALIZE IF TO 0.
+1031 01616 3341         DCA KIFSHB
+1032 01617 1205         TAD IFCN        /INTIALIZE TEST COUNTER
+1033 01620 3276         DCA RMFCN1
+1034 01621 1341 RMFL2,  TAD KIFSHB      /UPDATE CURRENT IF.
+1035 01622 1045         TAD K10
+1036 01623 3341         DCA KIFSHB
+1037 01624 1341         TAD KIFSHB
+1038 01625 7041         CIA
+1039 01626 3342         DCA MIFSHB
+1040 01627 1065         TAD K7770       /INITIALIZE DF COUNTER TO -10.
+1041 01630 3277         DCA DFCN
+1042 01631 1065         TAD K7770       /INITIALIZE DF TO -10.
+1043 01632 3337         DCA KDFSHB
+1044 01633 1337 RMFL1,  TAD KDFSHB      /UPDATE DF.
+1045 01634 1045         TAD K10
+1046 01635 3337         DCA KDFSHB
+1047 01636 1337         TAD KDFSHB
+1048 01637 7041         CIA
+1049 01640 3340         DCA MDFSHB
+1050 01641 1205         TAD IFCN        /TRANSFER DF AND IF INFORMATION
+1051 01642 3244         DCA .+2         /TO EXTENDED FIELDS.
+1052 01643 4700         JMS I XFERP
+1053 01644 0000         0
+1054 01645 7774         -4
+1055 01646 1736         KDFSHB-1
+1056 01647 6201         CDF 00
+1057            
+1058 01650 1040         TAD KCDF        /UPDATE CDF INST.
+1059 01651 1337         TAD KDFSHB
+1060 01652 3260         DCA RMFI1
+1061 01653 1041         TAD KCIF        /UPDATE CIF INST.
+1062 01654 1341         TAD KIFSHB
+1063 01655 3261         DCA RMFI2
+1064 01656 6041 RMFE2,  TSF             /ENSURE TTO FLAG SET.
+1065 01657 4422         JMS I XTFLG
+1066 01660 6201 RMFI1,  CDF             /SET DF AND IF TO CURRENT FIELD.
+1067 01661 6202 RMFI2,  CIF
+1068 01662 5303         JMP RMFDY       /GO TO RMFDY IN CURRENT IF.
+1069 01663 6244 INTE,   RMF             /ENTER FROM INTERRUPT FROM EX. FLD.
+1070 01664 5310         JMP RMFDY1      /NO, DO NEXT DF.
+1071 01665 2277 RMFE1,  ISZ DFCN        /ALL DF'S USED WITH CURRENT IF?
+1072 01666 5233         JMP RMFL1       /NO, DO NEXT DF.
+1073 01667 2276         ISZ RMFCN1      /ONE PASS OF RMFTST COMPLETE?
+1074 01670 5221         JMP RMFL2       /NO, DO NEXT IF.
+1075 01671 2275         ISZ LBTSTC      /RMFTST DONE?
+1076 01672 5215         JMP RMFL3       /NO.  DO AGAIN.
+1077 01673 5701         JMP I CSR8P     /YES.
+1078 01674 1663 INTEP,  INTE
+1079 01675 0000 LBTSTC, 0
+1080 01676 0000 RMFCN1, 0
+1081 01677 0000 DFCN,   0
+1082 01700 2000 XFERP,  XFER
+1083 01701 1554 CSR8P,  CSR8
+1084 01702 5404 JMPI4,  JMP I 4
+1085            /
+1086            /
+1087            /
+1088            /
+1089            /
+1090            
+1091            /ROUTINE TO CHECK CORRECT TRANSFERS FOR SAVE FIELD TO DATA FIELD AND
+1092                    /SAVE FIELD TO INST. BUFFER TO INSTRUCTION FIELD AFTER
+1093                    /RMF.
+1094            /STORED IN ALL EXTENDED FIELDS.
+1095            
+1096 01703 6001 RMFDY,  ION             /THIS IS NOT TRANSFERRED.
+1097 01704 7000         NOP
+1098 01705 6002         IOF
+1099 01706 7402 E60,    HLT             /INTERRUPT FAILURE.
+1100 01707 5333         JMP REPEAT
+1101 01710 7200 RMFDY1, CLA
+1102 01711 6214         RDF             /CHECK FOR CORRECT DATA FIELD
+1103 01712 1340         TAD MDFSHB
+1104 01713 7650         SNA CLA
+1105 01714 5320         JMP .+4
+1106 01715 1337         TAD KDFSHB      /DATA FIELD INCORRECT
+1107 01716 7402 E61,    HLT             /SF TO DF TRANSFER FAILED AFTER RMF.
+1108 01717 5333         JMP REPEAT      /REPEAT THIS TEST.
+1109 01720 6224         RIF             /CHECK FOR CORRECT INSTRUCTION FIELD.
+1110 01721 1342         TAD MIFSHB
+1111 01722 7650         SNA CLA
+1112 01723 5327         JMP .+4
+1113 01724 1341         TAD KIFSHB      /INSTRUCTION FIELD INCORRECT
+1114 01725 7402 E62,    HLT             /SF TO IB TRANSFER FAILED AFTER RMF.
+1115 01726 5333         JMP REPEAT      /REPEAT THIS TEST.
+1116 01727 6201         CDF 00          /GO BACK AND RUN NEXT TEST.
+1117 01730 6202         CIF 00
+1118 01731 5732         JMP I .+1
+1119 01732 1665         RMFE1
+1120 01733 6201 REPEAT, CDF 00          /GO BACK AND REPEAT FAILING
+1121 01734 6202         CIF 00          /TEST.
+1122 01735 5736         JMP I .+1
+1123 01736 1656         RMFE2
+1124 01737 0000 KDFSHB, 0               /DATA FIELD SHOULD BE
+1125 01740 0000 MDFSHB, 0               /TWO'S COMPLEMENT OF ABOVE.
+1126 01741 0000 KIFSHB, 0               /INSTRUCTION FIELD SHOULD BE
+1127 01742 0000 MIFSHB, 0               /TWO'S COMPLEMENT OF ABOVE.
+1128            /
+1129            /
+1130            /
+1131            /
+1132            /
+1133            /
+1134            /ROUTINE TO TRANSFER N1 WORDS STARTING AT P IN FIELD 0 TO P IN THE
+1135                    /NEXT N2 EXTENDED FIELDS.
+1136                    /THE CALLING SEQUENCE IS:
+1137                    /JMS I XFERP
+1138                    /-N2
+1139                    /-N1
+1140                    /P-1
+1141            
+1142            /
+1143            *2000
+1144            /
+1145 02000 0000 XFER,   0
+1146 02001 7200         CLA
+1147 02002 1600         TAD I XFER      /GET -N2
+1148 02003 3242         DCA N2
+1149 02004 2200         ISZ XFER
+1150 02005 1600         TAD I XFER      /GET -N1
+1151 02006 3243         DCA N1
+1152 02007 2200         ISZ XFER
+1153 02010 1600         TAD I XFER      /GET P-1
+1154 02011 3244         DCA P
+1155 02012 2200         ISZ XFER        /UPDATE TO RETURN ADDRESS.
+1156 02013 1040         TAD KCDF        /INITIALIZE CDF INST.
+1157 02014 3232         DCA XFERIN
+1158 02015 1242         TAD N2
+1159 02016 3245         DCA XFERC2
+1160 02017 1244 XFERL2, TAD P           /PUT POINTER INTO AUTO 10 AND 11.
+1161 02020 3010         DCA 10
+1162 02021 1244         TAD P
+1163 02022 3011         DCA 11
+1164 02023 1243         TAD N1          /SET COUNTER 1 TO -N1.
+1165 02024 3246         DCA XFERC1
+1166 02025 1232         TAD XFERIN      /UPDATE CDF INST.
+1167 02026 1045         TAD K10
+1168 02027 3232         DCA XFERIN
+1169 02030 6201 XFERL1, CDF 00          /TRANSFER
+1170 02031 1410         TAD I 10
+1171 02032 6201 XFERIN, CDF
+1172 02033 3411         DCA I 11
+1173 02034 2246         ISZ XFERC1      /DONE WITH CURRENT FIELD?
+1174 02035 5230         JMP XFERL1      /NO, CONTINUE.
+1175 02036 2245         ISZ XFERC2      /DONE WITH ALL FIELDS?
+1176 02037 5217         JMP XFERL2      /NO, DO NEXT FIELD.
+1177 02040 6201         CDF 00          /ALL DONE.  SET DF=0.
+1178 02041 5600         JMP I XFER      /EXIT.
+1179 02042 0000 N2,     0
+1180 02043 0000 N1,     0
+1181 02044 0000 P,      0
+1182 02045 0000 XFERC2, 0
+1183 02046 0000 XFERC1, 0
+1184            
+1185            
+1186            /
+1187            *2200
+1188            /
+1189            /REFERENCE ALL 4K FIELDS NOT PRESENT, IF 32K
+1190            /IS PRESENT, THE TEST IS BY-PASSED, AND PROGRAM IS
+1191            /RESTARTED AT 200, EACH EACBD NOT PRESENT IS
+1192            /REFFERENCED BY THE PROGRAM WITH JMP, DCA AND TAD.
+1193            //THE PROGRAM MUST CONTINUE IN SEQUENCE/ THE TTY
+1194            /BE0LL WLL SIGNAL A SUCCESSFUL TEST, AND THE PRO-
+1195            /GRAM IS THEN RESTARTED AT 200,
+1196 02200 7200 NOMEM,  CLA
+1197 02201 1065         TAD     K7770
+1198 02202 3027         DCA     LOOP    /TEST LOOP COUNTER
+1199 02203 7604         LAS             /READ SR9-11
+1200 02204 0044         AND     K7
+1201 02205 7041         CIA
+1202 02206 1044         TAD     K7      /SUBTRACT       MAX,    POSSIPOSSIBLE
+1203 02207 7450         SNA
+1204 02210 5652         JMP     I       XBELL   /32K    PRESENT,        CAN'T
+1205 02211 3033         DCA     NOSTAK  /SAVE   NO,     MISSING
+1206 02212 3651         DCA     I       XELL    /CLEAR  THE     TLS     IOT     AT
+1207                                            /BELL+1 ELL+1RTOIBIT
+1208                                            /FALSE  INDICATION,     TLS
+1209                                            /IS RESTORED LATER WRONG
+1210                                            /ENTRY FROM     NON-EXISTENT
+1211                                            /MEMORY MAY     CAUSE   A
+1212                                            /HANG-UP        AT      BELL+2  AND     +3.
+1213 02213 7604         LAS             /#      OF      FIELDS PRESENT
+1214 02214 0044         AND     K7
+1215 02215 7001         IAC             /+1     TO      GET     1ST     MISSING
+1216 02216 7100         CLL
+1217 02217 7006         RTL             /POSITION       TO      AC      6-8,
+1218 02220 7004         RAL
+1219 02221 3034         DCA     NOFLD   /1ST    MISSING
+1220 02222 1033         TAD     NOSTAK  /#      STACKS  NOT     HERE
+1221 02223 7041         CIA
+1222 02224 3033         DCA     NOSTAK  /USED AS COUNTER
+1223            /
+1224            /
+1225 02225 1040         TAD     KCDF
+1226 02226 1034         TAD     NOFLD           /MISSING        STACK
+1227 02227 3262         DCA     CDF0S
+1228 02230 1040         TAD     KCDF
+1229 02231 1034         TAD     NOFLD
+1230 02232 3307         DCA     CDF1S
+1231            /
+1232            /NOW SEE        IF      AN      ODD     OR      EVEN    NUMBER  IS      MISSING
+1233            /
+1234 02233 1033         TAD     NOSTAK
+1235 02234 7041         CIA
+1236 02235 7010         RAR
+1237 02236 7620         SNL     CLA             /L=1,   FIRST   READ    0.S,    THEN    ALWAYS
+1238                                    /ALL    I'S
+1239 02237 5257         JMP POS+3               /0-1,   ALWAYS READ     ALL     1'S
+1240 02240 4261         JMS     ALL0            /READ   ALL     0 FROM  1ST
+1241 02241 2033 CNSTK,  ISZ     NOSTAK          /DONE   ALL     MISSING IF      SKIP
+1242 02242 5254         JMP     POS             /READ   ALL     1'S     FROM    HERE    ON
+1243 02243 2027         ISZ     LOOP            /DONE   LOOPING IF      SKIP
+1244 02244 5650         JMP     I       XNOM            /REPEAT
+1245 02245 1253         TAD     TTB
+1246 02246 3651         DCA I XELL              /RESTORE        TLS
+1247 02247 5652         JMP     I       XBELL           /RING   BELL
+1248 02250 2203 XNOM,   NOMEM+3
+1249 02251 1562 XELL,   BELL+1
+1250 02252 1561 XBELL,  BELL
+1251 02253 6046 TTB,    TLS
+1252            /
+1253 02254 1307 POS,    TAD     CDF1S
+1254 02255 1045         TAD     K10             /DF     PLUS    1
+1255 02256 3307         DCA     CDF1S
+1256 02257 4306         JMS     ALL1            /READ   ALL     1'S
+1257 02260 5241         JMP     CNSTK           /CHECK DONE
+1258            
+1259            /
+1260            /ROUTINE TO READ        ALL     0'S.
+1261            /
+1262 02261 0000 ALL0,   0
+1263 02262 6201 CDF0S,  CDF     00      /SET    DF      TO      1ST     MISSING
+1264 02263 7240         CLA     CMA
+1265 02264 3010         DCA     10      /10     AND     11      USE!'   FOR     ADDRESS
+1266 02265 7040         CMA
+1267 02266 3011         DCA     11
+1268 02267 3002         DCA     2       /USE    AS COUNTER
+1269 02270 7040         CMA
+1270 02271 3410         DCA     I       10      /WRITE  1'S     INTO    NON-EXIS-
+1271 02272 2002         ISZ     2       /TENT   FIELD,
+1272 02273 5270         JMP     .-3
+1273 02274 1411         TAD     I       11      /READ   NDN-EXIST.      FIELD
+1274 02275 7650         SNA     CLA     /SHOULD = 0000
+1275 02276 5301         JMP     .+3
+1276 02277 1011         TAD     11
+1277 02300 7402 E54,    HLT             /ERROR, AN      EXISTING        FIELD
+1278                                    /WAS    REFERENCED.     C(AC)=
+1279                                    /ADDRESS REFERENCED
+1280 02301 2002         ISZ     2
+1281 02302 5274         JMP     E54-4   /READ NEXT
+1282            /
+1283 02303 6201         CDF     00
+1284 02304 6202         CIF     00
+1285 02305 5661         JMP     I       ALL0    /EXIT
+1286            /
+1287            /ROUTINE TO READ ALL 1'S
+1288            /
+1289 02306 0000 ALL1,   0
+1290 02307 6201 CDF1S,  CDF 00          /SET DF TD MISSING FIELD
+1291 02310 7240         CLA CMA
+1292 02311 3010         DCA 10          /10 AND 11 USED FOR. ADDRESSING
+1293 02312 7040         CMA
+1294 02313 3011         DCA 11
+1295 02314 3002         DCA 2           /USED AS COUNTER
+1296 02315 3410         DCA I 10                /WRITE 0'S
+1297 02316 2002         ISZ 2
+1298 02317 5315         JMP .-2
+1299 02320 1411         TAD I 11                /READ 1'S FROM NO MEMORY
+1300 02321 7040         CMA
+1301 02322 7450         SNA
+1302 02323 5327         JMP     .+4
+1303 02324 7040         CMA
+1304 02325 7402 E57,    HLT             /7777 NOT READ, C(AC)= DATA
+1305 02326 7200         CLA             /READ, C(11)- ADORESS,
+1306 02327 2002         ISZ 2
+1307 02330 5320         JMP E57-5
+1308 02331 6201         CDF 00
+1309 02332 6202         CIF 00
+1310 02333 5706         JMP I ALL1      /EXIT
+1311            /
+1312            /READ   SR9-11
+1313            /
+1314 02334 0000 NSTKS,  0
+1315 02335 7604         LAS
+1316 02336 0044         AND K7
+1317 02337 7041         CIA
+1318 02340 3031         DCA STKS
+1319 02341 5734         JMP I NSTKS
+1320            /
+1321            /SET TTY FLAG
+1322            /
+1323 02342 0000 TFLG,   0
+1324 02343 7200         CLA
+1325 02344 0015         AND 15
+1326 02345 1344         TAD .-1
+1327 02346 6046         TLS
+1328 02347 6041         TSF
+1329 02350 5347         JMP .-1
+1330 02351 7200         CLA
+1331 02352 5742         JMP I TFLG      /EXIT
+1332            /
+1333                    $
