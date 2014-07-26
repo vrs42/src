@@ -1,0 +1,201 @@
+#!/usr/bin/perl
+
+# Extract files from an OS/8 disk image.
+
+# A disk image is presumed to be a series of 512 byte blocks.
+# Each such block is presumed to be 256 12 bit words, with 
+# each 12 bit word stored little endian in a pair of bytes, 
+# with zeroes in the high 4 of the 16 bits.
+
+# In octal:
+# Block 0 is assumed to be a bootstap.
+# Blocks 1-6 are presumed to be OS/8 directory blocks.
+# Blocks 7-12 of a system device are the Keyboard Monitor.
+# Blocks 13-15 of a system device are the User Service Routine.
+# Blocks 16-25 of a system device are device handlers.
+# Block  26 of a system device is the file creation routine for USR.
+# Blocks 27-50 of a system device are the System Scratch Blocks.
+# Blocks 51-53 of a system device are the Command Decoder.
+# Blocks 54-55 of a system device are the SAVE and DATE overlays.
+# Block  56 of a system device is the Monitor Error routine.
+# Block  57 of a system device is CHAIN processor for USR.
+# Blocks 60-63 of a system device is System ODT.
+# Block  64 of a system device is reserved for expansion.
+# Block  65 of a system device is CCL storage.
+# Block  66 of a system device is the 12K TD8E resident code.
+# Block  67 of a system device is the CCL overlay.
+
+# File storage begins in block 70 of a system device, and block
+# 7 of a non-system device.
+
+# Each directory block contails a direcory block header, followed
+# by a series of file entries.  The directory block header is five
+# words:
+#   0   Minus the number of file entries in this segment.
+#   1   The starting block number of the first file for this segment.
+#   2   Link to the next segment, or zero if there is none.
+#   3   A flag word, which points (in memory) to the end of a
+#       tentative file entry for this segment, otherwise zero.
+#   4   Minus the number of additional information words.
+
+# Each file entry, in turn, is either permanent, tentative, or 
+# empty.  A permanent file entry has N+4 words, where N is number 
+# of additional information words:
+#   0   File name characters 1 & 2
+#   1   File name characters 3 & 4
+#   2   File name characters 5 & 6
+#   3   File extension characters 1 & 2
+#   n+3 Addition information words, if any
+#   n+4 Minus file length, in blocks.
+
+# An empty file entry has two words:
+#   0   Always 0000
+#   1   Minus the number of blocks of this empty area.
+
+# A tentative file appears as a permanent file with a length of 
+# zero, and is always followed by an empty file entry which 
+# describes the area it is being created in.  (Close will fill
+# in the file length, and adjust the size of the emty area.)
+
+# All OS/8 files are thus contiguous, spefifying only a length 
+# in blocks and a starting block number.  File names are in 6.2 
+# format, and the character set is the standard PDP-8 6-bit 
+# (printable, uppercase only, with 'A'=01) character set.
+
+$chars = '@abcdefghijklmnopqrstuvwxyz[\\]^_ !"#$%&\'()*+,-./0123456789:;<=>?';
+@chars = split(//, $chars);
+
+# First, open the "device".
+open(INPUT, $ARGV[0]) || die "$ARGV[0]: $!";
+binmode(INPUT);
+
+# Determine the blocksize
+$dectape = ((-s INPUT)%129 == 0);
+$sector = 128 + $dectape;
+$blksiz = 2*2*$sector; # convert a 2 sector block to bytes.
+
+# Next, start on block 1, and see if it looks like a directory 
+# segment.
+$dirblk = 1;
+while ($dirblk) {
+  seek(INPUT, $dirblk*$blksiz, 0) || die "$ARGV[0]: $!";
+  $nentry = &getword();
+  $offset = &getword();
+  $link = &getword();
+  $flagw = &getword();
+  $nadd = &getword();
+  $nentry -= 4096;
+  $nadd -= 4096;
+die "$offset $link $flagw $nadd" unless $nadd == -1;
+  # Iterate over the entries in this segment.
+  for (;$nentry < 0; $nentry++) {
+    # Read the first word to determine the entry type.
+    $name1 = &getword();
+    if ($name1) {
+      # Named file, permanent or not.  Get the name/extension.
+      $name2 = &getword();
+      $name3 = &getword();
+      $ext = &getword();
+      # Additional information words, if any
+      @a = ();
+      for ($i = $nadd; $i; $i++) {
+        push(@a, &getword());
+      }
+      # Now the length
+      $length = &getword();
+      # Ignore a tentative file.
+      next unless $length;
+      $length = 4096 - $length;
+      # Process the date, if any.
+      $date = "";
+      if (($#a>=0) && $a[0]) {
+        # Assume first additional word (if nonzero) is a creation date.
+        $date = $a[0];
+        $mo = ($date >> 8) & 017;
+        $da = ($date >> 3) & 037;
+        $yr = ($date     ) & 007; # Not Y2K compliant!
+        $yr += 70;
+        $date = sprintf("%2d/%2d/%2d", $mo, $da, $yr);
+      }
+      # Mangle the bits of the name into something interesting.
+      @bytes = ($name1 >> 6, $name1 & 077,
+                $name2 >> 6, $name2 & 077,
+                $name3 >> 6, $name3 & 077,
+                $ext   >> 6, $ext   & 077);
+      $name = "";
+      for $i (@bytes) {
+        $name .= $chars[$i];
+      }
+      ($name, $ext) = $name =~ /(......)(..)/;
+      $name =~ s/@*$//;
+      $ext =~ s/@*$//;
+      # At this point, $length blocks starting at $offset belong
+      # to a file whose name (and possibly creation date) is known.
+# For now, just write out the information, DIR style.
+printf "%-6s.%-2s  %6d  %6d  $date\n", $name, $ext, $offset, $length;
+writefile($name, $ext, $offset, $length, $date);
+      # Update our offset.
+      $offset += $length;
+    } else {
+      # Empty segment.  Read the length and update our offset.
+      $offset += &getword();
+    }
+  }
+  # Follow the link to the next segment.
+  $dirblk = $link;
+}
+
+#
+# Get the next word, knowing that on DECTape images, 
+# every 129th word must be skipped.
+sub getword {
+  if ($dectape && (tell(INPUT)/2)%$sector == 128) {
+    read(INPUT, $buf, 2) || die "$ARGV[0]: $!";
+  }
+  read(INPUT, $buf, 2) || die "$ARGV[0]: $!";
+  return unpack("s", $buf);
+}
+
+#
+# To write a file, some sort of conversion to bytes
+# is needed.  Fortunately, the standard OS/8 convention
+# preserves all bits.  For 8-bit data (text files, .BN 
+# files, etc.), this is even correct.  For word oriented
+# files (mostly .SV format or equivalent), additional
+# interpretation may be needed later.
+sub writefile {
+  local($name, $ext, $offset, $length, $date) = @_;
+
+  # Administrivia -- must not cause the directory reader
+  # to lose it's place.
+  $diroff = tell(INPUT);
+
+  # Open the output file
+  open(OUTPUT, ">$name.$ext") || die "$name.ext: $!";
+  binmode(OUTPUT);
+
+  # Convert offset and length to sectors.
+  $offset *= 2;
+  $length *= 2;
+
+  # Copy each sector.
+  for ($s = $offset; $length; $offset++, $length--) {
+    seek(INPUT, 2*$offset*$sector, 0) || die "$ARGV[0]: $!";
+    for ($w = 0; $w < 128; $w += 2) {
+      # Every 2 words becomes 3 bytes
+      $w1 = &getword();
+      $w2 = &getword();
+      $b1 = $w1 & 0377;
+      $b2 = $w2 & 0377;
+      $b3 = (($w1 >> 4) & 0360) + ($w2 >> 8);
+      print OUTPUT pack("CCC", $b1, $b2, $b3);
+    }
+  }
+
+  # Close the file, set the date.
+  close(OUTPUT) || die "$name.$ext: $!";
+  system("touch -d '$date' $file.$ext");
+
+  # Lastly, restore state for directory search.
+  seek(INPUT, $diroff, 0) || die "$ARGV[0]: $!";
+}
