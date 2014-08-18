@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+# Convert files with 4 bytes per doubleword to 3 bytes
+# per doubleword.
+
+foreach $f (@ARGV) {
+  if (-f "$f.od") {
+    warn "Skipping $f.od: exists\n";
+    next;
+  }
+  open(INPUT, $f) || die "$f: $!";
+  binmode(INPUT);
+  open(OUTPUT, ">$f.od") || "$f.od: $!";
+  warn "Writing $f.od\n";
+  while (read(INPUT, $buf, 4)) {
+    @b = unpack("CCCC", $buf);
+    printf OUTPUT "%04o\n%04o\n%04o\n", $b[0], $b[2], $b[1]<<4|$b[3];
+  }
+  close(INPUT) || die "$f: $!";
+  close(OUTPUT) || die "$f.od: $!";
+}
+exit 0;

@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+#
+# Read the list of known (found) diagnostics.
+open(INPUT, "Descriptions") || die "Descriptions: $!";
+while (<INPUT>) {
+  die unless ($key, $desc) = /(\S+)\s+(.*)$/;
+  $key =~ y/A-Z/a-z/;
+  $key =~ s/-pb[0-9]*$//;
+  $known{$key} = $desc;
+}
+
+#
+# Read the list of known missing diagnostics.
+open(INPUT, "Missing") || die "Missing: $!";
+while (<INPUT>) {
+  die unless ($key, $desc) = /(\S+)\s+(.*)$/;
+  $key =~ y/A-Z/a-z/;
+  $key =~ s/-pb[0-9]*$//;
+  $missing{$key} = $desc;
+}
+
+#
+# Read the list of "unknown" diagnostics.
+open(INPUT, "Unknown") || die "Unknown: $!";
+while (<INPUT>) {
+  die unless ($key, $desc) = /(\S+)\s+(.*)$/;
+  $key =~ y/A-Z/a-z/;
+  $key =~ s/-pb[0-9]*$//;
+  $unknown{$key} = $desc;
+}
+
+#
+# For each "unknown" diagnostic, see if we 
+# actually do know the status.
+foreach $key (sort keys %unknown) {
+  next if defined $known{$key};
+  next if defined $missing{$key};
+  print "$key\t$unknown{$key}\n";
+}
