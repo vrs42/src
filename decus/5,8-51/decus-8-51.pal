@@ -1,0 +1,83 @@
+
+*200
+ENTRY=0
+/PACK0 AND UNPAC0 ARE THE ENTRIES 
+/FOR PACKING AND UNPACKING CHARACTERS.
+
+PACKHF,   0                   /HALF WORD INDICATOR.
+PACKWD,   0                   /WORD POINTER.
+M2,       -2                  /COMMONLY USED CONSTANT
+
+/PACK IS ENTERED WITH THE ASCII CODE IN THE AC.
+/
+PCHRT=UNPAC0
+PCHAR=UNPAC1
+PACK0,    ENTRY               /MERGE A CHARC INTO BUF.
+          DCA PCHAR           /SAVE CHARC TO BE PACKED.
+          TAD M237
+          TAD PCHAR           /IS THIS A
+          SMA SZA CLA         /"SPECIAL" CHARACTER?
+          JMP .+3             /NO,CHOP.
+PACKSP,   TAD P237            /YES, PREFACE.
+          JMS PACK1           /PACK A SPECIAL DELIMITER.
+          TAD PCHAR           /LOAD THE ASCII.
+          JMS PACK1           /PACK THE CHARACTER BITS.
+          JMP I PACK0
+/
+PACK1,    ENTRY               /TWO POINTERS INDICATE THE 
+          AND RTMSK
+          ISZ PACKHF          /NEXT UNUSED SLOT.
+          JMP PACK2           /LEFT HALF IS NEXT.
+          DCA PCHRT           /CUT OUT THE LEFT HALF.
+          TAD I PACKWD        /RIGHT HALF OF BUFFER
+          AND LFMSK
+          TAD PCHRT
+          DCA I PACKWD        /MUST BE ZERO.
+          ISZ PACKWD          /INCREMENT THE POINTER.
+          TAD M2              /SETUP CONSTANT TO 
+          DCA PACKHF          /INITIALIZE THE HALF WORD POINTER
+          JMP I PACK1         /THAT'S DONE.
+PACK2,    CLL RTL             /SHIFT TO LEFT SIDE.
+          RTL;RTL             /LEFT JUSTIFY.
+          DCA I PACKWD        /SUCCESSIVE PACK CALLS INSURE
+          JMP I PACK1         /THAT THE RIGHT HALF WILL BE ZERO.
+/
+/UNPACK RETURNS THE EXPANDED CODE IN THE AC.
+/
+UNPAC0,   ENTRY
+          JMS UNPAC1          /GET A CODE.
+          TAD M37             /TEST FOR DELIMITER.
+          SNA                 /SHIFT?
+          JMP UNPSPC          /YES
+          SPA                 /HIGH OR LOW?
+          TAD P100            /RESTORE THE ASCII.
+          TAD P237            /LOW.
+          JMP I UNPAC0        /DONE.
+UNPSPC,   JMS UNPAC1          /GET ANOTHER CHARACTER.
+          TAD P200            /RESTORE THE 8-PUNCH.
+          JMP I UNPAC0        /SPECIAL ASCII RESTORED.
+/
+UNPAC1,   ENTRY               /UNINTER ONE 6-BIT CHARACTER.
+          ISZ PACKHF          /TEST THE HALF POINTER.
+          JMP UNPAC2          /LEFT HALF.
+          TAD M2              /RIGHT HALF.
+          DCA PACKHF          /RESET POINTER.
+          TAD I PACKWD        /GET LETTER.
+          ISZ PACKWD          /MOVE WORD POINTER.
+UNPCK,    AND RTMSK           /MASK RIGHT HALF.
+          JMP I UNPAC1        /LEAVE WITH THE UNDEAD.
+UNPAC2,   TAD I PACKWD        /GET LETTER.
+          RTR;RTR;RTR         /MOVE TO RIGHT.
+          JMP UNPCK           /CLEANUP RIGHT HALF.
+/
+/SPECIAL CONSTANTS
+RTMSK,    0077
+LFMSK,    7700
+P237,     237
+M237,     -237
+M37,      -37
+P100,     100
+P200,     200
+
+          $
+

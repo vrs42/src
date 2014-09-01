@@ -1,0 +1,163 @@
+/FEB. 2, 1966
+
+/TERADYNE INC.
+
+/TAPE AND MEMORY COMPARISON PROGRAM
+
+/USES HIGH SPEED READER AND TTY
+
+/PRINTS OUT THE INFORMATION WHENEVER THE MEMORY CONTAINS
+/DATA THAT DIFFERS FROM THE TAPE
+
+/ALWAYS  PRINTS OUT THE CHECKSUM ON THE TAPE AS
+/AN ERROR, AT LOCATION 1 BEYOND THE TAPE LIMIT
+
+/FORMAT IS
+
+/MEMORY ADDRESS     CONTENT OF     CONTENT OF
+/                    MEMORY         TAPE
+/TAPE-MEMORY COMPARITOR
+
+
+START,    RFC
+          PLS
+          TLS
+
+BEGIN,    JMS READ
+          JMP BEGIN  /LEADER
+          JMP ADRS   /ADRESS STARTS HERE
+ERROR,    HLT        /ERROR HALT
+
+          JMP START  /RESTART PROGRAM
+
+END,      HLT
+          JMP START
+
+ADRS,     JMS R6L
+          DCA T2
+          JMS READ
+          JMP ERROR
+          JMP ERROR
+          TAD T2
+          DCA CLC
+
+WORD,     JMS READ
+          JMP END
+          JMP ADRS
+          JMS R6L
+          DCA T2
+          JMS READ
+          JMP ERROR
+          JMP ERROR
+          TAD T2
+          DCA T1     /TOTAL WORD
+          TAD I CLC
+          CIA
+          TAD T1
+          SNA CLA
+          JMP CONT
+          TAD CLC
+          JMS OCTL
+          TAD I CLC
+          JMS OCTL
+          TAD T1
+          JMS OCTL
+          JMS CRLF
+CONT,     ISZ CLC
+          JMP WORD
+READ,     0
+          RSF
+          JMP .-1
+          RFC RRB
+          DCA T1
+          TAD T1
+          AND M1
+          SZA CLA
+READX,    JMP I READ /EXITS AND EXIT 1
+          ISZ READ
+          TAD T1
+          AND M2
+          SZA CLA
+          JMP READY
+          ISZ READ
+READY,    TAD T1
+          JMP READX  /EXIT 3
+
+CLC,      0
+T2,       0
+T1,       0
+M2,       100
+M1,       200
+T3,       0
+
+OCTL,     0
+          DCA T3
+          TAD T3
+          JMS R9R
+          JMS TYPEA
+          JMS R6R
+          JMS TYPEA
+          JMS R3R
+          JMS TYPEA
+          JMS TYPEA
+          CLL CLA
+          TAD SPACE1
+          JMS TYPE
+          JMP I OCTL
+
+R3R,      0
+          CLL RTR
+          CLL RAR
+          JMP I R3R
+
+R6R,      0
+          JMS R3R
+          JMS R3R
+          JMP I R6R
+
+R9R,      0
+          JMS R6R
+          JMS R3R
+          JMP I R9R
+
+R6L,      0
+          CLL RTL
+          RTL
+          RTL
+          JMP I R6L
+
+TYPEA,    0
+          AND TYPEA2 /7
+          TAD TYPEA1 /260
+          JMS TYPE
+          TAD T3
+          JMP I TYPEA
+TYPEA1,   260
+TYPEA2,   7
+
+
+TYPE,     0
+          TSF
+          JMP .-1
+          TLS
+          CLL CLA
+          JMP I TYPE
+
+SPACE1,   240
+
+
+CRLF,     0
+          TAD CR1    /215
+          JMS TYPE
+          TAD CR2    /212
+          JMS TYPE
+          JMP I CRLF
+
+CR1,      215
+CR2,      212
+
+
+
+$
+
+

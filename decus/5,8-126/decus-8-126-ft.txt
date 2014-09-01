@@ -1,0 +1,96 @@
+
+
+
+C;     THIS PROGRAM WILL FIND THE MEAN AND STANDARD DEVIATION OF A SET
+C;     OF POINTS DEFINING A CUMULATIVE GAUSSIAN DISTRIBUTION.
+       DIMENSION X(20), Y(20), F(20), F1(20), F2(20), R(20), B(5), C(5)
+C;     XM AND SDEV ARE THE INITIAL ESTIMATES OF THE MEAN AND THE 
+C;     STANDARD DEVIATION, N IS THE NO. OF POINTS, EPS IS THE
+C;     CONVERGENCE FACTOR, MDATA IS 1 IF ANOTHER SET OF DATA 
+C;     FOLLOWS, OR 2 IF LAST SET.
+24;    ACCEPT 2, XM, SDEV, EPS, N, MDATA
+2;     FORMAT(E,E,E,I,I)
+       DO 30 I=1,N
+       ACCEPT 3, X(I), Y(I)
+3;     FORMAT(E,E)
+30;    CONTINUE
+       B(1) = 1.0/384.0
+       B(2) = -1.0/48.0
+       B(3) = .12500
+       B(4) = -0.500
+       B(5) = 1.0
+       C(1) = 1.0/3456.0
+       C(2) = -1.0/336.0
+       C(3) = .0250
+       C(4) = -1.0/6.00
+       C(5) = 1.0
+C;     COMPUTE FUNCTION AND PARTIALS FROM A SERIES
+16;    DO 11 J=1,N
+       Z = (X(J)-XM)/SDEV
+       ZSQ = Z*Z
+       F(J) = C(1)*ZSQ+C(2)
+       G = B(1)*ZSQ+B(2)
+       DO 25 I=3,5
+       F(J) = F(J)*ZSQ+C(I)
+       G = G*ZSQ+B(I)
+25;    CONTINUE
+       F(J) = F(J)*Z*.398942 + 0.50
+       G = G*0.398942
+C;     COMPUTE PARIALS FROM G
+       F1(J) = G/(-SDEV)
+       F2(J) = F1(J)*Z
+       R(J) = F(J)-Y(J)
+11;    CONTINUE
+       A1 = 0
+       A2 = 0
+       A4 = 0
+       B1 = 0
+       B2 = 0
+       DO 12 K=1,N
+C;     COMPUTE COEFFECIENTS OF DIFF. CORRECTION EQUATIONS
+       A1 = A1+F1(K)*F1(K)
+       A2 = A2+F1(K)*F2(K)
+       A4 = A4+F2(K)*F2(K)
+       B1 = B1-F1(K)*R(K)
+       B2 = B2-F2(K)*R(K)
+12;    CONTINUE
+C;     COMPUTE CORRECTION FACTORS BY CRAMERS RULE
+       DET = A1*A4-A2*A2
+       D1 = (B1*A4-B2*A2)/DET
+       D2 = (A1*B2-B1*A2)/DET
+C;     COMPUTE NEW VALUES OF MEAN AND STANDARD DEVIATION
+       XM = XM+D1
+       SDEV = SDEV+D2
+C;     CHECK FOR CONVERGENCE
+       IF(D1) 40, 41, 41
+40;    D1 = -D1
+41;    IF(D2) 42, 43, 43
+42;    D2 = -D2
+43;    IF(D1-EPS) 13, 13, 16
+13;    IF(D2-EPS) 15, 15, 16
+15;    TYPE 4, XM, SDEV
+4;     FORMAT(/,/,/, "MEAN=", E, "SDEV=", E)
+C;     COMPUTE NEW RESIDUALS FOR MEAN SQUARE ERROR
+       DO 20 J=1,N
+       Z = (X(J)-XM)/SDEV
+       ZSQ = Z*Z
+       F(J) =  C(1)*ZSQ+C(2)
+       DO 21 I=3,5
+       F(J) = F(J)*ZSQ+C(I)
+21;    CONTINUE
+       F(J) = F(J)*Z*.398942 + 0.50
+       R(J) = F(J)-Y(J)
+20;    CONTINUE
+       SQERR = 0
+       DO 22 I=1,N
+       SQERR = SQERR+R(I)*R(I)
+22;    CONTINUE
+       XN = N
+       ERR = SQERR/XN
+       TYPE 5, ERR
+5;     FORMAT(/, "MEAN SQUARE ERROR=", E)
+       GO TO (24,23), MDATA
+23;    STOP
+       END
+
+

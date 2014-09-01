@@ -1,0 +1,157 @@
+
+/
+/
+/ PAL II EQUIVALENCES
+/
+CNTR=164
+PASS=202
+NEXI=73
+CKSM=157
+KONS=561
+PUNI=55
+CP=107
+BUFL=105
+BBB=45
+C200=20
+M2=23
+M4=31
+M200=37
+/
+/ SPECIAL CONSTANTS
+/
+*4
+APOS,3274
+CPOS,3275
+DPOS,3276
+MASK,7417
+/
+/ INITIALIZATION SECTION
+/
+*201
+      JMP .-1
+*215
+START,TAD M200
+      DCA CP
+      TAD DPOS
+      DCA BUFL
+      JMP PASS
+*231
+      JMP START
+/
+/ MODIFIED L/T ROUTINE FOR TERMINATION
+/
+*542
+LDTR, 0
+      TAD KONS
+      DCA CNTR
+      TAD C200
+      JMS I BBB
+      ISZ CNTR
+      JMP .-3
+      JMP I LDTR
+GEO,  TAD KONS
+      DCA CNTR
+      JMS I BBB
+      ISZ CNTR
+      JMP .-2
+      JMP I NEXI
+/
+/ RE-INITIALIZING ROUTINE
+/
+*600
+NOPN, TAD TADR
+      DCA I APOS
+      TAD TADR
+      DCA CKSM
+      JMP I BINP
+TEMP, 0
+/
+/ CONTINUATION OF PUNCH ROUTINE
+/
+*614
+PUNC, TAD I CPOS
+      RAR
+      TAD M2
+      DCA CP
+      DCA I BUFL
+      SNL
+      ISZ BUFL
+      CLL
+      TAD I CPOS
+      TAD CKSM
+      SZL
+      IAC CLL
+      CMA
+      DCA I BUFL
+      ISZ BUFL
+      DCA I BUFL
+      TAD M4
+      DCA BUFL
+      TAD C200
+      JMS I BBB
+      ISZ BUFL
+      JMP .-3
+      JMS I BBB
+      TAD APOS
+      DCA BUFL
+KLP,  TAD I BUFL
+      CLL RTR
+      RTR
+      JMS I BBB
+      TAD I BUFL
+      AND MASK
+      DCA TEMP
+      ISZ BUFL
+      TAD I BUFL
+      AND MASK
+      CLL RTR
+      RTR
+      TAD TEMP
+      JMS I BBB
+      TAD I BUFL
+      JMS I BBB
+      ISZ BUFL
+      ISZ CP
+      JMP KLP
+      TAD DPOS
+      DCA BUFL
+      TAD M200
+      DCA CP
+      JMP NOPN
+TADR, 0
+/
+/ BEGINNING OF NEW BINARY PUNCH ROUTINE
+/
+*752
+BINP, 0
+      SZL
+      JMP NADR
+      DCA I BUFL
+      TAD CKSM
+      TAD I BUFL
+      SZL
+      IAC CLL
+      DCA CKSM
+      ISZ BUFL
+      ISZ CP
+      JMP I BINP
+      TAD I APOS
+      TAD C200
+NADR, DCA TADR
+      TAD CP
+      TAD C200
+      SNA
+      JMP NOPN
+      CIA CLL CML
+      DCA I CPOS
+      JMP PUNC
+/
+/ MODIFIED PASS TWO TERMINATION
+/
+*1266
+EP2,  CLA CLL CML
+      JMS I PUNI
+      JMP I JEO
+JEO,  GEO
+$
+

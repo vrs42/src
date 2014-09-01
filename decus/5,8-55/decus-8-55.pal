@@ -1,0 +1,531 @@
+                       / PALEX WITHOUT IOT
+*6600
+BEGIN,   TLS           / CLEAR OUTPUT FLAG
+         JMP I ATIWA
+ATIWA,   TIW
+AHELP,   HELP
+START,   JMS I AHELP   / IS PC WITHIN LIMITS
+         TAD FG5       / YES, CHECK WAIT FLAG
+         SZA CLA       / SHOULD WE WAIT
+         JMP I ATW     / YES
+         DCA FG4       / NO CLEAR MOD. PRINTOUT FLAG
+         DCA FG5       / CLEAR WAIT FLAG
+         DCA FG3       / CLEAR JMP+JMS PRINTOUT FLAG
+         TAD PC        / GET PROGRAM COUNTER
+         AND MASK1     / TRIM
+         DCA PAGE      / STORE STARTING ADDRESS OF PAGE
+         TAD I PC      / GET INSTRUCTION
+         DCA INST      / STORE INSTRUCTION
+         TAD INST      / GET INSTRUCTION
+         AND MASK4     / TRIM
+         DCA ADD       / STORE ADDRESS
+         TAD INST      / GET INSTRUCTION
+         RTL           / CHECK TO SEE
+         RTL           / IF ADDRESS IS
+         SPA CLA       / ON PAGE ZERO
+         TAD PAGE      / NOT PAGE ZERO,GET PAGE ADDRESS
+         TAD ADD       / GET ADDRESS
+         DCA ADD       / STORE ADDRESS
+         SNL           / IS IT INDIRECT
+         JMP VALUE     / NO
+         TAD INST      / CHECK FOR IOT + OPR
+         SPA CLA
+         JMP .+3       / YES
+         TAD ADD       / NO
+         JMS I ACKAIR  / CHECK AUTO INDEX
+         TAD ADD       / YES GET ADDRESS
+         DCA IADD      / STORE IN INDIRECT ADDRESS
+         TAD I IADD    / GET ACTUAL ADDRESS
+         DCA ADD       / STORE IN ADDRESS
+         IAC           / NOTE INDIRECT ADDRESS
+VALUE,   DCA DOIADD    / 1 IF YES, 0 IF NO
+         TAD INST      / GET INSTRUCTION
+         AND MASK2     / TRIM
+         TAD CONOP     / SET UP SIMULATION OF
+         DCA MEMOP     / INSTRUCTION
+         TAD INST      / GET INSTRUCTION
+         AND MASK2     / TRIM
+         CLL RTL       / SET UP SIMULATION
+         RTL           / OF INSTRUCTION
+         TAD CON1      / WITH A
+         DCA PDP       / PROPER JUMP
+PDP,     JMP I A0      / JUMP TO PROPER ROUTINE
+A0,      SVAL          / FOR AND
+A1,      SVAL          / FOR TAD
+A2,      SVAL          / FOR ISZ
+A3,      SVAL          / FOR DCA
+A4,      SJMS          / FOR JMS
+A5,      SJMP          / FOR JMP
+A6,      SIOT          / FOR IOT
+A7,      SOPR          / FOR OPR
+ACKAIR,  CKAIR
+AVALID,  VALID
+
+SVAL,    JMS I AVALID
+SGET,    TAD LINK      / GET LINK
+         RAR           / POSITION LINK
+         TAD ACC       / GET ACCUMULATOR
+MEMOP,   0000          / SIMULATE INSTRUCTION
+         SKP           / WAS IT A SKIP
+         ISZ NEWPC     / YES, SET NEW PROGRAM COUNTER
+         ISZ NEWPC     / NO, SET NEW PROGRAM COUNTER
+         DCA ACC       / STORE ACCUMULATOR
+         RAL           / POSITION LINK
+         DCA LINK      / STORE LINK
+         JMP I PRINT   / OUTPUT INFO.
+SJMS,    JMS I AVALID
+         TAD PC        / SET UP JMS SIMULATION
+         IAC           / BY STORING PC+1
+         DCA I ADD     / IN ADDRESS
+         IAC           / AND JUMP TO ADDRESS+1
+         SKP           / DONT REDHECK
+SJMP,    JMS I AVALID
+         TAD ADD       / GET ADDRESS
+         ISZ FG3       / SET JMP+JMS PRINTOUT FLAG
+         DCA NEWPC     / SET NEW PROGRAM COUNTER
+         JMP I PRINT   / PRINT INFO.
+SIOT,    TAD INST      / OPR+IOT GET INSTRUCTION
+         ISZ FG4       / SET MODIFIED OUTPUT FLAG
+         TAD CON3      / CHECK FOR
+         CLL           / ION
+         CLA           / DO NOT ALLOW     SEE NOTE
+         JMP SOPRS     / ION TO BE EXECUTED
+SOPR,    TAD INST      / GET INSTRUCTION
+         AND AHLT      / CHECK FOR
+         TAD MHLT      / HALT INSTRUCTION
+         ISZ FG4       / IS IT
+         SZA CLA       / A HALT
+         JMP OP        / NO
+         ISZ FG5       / YES
+SOPRS,   ISZ NEWPC     / SET NEW PROGRAM COUNTER
+         JMP I PRINT   / OUTPUT INFO.
+OP,      TAD INST      / GET INSTRUCTION
+         DCA MEMOP     / SET UP SIMULATION
+         JMP SGET      / OF INSTRUCTION
+NO,      CLA CLL       / NOT VALID
+         ISZ FG5       / SET WAIT FLAG
+         ISZ NEWPC     / SET NEW PROGRAM COUNTER
+         JMP I PRINT   / OUTPUT INFO.
+      / NOTE, IF INST AT 6727 IS CLA
+      / NO IOT WILL BE EXECUTED
+      / IF INST AT 6727 IS SNA CLA
+      / ALL IOT EXCEPT ION WILL BE EXECUTED
+
+PC,      0             / PROGRAM COUNTER
+INST,    0             / INSTRUCTION
+ACC,     0             / ACCUMULATOR
+ADD,     0             / ADDRESS
+CADD,    0000          / CONTENTS OF ADDRESS
+IADD,    0             / INDIRECT ADDRESS
+LINK,    0000          / LINK
+PAGE,    0000          / ADDRESS OF PAGE
+NEWPC,   0200          / NEW PROGRAM COUNTER
+MASK1,   7600
+MASK2,   7000
+MASK4,   0177
+DOIADD,  0000          / INDIRECT ADDRESS FLAG
+CON1,    JMP I A0
+MHLT,    0-7402        / MINUS HALT
+FG4,     0             / MODIFIED PRINTOUT FLAG
+FG5,     0             / WAIT FLAG
+CON3,    0-6001        / MINUS ION
+PRINT,   PRNT          / PRINTOUT ROUTINE
+CONOP,   AND I ADD
+FG3,     0             / JMP +JMS PRINTOUT FLAG
+ATW,     TIXX
+AHLT,    7402          / HALT
+
+*BEGIN+200
+TI,      KSF           / IS THERE A CHARACTER TO INPUT
+         JMP I ASTR    / NO JMP TO START
+TIW,     CLA CLL       / YES CLEAR AC + LINK
+         KSF           / IS THERE A CHARACTER TO INPUT
+         JMP .-1       / NO WAIT
+         KRB           / YES INPUT CHARACTER
+TICT,    DCA SCRLF     / STORE TEMPORARILY
+         TAD SCRLF     / GET CHARACTER
+         JMS I AOUT    / OUTPUT IT
+         TAD TTAD      / SET UP
+         DCA ATTAD     / FOR CHECKING
+         TAD TJMP      / CHARACTER
+         DCA ATJMP     / SET UP COUNTER,
+         TAD VAL       / JUMPS AND
+         DCA CTR       / COMPARISONS
+         TAD SCRLF     / GET CHARACTER
+ATTAD,   TAD T12       / CHECK CHARACTER
+         ISZ .-1       / MOVE CHECKER
+         ISZ .+2       / MOVE JUMPER
+         SNA           / IS THERE A MATCH
+ATJMP,   JMP I ATIX-1  / YES JUMP
+         ISZ CTR       / NO MOVE COUNTER
+         JMP ATTAD     / CHECK NEXT CHARACTOR
+         CLA CLL       / LAST CHARACTER FAILED
+         TAD SCRLF     / GET CHARACTER
+         AND MASK3     / CHECK TO SEE
+         TAD M60       / IF IT IS A NUMBER
+         SZA CLA       / IS IT A NUMBER
+         JMP TIXX+3    / NO
+         TAD TITP      / YES
+         CLL RAL       / PREPARE
+         CLL RAL       / TO ADD
+         CLL RAL       / NUMBER TO
+         DCA TITP      / STORED NUMBER
+         TAD SCRLF     / GET NUMBER
+         TAD M60       / TRIM
+         TAD TITP      / ADD TO OLD NUMBERS
+         DCA TITP      / STORE NUMBERS AND
+         JMP TIW       / WAIT
+MASK3,   7770
+TIAD,    0             / HOLD PARTIALLY ASSEMBLED DIGIT
+TITP,    0             / HOLD ADDRESS
+TTAD,    TAD T12
+TJMP,    JMP I ATIX-1
+VAL,     0-15
+CTR,     0-15
+TICM,    TAD TITP      / COMMA RECEIVED
+         DCA TIAD      / PUT ADDRESS INTO TIAD
+         DCA TITP      / AND CLEAR TITP
+         JMP TIW       / AND WAIT
+TIRT,    TAD TIAD      / CARRIAGE RETURN RECEIVED
+         JMS VALID1    / CHECK FOR VALID ADDRESS
+         JMP TICK      / NOT VALID
+TOK,     TAD TITP      / VALID, DEPOSIT DIGITS
+         DCA I TIAD    / INTO ADDRESS
+
+TIX,     DCA TIAD      / CLEAR TIAD
+         DCA TITP      / CLEAR TITP
+         JMS SCRLF     / SEND CARRIAGE RETURN,LINA FEED
+         ISZ I XFG5    / SET WAIT FLAG
+         JMP TIW       / WAIT
+TIXX,    CLA CLL       / GET OLD
+         TAD OPC       / PROGRAM COUNTER
+         JMS I ASND4   / OUTPUT IT
+         TAD EX        / SEND LETTER
+         JMS I AOUT    / X
+         JMP TIX       / INITIALIZE.
+XFG5,    FG5           / WAIT FLAG
+OPC,     0             / OLD PROGRAM COUNTER
+TICK,    TAD TIAD      / CHECK FOR ADDRESS
+         JMP I ATCK    / OF ACC. + LINK
+EX,      330           / X
+TIAR,    TAD I TITP    / ARROW RECEIVED
+         JMS I ASND4   / OUTPUT CONTENTS OF
+         JMP TIX       / ADDRESS REQUESTED, INITIALIZE
+SCRLF,   0             / SEND CARRIAGA RETURN,LINE FEED
+         TAD TCR       / GET CR
+         JMS I AOUT    / OUTPUT
+         TAD TLF       / GET LF
+         JMS I AOUT    / OUTPUT
+         JMP I SCRLF   / EXIT
+TCR,     215           / CARRIAGE RETURN
+TLF,     212           / LINE FEED
+AOUT,    OUTPUT        / ADDRESS OF OUTPUT ROUTINE
+T12,     0-303         / 0-C
+T13,     303-254       / C-COMMA
+T14,     254-215       / COMMA-CARRIAGE RETURN
+T15,     215-337       / CARRIAGE RETURN-ARROW
+T18,     337-301       / ARROW-A
+T19,     301-314       / A-L
+T20,     314-317       / L-O
+T21,     317-312       / O-J
+T22,     312-323       / J-S
+T23,     323-306       / S-F
+T24,     306-302       / F-B
+T25,     302-324       / B-T
+T26,     324-320       / T-P
+
+ASND4,   SEND4
+ATCK,    TCK
+ATIX,    C             / CONTINUE
+         TICM          / COMMA
+         TIRT          / CARRIAGE RETURN
+         TIAR          / ARROW
+A,       ACM           / ACCUMULATOR
+L,       LNK           / LINK
+O,       ORG           / ORIGIN
+J,       TRAN          / JMP + JMS ONLY
+S,       SHORT         / SHORT
+F,       FULL          / FULL
+         ABOT          / BOTTOM
+         ATOP          / TOP
+         APNT          / PRINT
+MN10,    0-10
+M60,     0-260
+ASTR,    START
+VALID1,  0             / CHECK FOR VALID ADDRESS
+         SNA           / IS ADDRESS ZERO
+         JMP GOOD+1    / YES, NO GOOD
+         CLL           / NO CHECK FURTHER
+         TAD MEND      / IS IT GREATER THAN
+         SZL           / THIS PROGRAM
+         JMP GOOD      / YES O.K.
+         TAD MBEGIN    / NO, IS IT LESS
+         SNL           / THAN THIS PROGRAM
+GOOD,    ISZ VALID1    / YES, SET UP EXIT
+         CLA CLL       / NO
+         JMP I VALID1  / EXIT
+MEND,    0-END-1
+MBEGIN,  END-BEGIN+1
+
+*BEGIN+400
+PRNT,    TAD APC       / GET PROGRAM COUNTER
+         DCA LOC       / STORE PROGRAM COUNTER
+         JMS I ASIPT   / IF PRINTOUT IS DESIRED
+         TAD I AADD    / GET ADDRESS
+         DCA NUM       / STORE ADDRESS
+         TAD I NUM     / GET CONTENTS OF ADDRESS
+         DCA I ACADD   / STORE IN CADD
+         TAD FG1       / CHECK FOR
+         SNA CLA       / JMS + JMP ONLY FLAG
+         JMP ON+1      / NO
+         TAD I AFG3    / YES , CHECK FOR
+         SNA CLA       / JMS + JMP PRINTOUT FLAG
+ON,      JMP I ASTART  / NO PRINTOUT
+         JMS PRINTE    / CHECK FOR
+OUT1,    0001          / PROGRAM COUNTER PRINTOUT
+         JMS PRINTE    / CHECK FOR
+OUT2,    0001          / INSTRUCTION PRINTOUT
+         JMS PRINTE    / CHECK FOR
+OUT3,    0001          / ACCUMULATOR PRINTOUT
+         TAD OUT4      / CHECK FOR
+         SNA CLA       / LINK PRINTOUT
+         JMP OUT5-1    / NO LINK PRINTOUT
+         TAD I ALINK   / GET LINK
+         TAD NUMB      / CONVERT TO ASCII
+         JMS OUTPUT    / OUTPUT
+         TAD SPC       / OUTPUT
+         JMS OUTPUT    / TWO
+         TAD SPC       / SPACES AFTER
+         JMS OUTPUT    / LINK
+         TAD I AFG4    / CHECK FOR
+         SZA CLA       / MODIFIED PRINTOUT
+         JMP CRLF      / YES, OUTPUT CR,LF
+         JMS PRINTE    / CHECK FOR
+
+OUT5,    0001          / ADDRESS PRINTOUT
+         JMS PRINTE    / CHECK FOR
+OUT6,    0001          / CONTENTS OF ADDRESS PRINTOUT
+         TAD I ADOIAD  / CHECK FOR
+         SNA CLA       / INDIRECT ADDRESS
+         JMP CRLF      / NO, SEND CR,LF
+         JMS PRINTE    / YES, CHECK FOR
+OUT7,    0001          / INDIRECT ADDRESS PRINTOUT
+         JMP CRLF      / SEND CR,LF
+PRINTE,  0             / CHECK FOR PRINTOUTS
+         TAD I PRINTE  / GET FLAG
+         ISZ PRINTE    / SET EXIT
+         SNA CLA       / IS FLAG SET
+         JMP I PRINTE  / NO, EXIT
+         TAD I LOC     / YES, GET DIGITS
+         ISZ LOC       / SET UP FOR NEXT ENTRANCE
+         JMS SEND4     / OUTPUT FOUR OCTAL DIGITS
+         JMP I PRINTE  / EXIT
+AFG5,    FG5           / WAIT FLAG
+C,       DCA I AFG5    / CONTINUE, CLEAR WAIT FLAG
+CRLF,    JMS I ACRLF   / SEND CR,LF
+         JMP I ASTART  / JMP TO START
+ACRLF,   SCRLF         / SENDS CR,LF
+SEND4,   0000          / OUTPUTS FOUR OCTAL DIGITS
+         DCA TEMP      / STORE DIGITS
+         JMS ROT       / ROTATE DIGITS RIGHT 9
+         0-11          / TIMES, MASK AND OUTPUT
+         JMS ROT       / ROTATE DIGITS RIGHT 6
+         0-6           / TIMES, MASK AND OUTPUT
+         JMS ROT       / ROTATE DIGITS RIGHT 3
+         0-3           / TIMES, MASK AND OQTPUT
+         JMS ROT       / ROTATE DIGITS RIGHT 13
+         0-15          / TIMES, MASK AND OUTPUT
+SPACE,   TAD SPC       / GET SPACE
+         JMS OUTPUT    / OUTPUT
+         TAD SPC       / GET SECOND SPACE
+         JMS OUTPUT    / OUTPUT
+         JMP I SEND4   / EXIT
+CKAIR,   0
+         AND MASK5     / CHECK FOR ADDRESS
+         SZA CLA       / LESS THAN 20
+         JMP I CKAIR   / NO
+         TAD I AADD    / YES
+         TAD CAIR      / SET UP INSTRUCTION
+         DCA KAIR      / TO INDEX
+KAIR,    0             / AUTO INDEX REGISTER
+         JMP I CKAIR   / RETURN
+MASK5,   7760
+CAIR,    AND I Z 0
+
+ROT,     0000          / ROTATES DIGITS AND OUTPUTS
+         TAD I ROT     / GET NUMBER OF ROTATES
+         DCA NUM       / STORE NUMBER
+         TAD TEMP      / GET DIGITS TO BE OUTPUTTED
+         RAR           / ROTATE RIGHT
+         ISZ NUM       / MORE
+         JMP .-2       / YES
+         AND MASK6     / NO, TRIM DIGITS
+         TAD NUMB      / CONVERT TO ASCII
+         JMS OUTPUT    / OUTPUT
+         ISZ ROT       / SET UP EXIT
+         JMP I ROT     / EXIT
+OUTPUT,  0             / OUTPUTS ONE CHARACTER
+         TSF           / READY TO OUTPUT
+         JMP .-1       / NO
+         TLS           / YES, OUTPUT
+         CLA CLL       / CLEAR AC + LINK
+         JMP I OUTPUT  / EXIT
+OUT4,    0001          / FLAG FOR LINK OUTPUT
+LOC,     0000          / HOLDS ADDRESS OF DIGITS
+APC,     PC            / PROGRAM COUNTER
+ALINK,   LINK          / LINK
+TEMP,    0000          / HOLDS DIGITS TO BE OUTPUTTED
+ASTART,  TI            / START
+ADOIAD,  DOIADD        / INDIRECT ADDRESS INDICATOR
+SPC,     0240          / SPACE
+MASK6,   0007          / MASK FOR OUTGOING CHARACTERS
+NUM,     0000          / HOLD NUMBERS
+NUMB,    0260          / CONVERTS TO ASCII
+FG1,     0             / JMS + JMP ONLY FLAG
+AFG3,    FG3           / JMS + JMP PRINTOUT FLAG
+AADD,    ADD           / ADDRESS
+ACADD,   CADD          / CONTENTS OF ACCUMULATOR
+ASIPT,   SIPT          / SHOULD I PRINT
+AFG4,    FG4           / MODIFIED PRINTOUT FLAG
+AIAD,    IADD          / INDIRECT ADDRESS
+VALID,   0             / CHECK FOR
+         TAD I AADD    / VALID ADDRASS
+         JMS I AVLD1
+         JMP I ANO     / NOT VALID
+         JMP I VALID   / VALID
+AVLD1,   VALID1
+ANO,     NO
+
+*BEGIN+600
+MBOT,    0             / MINUS BOTTOM LIMIT
+MTOP,    0             / MINUS TOP LIMIT
+BOT,     7776          / BOTTOM LIMIT
+TOP,     0001          / TOP LIMIT
+VALID2,  0             / CHECK FOR VALID ADDRESS
+         DCA END       / STORE ADDRESS
+         TAD BOT       / GET BOTTOM LIMIT
+         CMA           / MAKE IT NEGATIVE
+         DCA MBOT      / STORE IT
+         TAD TOP       / GET TOP LIMIT
+         CIA           / MAKE IT APPROPRIATE
+         IAC           / FOR CALCULATIONS
+         TAD BOT       / OF LIMITS
+         DCA MTOP      / STORE IT
+         TAD END       / GET ADDRESS
+         SNA           / IS IT ZERO
+         JMP VOK+1     / YES, NO GOOD
+         CLL           / NO
+         TAD MBOT      / IS IT OUTSIDE
+         SZL           / OF LOWER LIMIT
+         JMP VOK+1     / YES, NO GOOD
+         TAD MTOP      / NO, IS IT OUTSIDE
+         SZL           / OF UPPER LIMIT
+VOK,     ISZ VALID2    / NO, SET UP EXIT
+         CLA CLL       / CLEAR ACC + LINK
+         JMP I VALID2
+         JMP I VALID2  / EXIT
+ATOP,    TAD I ATITP   / GET UPPER LIMIT
+         DCA TOP       / STORE IT
+         JMP I TTIX    / WAIT
+ABOT,    TAD I ATITP   / GET LOWER LIMIT
+         DCA BOT       / STORE IT
+         JMP I TTIX    / WAIT
+APNT,    TAD I ATITP   / GET ADDRESS AT WHICH
+         CIA           / PRINTOUT WILL START
+         DCA I YESP    / STORE IT
+         JMP I TTIX    / WAIT
+TTIX,    TIX           / WAIT
+YESP,    PTYES         / START OF PRINTOUT ADDRESS
+ALK,     LINK          / LINK
+ACCUM,   ACC           / ACCUMULATOR
+AFLG,    FG1           / JMS+ JMP ONLY FLAG
+AST,     START         / START
+
+ACM,     TAD ACCUM     / A GET ADDRESS OF ACCUMULATOR
+         DCA I ATITP   / STORE IN TITP
+         JMP I ATIW    / WAIT
+LNK,     TAD ALK       / L GET ADDRESS OF LINK
+         JMP ACM+1     / STORE IN TITP + WAIT
+ORG,     TAD I ATITP   / O GET ADDRESS
+         DCA I ANC     / PUT IN NEW PROGRAM COUNTER
+         DCA I ATITP   / CLEAR TITP
+         DCA I AF5     / CLEAR WAIT FLAG
+         JMS I ASCRLF  / OUTPUT CR,LF
+         JMP I AST     / JUMP TO START
+AF5,     FG5           / WAIT FLAG
+TRAN,    ISZ I AFLG    / J SET JMS + JMP ONLY FLAG
+         JMP WHERE     / JUMP TO WHERE
+ASCRLF,  SCRLF         / CR,LF
+ATITP,   TITP          / TITP
+ATIW,    TIW           / WAIT
+SHORT,   DCA I AFLG    / S CLEAR JMS + JMP ONLY FLAG
+         DCA I AOUT5   / CLEAR ADDRESS FLAG
+         DCA I AOUT6   / CLEAR CONTENTS OF ADD FLAG
+         DCA I AOUT7   / CLEAR INDIRECT ADD FLAG
+         JMP WHERE     / JUMP TO WHERE
+FULL,    DCA I AFLG    / F CLEAR JMS + JMP ONLY FLAG
+         ISZ I AOUT5   / SET ADDRESS FLAG
+         ISZ I AOUT6   / SET CONTENTS OF ADD FLAG
+         ISZ I AOUT7   / SET INDIRECT ADD FLAG
+WHERE,   TAD I ANC     / GET NEW PROGRAM COUNTER
+         JMS I ASD4    / OUTPUT IT
+         JMS I ASCRLF  / SEND CR,LF
+         TAD I AF5     / CHECK WAIT FLAG
+         SZA CLA       / IS IT SET
+         JMP I ATIW    / YES, WAIT
+         JMP I AST     / NO, JUMP TO START
+AOUT5,   OUT5          / ADDRESS FLAG
+AOUT6,   OUT6          / CONTENTS OF ADD FLAG
+AOUT7,   OUT7          / INDIRECT ADD FLAG
+TCK,     TAD MACC      / CHECK FOR ADDRESS OF
+         SNA           / ACCUMULATOR
+         JMP OK        / OK
+         TAD MLK       / CHECK FOR ADDRESS OF
+         SNA CLA       / LINK
+         JMP OK        / OK
+         JMS I ASCRLF  / NO GOOD, SEND CR,LF
+         JMP I ATX     / SEND X
+OK,      JMP I ATOK    / OK
+
+ATOK,    TOK           / OK
+MACC,    0-ACC         / ADDRESS OF ACCUMULATOR
+MLK,     ACC-LINK      / ACC-LINK
+ATIXX,   TIXX          / WAIP
+ANC,     NEWPC         / NEW PROGRAM COUNTER
+ASD4,    SEND4         / OUTPUTS FOUR OCTAL DIGITS
+ATI,     TI            / START
+TPC,     PC            / PROGRAM COUNTER
+PTYES,   0             / START OF PRINTOUT ADDRESS
+SIPT,    0             / SHOULD I PRINT
+         TAD PTYES     / CHECK FOR START
+         SNA           / OF PRINTOUT
+         JMP .+4       / DONT CHECK
+         TAD I TPC     / COMPARE PROGRAM
+         SZA CLA       / COUNTER WITH START OF
+         JMP I ATI     / PRINT ADDRESS, NO MATCH
+         DCA PTYES     / MATCH, START PRINTING
+         JMP I SIPT    / EXIT
+VLD1,    VALID1
+HELP,    0             / HOUSEKEEPING
+         TAD I TPC     / GET PROGRAM COUNTER
+         DCA I AOPC    / PUT IT IN OLD PROGRAM CTR.
+         TAD I ANC     / GET NEW PROGRAM COUNTER
+         DCA I TPC     / PUT IT IN PROGRAM COUNTER
+         TAD I ANC     / GET NEW PROGRAM COUNTER
+         JMS I VLD1    / CHECK TO SEE IF VALID
+         JMP I ATIXX   / NO, SEND X
+         TAD I ANC     / YES
+         JMS VALID2    / CHECK TO SEE IF
+         SKP           / WITHIN LIMITS
+         JMP I HELP    / YES
+         TAD EL        / NO, SEND L
+         JMS I LOUT
+         JMP I TTIX    / WAIT
+EL,      314           / L
+LOUT,    OUTPUT
+ATX,     TIXX+3
+AOPC,    OPC           / OLD PROGRAM COUNTER
+END,     0             / THE END
+
+       $
+

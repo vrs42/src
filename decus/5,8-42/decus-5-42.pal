@@ -1,0 +1,127 @@
+
+/ENTER BY LOAD ADDRESS - READ WITH S.R. = 1 FOR HIGH SPEED READER OR
+/S.R. = ZERO FOR TELETYPE
+*200
+STA,      LAS
+         DCA RREG   /READ REG.
+         HLT
+         LAS     /STARTING STORAGE ADDRESS
+          DCA BEGN   /BEGN,   GET IN BEGINNING ADDRESS
+         TAD RREG
+          SZA CLA
+          JMP HSR    /NON ZERO---HSR
+RTT,      KSF
+         JMP .-1
+         KRB
+         TLS
+         TSF
+         JMP .-1
+         JMP TEST
+HSR,      RFC
+          RSF
+          JMP .-1
+          RRB
+         JMP TEST
+SPEC,    TAD ZOC   /ZERO ONE COUNTER
+          SZA CLA    /1 - LEFT HALF FULL
+          JMP .+6
+         TAD TEM
+         AND C770
+          DCA I BEGN
+         ISZ BEGN
+          JMP X
+         TAD TEM1
+          DCA I BEGN
+         ISZ BEGN
+         JMP Y
+END,     TAD ZOC
+         SNA CLA
+          JMP .+6
+         TAD TEM1
+         DCA I BEGN
+         ISZ BEGN
+          TAD OONE
+          JMP .+2
+         CLA IAC
+          DCA I BEGN
+         DCA ZOC
+         TAD BEGN
+         HLT
+         JMP STA
+TEST,    DCA TEM
+         TAD TEM
+         TAD LT
+         SNA CLA   /LEADER TRAILER  0-200
+         JMP X
+          TAD TEM
+          TAD ENDS   /END SIGNAL 0-246
+          SNA CLA
+          JMP END
+          TAD A
+          JMS CK
+          TAD RET
+          JMS CK
+          TAD LF
+          JMS CK
+          TAD EOT
+          JMS CK
+          TAD WRU
+          JMS CK
+          TAD RU
+          JMS CK
+          TAD BELL
+          JMS CK
+          TAD ACK
+          JMS CK
+          TAD ALTM
+          JMS CK
+          TAD RUBO
+          JMS CK
+         TAD ZOC     /ZERO ONE COUNTER
+         SZA
+          JMP .+14
+         ISZ ZOC
+Y,       TAD TEM
+         AND C770
+         CLL RTL
+         RTL
+         RTL
+         DCA TEM1
+X,        TAD RREG
+          SZA CLA
+         JMP HSR
+         JMP RTT
+         CLA
+         DCA ZOC
+         TAD TEM
+         AND C770
+         TAD TEM1
+          DCA I BEGN
+          ISZ BEGN
+          JMP X
+CK,       0
+          TAD TEM
+          SNA CLA
+          JMP SPEC
+          JMP I CK
+OONE,  0100
+A, 0-300
+BEGN, 0
+RREG, 0
+TEM, 0
+TEM1, 0
+C770, 0077
+ZOC, 0
+RUBO, 0-377
+ALTM, 0-375
+ACK, 0-374
+BELL, 0-207
+RU, 0-206
+WRU, 0-205
+EOT, 0-204
+ENDS, 0-246
+LF, 0-212
+RET, 0-215
+LT, 0-200
+$
+

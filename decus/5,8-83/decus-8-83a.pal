@@ -1,0 +1,358 @@
+/OCTAL DEBUGGING PROGRAM -JAMES ROTHMAN 6/15/67
+
+          TLS
+END,      JMS I CRLF
+          JMS I READ          /READ A NUMBER
+          JMS I TYPE
+          TAD N14             /RESET CONSTANTS
+          DCA CNT
+          TAD RTABA
+          DCA TABA
+          TAD RTABB
+          DCA TABB
+LOOP1,    TAD I TABB
+          DCA CHECK
+          KRS
+          TAD I TABA          /IDENTIFY REQUEST
+          SNA CLA
+          JMP I CHECK         /ENTER REQUESTED ROUTINE
+          ISZ TABA
+          ISZ TABB
+          ISZ CNT
+          JMP LOOP1
+          JMP END+1           /CAN'T IDENTIFY-READ AGAIN
+O,        JMS I OCTRD         /OPEN INSTRUCTION
+          DCA CURLOC
+          TAD I CURLOC
+          JMS OCTPNT          /TYPE CONTENTS
+          JMP END
+II,       JMS I OCTRD         /INSERT INSTRUCTION
+          DCA I CURLOC
+          ISZ CURLOC
+          JMP END
+N,        ISZ CURLOC          /NEXT REGISTER REQUESTED
+          TAD CURLOC
+          JMS OCTPNT
+          JMP II-3
+
+D,        JMS I OCTRD         /OCTAL DUMP REQUESTED
+          DCA INIT            /RECORD FIRST AND LAST
+          JMS I OCTRD         /OF REQUESTED REGISTERS
+          CIA
+          DCA FIN
+LOOP2,    JMS I CRLF
+          TAD INIT
+          JMS OCTPNT
+          TAD HYPH
+          JMS I TYPE
+          TAD N4
+          DCA CNT
+LOOP3,    TAD I INIT          /OUTPUT 4 SEQUENTIAL REGISTER
+          JMS OCTPNT
+          TAD INIT            /FINISHED?
+          TAD FIN
+          SNA CLA
+          JMP END
+          ISZ INIT
+          ISZ CNT
+          JMP LOOP3
+          JMP LOOP2
+S,        JMS I OCTRD         /START REQUESTED
+          DCA LOCJMP
+          JMS I CRLF
+GO,       HLT
+          JMP I LOCJMP
+R,        JMS I OCTRD         /RUN WITH PRESET AC
+          DCA LOCJMP          /AND LINK REQUESTED
+          JMS I CRLF
+          TAD LINK
+          CLL RAR
+          TAD AC
+          JMP GO
+OCTPNT,   0                   /OCTAL PRINT SUB-ROUTINE
+          DCA TEMP4
+          TAD R240
+          JMS I TYPE
+          TAD N4
+          DCA TEMP3
+LOOP6,    TAD TEMP4
+          CLL RAL
+          RTL
+          DCA TEMP4
+          TAD TEMP4
+          RAL
+          AND M7
+          TAD R260
+          JMS I TYPE
+
+          ISZ TEMP3
+          JMP LOOP6
+          JMP I OCTPNT
+J,        JMP I M6000         /JUMP TO SINGLE-STEPPER
+A,        TAD AC              /AC REFERENCED
+          JMS CHECK
+          DCA AC              /RE-INSERT AC
+          JMP END
+L,        TAD LINK            /LINK REFERENCED
+          JMS CHECK
+          DCA LINK            /RE-INSERT LINK
+          JMP END
+CHECK,    0                   /CHECK FOR INSERT REQUEST
+          JMS OCTPNT
+          JMS I CRLF
+          JMS I READ
+          JMS I TYPE
+          KRS
+          TAD N311
+          SZA CLA
+          JMP END+3           /CONTINUE AS USUAL
+          JMS I OCTRD
+          JMP I CHECK
+CRLF,     LF                  /CONSTANTS AND VARIABLES
+READ,     RD
+TYPE,     TYP
+N14,      -14
+M7,       7
+CNT,      0
+RTABA,    LETTER
+TABA,     LETTER
+RTABB,    LOCS
+TABB,     LOCS
+OCTRD,    RDOCT
+CURLOC,   0
+HYPH,     255
+N4,       -4
+LINK,     0
+AC,       0
+TEMP3,    0
+TEMP4,    0
+R240,     240
+R260,     260
+M6000,    6000
+LETTER,   -311;-317;-316;-302;-301;-314;-304
+          -323;-322;-303;-312;-320
+P,        DCA CHK             /MEMORY PUNCH REQUESTED
+          HLT
+          LAS
+          AND M1
+          SZA CLA
+          TAD HTYPE
+          TAD TYPE2
+          DCA LOCPNT
+          TAD LOCPNT
+          DCA I LDRCAL
+          HLT
+          LAS
+          CIA
+          DCA CNT2
+          JMS I LEADER
+
+LOOP4,    HLT                 /RECORD FIRST AND LAST REGISTERS
+          LAS
+          DCA INIT2
+          HLT
+          LAS
+          DCA FIN2
+          TAD M177
+          DCA M77
+          STL
+          TAD INIT2
+          JMS PRINT
+          TAD R77
+          DCA M77
+LOOP5,    TAD I INIT2
+          JMS PRINT
+          TAD INIT2
+          CIA
+          TAD FIN2
+          SNA CLA
+          JMP DONE
+          ISZ INIT2
+          JMP LOOP5
+DONE,     ISZ CNT2
+          JMP LOOP4
+          TAD CHK
+          JMS PRINT
+          JMS I LEADER
+          JMP I ENDIT
+PRINT,    0                   /BINARY FORMAT PRINT
+          DCA TEMP1
+          TAD TEMP1
+          RTR;RTR;RTR
+          AND M77
+          JMS SUM
+          JMS I LOCPNT
+          TAD TEMP1
+          AND R77
+          JMS SUM
+          JMS I LOCPNT
+          JMP I PRINT
+SUM,      0
+          DCA TEMP2
+          TAD TEMP2
+          TAD CHK
+          DCA CHK
+          TAD TEMP2
+          JMP I SUM
+
+RDOCT,    0                   /OCTAL READ SUB-ROUTINE
+          TAD M240
+          JMS I TYPE2
+          DCA TEMP2
+          TAD MN4
+          DCA TEMP1
+BACK,     JMS I READ2
+          JMS I TYPE2
+          KRS
+          TAD N375
+          SNA CLA
+          JMP TERM
+          KRS
+          AND M270
+          TAD N260
+          SZA CLA
+          JMP BACK
+          TAD TEMP2
+          CLL RAL
+          RTL
+          DCA TEMP2
+          KRS
+          TAD N260
+          TAD TEMP2
+          DCA TEMP2
+          ISZ TEMP1
+          JMP BACK
+TERM,     TAD TEMP2
+          JMP I RDOCT
+CHK,      0                   /CONSTANTS AND VARIABLES
+CNT2,     0
+LEADER,   LDR
+INIT2,    0
+FIN2,     0
+M177,     177
+M77,      77
+R77,      77
+HTYPE,    HITYPE-TYP
+ENDIT,    END
+TEMP1,    0
+TEMP2,    0
+M240,     240
+TYPE2,    TYP
+MN4,      -4
+READ2,    RD
+N375,     -375
+M270,     270
+N260,     -260
+LOCPNT,   0
+LDRCAL,   JMSLOC
+M1,       1
+ADDR,     0;0;0;0;0;0;0
+B,        JMS RESET
+          TAD BRPNTR
+          DCA 2
+          JMS FIND
+          JMS I RDOCT2
+          DCA I TABC
+          TAD I TABC
+          DCA TEMP5
+          TAD I TEMP5
+          DCA I TABD
+          TAD BRINST
+          DCA I TEMP5
+          JMP I END2
+PNTHIT,   0                   /FOUND BREAK-POINT
+          DCA I ACC
+          RAL
+          DCA I LINK2
+          STA
+          TAD PNTHIT
+          DCA PNTHIT
+          JMP I END2
+C,        JMS RESET
+          TAD PNTHIT
+          CIA
+          JMS FIND
+          TAD I TABD
+          DCA I PNTHIT
+          DCA I TABC
+          TAD PNTHIT
+          JMP I RPLUS1
+RESET,    0
+          TAD RTABC
+          DCA TABC
+          TAD RTABD
+          DCA TABD
+          TAD RN4
+          DCA CNT4
+          JMP I RESET
+FIND,     0
+          DCA RESET
+          TAD RESET
+          TAD I TABC
+          SNA CLA
+          JMP I FIND
+
+          ISZ TABC
+          ISZ TABD
+          ISZ CNT4
+          JMP .-7
+          HLT
+LF,       0
+          TAD M215
+          JMS TYP
+          TAD M212
+          JMS TYP
+          JMP I LF
+RD,       0
+          KSF
+          JMP .-1
+          KRB
+          JMP I RD
+TYP,      0
+          TSF
+          JMP .-1
+          TLS
+          CLA CLL
+          JMP I TYP
+HITYPE,   0
+          PSF
+          JMP .-1
+          PLS
+          CLA CLL
+          JMP I HITYPE
+LDR,      0
+          TAD N75
+          DCA LEADCT
+          TAD M200
+          JMS I JMSLOC
+          ISZ LEADCT
+          JMP .-3
+          JMP I LDR
+RTABC,    ADDR
+TABC,     ADDR
+RTABD,    INST
+TABD,     INST
+RDOCT2,   RDOCT
+CNT4,     0
+TEMP5,    0
+BRINST,   JMS I 2
+END2,     END
+ACC,      AC
+LINK2,    LINK
+RPLUS1,   R+1
+RN4,      -7
+M215,     215
+M212,     212
+N75,      -144
+M200,     200
+JMSLOC,   0
+LEADCT,   0
+BRPNTR,   PNTHIT
+LOCS,     II;O;N;B;A;L;D;S;R;C;J;P
+INST,     0;0;0;0;0;0;0
+FIN=TABB
+INIT=TABA
+LOCJMP=TABA
+N311=LETTER
+          $
+
