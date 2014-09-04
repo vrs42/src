@@ -1,0 +1,677 @@
+/A-07-01
+
+/FOUR WORD FLOATING POINT
+/FUNCTION PACKAGE
+
+FSQ=0001
+FSQRT=0002
+FSIN=0003
+FCOS=0004
+FATN=0005
+FLOG=0006
+FEXP=0007
+FNEG=0016
+
+FPAC=0052
+
+
+/ADDITIONS, CHANGES, AND CORRECTIONS
+/TO FOUR WORD FLOATING POINT PACKAGE
+
+*63
+NEG,      6261 
+
+/TABLE6 ADDITIONS
+*5751
+          SQUARE
+          ROOT
+          SINE
+          COS
+          ARTN
+          LOG
+          EXP
+
+*5766
+          6261                /NEGATE
+
+/SQUARE FAC
+*5772
+SQUARE,   0
+          JMS I 7
+          FPUT FPAC
+          FMPY FPAC
+          FEXT
+          JMP I SQUARE
+
+
+/CORRECTION TO FSUB ROUTINE
+*6030
+          JMP 6164
+*6164
+          JMS 6000
+          JMP I 6026
+
+/RELOCATE PRCHAR ROUTINE FROM 6767
+*6166
+PRCHAR,   0
+          TAD 57
+          SNA CLA
+          JMP I PRCHAR
+          TAD LFED
+          JMS I OPUT
+          JMP I PRCHAR
+LFED,     0212
+OPUT,     7345
+
+
+/GET INTEGRAL PORTION OF FAC INTO FAC
+*6752
+INT,      0
+          TAD 44
+          SPA SNA
+          JMP INT2
+          TAD M13
+          DCA 44
+INT1,     TAD 44
+          SMA CLA
+          JMP INT3
+          JMS I SHFT
+          JMP INT1
+INT2,     CLA
+          DCA 45
+INT3,     DCA 46
+          DCA 47
+          TAD P13
+          DCA 44
+          DCA 50
+          JMP I INT
+
+M13,      -13
+P13,      13
+SHFT,     6116
+
+
+/CALL PRCHAR AT NEW LOCATION
+*7173
+          6166
+
+
+
+
+
+
+
+
+
+/FLOATING SQUARE ROOT
+*5000
+ROOT,     0
+          TAD 45
+          SNA
+          JMP I ROOT          /ZERO INPUT
+          SMA CLA
+          JMP ROOT1
+          JMS I NEG           /NEGATIVE INPUT
+          IAC
+ROOT1,    DCA 61              /SET INPUT ERROR FLAG
+          TAD 44              /PUT INITIAL APPROX INTO ITER
+          CLL
+          SPA
+          CML
+          RAR
+          DCA ITER
+          TAD ROOT1
+          DCA ITER +1
+          DCA ITER+2
+          DCA ITER+3
+          JMS I 7             /PUT INPUT INTO FPAC
+          FPUT FPAC
+          FEXT
+          JMP ROOT3
+ROOT2,    JMS I 7             /PUT FAC INTO ITER
+          FPUT ITER
+          FEXT
+ROOT3,    JMS I 7             /GENERATE NEXT APPROX IN FAC
+          FGET FPAC
+          FDIV ITER
+          FADD ITER
+          FEXT
+          CLA CMA
+          TAD 44
+          DCA 44
+          TAD 44              /ITER=FAC WITHIN ONE BIT?
+          CMA IAC
+          TAD ITER
+          SZA CLA
+          JMP ROOT2
+          TAD 45
+          CMA IAC
+          TAD ITER+1
+          SZA CLA
+          JMP ROOT2
+          TAD 46
+          CMA IAC
+          TAD ITER+2
+          SZA CLA
+          JMP ROOT2
+          TAD 47
+          CMA IAC
+          TAD ITER+3
+          SMA
+          CMA IAC
+          IAC
+          SPA CLA
+          JMP ROOT2
+          JMP I ROOT          /YES
+
+ITER,     0
+          0
+          0
+          0
+
+
+
+
+
+
+
+
+
+/FLOATING EXPONENT
+EXP,      0
+          TAD 45
+          SMA CLA               /IS ARGUMENT NEGATIVE?
+          JMP EXP1
+          JMS I NEG             /YES, NEGATE
+          CLA CMA
+EXP1,     CMA
+          DCA ITER            /NEGATIVE ARGUMENT FLAG
+          JMS I 7
+          FDIV I ELGE2        /GET N+F
+          FPUT FPAC
+          FEXT
+          JMS I EINT          /DROP F
+          TAD 45
+          CMA IAC
+          DCA ITER+1          /STORE INTEGER -N
+          JMS I NEG           /FORM FLOATING (-N).
+          JMS I 7
+          FADD FPAC           /FORM F
+          FMPY I ELGE2
+          FPUT FPAC
+          FMPY I EK7
+          FADD I EK6
+          FMPY FPAC
+          FADD I EK5
+          FMPY FPAC
+          FADD I EK4
+          FMPY FPAC
+          FADD I EK3
+          FMPY FPAC
+          FADD I EK2
+          FMPY FPAC
+          FADD I EK1
+          FMPY FPAC
+          FADD EK0
+          FEXT
+          TAD ITER+1
+          TAD 44
+          DCA 44              /DIVIDE SUM BY 2 TO THE N.
+          ISZ ITER
+          JMP I EXP
+          JMS I 7               /POSITIVE ARGUMENT,
+          FPUT FPAC             /TAKE RECIPROCAL.
+          FGET ONE
+          FDIV FPAC
+          FEXT
+          JMP I EXP
+
+EINT,     INT
+ELGE2,    LGE2
+ONE,      0001
+          2000
+          0000
+EK0,      0000
+          3777
+          7777
+          7775
+
+/POINTERS TO EXPONENT SERIES CONSTANTS
+EK7,      X7
+EK6,      X6
+EK5,      X5
+EK4,      X4
+EK3,      X3
+EK2,      X2
+EK1,      X1
+
+
+
+
+
+
+
+/FLOATING SINE
+*5200
+SINE,     0
+          TAD 45
+          SMA SZA CLA
+          JMP SIN1
+          TAD 45
+          SMA CLA
+          JMP I SINE          /ZERO INPUT
+          JMS I NEG           /NEGATIVE INPUT
+          CLA CMA
+SIN1,     DCA PNTR
+          JMS I 7               /REDUCE TO MODULO 2PI
+          FDIV PI
+          FDIV TWO
+          FPUT I XSQR
+          FEXT
+          JMS I SINT          /GET INTEGRAL PART OF FAC
+          JMS I NEG
+          JMS I 7
+          FADD I XSQR           /GET FRACTIONAL PART
+          FMPY PI
+          FMPY TWO
+          FPUT FPAC           /SIN(2 PI I + F)=SIN(F)
+          FSUB PI               /REDUCE TO MODULO PI
+          FEXT
+          TAD 45
+          SPA CLA
+          JMP SIN2
+          JMS I 7             /F G.T. PI. SIN (F-PI)==-SIN(F)
+          FPUT FPAC
+          FEXT
+          TAD PNTR
+          SNA CLA
+          CMA
+          DCA PNTR
+SIN2,     JMS I 7               /REDUCE MODULO PIBY2
+          FGET FPAC
+          FSUB PIOT
+          FEXT
+          TAD 45
+          SPA CLA
+          JMP SIN3
+          JMS I 7             /F G.T. PI/2. SIN(PI-F)=SIN(F)
+          FGET PI
+          FSUB FPAC
+          FPUT FPAC
+          FEXT
+SIN3,     JMS I 7             /EVALUATE SERIES
+          FGET FPAC
+          FDIV PIOT             /REDUCE ARGUMENT L.T. 1
+          FPUT FPAC
+          FMPY FPAC
+          FPUT I XSQR
+          FMPY C13
+          FADD C11
+          FMPY I XSQR
+          FADD C9
+          FMPY I XSQR
+          FADD C7
+          FMPY I XSQR
+          FADD C5
+          FMPY I XSQR
+          FADD C3
+          FMPY I XSQR
+          FADD PIOT
+          FMPY FPAC
+          FEXT                /SERIES EVALUATED
+          ISZ PNTR
+          JMP I SINE
+          JMS I NEG
+          JMP I SINE
+
+PNTR,     0                   /NEGATION FLAG
+SINT,     INT
+XSQR,     ITER
+
+PIOT,     0001
+          3110
+          3755
+          2421
+PI,       0002
+          3110
+          3755
+          2421
+TWO,      0002
+          2000
+          0000
+          0000
+
+/SINE CONSTANTS
+C13,      7750
+          3643
+          6415
+          1500
+C11,      7756
+          4163
+          7054
+          0206
+C9,       7764
+          2501
+          7015
+          1042
+C7,       7771
+          5464
+          5514
+          6150
+C5,       7775
+          2431
+          5361
+          4736
+C3,       0000
+          5325
+          0414
+          3167
+
+/FLOATING COSINE
+COS,      0
+          JMS I NEG
+          JMS I 7
+          FADD PIOT             /COS(F)=SIN(PIBY2 - F)
+          FEXT
+          JMS SINE
+          JMP I COS
+
+/FLOATING EXPONENT CONSTANTS
+
+X7,       7764
+          5542
+          5227
+          4775
+X6,       7767
+          2560
+          3573
+          7333
+X5,       7772
+          5700
+          2131
+          0200
+
+
+
+
+/FLOATING ARCTANGENT
+*5400
+ARTN,     0
+          TAD 45
+          SMA CLA
+          JMP ATN1
+          JMS I NEG           /NEGATIVE INPUT
+          CLA CMA
+ATN1,     DCA FLAG3
+          JMS I 7
+          FPUT FPAC
+          FSUB I AONE
+          FEXT
+          TAD 45
+          SPA CLA
+          JMP ATN2
+          JMS I 7             /INPUT G.T. ONE
+          FGET I AONE           /TAKE RECIPROCAL
+          FDIV FPAC
+          FPUT FPAC
+          FEXT
+          CLA CMA
+ATN2,     DCA FLAG2
+          JMS I 7             /EVALUATE SERIES
+          FGET FPAC
+          FMPY FPAC
+          FPUT I ARG2
+          FMPY K23
+          FADD K21
+          FMPY I ARG2
+          FADD MK19
+          FMPY I ARG2
+          FADD K17
+          FMPY I ARG2
+          FADD MK15
+          FMPY I ARG2
+          FADD K13
+          FMPY I ARG2
+          FADD MK11
+          FMPY I ARG2
+          FADD K9
+          FMPY I ARG2
+          FADD MK7
+          FMPY I ARG2
+          FADD K5
+          FMPY I ARG2
+          FADD MK3
+          FMPY I ARG2
+          FADD K1
+          FMPY FPAC
+          FEXT                /SERIES EVALUATED
+          ISZ FLAG2
+          JMP ATN3
+          JMS I NEG
+          JMS I 7
+          FADD I PI2            /ARTN(F)=PIBY2 - ARTN(1/F)
+          FEXT                  /FOR F G.T. ONE.
+ATN3,     ISZ FLAG3
+          JMP I ARTN
+          JMS I NEG
+          JMP I ARTN
+
+FLAG2,    0                   /INPUT G.T. ONE FLAG
+FLAG3,    0                   /NEGATION FLAG
+PI2,      PIOT
+ARG2,     ITER
+AONE,     ONE
+
+/ARCTANGENT CONSTANTS
+K23,      7766
+          5457
+          4432
+          1701
+K21,      7771
+          2145
+          4241
+          4605
+MK19,     7772
+          4166
+          3357
+          4120
+K17,      7774
+          2040
+          1626
+          5457
+MK15,     7774
+          4507
+          1221
+          3170
+K13,      7775
+          2222
+          2557
+          0167
+MK11,     7775
+          5107
+          0475
+          7567
+K9,       7775
+          3427
+          7472
+          2175
+MK7,      7776
+          5555
+          7621
+          6402
+K5,       7776
+          3146
+          3041
+          1767
+MK3,      7777
+          5252
+          5253
+          5611
+K1,       0000
+          3777
+          7777
+          7755
+
+/EXPONENT CONSTANTS
+X4,       7774
+          2524
+          7613
+          5106
+X3,       7776
+          5252
+          5353
+          1521
+X2,       7777
+          3777
+          7775
+          1652
+X1,       0000
+          4000
+          0000
+          0275
+
+
+
+
+/FLOATING LOGARITHM
+*4600
+LOG,      0
+          TAD 45
+          SMA CLA
+          JMP LOG1
+          JMS I NEG           /NEGATIVE INPUT
+          IAC
+LOG1,     DCA 61
+          JMS I 7
+          FPUT FPAC           /STORE POSITIVE ARGUMENT
+          FSUB I LONE
+          FEXT
+          TAD 45
+          SMA CLA             /ARG L.T. 1?
+          JMP LOG2            /NO
+          JMS I 7             /INPUT L.T. 1, INVERT
+          FGET I LONE
+          FDIV FPAC
+          FPUT FPAC
+          FEXT
+          CLA CMA
+LOG2,     DCA FLAG4           /FLAG4 SET IF ARG L.T. 1
+          JMS I 7             /RESTORE FAC
+          FGET FPAC
+          FEXT
+          CMA                 /GET N
+          TAD 44
+          DCA 45
+          TAD RA              /SET UP RETURN FROM INT
+          DCA I LINT
+          JMP I AFLOAT
+BACK,     JMS I 7
+          FMPY LGE2
+          FPUT I LITER        /STORE N*LGE2
+          FGET FPAC
+          FEXT
+          IAC                 /GET F
+          DCA 44
+          JMS I 7
+          FSUB I LONE         /GET F-1
+          FPUT FPAC           /EVALUATE SERIES
+          FMPY L12
+          FADD L11
+          FMPY FPAC
+          FADD L10
+          FMPY FPAC
+          FADD L9
+          FMPY FPAC
+          FADD L8
+          FMPY FPAC
+          FADD L7
+          FMPY FPAC
+          FADD L6
+          FMPY FPAC
+          FADD L5
+          FMPY FPAC
+          FADD L4
+          FMPY FPAC
+          FADD L3
+          FMPY FPAC
+          FADD L2
+          FMPY FPAC
+          FADD L1
+          FMPY FPAC           /SERIES NOW EVALUATED
+          FADD I LITER        /ADD N*LGE2
+          FEXT
+          ISZ FLAG4           /WAS ARGUMENT L.T. 1?
+          JMP I LOG
+          JMS I NEG           /YES, NEGATE SUM
+          JMP I LOG
+
+LONE,     ONE
+LTWO,     TWO
+FLAG4,    0                   /NEGATION FLAG
+LINT,     INT
+LITER,    ITER
+AFLOAT,   INT2+2
+RA,       BACK
+
+LGE2,     0
+          2613
+          4413
+          7676
+/LOGARITHM CONSTANTS
+L12,      7766
+          4132
+          5467
+          5141
+L11,      7771
+          3467
+          0413
+          5110
+L10,      7773
+          4633
+          3721
+          5500
+L9,       7774
+          3470
+          0312
+          3507
+L8,       7775
+          4770
+          3123
+          3611
+L7,       7776
+          2050
+          7523
+          5173
+L6,       7776
+          5312
+          1653
+          0406
+L5,       7776
+          3137
+          6765
+          6402
+L4,       7776
+          4000
+          7041
+          0031
+L3,       7777
+          2525
+          2301
+          7431
+L2,       7777
+          4000
+          0006
+          2241
+L1,       0000
+          3777
+          7777
+          7445
+
+
+
+
+          $
+
+
+
+

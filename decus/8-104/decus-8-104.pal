@@ -1,0 +1,388 @@
+         
+/DISASSEMBLY PROGRAM PAGE 7
+/CROSS REFERENCE PRINTOUT
+          *1600
+XPRNT,    CLA IAC    /NO REFERENCES TO LOCATION 0
+          DCA PC
+          DCA FLAG+1
+          JMS I IPAGE
+          JMS I IXTYP
+          JMS CRLF
+          TAD 16
+          CMA IAC
+          TAD AXREF
+          SNA
+          JMP NONE   /NO ENTRIES IN TABLE
+          STL RAR    /DIVIDE BY TWO
+          DCA SAVE   /= NUMBER OF ENTRIES
+UP,       TAD SAVE
+          DCA FLAG+4
+          CMA
+          DCA FLAG
+          TAD AXREF
+          DCA 16
+          CMA
+          TAD FLAG+1
+          DCA FLAG+1
+          TAD I 16
+          TAD FLAG+1
+          SNA CLA
+          JMP PRNTX
+          ISZ 16
+LP,       ISZ FLAG+4
+          JMP .-6
+          ISZ PC
+          JMP UP
+END,      JMS CRLF   /FINISHED WITH CROSS REFERENCE
+          JMS I IPAGE
+          JMP I .+1
+          0200
+NONE,     JMS CRLF   /PRINT "NONE"
+          JMS OUTPUT
+          1617
+          1605
+          0000
+          JMP END
+PRNTX,    ISZ FLAG
+          JMP DWN
+          JMS CRLF
+          TAD M11
+          DCA FLAG+2
+          TAD PC
+          JMS OCTYP
+          TAD C6
+          JMS I ISPACE          /MAKE TWO SPACES
+          JMS SYMBL
+DWN,      ISZ FLAG+2
+          JMP DWN2
+          TAD M0010
+          DCA FLAG+2
+          JMS CRLF
+          TAD I ISYMCN
+          SZA CLA
+          JMS I ISPACE
+          JMS I ISPACE
+DWN2,     TAD I 16
+          JMS OCTYP
+          JMP LP
+M0010,    -10
+FTAB,     0601       /FADD
+          0404
+          0623       /FSUB
+          2502
+          0615       /FMPY
+          2031
+          0604       /FDIV
+          1126
+          0607       /FGET
+          0524
+          0620       /FPUT
+          2524
+FCHK,     TAD SAVE   /MORE FLOATING POINT
+          CMA
+          AND FMSK   /IS IT FNOR
+          SNA CLA
+          JMP .+3
+          JMS I MEMI
+          FTAB-3
+          JMS OUTPUT
+          0616
+          1722
+          0000
+          JMP RETURN
+SUBR,     TAD SAVE
+          SNA CLA
+          JMP EXIT   /FEXT
+          JMS OUTPUT
+          2325
+          0222
+          0000
+          JMP ILL
+EXIT,     JMS OUTPUT
+          0605
+          3024
+          0000
+          DCA I IFLAG
+          JMP RETURN
+FMSK,     7000
+MEMI,     MEM
+IFLAG,    FFLAG
+SYMBL,    0
+          TAD I ISYMCN
+          SNA CLA
+          JMP I SYMBL
+          TAD PC
+          DCA ADD
+          DCA CLER
+          JMS I ISMSR
+          JMP .+4
+          TAD C254
+          JMS I OUT
+          ISZ CLER
+          TAD CLER
+          JMS I ISPACE
+          JMP I SYMBL
+ISYMCN,   SYMCNT
+ISMSR,    SMSR
+C254,     254
+IXTYP,    XTYP
+XREF,     0
+LAST07,
+          
+/SYMBOL TABLE FOR DISASSEMBLER
+/VERSION 15/IX/67
+$
+*U*',/CARD READER FOR THE PDP-8 FORTRAN COMPILER
+/USING THE CR01C CARD READER AND THE 183 MEMORY EXTENTION
+/LISTING OF CHANGES AND ADDITIONS
+ 
+ 
+/LINKAGE TO INITIALIZING ROUTINE
+ 
+*200
+       6212           /CHANGE TO INSTRUCTION FIELD 1
+       JMP I  .+1     /JUMP TO THE...
+       INIT           /CARD INITIALIZING ROUTINE
+ 
+ 
+/LINKAGE TO KEYBOARD AND CARD READ ROUTINE
+*5155
+       6213           /CHANGE TO FIELD 1
+       JMS I  .+1     /REPLACES THE NORMAL...
+       ENTRY          /READ ROUTINE
+*5536
+       6213           /CHANGE TO FIELD 1
+       JMS I  .+1     /REPLACES THE NORMAL...
+       ENTRY          /READ ROUTINE
+ 
+ 
+/ROUTINE TO MOVE INITIALIZE AND READ ROUTINES
+ 
+*7240
+       CLA            /STARTS HERE
+LOOP,  TAD I  FENT    /PICKUP WORD FROM LOWER MEMORY
+       6211           /CHANGE TO DATA FIELD 1
+       DCA I  FENT    /STORE IN UPPER MEMORY
+       6201           /CHANGE TO DATA FIELD 0
+       ISZ    FENT    /INCREMENT POINTER, NEVER SKIP
+       ISZ    FIN     /ARE WE FINISHED
+       JMP    LOOP    /NO, MOVE ONE MORE WORD
+       HLT            /YES
+       JMP I  .+1     /JUMP TO 200 TO START...
+       200            /THE FORTRAN COMPILER
+FENT,  INIT           /FIRST WORD MOVED
+FIN,   INIT-BUF-1     /NUMBER OF WORDS MOVED
+/ROUTINE TO INITIALIZE THE CARD READ ROUTINE
+ 
+INIT,  OSR            /THIS INSTRUCTION WAS AT 200
+       DCA I  PZRO    /THIS INSTRUCTION WAS AT 201
+       6211           /CHANGE TO DATA FIELD 1
+       DCA I  IPLPA   /SET BUFFER EMPTY INDICATOR
+       DCA I  LF1     /CLEAR CARD READER BUSY FLAG
+       DCA I  LFCONT  /CLEAR CONTINUATION FLAG
+       6203           /CHANGE TO FIELD 0
+       JMP I  .+1     /RETURN TO...
+       5677           /STANDARD INITIALIZING ROUTINE
+PZRO,  162            /ADDRESS OF INIT+1
+IPLPA, BUF            /FIRST COLUMN IN CARD BUFFER
+LFCONT,FCONT          /LOCATION OF CONTINUATION FLAG
+LPOINT,POINT          /CARD BUFFER POINTER
+LF1,   F1             /LOCATION IF CARD READER BUSY FLAG
+ 
+ 
+/CARD READ ROUTINE
+ 
+*7400
+ENTRY, NOP            /START OF CARD READING ROUTINE
+       CLA            /...
+       TAD I  POINT   /PICKUP CONTENTS OF BUFFER
+       SNA            /IS BUFFER EMPTY
+       JMP    READ    /YES
+       ISZ    POINT   /INCREMENT POINTER, NEVER SKIP
+FOX,   6203           /CHANGE TO FIELD 0
+       ISZ    ENTRY   /SKIP ONE ON RETURN
+       JMP I  ENTRY   /RETURN
+READ,  TAD    F1      /READER BUSY FLAG
+       SNA            /IS CARD READER BUSY
+       JMP    KEY     /NO
+       6671           /YES, WAIT FOR CARD DONE FLAG
+       JMP    .-1     /...
+KEYM4, 6674           /CLEAR CARD DONE FLAG
+       6632           /CLEAR DATA READY FLAG
+       CLA            /...
+       DCA    F1      /CLEAR READER BUSY FLAG
+KEY,   CLA OSR        /LOAD AC WITH THE SWITCH REGISTER
+       RTR            /...
+       SZL CLA        /IS BIT 11 OF SWITCH REGISTER ON
+       JMP    SCR     /YES, READ CARD
+       6031           /NO, IS KEYBOARD FLAG ON
+       JMP    KEY     /NO, TEST SWITCH REGISTER
+       6036           /READ CHARACTER
+       AND    MASK    /REMOVE PARITY BIT
+       TAD    N200    /ADD IN PARITY BIT
+       JMP    FOX     /RETURN
+SCR,   6672           /CARD READY
+       JMP    KEY     /NO
+       TAD    IPLP    /YES, READ CARD
+       DCA    POINT   /INITIALIZE POINTER TO START OF BUFFER
+       TAD    IPLP    /...
+       DCA    LAST    /INITIALIZE LAST NON-SPACE POINTER
+       TAD    MCOLS   /LOAD AC WITH MINUS 72(10)
+       DCA    TEMP2   /INITIALIZE NUMBER OF COLUMNS POINTER
+READC, 6672           /KEEP SELECTING THE CARD READER
+       NOP            /IGNORE SKIP
+       6631           /DATA READY
+       JMP    READC   /NO, SELECT CARD READER AGAIN
+       6632           /YES, READ DATA ALPHA
+       DCA    TEMP1   /STORE IN TEMP
+       TAD    MTIME   /READ EACH COLUMN 19 MORE TIMES
+       DCA    TEMP3   /INITIALIZE MULTIPUL READING COUNTER
+TEST,  6632           /READ DATA AGAIN
+       CIA            /NEGATE IT
+       TAD    TEMP1   /ADD WHAT WAS READ INITIALLY
+       SZA            /IS IT ZERO
+       JMP    ERR     /NO, ERROR, GO TO HALT
+       ISZ    TEMP3   /YES, SHOULD WE READ IT AGAIN
+       JMP    TEST    /YES
+       TAD    TEMP1   /NO, IT'S BEEN READ ENOUGH
+       SNA CLA        /IS IT A SPACE
+       JMP    MXT     /YES, SKIP NEXT TWO INSTRUCTIONS
+       TAD    POINT   /NOT A SPACE
+       DCA    LAST    /MOVE LAST NON-SPACE POINTER
+MXT,   TAD    LTABLE  /CALCULATE LOCATION IN TABLE
+       TAD    TEMP1   /SIMPLE TABLE LOOK-UP...
+       DCA    TEMP1   /TO FIND ASCII CODE
+       TAD I  TEMP1   /GET CONTENTS OF TABLE
+       DCA I  POINT   /PLACE IN BUFFER
+       ISZ    POINT   /MOVE BUFFER POINTER
+       ISZ    TEMP2   /FINISHED 72 COLUMNS YET
+       JMP    READC   /NO, READ ANOTHER COLUMN
+       CMA            /C(AC)=1
+       DCA    F1      /SET CARD READER BUSY FLAG
+       TAD I  IPLP    /GET CONTENTS OF COLUMN ONE
+       TAD    M303    /IS THERE A C IN...
+       SNA CLA        /THE FIRST COLUMN
+       JMP    READ    /YES, READ ANOTHER CARD
+       TAD I  LCOL6   /GET COLUMN 6
+       TAD    M240    /SUBTRACT 240, A SPACE
+       SZA CLA        /IS COLUMN 6 BLANK
+       JMP    CONTA   /NOT BLANK, MUST BE A CONTINUATION
+       TAD    FCONT   /GET CONTINUATION FLAG
+       SZA CLA        /IS CONTINUATION FLAG ON
+       JMP    CONTA   /YES, THIS IS A CONTINUATION
+       TAD    LRET    /NOT CONTINUATION, SET POINTER...
+       DCA    POINT   /TO A RETURN AND LINE FEED
+SETF,  DCA    FCONT   /CLEAR CONTINUATION FLAG
+       TAD I  LAST    /GET THE LAST NON-SPACE
+       TAD    M247    /IS LAST NON-SPACE AN APOSTRAPHY
+       SNA            /...
+       ISZ    FCONT   /YES, SET CONTINUATION FLAG
+       SZA CLA        /...
+       ISZ    LAST    /NO, INCREMENT LAST NON-SPACE POINTER
+       DCA I  LAST    /STORE END OF LINE CHARACTER (ZERO)
+       TAD    N273    /PLACE A SEMICOLON...
+       DCA I  LCOL6   /IN COLUMN SIX
+       JMP    ENTRY+1 /PRETEND THAT YOU JUST ENTERED
+CONTA, TAD    LCOL7   /GET THE ADDRESS OF COL 7...
+       CIA            /AND SUBTRACT IT FROM...
+       TAD    LAST    /THE ADDRESS OF THE LAST NON-ZERO
+       SPA CLA        /IS THERE ANY INFO AFTER COL 6
+       JMP    READ    /NO, READ ANOTHER CARD
+       TAD    LCOL7   /GET THE LOCATION OF COLUMN 7...
+       DCA    POINT   /AND SET CARD BUFF POINTER THERE
+       JMP    SETF    /CONTINUE
+ERR,   HLT            /LAST CARD READ SHOULD BE RE-READ
+       JMP    KEYM4   /RETURN TO START OF READ ROUTINE
+MASK,  177            /MASK OFF PARITY BIT
+N200,  200            /PARITY BIT
+N273,  273            /SEMICOLON
+M303,  -303           /-ASCII(C)
+MCOLS, -110           /-72(10)
+M240,  -240           /SPACE
+M247,  -247           /MINUS APOSTRAPHY
+MTIME, -23            /NUMBER OF TIMES EACH COLUMN IS READ
+TEMP1, 0              /STORES CARD CODE DURING RE-READING
+TEMP2, 0              /CONTAINS NUMBER OF COLUMNS COUNTER
+TEMP3, 0              /CONTAINS RE-READING COUNTER
+LAST,  BUF            /LAST NON-SPACE POINTER
+IPLP,  BUF            /LOCATION OF CARD BUFFER
+POINT, BUF            /CARD BUFFER POINTER
+F1,    0              /CARD READER BUSY FLAG
+FCONT, 0              /CONTINUATION FLAG, 0=OFF, 1=ON
+LCOL6, COL6           /LOCATION OF COLUMN 6
+LCOL7, COL7           /LOCATION OF COLUMN 7
+LRET,  RET            /LOCATION OF THE RETURN
+LTABLE,TABLE          /LOCATION OF CARD CHARACTER TABLE
+RET,   215            /RETURN
+LF,    212            /LINE FEED
+BUF,   0              /FIRST LOCATION OF CARD BUFFER
+COL6=BUF+5
+COL7=BUF+6
+*7300                 /START OF CHARACTER TABLE
+TABLE,
+       240            /SPACE
+       261            /1
+       262            /2
+       263            /3
+       264            /4
+       265            /5
+       266            /6
+       267            /7
+       270            /8
+       271            /9
+       277            /UNDEFINED
+       275            /=
+       247            /'
+       277            /UNDEFINED
+       277            /UNDEFINED
+       277            /UNDEFINED
+       260            /0
+       257            //
+       323            /S
+       324            /T
+       325            /U
+       326            /V
+       327            /W
+       330            /X
+       331            /Y
+       332            /Z
+       277            /UNDEFINED
+       254            /,
+       250            /(
+       277            /UNDEFINED
+       277            /UNDEFINED
+       277            /UNDEFINED
+       255            /-
+       312            /J
+       313            /K
+       314            /L
+       315            /M
+       316            /N
+       317            /O
+       320            /P
+       321            /Q
+       322            /R
+       277            /UNDEFINED
+       242            /$ IS QUOTE
+       252            /*
+       277            /UNDEFINED
+       277            /UNDEFINED
+       277            /UNDEFINED
+       253            /+
+       301            /A
+       302            /B
+       303            /C
+       304            /D
+       305            /E
+       306            /F
+       307            /G
+       310            /H
+       311            /I
+       277            /UNDEFINED
+       256            /.
+       251            /)
+       277            /UNDEFINED
+       277            /UNDEFINED
+       277            /UNDEFINED
+$
+

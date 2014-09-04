@@ -1,0 +1,66 @@
+
+          KCC                 /INITIALISATION
+          DCA CHKSUM
+          TAD K100
+          CMA
+          DCA P
+BEGIN,    DCA DMP
+          KSF                 / GET CHARACTER
+          JMP .-1
+          KRB
+          TAD M272
+          SMA                 /IS IT LETTER OR NUMBER?
+          JMP INST            /LETTER
+          TAD K12             /NUMBER
+          RAL CLL
+          RTL
+          TAD DMP
+          DCA DMP             /STORE MOST SIG. HALF
+          KSF
+          JMP .-1
+          KRB
+          AND M7
+          TAD DMP             /ASSEMBLE WORD
+          TLS
+          TAD CHKSUM          /UPDATE CHECKSUM
+          DCA CHKSUM
+          JMP BEGIN
+INST,     TAD KON             /WHICH LETTER?
+          DCA .+1
+          0
+          JMP ORIGIN          /A
+          JMP LEADER          /B
+          TAD CHKSUM          /C
+          CLL RTR             /OUTPUT CHECKSUM
+          RTR
+          RTR
+          AND M77
+          JMS PUNCH
+          TAD CHKSUM
+          AND M77
+          JMS PUNCH
+          JMP LEADER          / PUNCH TRAILER
+ORIGIN,   TAD K100            /DEFINE ORIGIN
+          JMP BEGIN
+LEADER,   TAD K100            /PUNCH LEADER
+          TAD K100
+          JMS PUNCH
+          ISZ P
+          JMP LEADER
+          JMP BEGIN-4
+PUNCH,    0
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I PUNCH
+KON,      5226
+M77,      77
+K12,      12
+M272,     7506
+M7,       7
+K100,     100
+P,        0
+DMP,      0
+CHKSUM,   0
+

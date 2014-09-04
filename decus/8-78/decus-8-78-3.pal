@@ -1,0 +1,166 @@
+
+
+
+/DIAGNOSE ROUTINE, SOURCE TAPE III
+
+*ORIGIN+200
+
+EMPTP,    EMPTY
+GOFLOP,   GOFLO
+N4407,    -4407
+WRITER,   WRITEO
+FILLP,    FILL
+LINK,     0
+ACCU,     0
+MQUO,     0
+ADDR,     0
+INST,     0
+EXITP,    EXIT
+ALTADD,   ALTERN
+KEEPP,    KEEP
+P7770,    7770
+P200,     200
+MRAD,     0
+PREV,     0
+POST,     0
+FIND,     0          /SUBROUTINE TO FIND
+          CLA CMA    /THE EFFECTIVE MEMORY
+                     /REFERENCE ADDRESS FOR EVENTUAL
+                     /STORAGE IN LOCATION 'MRAD'
+          TAD P200   /0177
+          AND INST
+          DCA MRAD   /LINE #
+          TAD P200
+          AND INST   /PAGE ZERO?
+          SNA CLA
+          JMP .+6    /YES
+          TAD P200   /NO
+          CIA        /7600
+          AND ADDR   /PAGE #
+          TAD MRAD
+          DCA MRAD   /PAGE # + LINE # = ADDRESS
+          TAD P200
+          TAD P200   /0400
+          AND INST   /INDIRECT?
+          SNA CLA
+          JMP I FIND /NO, DIRECT
+          TAD I MRAD /YES.   SHOULD MRAD BE AN AUTOINDEX,
+                     /THIS INSTRUCTION WILL INCREMENT ITS
+                     /CONTENTS GIVING THE ACTUAL EFFECTIVE
+                     /ADDRESS.   THE AUTOINDEX IS NEVER
+                     /INDIRECTLY ADDRESSED HEREAFTER.
+          DCA MRAD
+          JMP I FIND
+CODE05,   JMS I WRITER
+          NO93       /"="
+          JMS FIND
+          TAD I MRAD
+          DCA PREV
+          TAD INST   /NOW START TO DECODE C(INST)
+          RAL
+          SZL
+          JMP CODE45 /CODES 4 & 5
+          RAL        /CODES 0 THROUGH 3
+          SZL
+          JMP AHEAD+6  /CODES 2 & 3
+          SPA CLA    /CODES 0 & 1
+          JMP .+7    /CODE 1
+          JMS I WRITER  /CODE 0
+          NO20       /AND
+          TAD ACCU
+          AND PREV
+          DCA ACCU
+          JMP AHEAD
+          JMS I WRITER
+          NO21       /TAD
+          JMS I FILLP
+          TAD PREV
+          JMS I EMPTP
+AHEAD,    TAD PREV
+          DCA POST
+          TAD POST
+          DCA I MRAD
+          ISZ ADDR
+          JMP I EXITP
+          SPA CLA
+          JMP CODE3
+          JMS I WRITER  /CODE 2
+          NO22       /ISZ
+          CLA IAC    /+1
+          TAD PREV
+          SNA CLA    /SYNTHETIC ISZ
+          ISZ ADDR
+          CLA IAC
+          JMP AHEAD
+CODE3,    JMS I WRITER
+          NO23       /DCA
+          TAD ACCU
+          DCA POST
+          DCA ACCU
+          JMP AHEAD+2
+CODE45,   RTL
+          SZL CLA
+          JMP CODE5
+CODE4,    TAD INST
+          TAD N4407
+          SNA CLA    /IS IT 'JMS I 7'?
+          JMP I GOFLOP  /YES
+          JMS I WRITER  /NO
+          NO24       /JMS
+          CLA IAC
+          TAD ADDR
+          DCA POST
+          OSR
+          RAR        /BIT 11 OF SR INTO L
+          CLA
+          TAD MRAD
+          SZL CLL    /SHORTCIRCUIT SUBROUTINE PRINTOUT?
+          JMP SHORT  /YES
+          DCA ADDR   /NO, PRINT ALL
+          JMP AHEAD+2
+CODE5,    JMS I WRITER
+          NO25       /JMP
+          TAD PREV
+          DCA POST
+          TAD MRAD
+          DCA ADDR
+          JMP I EXITP
+SHORT,    IAC
+          DCA INST   /TEMPORARY USE OF INST
+          TAD ALTADD /PUT 'ALTERN' AS THE FIRST INSTRUCTION  -
+          DCA I MRAD /  -  OF THE SUBROUTINE
+          JMS I WRITER
+          NO91       /(RETURN,FEED,SPACE)
+          DCA I KEEPP           /CLEAR 'KEEP'
+          JMS I FILLP
+          JMP I INST /ENTER THE SUBROUTINE
+
+*ORIGIN+751
+
+EMPTYS,   EMPTY
+POSTS,    POST
+ADDRS,    ADDR
+MRADS,    MRAD
+ALTERN,   ISZ KEEP   /NORMAL RETURN
+          ISZ KEEP   /ADVANCED RETURN
+          ISZ KEEP   /DOUBLY ADVANCED RETURN
+          JMS I EMPTYS  /TRIPLY ADVANCED RETURN
+          TAD KEEP   /3, 2, 1 OR 0
+          CMA
+          TAD P4     /0, 1, 2 OR 3
+          TAD I POSTS
+          DCA I POSTS
+          TAD I POSTS
+          DCA I ADDRS
+          TAD I MRADS
+          DCA KEEP   /TEMPOARY USE OF 'KEEP' TO HOLD C(MRAD)
+          TAD I POSTS
+          DCA I KEEP
+          JMS WRITEO
+          NO95       /(RETURN,FEED, 33 SPACES)
+          JMP I .+1
+          EXIT
+
+          PAUSE
+
+

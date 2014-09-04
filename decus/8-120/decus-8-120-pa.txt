@@ -1,0 +1,474 @@
+/SYMBOL DEFINITIONS
+AX1=10
+AX2=11
+BUFF=1400
+READ=3
+SYSIO=7642
+TEM1=174
+TEM2=175
+WRITE=5
+/
+*200
+BEGN,	JMS CRLF
+	JMS TMES
+	MSG2
+	JMS RMES
+CHAR,	BUFF
+	TAD I .-1
+	CIA
+	TAD ("L
+	SNA CLA		/LOAD OR DUMP?
+	JMP LOAD
+	TAD I CHAR
+	CIA
+	TAD ("V
+	SNA CLA		/OR VERIFY?
+	JMP VRFY
+	TAD I CHAR
+	CIA
+	TAD ("D
+	SZA CLA
+	JMP BEGN
+DUMP,	JMS TMES
+	MSG3
+	JMS ROCT
+	DCA N
+	JMS TMES
+	MSG1
+	JMS ROCT
+	DCA LB
+	TAD (200
+	PLS
+	CLA
+	TAD (120
+	DCA .+2
+PLOT,	JMS LDLP
+	100
+	JMS SYSIO	/READ BLOCK N
+	READ
+N,	0
+	BUFF		/CORE LOC'N
+L,	0
+	HLT
+	TAD N
+	DCA BUFF+200
+	TAD L
+	DCA BUFF+201
+	TAD (-202	/COMPUTE CHECKSUM
+	DCA INDX
+	TAD (BUFF-1
+	DCA Z AX1
+LP01,	TAD I AX1
+	ISZ INDX
+	JMP LP01
+	DCA BUFF+202
+	JMS PBIN
+	203
+	BUFF
+	TAD (14
+	DCA PLOT+1
+	ISZ N
+	TAD N
+	CIA
+	TAD LB
+	SMA CLA
+	JMP PLOT
+	JMS LDLP
+	40
+	JMP BEGN
+LB,	0
+INDX,	0
+/
+LOAD,   JMS TMES
+        MSG1
+        JMS ROCT
+        DCA LB
+	RFC
+        JMS LOOK        /READ ONE BLOCK FROM THE TAPE
+LP03,   TAD BUFF+200
+        DCA BN
+        TAD BN
+        CIA
+        TAD LB
+        SPA CLA         /IS THIS BLOCK NR OK?
+        JMP ENDP
+        TAD BUFF+201
+        DCA LN
+        JMS I (SYSIO
+        WRITE
+BN,     0       /BLOCK NUMBER
+        BUFF
+LN,     0       /LINK NUMBER
+        HLT
+        TAD BN
+        CIA
+        TAD LB
+        SZA CLA
+        JMP LOAD+5
+ENDP,   JMS CRLF
+        JMS TMES
+        MSG4
+        JMS CRLF
+        JMP BEGN
+CKSM,   0
+/
+        PAGE
+
+*BEGN+200
+RBIN,   0               /SPECIAL BINARY LOADER
+        TAD I RBIN
+        ISZ RBIN        /CALL AS FOLLOWS...
+        CIA
+        DCA KNDX        / JMS RBIN
+        CMA             / N     (N = NR OF 12-BIT WORDS)
+        TAD I RBIN      / LOC   (LOC = BUFFER ADDRESS)
+        ISZ RBIN
+        DCA AX1
+        TAD (JMP LP04
+        DCA SWHH
+LP04,   JMS I [PTRI
+        TAD (-200
+        SNA
+SWHH,   JMP LP04
+        TAD (200
+        CLL RTL
+        RTL
+        RTL
+        DCA TEM1
+        JMS I [PTRI
+        TAD TEM1
+        DCA I AX1
+        TAD (JMP I RBIN
+        DCA SWHH
+        ISZ KNDX
+        JMP LP04
+        JMS I [PTRI
+        TAD (-200
+        SZA CLA
+        JMP .-3
+        JMP I RBIN
+/
+PTRI,   0               /HI-SPEED READER ROUTINE
+        RSF
+        JMP WAIT
+        DCA PTRF        /SET READER FLAG
+        RRB RFC
+        JMP I PTRI
+WAIT,   DCA PBIN
+        ISZ PTRF
+        JMP PTRI+1
+        JMS CRLF
+        JMS TMES
+        MSG5
+        TAD BN
+        JMS TOCT
+        JMS CRLF
+        HLT
+        JMP BEGN
+PTRF,   0
+/
+PBIN,   0               /SPECIAL BINARY PUNCH ROUTINE
+        TAD I PBIN
+        ISZ PBIN        /CALL AS FOLLOWS...
+        CIA
+        DCA KNDX        / JMS PBIN
+        CMA             / N     (N = NR OF 12-BIT WORDS)
+        TAD I PBIN      / LOC   (LOC = BUFFER ADDRESS)
+        ISZ PBIN
+        DCA AX1
+LP05,   TAD I AX1
+        DCA TEM1
+        TAD TEM1
+        RTR
+        RTR
+        RTR
+        AND (77
+        JMS I [PTPO
+        TAD TEM1
+        AND (77
+        JMS I [PTPO
+        ISZ KNDX
+        JMP LP05
+        JMP I PBIN
+/
+PTPO,   0               /HI-SPEED PUNCH ROUTINE
+        PSF
+        JMP .-1
+        PLS
+        CLA
+        JMP I PTPO
+/
+LDLP,   0               /LEADER-TRAILER PUNCH ROUTINE
+        TAD I LDLP
+        ISZ LDLP
+        CIA
+        DCA KNDX
+        TAD (200
+        JMS I [PTPO
+        ISZ KNDX
+        JMP .-3
+        JMP I LDLP
+/
+CRLF,   0
+        TAD (215
+        JMS TTYO
+        TAD (212
+        JMS TTYO
+        JMP I CRLF
+/
+KNDX,   0
+/
+ERR1,   0               /CHECKSUM ERROR ON READ
+        JMS TMES
+        MSG6
+        TAD BN
+        JMS TOCT
+        JMS CRLF
+        JMS TMES
+        MSG7
+        JMS RMES
+        BUFF+204
+        TAD I .-1
+        CIA
+        TAD ("R
+        SZA CLA
+        JMP BEGN        /RESTART
+	RFC
+        JMP I ERR1      /RETRY
+/
+        PAGE
+
+*BEGN+400
+TMES,   0               /MESSAGE TYPEOUT ROUTINE
+        TAD I TMES
+        ISZ TMES
+        DCA POIN
+LP08,   TAD I POIN
+        CLL RTR
+        RTR
+        RTR
+        JMS OTCH
+        JMP I TMES
+        TAD I POIN
+        ISZ POIN
+        JMS OTCH
+        JMP I TMES
+        JMP LP08
+POIN,   0
+/
+OTCH,   0               /CHARACTER TYPEOUT ROUTINE
+        AND (77
+        SNA             /END OF LIST?
+        JMP I OTCH      /YES
+        TAD (-40
+        SPA
+        TAD (100
+        TAD (240
+        JMS TTYO
+        ISZ OTCH
+        JMP I OTCH
+/
+TTYO,   0
+        TLS
+        TSF
+        JMP .-1
+        CLA
+        JMP I TTYO
+/
+ROCT,   0               /OCTAL READ-IN ROUTINE
+        DCA TEM1
+        DCA TEM2
+        TAD (JMP QUES
+        DCA SWHP
+        JMS RMES
+        BUFF
+        CMA
+        TAD .-2
+        DCA AX1
+LP07,   TAD I AX1
+        SNA
+SWHP,   JMP QUES
+        TAD (-260
+        SPA
+        JMP QUES
+        TAD (-10
+        SMA
+        JMP QUES
+        TAD (10
+        TAD TEM2
+        DCA TEM1
+        TAD TEM1
+        CLL RAL
+        RTL
+        DCA TEM2
+        TAD (JMP BYP2
+        DCA SWHP
+        JMP LP07
+BYP2,   TAD TEM1
+        JMP I ROCT
+QUES,   TAD ("?
+        JMS TTYO
+        JMS CRLF
+        JMP ROCT+1
+/
+RMES,   0               /MESSAGE READ-IN ROUTINE
+        KCC
+        CMA
+        TAD I RMES
+        ISZ RMES
+        DCA AX1
+LP06,   JMS TTYI
+        DCA TEM1
+        TAD TEM1
+        TAD (-377
+        SNA CLA
+        JMP RBOT
+        TAD TEM1
+        JMS TTYO
+        TAD TEM1
+        TAD (-215
+        SNA CLA
+        JMP BYP0
+        TAD TEM1
+        DCA I AX1
+        JMP LP06
+BYP0,   DCA I AX1
+        TAD (212
+        JMS TTYO
+        JMP I RMES
+RBOT,   TAD ("\
+        JMS TTYO
+        CMA
+        TAD AX1
+        DCA AX1
+        JMP LP06
+/
+TTYI,   0               /TELETYPE INPUT ROUTINE
+        KSF
+        JMP .-1
+        KRB
+        TAD (-203
+        SNA             /IS IT A ^C?
+        JMP I (7600
+        TAD (203
+        JMP I TTYI
+/
+        PAGE
+/
+*BEGN+600
+VRFY,   JMS TMES        /TAPE VERIFICATION ROUTINE
+        MSG1
+        JMS ROCT
+        DCA LB
+	RFC
+        JMS LOOK        /READ ONE BLOCK FROM THE TAPE
+        TAD BUFF+200
+        DCA BLK
+        TAD BLK
+        DCA BN
+        JMS I (SYSIO
+        READ
+BLK,    0
+        BUFF+400
+LNK,    0
+        HLT
+        TAD (BUFF-1
+        DCA AX1
+        TAD (BUFF+377
+        DCA AX2
+        TAD (-200
+        DCA IX
+        TAD I AX1
+        CIA
+        TAD I AX2
+        SZA CLA
+        JMP ERR2
+        ISZ IX
+        JMP .-6
+        TAD LNK
+        CIA
+        TAD BUFF+201
+        SZA CLA
+        JMP ERR2
+        TAD LB
+        CIA
+        TAD BLK
+        SPA CLA         /WAS THIS THE LAST BLOCK?
+        JMP VRFY+5
+        JMS CRLF
+        JMS TMES
+        MSG8            /TAPE VERIFIED!
+        JMS CRLF
+        JMP BEGN
+IX,     0
+/
+LOOK,   0
+        RFC
+        JMS RBIN
+        203
+        BUFF
+        TAD (-202
+        DCA IX
+        TAD (BUFF-1
+        DCA AX1
+        DCA CKSM
+LP02,   TAD I AX1
+        ISZ IX
+        JMP LP02
+        CIA
+        TAD BUFF+202
+        SNA CLA
+        JMP .+3
+        JMS ERR1
+        JMP LOOK+1
+        JMP I LOOK
+/
+ERR2,   JMS TMES
+        MSG9            /ERROR IN BLOCK NR
+        TAD BLK
+        JMS TOCT
+        JMS CRLF
+        JMS TMES
+        MSG7
+        JMS RMES
+        BUFF+204
+        TAD I .-1
+        CIA
+        TAD ("R
+        SZA CLA
+        JMP BEGN
+        JMP VRFY+4
+/
+TOCT,   0               /OCTAL TYPEOUT ROUTINE
+        CLL RAL
+        DCA TEM1
+        TAD (-4
+        DCA TEM2
+LP10,   TAD TEM1
+        RTL
+        RAL
+        DCA TEM1
+        TAD TEM1
+        AND (7
+        TAD (260
+        JMS TTYO
+        ISZ TEM2
+        JMP LP10
+        JMP I TOCT
+/
+        PAGE
+/
+/
+*BEGN+1000
+MSG1,   TEXT /ENTER LAST BLOCK NR - /
+MSG2,	TEXT /LOAD DUMP OR VERIFY - /
+MSG3,   TEXT /ENTER FIRST BLOCK NR - /
+MSG4,   TEXT /TAPE LOADED!/
+MSG5,   TEXT /RAN OUT OF TAPE AFTER BLOCK /
+MSG6,   TEXT /CHECKSUM AFTER BLOCK NR /
+MSG7,   TEXT /TYPE "R" TO RETRY, "S" TO RESTART - /
+MSG8,   TEXT /TAPE VERIFIED!/
+MSG9,   TEXT /ERROR IN BLOCK /
+        PAGE
+        $
+

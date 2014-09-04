@@ -1,0 +1,112 @@
+
+
+/DIAGNOSE ROUTINE, SOURCE TAPE I
+
+ORIGIN=3600          /ALTER THIS INSTRUCTION ONLY TO
+                     /REPOSITION ENTIRE ROUTINE
+
+/NOTE THAT FLOATING POINT SECTION OF THIS ROUTINE STARTS 
+/AT ORIGIN-200
+
+*ORIGIN+600          /THIS PAGE IS DEVOTED MAINLY TO A
+                     /'WRITE' SUBROUTINE & TO THE ARCHIVE
+
+WRITEO,   0          /HOLDS MAIN PROGRAM ADDRESS, E.G.
+                     /THAT OF 'NO2'
+          CLA
+          TAD I WRITEO  /GET THE MESSAGE NUMBER
+          DCA KEEP   /STORE IT
+          TAD I KEEP /GET XXYY, THE ENCODED PAIR
+          LSR        /SHIFT C(AC+MQ) RIGHT 6 BITS -
+          0005       / - TO GIVE 00XX IN AC
+          JMS SIXBIT
+          SHL        /SHIFT C(AC+MQ) LEFT AGAIN -
+          0005       / - TO GIVE 00YY IN AC
+          JMS SIXBIT
+          ISZ KEEP      /GET THE NEXT -
+          JMP WRITEO+4  / - ENCODED PAIR
+          CLA CMA    /RESET 'TAB' TO -
+          DCA TAB    / - 7777
+          ISZ WRITEO /EX-
+          JMP I WRITEO /-IT
+SIXBIT,   0          /SUBROUTINE TO HANDLE THE INTERPRET-
+                     /ATION OF EACH 6 BIT CODE
+          ISZ TAB    /DOES TAB CONTAIN 0 OR -1?
+          JMP RECORD+5 /0: SO THIS CODE IS A TABULATION #
+          TAD M74    /-1 AS USUAL: 00XX-0074
+          SPA
+          JMP RECORD /CODES 73 AND LESS: PRINT THEM
+          SNA
+          JMP RECORD+3 /CODE 74: GO & CLEAR 'TAB'
+          TAD M2     /-1, 0 OR +1 FOR CODES 75, 76 OR 77
+          SMA SZA
+          JMP SIXBIT-4 /CODE 77: GO & EXIT
+          SZA
+          TAD P4     /CODE 75
+          TAD M122   /CODES 75 & 76
+RECORD,   TAD P54    /00XX - 0020 FOR CODES 73 & LESS
+          JMS DIGOUT
+          CLA CMA    /-1
+          DCA TAB    /ENSURE 'TAB' IS SET TO -1
+          JMP I SIXBIT /GET NEXT 6 BITS
+          CIA        /-(TABULATION #)
+          DCA TAB    /NOW USE 'TAB' AS AN INDEX
+          TAD P54
+          TAD M74    /-0020 + 0260 = 0240 = ASCII 'SPACE'
+          JMS DIGOUT
+          ISZ TAB    /COUNTING
+          JMP .-4    /REPEAT
+          JMP RECORD+2 /TABULATION COMPLETE* :  SET 'TAB'
+KEEP,     0
+TAB,      -1         /INITIALLY SET
+M2,       -2
+P4,       4
+M74,      -74
+M122,     -122
+P54,      54
+DIGOUT,   0          /SUBROUTINE TO OUTPUT A SINGLE OCTIT
+          TAD P260
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I DIGOUT
+P260,     260
+NO1,      7576;6471;6045;0064;5045;0051;5651;6451;4154;0043;1077
+NO2,      6043;1132;0077
+NO3,      5411;3200;0077
+NO4,      4143;1132;0077
+NO5,      5561;1132
+NO11,     0077
+NO91,     7576
+NO94,     7575;0077
+NO92,     7677
+NO95,     7576;7436
+NO10,     7403;0077
+NO58,     3546;7777
+NO80,     7575;7426
+NO81,     1477
+NO20,     4156;4477
+NO21,     6441;4477
+NO22,     5163;7277
+NO23,     4443;4177
+NO24,     5255;6377
+
+*ORIGIN+373
+
+NO25,     5255;6077
+NO26,     3677
+NO57,     4570;6477
+
+*ORIGIN+577
+
+NO93,     3577
+
+*ORIGIN+133          
+
+NO99,     7600
+NO12,     7402;7777
+
+          PAUSE
+
+~

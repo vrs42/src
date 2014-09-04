@@ -1,0 +1,507 @@
+/A-07-02
+
+/FOUR WORD RUDIMENTARY CALCULATOR
+/USES FOUR WORD FLOATING POINT PACKAGE 8-20-F
+/AND FOUR WORD EXTENDED FUNCTIONS A-07-01
+
+/STARTING ADDRESS 4400   ***********************
+
+FSQ=0001
+FSQRT=0002
+FSIN=0003
+FCOS=0004
+FATN=0005
+FLOG=0006
+FEXP=0007
+
+*5
+          7400
+          7200
+          5600
+
+*4400
+          KCC        /INITIALIZE FLAGS
+          TLS
+START,    JMS CRLF   /TYPE 3 CARRIAGE RETURNS
+          JMS CRLF
+          JMS CRLF
+          JMS I 5    /CALL F.P. INPUT
+
+/TEST C(60)
+TCH,      CLA
+          TAD ALIST1 /INITIALIZE OPERATOR LIST
+          DCA EX
+          TAD ALIST2 /INITIALIZE OPERATION LIST
+          DCA OP
+          JMS SCAN   /SEARCH FOR OPERATOR
+          JMP TCH1   /NOT FOUND, CHECK USER LIST
+          TAD I OP   /FOUND, GET OPERATION
+          DCA EX1    /PUT INTO EXECUTE ROUTINE
+          TAD 60     /GET TERMINATING CHARACTER
+          AND MASK1
+          SNA CLA    /ONE OPERAND OPERATION?
+          JMP OP2    /NO, TWO OPERAND OPERATION
+          JMS EX             /EXECUTE ONE OPERAND OPERATION
+          JMP TCH2
+
+TCH1,     TAD ALIST3 /INITIALIZE USER OPERATION LIST
+          DCA OP
+          JMS SCAN   /SEARCH FOR USER OPERATOR
+          JMP TCH4   /NOT FOUND, ILLEGAL CHARACTER
+OP,       0          /EXECUTE USER ROUTINE
+TCH2,     JMS I INPUT        /READ ONE CHAR INTO 60
+TCH3,     JMP TCH    /REPEAT OPERATOR SEARCH
+
+/OUTPUT RESULT AND  RESTART
+TCH4,     TAD EQL
+          JMS I TYPE
+          JMS CRLF
+          JMS I 6             /OUTPUT RESULT
+          JMP START
+
+/SCAN OPERATOR LISTS
+SCAN,     0
+SCAN1,    ISZ EX     /PICK UP NEXT OPERATOR
+          ISZ OP     /PICK UP NEXT OPERATION
+          TAD I EX
+          SNA        /END OF LIST REACHED?
+          JMP I SCAN /YES, CHECK USER LIST
+          TAD 60
+          SZA CLA    /NO, MATCH FOUND YET?
+          JMP SCAN1  /NO, MOVE DOWN LIST
+          ISZ SCAN   /YES, RETURN TO GET INSTRUCTION
+          JMP I SCAN
+
+
+/EXECUTION OF TWO OPERAND OPERATIONS
+OP2,      JMS I 7
+          FPUT DFS1  /STORE FIRST OPERAND
+          FEXT
+          JMS I 5    /CALL F.P. INPUT
+          JMS I 7
+          FPUT DFS2  /STORE SECOND OPERAND
+          FGET DFS1  /GET FIRST OPERAND
+          FEXT
+          JMS EX     /EXECUTE TWO OPERAND OPERATION
+          JMP TCH    /RETURN TO CHECK TERMINATING CHAR
+
+/EXECUTE ROUTINE
+EX,       0
+          JMS I 7
+EX1,      0          /OPERATION INSTRUCTION
+          FEXT
+          JMP I EX
+
+/BASIC F.P. OPERATORS PROVIDED
+/TWO OPERAND OPERATORS
+LIST1,    -0253              /+
+          -0255               /-
+          -0252               /*
+          -0257               //
+/ONE OPERAND OPERATORS
+          -0307               /G
+          -0320               /P
+          -0321               /Q
+          -0322               /R
+          -0323               /S
+          -0303               /C
+          -0301               /A
+          -314             /L
+          -330             /X
+          0
+/USER DEFINED OPERATORS 8 ROUTINES CAN BE ADDED
+/OPERATOR SYMBOL MAY BE EITHER LETTER OR NUMBER OR SPECIAL CHAR
+USER1,    0
+          0
+          0
+          0
+          0
+          0
+          0
+         0
+
+/TWO OPERAND OPERATIONS
+LIST2,    FADD DFS2
+          FSUB DFS2
+          FMPY DFS2
+          FDIV DFS2
+/ONE OPERAND OPERATIONS
+          FGET DFS3
+          FPUT DFS3
+          FSQ
+          FSQRT
+          FSIN
+          FCOS
+          FATN
+          FLOG
+          FEXP
+
+/ADDRESSES OF USER DEFINED OPERATION SUBROUTINES
+USER2,    0
+          0
+          0
+          0
+          0
+          0
+          0
+
+DFS1,     0                   /FIRST OPERAND
+          0
+          0
+          0
+DFS2,     0                   /SECOND OPERAND
+          0
+          0
+          0
+DFS3,     0          /STORAGE REGISTER FOR "PUT" AND "GET"
+          0
+          0
+          0
+
+CRLF,     0
+          TAD CR
+          JMS I TYPE
+          TAD LF 
+          JMS I TYPE
+          JMP I CRLF
+
+
+MASK1,    0100
+ALIST1,   LIST1-1
+ALIST2,   LIST2-1
+ALIST3,   JMS I USER2-1
+EQL,      0275
+CR,       0215
+LF,       0212
+TYPE,     7345
+INPUT,    7150
+
+
+
+/FOUR USER DEFINED OPERATIONS:
+/1.OUTPUT FAC IN OCTAL AND AS USUAL
+/2.INPUT OPERAND IN OCTAL FORM
+/3.INPUT OPERAND IN DEGREES,MINUTES,SECONDS
+/4.OUTPUT FAC IN DEGREES,MINUTES,SECONDS AND TENTHS
+
+*USER1
+          -0317               /O
+          -0311               /I
+          -0304               /D
+          -250                /(
+
+
+*USER2
+          OCTL
+          IPACK
+          DEGR
+          ODMS
+
+*4200
+
+/TERMINATE CALCULATION
+/OUTPUT C(FAC) IN OCTAL
+/OUTPUT AS USUAL
+OCTL,     0
+          TAD 44
+          JMS OUTC
+          TAD 45
+          JMS OUTC
+          TAD 46
+          JMS OUTC
+          TAD 47
+          JMS OUTC
+          JMP I TINPT
+
+OUTC,     0
+          DCA REG1
+          TAD REG4
+          DCA REG2
+          JMS I COUTCR
+          TAD REG1
+          CLL RTL
+          JMP OUTC3
+OUTC2,    TAD REG1
+          RAL
+OUTC3,    RTL
+          DCA REG1
+          TAD REG1
+          AND REG3
+          TAD REG6
+          JMS I PRINT
+          ISZ REG2
+          JMP OUTC2
+          JMP I OUTC
+
+TINPT,    TCH4
+REG1,     0
+REG2,     0
+REG3,     0007
+REG4,     -4
+REG6,     0260
+COUTCR,   CRLF
+PRINT,    7345
+IN,       7150
+TEMP,     DFS1
+
+
+/INPUT OPERAND IN OCTAL FORM
+/OPERATOR MUST PRECEED INPUT
+IPACK,    0
+          JMS I COUTCR
+          JMS INPD
+          DCA 44
+          JMS I COUTCR
+          JMS INPD
+          DCA 45
+          JMS I COUTCR
+          JMS INPD
+          DCA 46
+          JMS I COUTCR
+          JMS INPD
+          DCA 47
+          JMP I IPACK
+
+INPD,     0
+          CLA
+          TAD REG4
+          DCA REG1
+INPD2,    DCA REG2
+          JMS I IN
+          AND REG3
+          TAD REG2
+          ISZ REG1
+          SKP
+          JMP I INPD
+          CLL RAL
+          RTL
+          JMP INPD2
+
+/INPUT OPERAND AS DEGREES, MINUTES, SECONDS
+/STORE IN FAC IN RADIANS
+/OPERATOR MUST PRECEED OPERAND
+/OPERAND FORMAT:
+/DEGREES, SPACE, MINUTES, SPACE, SECONDS, SPACE
+DEGR,     0
+          JMS I 5
+          JMS I 7
+          FMPY D
+          FPUT I TEMP
+          FEXT
+          JMS I 5
+          JMS I 7
+          FMPY M
+          FADD I TEMP
+          FPUT I TEMP
+          FEXT
+          JMS I 5
+          JMS I 7
+          FMPY S
+          FADD I TEMP
+          FEXT
+          JMP I DEGR
+
+D,        7773                /DEGREES TO RADIANS
+          2167
+          6432
+          4225
+
+M,        7765                /MINUTES TO RADIANS
+          2304
+          0455
+          2756
+
+
+S,        7757                /SECONDS TO RADIANS
+          2425
+          3226
+          6277
+
+
+
+          
+
+
+/SUBROUTINE TO OUTPUT DEGREES, MINUTES, SECONDS
+*4000
+ODMS,     0
+          JMS I 7
+          FMPY DEGRAD
+          FPUT SAVE1
+          FEXT
+          TAD 45
+          SPA CLA
+          JMP NEGAT
+          JMS SPACE
+GO,       JMS I AFLFX
+          JMS I ABBCD
+          JMS PACC
+          JMS SPACE
+          TAD 45
+          JMS I AFXFL
+          JMS I 7
+          FPUT SAVE2
+          FGET SAVE1
+          FSUB SAVE2
+          FMPY F60
+          FPUT SAVE1
+          FEXT
+          JMS I AFLFX
+          JMS I ABBCD
+          JMS PACC
+          JMS SPACE
+          TAD 45
+          JMS I AFXFL
+          JMS I 7
+          FPUT SAVE2
+          FGET SAVE1
+          FSUB SAVE2
+          FMPY F600
+          FEXT
+          JMS I AFLFX
+          JMS I ABBCD
+          JMS PACC
+          JMP I ASTART
+NEGAT,    JMS I 63
+          JMS I 7
+          FPUT SAVE1
+          FEXT
+          CLA
+          TAD MINSIN
+          JMS I ATYPE
+          JMP GO
+MINSIN,   255
+
+PACC,     0
+          DCA HOLD
+          TAD M3
+          DCA PCTR
+PACC1,    TAD HOLD
+          CLL RTL
+          RTL
+          DCA HOLD
+          TAD HOLD
+          RAL
+          AND K17
+          TAD CODE
+          JMS I ATYPE
+          ISZ PCTR
+          JMP PACC1
+          JMP I PACC
+SAVE1,    0
+          0
+          0
+          0
+SAVE2,    0
+          0
+          0
+          0
+F60,      0006
+          3600
+          0
+          0
+F600,     0012
+          2260
+          0
+          0
+PCTR,     0
+DEGRAD,   0006
+          3451
+          3560
+          3230
+HOLD,     0
+M3,       -3
+K17,      0017
+CODE,     260
+ATYPE,    7345
+SPACE,    0
+          CLA
+          TAD SP
+          JMS I ATYPE
+          JMP I SPACE
+SP,       240
+
+AFLFX,    FLFX
+ABBCD,    BBCD
+AFXFL,    FXFL
+ASTART,   4402
+
+
+
+/[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[
+*3600
+FXFL,     0
+          DCA 45
+          DCA 46
+          DCA 47
+          TAD C13
+          DCA 44
+          JMS I 7
+          FNOR
+          FEXT
+          JMP I FXFL
+C13,      13
+BBCD,     0
+          DCA TMPS
+          DCA VLUE
+          TAD TMPS
+          TAD M100
+          SPA
+          JMP .+3
+          ISZ VLUE
+          JMP .-4
+          TAD K100
+          DCA TMPS
+          TAD VLUE
+          CLL RTL
+          RTL
+          DCA VLUE
+          TAD TMPS
+          TAD M10
+          SPA
+          JMP .+3
+          ISZ VLUE
+          JMP .-4
+          TAD K10
+          DCA TMPS
+          TAD VLUE
+          CLL RTL
+          RTL
+          TAD TMPS
+          JMP I BBCD
+TMPS,     0
+VLUE,     0
+M100,     -144
+K100,     144
+M10,      -12
+K10,      12
+FLFX,     0
+          CLA
+          TAD 44
+          SMA SZA
+          JMP .+4
+          CLA
+          DCA 45
+          JMP I FLFX
+          TAD M13
+          SNA
+          JMP FLFX1
+          SMA
+          HLT
+          DCA 44
+          CLL
+          TAD 45
+          SPA
+          CML
+          RAR
+          DCA 45
+          ISZ 44
+          JMP .-7
+FLFX1,    TAD 45
+          JMP I FLFX
+M13,      -13
+
+
+$
+
+

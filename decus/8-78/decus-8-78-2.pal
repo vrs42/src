@@ -1,0 +1,138 @@
+
+
+/DIAGNOSE ROUTINE,SOURCE TAPE II
+
+*ORIGIN
+
+START1,   NOP
+START2,   JMP .+5    /SPECIFY CONTENTS OF PSEUDOREGISTERS
+START3,   NOP
+START4,   DCA I LINKP  /START WITH PSEUDOREGISTERS CLEAR
+          DCA I ACCUP
+          JMP OMIT
+          JMS INPUT
+          NO3
+          DCA I LINKP
+          JMS INPUT
+          NO4
+          DCA I ACCUP
+          JMS INPUT
+          NO5
+OMIT,     DCA I MQUOP
+          JMS INPUT
+          NO2
+          DCA I ADDRP
+          DCA POINT  /CLEAR POINT
+REST,     JMS I WRITEP  /RESTART
+          NO94       /(RETURN, SPACE)
+          JMS I WRITEP
+          NO92       /(FEED)
+          TAD I LINKP /GET THE CONTENTS OF LINK
+          JMS I DIGOUP  /  -  & PRINT IT
+          JMS I WRITEP
+          NO11       /(SPACE)
+          TAD I ACCUP /GET C(ACCU)
+          JMS ACWRIT /& PRINT IT
+          JMS I WRITEP
+          NO10       /(FOUR SPACES)
+          TAD I MQUOP /GET C(MQUO)
+          JMS ACWRIT /& PRINT IT 
+NEXT,     JMS I WRITEP
+          NO99       /(FEED, 3 SPACES)
+          TAD I ADDRP /GET C(ADDR)
+          JMS ACWRIT /& PRINT IT
+          JMS I WRITEP
+          NO10
+          TAD I ADDRP
+          DCA STORAC /TEMPORARY STORE
+          TAD I STORAC /GET C[C(ADDR)] -
+          DCA I INSTP /& PUT INTO 'INST'
+          TAD I INSTP
+          JMS ACWRIT /& PRINT IT
+          TAD POINT
+          SZA CLA    /IN FLOATING POINT?
+          JMP I FLOATP   /YES
+          TAD I INSTP    /NO
+          CMA
+          AND P6000
+          SNA CLA
+          JMP I COD67P  /CODES 6 & 7
+          JMP I COD05P  /CODES 0 THROUGH 5
+WRITEP,   WRITEO
+P6000,    6000
+COD05P,   CODE05
+COD67P,   CODE67
+FLOATP,   FLOAT
+LINKP,    LINK
+MRADP,    MRAD
+PREVP,    PREV
+POSTP,    POST
+ACCUP,    ACCU
+MQUOP,    MQUO
+ADDRP,    ADDR
+INSTP,    INST
+POINT,    0          /CHANGED TO +1 DURING FP SEQUENCES
+INPUT,    0
+          TAD I INPUT
+          DCA .+4
+          JMS I WRITEP
+          NO1
+          JMS I WRITEP
+          0          /BECOMES 'NO5','NO3','NO4' OR 'NO2'
+          JMS LOADAC
+          ISZ INPUT
+          JMP I INPUT
+EXIT,     JMS I WRITEP
+          NO11
+          TAD I MRADP
+          JMS ACWRIT /PRINT C(MRAD
+          JMS I WRITEP
+          NO12       /(2 SPACES)
+          TAD I PREVP
+          JMS ACWRIT /PRINT C(PREV)
+          JMS I WRITEP
+          NO26       /">"
+          TAD I POSTP
+          JMS ACWRIT /PRINT C(POST)
+          JMP REST
+
+*ORIGIN+136
+
+LOADAC,   0          /TWO ROUTINES FOLLOW FOR INPUT &
+                     /OUTPUT OF 4-OCTIT NUMBERS
+          CLA MQL
+          TAD MINUS4
+          DCA COUNT
+          SHL        /SHIFT C(AC+MQ) LE-
+          0002       / -FT THREE BITS
+          MQL
+          KSF        /WAITING FOR READER BUF-
+          JMP .-1    /-FER TO BE FILLED
+          KRB        /ASCII CODED DIGIT ENTERS AC
+          TAD M0260  /SUBTRACT 260
+          MQA        /C(MQ) ORED WITH C(AC)
+          ISZ COUNT
+          JMP LOADAC+4
+          DCA STORAC
+          TAD STORAC
+          JMS ACWRIT
+          TAD STORAC
+          JMP I LOADAC
+ACWRIT,   0
+          MQL        /ZERO INTO AC, WXYZ INTO MQ
+          TAD MINUS4
+          DCA COUNT
+          SHL        /SHIFT C(AC+MQ) LE-
+          0002       / -FT THREE BITS
+          JMS I DIGOUP
+          ISZ COUNT
+          JMP ACWRIT+4
+          JMP I ACWRIT
+COUNT,    0          /-4 THEN -3 THEN -2 THEN -1
+MINUS4,   7774
+DIGOUP,   DIGOUT
+M0260,    7520
+STORAC,   0
+
+          PAUSE
+

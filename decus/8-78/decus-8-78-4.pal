@@ -1,0 +1,138 @@
+
+
+
+/DIAGNOSE ROUTINE, SOURCE TAPE IV
+
+*ORIGIN+400
+
+TWOCT,    0          /SUBROUTINR TO OUTPRINT THE OCTITS
+          DCA STORE  /YZ FOLLOWED BY A SPACE WHEN
+          TAD STORE  /ENTERED WITH WXYZ IN THE AC
+          RTR
+          RAR
+          AND P7
+          JMS I DIGOUQ
+          TAD STORE
+          AND P7
+          JMS I DIGOUQ
+          JMS I WRITEQ
+          NO11
+          JMP I TWOCT
+DIGOUQ,   DIGOUT
+WRITEQ,   WRITEO
+INSTQ,    INST
+P1760,    1760
+ADDRQ,    ADDR
+FINAD,    0
+P7,       7
+STORE,    0
+P5177,    5177
+P0177,    177
+LOCN,     0
+DUMMYP,   DUMMY
+MINST1,   JMP REGAIN+2
+ACCUQ,    ACCU
+LINKQ,    LINK
+MQUOQ,    MQUO
+MINST2,   JMP REGAIN+1
+MINST3,   JMP REGAIN
+P0377,    377
+P7600,    7600
+P7761,    7761
+P7767,    7767
+ACWRIQ,   ACWRIT
+CODE67,   TAD I INSTQ
+          RTL
+          SPA CLA
+          JMP CODE7
+          TAD I INSTQ           /CODE 6: GET C(INST)
+          AND P1760  /LOOK FOR CODES 601X
+          SNA CLA
+          IAC        /CODES 601X: ADD 3
+          IAC        /OTHER 6 CODES: ADD2
+BYPASS,   IAC        /CERTAIN EAE CODES: ADD ONE
+          TAD I ADDRQ /TO C(ADDR)
+          DCA FINAD  /HOLDS FINAL ADDRESS
+          JMS I WRITEQ
+          NO80       /(RETURN, 19 SPACES)","
+          TAD FINAD
+          JMS TWOCT
+          TAD FINAD
+          CMA
+          TAD I ADDRQ  /-4, -3 OR -2
+          DCA FINAD  /NOW USE 'FINAD' AS AN INDEX
+          TAD DUMMYP
+          DCA LOCN   /SET C(LOCN) TO DUMMY
+AGAIN,    TAD I ADDRQ
+          DCA STORE  /HOLDS AN ADDRESS IN THE SICK PROGRAM
+          TAD I STORE  /GET THE CORRESPONDING INSTRUCTION
+          DCA I LOCN /& SET IT INTO THE DUMMY SEQUENCE
+          TAD I STORE
+          JMS I ACWRIQ  /& PRINT IT
+          TAD P5177
+          CMA        /2600
+          TAD I STORE
+          AND P7600  /IS IT A JUMP .-1 INSTRUCTION?
+          SZA CLA
+          JMP .+5    /NO
+          TAD P0177  /YES
+          AND LOCN   /CURRENT DUMMY LINE #
+          TAD P5177  /SYNTHETIC JMP .-1 INSTRUCTION
+          DCA I LOCN /TO REPLACE ORIGINAL
+          ISZ I ADDRQ
+          ISZ LOCN
+          ISZ FINAD
+          JMP COMMA
+WAYOUT,   TAD MINST1 /LEAVE LOOP
+          DCA I LOCN /INSERT MOBILE INSTRUCTION # 1
+          JMS I WRITEQ
+          NO94       /(RETURN,SPACE) (TO *)
+          JMS FILL
+DUMMY,    0          /FIRST INSTRUCTION
+          0          /SECOND
+          0          /  :
+          0
+          0          /FOR MOBILE INSTRUCTION ONLY
+REGAIN,   ISZ I ADDRQ
+          ISZ I ADDRQ
+          JMS EMPTY
+          JMP I .+1  /RESTART WITH A 'FEED'
+          REST+2
+COMMA,    JMS I WRITEQ
+          NO81       /,
+          JMP AGAIN
+CODE7,    TAD I INSTQ
+          TAD P0377
+          AND P7761  /CODE 74(0 OR 1)(ODD)?
+          SZA CLA
+          JMP .+6    /NO
+          TAD I INSTQ  /YES
+          TAD P0377
+          AND P7767  /CODE 74(0 OR 1)1?
+          SZA CLA
+          JMP BYPASS /NO: CODES 74(0 OR 1)(3, 5 OR 7)
+          TAD I INSTQ  /YES
+          DCA DUMMY
+          TAD MINST2
+          DCA DUMMY+1
+          TAD MINST3
+          DCA DUMMY+2
+          JMP WAYOUT+2
+FILL,     0          /SUBROUTINE TO FILL MQ, L AND AC
+          TAD I MQUOQ/FROM MQUO, LINK AND ACCU
+          MQL
+          TAD I LINKQ
+          CLL RAR
+          TAD I ACCUQ
+          JMP I FILL
+EMPTY,    0          /SUBROUTINE TO EMPTY MQ, L AND AC
+          DCA I ACCUQ/INTO MQUO , LINK AND ACCU
+          RAL
+          DCA I LINKQ
+          MQA
+          DCA I MQUOQ
+          JMP I EMPTY
+
+          PAUSE
+
+

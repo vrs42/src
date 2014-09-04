@@ -1,0 +1,171 @@
+
+          /B.EIBEN    AACHEN,4.3.68.
+          /III.PHYS.INST
+          /T.H.AACHEN
+          /AACHEN,W.GERMANY
+          /TAPE HANDLER
+          /
+          /MANUAL OPERATION:
+          /          ADDR. 7442: NUMBER OF BLOCKS
+          /                7443: TRANSFER-ADRESS
+          /                7444: INITIAL BLOCK
+          /                7445: READ=2,WRITE=4
+          /                7446: STARTING ADRESS
+          /PROGRAM RETURNS TO 7441 WITH AC=0100,WHEN DONE!
+          /
+          /USING AS SUBROUTINE:
+          /          CALLING SEQUENCE:     JMS I PICKUP
+          /                                CORE ADRESS
+          /                                INITIAL BLOCK
+          /                                NUMBER OF BLOCKS
+          /                                ERROR RETURN ADRESS
+          /                                READ=2, WRITE=4
+          /
+          /WITH INTERRUPT,A,SERVICE ROUTINE SHOULD BE PREPARED AND
+          /DISM=NOP SHOULD BE REPLACED BY DISM=JMP  Z SCAT OR JMP I
+          / Z SCAT AS EXPLAINED FOR DEC STANDARD ROUTINES
+          /
+          /FOR SEARCHING,REQUEST 0 BLOCKS,CORE ADRESS AND READ OR
+          /WRITE IMMATERIAL
+          /PROGRAM IS PROTECTED,I.E. BLOCKS 0 OR 1 AND MEM.PORTION
+          /7600-7777 CAN'T BE OVERWRITTEN.TO SWITCH OFF PROTECTION
+          /CHANGE TAP,  STA RAL  TO TAP, JMP FORWD !
+          /
+          /AFTER TRANSFER,STATUS IS IN AC!
+          /AC=0000              PROTECTION WORKED,NO TRANSFER
+          /AC=0100              TRANSFER READY
+          /AC OTHERWISE,SEE USERS HANDBOOK FOR STATUS FLAGS!
+          /
+          /
+          DISM=NOP
+          *7400
+OUT,      CLA IAC    /RETURN SYSTEM
+          DCA BLOCKS
+          TAD ADDR
+          DCA ADRESS
+          STL RAL
+          DCA BLOCK
+          STL RTL
+          DCA REWRIT
+          TAD ADRESS
+          DCA SAVE
+          JMP FORWD
+M1,       7777
+WAIT,     0          /DT-DELAY AND SERVICE SUB
+          MMCF
+          DISM       /NOP OR JMP,JMP I Z FOR INTERRUPT-MODE
+RETURN,   MMSF       /DT-FLAG?
+          JMP .-1
+          CLA CLL
+          MMSC       /ERROR FLAG?
+          JMP I WAIT/NO,RETURN
+          MMRS       /YES,END ZONE?
+          RTL
+          SPA CLA
+          JMP REVD   /YES,REVERSE DIRECTION
+ERRET,    MMMF       /ERROR OR READY,STOP TAPE!
+          TAD SAVE
+          DCA I ADRESS/RESTORE 129TH WORD
+          MMRS       /GET STATUS
+          DCA WORK1
+          TAD WORK1
+          MMSF
+          JMP .-1
+          JMP I ERROR           /RETURN ADRESS
+ERR,      HLT
+BLOCKS,   0
+ADRESS,   0
+BLOCK,    0
+REWRIT,   0
+BEGIN,    CLA CLL
+          TAD BLOCKS
+          SNA
+          JMP FORWD  /0 BLOCKS REQUESTED,ONLY SEARCHING!
+          CIA
+          DCA BLOCKS /=-BLOCK-COUNT
+          TAD BLOCKS
+          DCA WORK1
+TAP,      STA RAL    /CHANGE TO JMP FORWD FOR ALL BLOCK-TRANSFER!
+          TAD BLOCK
+          SPA CLA
+          JMP I ERROR/BLOCK 0 OR 1 REQUESTED
+          TAD ADRESS
+          JMP NEXT+2
+NEXT,     TAD SAVE
+          TAD C200
+          DCA SAVE
+          TAD SAVE
+          TAD C200
+          SNA CLA
+          JMP I ERROR/ADRESS IN PROTECTED AREA
+          ISZ WORK1
+          JMP NEXT
+FORWD,    TAD FORWAD /SEARCH FORWARDS
+          MMMM
+          JMS WAIT
+          TAD WRK1   /=(WORK1
+          MMML
+SUCHE,    JMS WAIT
+          TAD WORK1
+          CIA
+          TAD BLOCK  /BLOCK FOUND?
+          SNA
+          JMP FINISH /YES!
+          SMA
+          JMP SUCHE  /NO,GO ON!
+REVD,     TAD M1     /SEARCH REVERSE
+          DCA SEARCH
+          TAD REVERS
+          MMMM
+          JMS WAIT
+          ISZ SEARCH
+          JMP .-2
+          JMP FORWD
+FINISH,   TAD BLOCKS /BLOCK FOUND,BEGIN TRANSFER
+          SNA CLA
+          JMP ERRET  /0 BLOCKS,ONLY SEARCHING!
+          TAD REWRIT
+          MMLF
+          TAD ADRESS
+          MMML
+          TAD ADRESS
+          TAD C200
+          DCA ADRESS
+          TAD I ADRESS/SAVE 129TH WORD
+          DCA SAVE
+          JMS WAIT
+          ISZ BLOCKS /READY?
+          JMP FINISH /NO
+          JMP ERRET
+C200,     200
+ADDR,     7600
+SEARCH,   0
+SAVE,     0
+ERROR,    ERR        /CAUTION,CHANGE FOR OTHER PAGE
+WORK1,    0
+WRK1,     WORK1      /CAUTION,CHANGE FOR OTHER PAGE
+FORWAD,   121
+REVERS,   131
+PICKUP,   0
+          IOF
+          CLA CLL
+          TAD PICKUP
+          DCA Z 0
+          TAD I Z 0  /GET CORE ADRESS
+          DCA ADRESS
+          ISZ Z 0
+          TAD I Z 0  /GET INITIAL BLOCK
+          DCA BLOCK
+          ISZ Z 0
+          TAD I Z 0  /GET BLOCK-COUNT
+          DCA BLOCKS
+          ISZ Z 0
+          TAD I Z 0  /GET (ERROR)-RETURN ADRESS
+          DCA ERROR
+          ISZ Z 0
+          TAD I Z 0  /GET READ-WRITE COMMAND
+          DCA REWRIT
+          ISZ Z 0    /FIRST RETURN SHOULD BE VIA Z 0
+          JMP BEGIN
+$
+

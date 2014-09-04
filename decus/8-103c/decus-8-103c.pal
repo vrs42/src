@@ -1,0 +1,236 @@
+
+            /PROGRAM BIO A-03-03
+            /CHANGES TO FLOATING POINT OUTPUT ROUTINE
+            /TO ALLOW OPTIONAL FIXED POINT OUTPUT
+            /IF (62)=0, OUTPUT FLOATING
+            /OTHERWISE C(62) = NUMBER DIGITS
+            /C(AC) = NUMBER OF DECIMAL  PLACES
+            /C(15) LOST DURING EXECUTION
+            *7200
+7200  0000  FOUT,    0
+7201  3631           DCA I SCAD               /SAVE C(AC)
+7202  1045           TAD HORDER
+7203  7710           SPA CLA
+7204  1330           TAD SMINUS
+7205  1327           TAD SPLUS
+7206  4345           JMS ASCOUT               /PRINT  +  OR  -
+7207  1376           TAD BFRST
+7210  3015           DCA 15                   /INITIALIZE AUTO-INDEX
+7211  5234           JMP 7234                 /CONVERT MANTISSA AND BUFFER THE DIGITS
+7212  1324  RETN,    TAD BEXP
+7213  3044           DCA 44                   /STORE DECIMAL EXPONENT
+7214  4777           JMS I FXAD               /GO TO OUTPUT THE NUMBER
+7215  5221           JMP CRLF                 /FIXED POINT RETURN
+7216  1343           TAD CHE                  /FLOATING POINT RETURN
+7217  4345           JMS ASCOUT               /PRINT E
+7220  4737           JMS I EXPT               /GO TO OUTPUT EXPONENT
+7221  1056  CRLF,    TAD SWIT1
+7222  7650           SNA CLA                  /PRINT CR-LF
+7223  5600           JMP I FOUT               /NO, EXIT
+7224  1341           TAD CARRTN               /YES
+7225  4345           JMS ASCOUT
+7226  1342           TAD LNFEED
+7227  4345           JMS ASCOUT
+7230  5600           JMP I FOUT               /EXIT
+7231  5567  SCAD,    SAC
+            *7376
+7376  5570  BFRST,   BUFFER-1
+7377  5400  FXAD,    FIX
+            *7301
+7301  3415           DCA I 15
+            *7305
+7305  3415           DCA I 15
+            *7310
+7310  5212           JMP RETN
+            *7325
+7325  7772           7772
+            /
+            /
+                     HORDER=45
+                     SMINUS=7330
+                     SPLUS=7327
+                     BEXP=7324
+                     CHE=7343
+                     EXPT=7337
+                     ASCOUT=7345
+                     SWIT1=56
+                     CARRTN=7341
+                     LNFEED=7342
+            /IN THE COMMENTS BELOW-
+            /   F = NUMBER OF DIGITS TO BE OUTPUT
+            /   D = NUMBER OF DECIMAL PLACES
+            /   E = DECIMAL EXPONENT
+            /   P = NUMBER OF PLACES REMAINING TO BE
+            /       PRINTED BEFORE DECIMAL POINT
+            *5400
+5400  0000  FIX,     0
+5401  1062           TAD 62
+5402  7450           SNA                      /FLOATING OUTPUT
+5403  5225           JMP R6                   /YES, ROUND OFF TO 6 PLACES
+5404  7041           CIA
+5405  1367           TAD SAC
+5406  7510           SPA                      /  F-D   0
+5407  5214           JMP .+5                  /YES
+5410  7240           CLA CMA
+5411  1062           TAD 62
+5412  3367           DCA SAC                  /MAKE D = F-1
+5413  7040           CMA
+5414  1044           TAD 44
+5415  7500           SMA                      /  F-D   E
+5416  7200           CLA                      /NO, ROUND OFF TO F PLACES
+5417  1062           TAD 62                   /YES
+5420  7510           SPA                      /   D+E   0
+5421  5250           JMP PRNT-1               /YES, NO ROUNDING NEEDED, GO TO PRINT
+5422  1356           TAD M6                   /NO, ROUND TO  D+E PLACES,
+5423  7500           SMA                      /TO A MAXIMUM OF 6 PLACES
+5424  7200           CLA
+5425  1354  R6,      TAD K7
+5426  3366           DCA TEMP                 /SAVE NUMBER+1 OF PLACES TO ROUND TO
+5427  1360           TAD BUFST
+5430  1366           TAD TEMP                 /SET UP BUFFER ADDRESS AT WHICH
+5431  3370           DCA PLCE                 /ROUNDING OFF SHOULD START
+5432  1366           TAD TEMP
+5433  7041           CIA                      /SET UP COUNT OF MAXIMUM NUMBER
+5434  3366           DCA TEMP                 /OF CARRIES ALLOWABLE
+5435  1353           TAD K4
+5436  2770  RET,     ISZ I PLCE               /ADD 1 TO DIGIT AT CURRENT POSITION
+5437  1770           TAD I PLCE
+5440  1357           TAD M10
+5441  7710           SPA CLA                  /CARRY REQUIRED
+5442  5251           JMP PRNT                 /NO, GO TO OUTPUT
+5443  3770           DCA I PLCE               /YES, MAKE CURRENT DIGIT A ZERO
+5444  2366           ISZ TEMP                 /BEGINNING OF BUFFER REACHED
+5445  5313           JMP DECR                 /NO, DECREMENT BUFFER ADDRESS AND REPEAT
+5446  2770           ISZ I PLCE               /YES, SET MANTISSA TO 0.1
+5447  2044           ISZ 44                   /COMPENSATE BY INCREMENTING EXPONENT
+5450  7200           CLA
+5451  1360  PRNT,    TAD BUFST
+5452  3015           DCA 15                   /SET AUTO-INDEX REGISTER
+5453  1062           TAD 62
+5454  7450           SNA                      /   F = 0
+5455  5342           JMP FLOP                 /YES, OUTPUT AS FLOATING NUMBER
+5456  7041           CIA                      /NO,
+5457  3370           DCA FCOUNT               /SET UP COUNT TO PRINT F PLACES
+5460  1370           TAD FCOUNT
+5461  1044           TAD 44
+5462  7540           SMA SZA                  /  E   F
+5463  5317           JMP XXX                  /YES, PRINT  X   S
+5464  1367           TAD SAC
+5465  7500           SMA                      /   E    F-D
+5466  7200           CLA                      /NO, TAKE P = E
+5467  7041           CIA                      /YES, TAKE P = F-D
+5470  1044           TAD 44
+5471  7041           CIA
+5472  3366           DCA TEMP                 /SET UP MINUS P
+5473  1363           TAD M7
+5474  3367           DCA SCOUNT               /SET COUNT OF MAX. NO. OF SIG. FIGS.
+5475  1044  BACK,    TAD 44
+5476  1366           TAD TEMP
+5477  7650           SNA CLA                  /   P = E
+5500  5330           JMP DIG                  /YES, PRINT DIGIT
+5501  1366           TAD TEMP                 /NO,
+5502  7001           IAC
+5503  7710           SPA CLA                  /   P   1
+5504  1362           TAD SPACE                /YES, TAKE SPACE  OTHERWISE ZERO
+5505  4323  IN,      JMS OUT                  /PRINT CHARACTER
+5506  2366           ISZ TEMP                 /P CHARACTERS PRINTED
+5507  5275           JMP BACK                 /NO
+5510  1364           TAD POINT                /YES,
+5511  4761           JMS I OPUT               /PRINT DECIMAL POINT
+5512  5275           JMP BACK
+5513  7040  DECR,    CMA
+5514  1370           TAD PLCE
+5515  3370           DCA PLCE
+5516  5236           JMP RET
+5517  7200  XXX,     CLA
+5520  1365           TAD CHX
+5521  4323           JMS OUT                  /PRINT X
+5522  5320           JMP .-2                  /AND REPEAT
+5523  0000  OUT,     0
+5524  4761           JMS I OPUT               /PRINT CHARACTER
+5525  2370           ISZ FCOUNT               /F CHARACTERS PRINTED
+5526  5723           JMP I OUT                /NO, RETURN
+5527  5600           JMP I FIX                /YES, NUMBER FINISHED
+5530  7040  DIG,     CMA
+5531  1044           TAD 44                   /REDUCE E BY 1
+5532  3044           DCA 44
+5533  2367           ISZ SCOUNT               /6 SIG. FIGS. PRINTED
+5534  5340           JMP .+4                  /NO
+5535  7040           CMA                      /YES,
+5536  3367           DCA SCOUNT               /RESET COUNT TO -1
+5537  5305           JMP IN                   /AND LEAVE C(AC) = 0
+5540  1415           TAD I 15                 /TAKE NEXT DIGIT FROM BUFFER
+5541  5305           JMP IN
+5542  1356  FLOP,    TAD M6                   /SET COUNT TO PRINT
+5543  3370           DCA FCOUNT               /6 DIGITS AFTER DECIMAL POINT
+5544  4761           JMS I OPUT               /PRINT 0
+5545  1364           TAD POINT
+5546  4761           JMS I OPUT               /PRINT   .
+5547  2200           ISZ FIX                  /INCREMENT RETURN ADDRESS
+5550  1415           TAD I 15                 /TAKE NEXT DIGIT FROM BUFFER
+5551  4323           JMS OUT                  /PRINT IT
+5552  5350           JMP .-2                  /AND REPEAT
+5553  0004  K4,      4
+5554  0007  K7,      7
+5555  7775  M3,      -3
+5556  7772  M6,      -6
+5557  7766  M10,     -12
+5560  5570  BUFST,   BUFFER-1
+5561  7353  OPUT,    7353
+5562  7760  SPACE,   240-260
+5563  7771  M7,      -7
+5564  7776  POINT,   256-260
+5565  0050  CHX,     330-260
+5566  0000  TEMP,    0
+                  SAC,
+5567  0000  SCOUNT,  0
+            PLCE,
+5570  0000  FCOUNT,  0
+            BUFFER,
+
+ASCOUT  7345
+BACK    5475
+BEXP    7324
+BFRST   7376
+BUFFER  5571
+BUFST   5560
+CARRTN  7341
+CHE     7343
+CHX     5565
+CRLF    7221
+DECR    5513
+DIG     5530
+EXPT    7337
+FCOUNT  5570
+FIX     5400
+FLOP    5542
+FOUT    7200
+FXAD    7377
+HORDER  0045
+IN      5505
+K4      5553
+K7      5554
+LNFEED  7342
+M10     5557
+M3      5555
+M6      5556
+M7      5563
+OPUT    5561
+OUT     5523
+PLCE    5570
+POINT   5564
+PRNT    5451
+RET     5436
+RETN    7212
+R6      5425
+SAC     5567
+SCAD    7231
+SCOUNT  5567
+SMINUS  7330
+SPACE   5562
+SPLUS   7327
+SWIT1   0056
+TEMP    5566
+XXX     5517
+
+

@@ -1,0 +1,148 @@
+
+
+
+
+/DIAGNOSE ROUTINE SOURCE TAPE V
+
+*6
+
+          7200       /FLOATING POINT OUTPUT POINTER
+          5600       /FLOATING POINT INTERPRETER POINTER
+
+*ORIGIN-200
+
+MRAD2,    0          /WILL DUPLICATE MRAD OR HOLD 0044
+FLOUT,    0          /SUBROUTINE TO FLOATING OUTPUT THE
+                     /INDIRECT CONTENTS OF MRAD2
+          TAD 55
+          DCA STOR55
+          DCA 55     /INHIBIT CRLF AFTER F.P. OUTPUT
+          JMS I 7
+          FPUT STORFP/SAVE C(FACC)
+          FGET I MRAD2
+          FEXT
+          JMS I 6    /OUTPUT
+          JMS I 7
+          FGET STORFP/RETRIEVE C(FACC)
+          FEXT
+          TAD STOR55
+          DCA 55     /RESTORE FORMER 55 CONTENTS
+          JMP I FLOUT
+STOR55,   0
+STORFP,   0;0;0
+POINTT,   POINT
+WRITET,   WRITEO
+P7000,    7000
+P600,     600
+P44,      44         /ADDRESS OF FACC
+ADDRT,    ADDR
+NEXTT,    NEXT
+TWOCTP,   TWOCT
+INSTT,    INST
+MRADT,    MRAD
+ACWRTT,   ACWRIT
+          FIND
+FLOAT,    JMS I .-1  /ENTRY POINT FROM ALL FLOATING POINT
+                     /COMMANDS EXCEPT JMS I 7
+          JMS I WRITET
+          NO58       /"=F"
+          TAD I INSTT
+          SZA
+          JMP CONTNU /INSTRUCTION OTHER THAN FEXT
+          JMS I WRITET
+          NO57       /"EXT"
+          DCA I POINTT  /CLEAR 'POINT'
+          JMP HENCE
+CONTNU,   RAL
+          SNL
+          JMP FCOD03
+          RAL
+          SNL
+          JMP FCOD45
+          JMS DECIDE
+          NO47
+          NO46
+FCOD45,   JMS DECIDE /FP CODES 4 OR 5
+          NO45
+          NO44
+FCOD03,   RAL        /FP CODES 0 THROUGH 3
+          SNL
+          JMP FCOD01
+          JMS DECIDE
+          NO43
+          NO42
+FCOD01,   SMA        /CODE 0 (EXPANDABLE) OR 1 (MEM REF)??
+          JMP EXPAND /CODE 0
+          JMS DECIDE /CODE 1 - NO DECISION
+          NO41
+DECIDE,   0          /NOT EXITED IN NORMAL SUBROUTINE FASHION
+          SMA CLA    /IS BIT ZER O 0 OR 1?
+          ISZ DECIDE /ZERO
+          TAD I DECIDE / GET APPROPRIATE MESSAGE NUMBER
+          DCA .+2
+          JMS I WRITET
+          0
+          JMS I WRITET
+          NO11       /(SPACE)
+          TAD I MRADT
+          JMS I ACWRTT  /OUTPUT MEMORY REFERENCE ADDRESS
+          JMS I WRITET
+          NO12       /(2 SPACES)
+          TAD I MRADT
+          DCA MRAD2
+          JMS FLOUT  /OUTPUT PRIOR C(MEM REF ADD) IN F.P.
+          TAD I INSTT           /THE ACTUAL INSTRUCTION
+          AND P7000  /ITS FIRST OCTIT
+          TAD P600   /0600 = INDIRECT,THIS PAGE
+          JMS PSEUDO
+          JMS I WRITET
+          NO26       /">"
+          JMS FLOUT  /OUTPUT SUBSEQ C(MEM REF ADD) IN F.P.
+          JMP HENCE
+EXPAND,   CLA
+          TAD I INSTT
+          JMS I TWOCTP
+          TAD I INSTT
+          JMS PSEUDO
+          JMP HENCE
+GOFLO,    JMS I WRITET          /ENTRY FOR JMS I 7 INSTRUCTION
+          NO59       /"FENT"
+          ISZ I POINTT  /SET 'POINT' TO +1
+HENCE,    JMS I WRITET
+          NO91       /(RETURN,FEED,SPACE)
+          TAD P44
+          DCA MRAD2
+          JMS FLOUT  /OUTPUT C(FACC)
+          ISZ I ADDRT
+          JMP I NEXTT  /RETURN TO MAIN PROGRAM
+PSEUDO,   0          /SUBROUTINE IN WHICH THE FLOATING
+                     /INSTRUCTION IS EXECUTED.  IN THE CASE
+                     /OF MEMORY REFERENCE INSTRUCTIONS,
+                     /THE EXECUTED INSTRUCTION IS ACTUALLY
+                     /INDIRECT TO MRAD2, SINCE THE LATTER
+                     /REGISTER CONTAINS THE TRUE MEMORY
+                     /REFERENCE ADDRESS
+          DCA .+2
+          JMS I 7
+          0
+          FEXT
+          JMP I PSEUDO
+NO59,     4645;5664;7777
+NO41,     4144       /ADD
+          4477
+NO42,     6365       /SUB
+          4277
+NO43,     5560       /MPY
+          7177
+NO44,     4451       /DIV
+          6677
+NO45,     4745       /GET
+          6477
+NO46,     6065       /PUT
+          6477
+NO47,     5657       /NOR
+          6277
+
+          $
+
+

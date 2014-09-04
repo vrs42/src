@@ -1,0 +1,100 @@
+
+*5200
+
+/TAPE CHARACTER EDITOR AND COMMENTATOR.
+/
+/THIS PROGRAM FITS BELOW MACRO-8
+/AND ABOVE DDT-8.
+/
+          TLS
+TOP,      JMS RED             /CLEAR THE FLAG TO GET NEXT.
+          DCA TEM             /SAVE THE CHARACTER.
+          LAS                 /CHECK THE CONTROLS FOR PRINT-SKIP
+          AND SKIP            /MASK OUT SKIP SWITCH.
+          SZA CLA             /TEST THE SWITCH.
+          JMP .+3             /SKIP PRINTING.
+          TAD TEM             /PRINT
+          JMS PNT             / PRINT A CHARACTER.
+          LAS                 /CHECK FOR SPEED COMMAND.
+          AND SPEED
+          SNA CLA
+          JMP WAITER          /GO CHECK THE STOP COMMAND.
+          JMS CYCLE           /WAIT.
+          LAS                 /READ THE SW'S.
+          AND MED             /MASK BIT ONE.
+          SNA CLA             /MEDIUM SPEED?
+          JMP WAITER          /WAITING DONE.
+          JMS CYCLE           /YES
+          LAS
+          AND LOW
+          SZA CLA             /LOW SPEED?
+          JMS CYCLE
+WAITER,   LAS                 /NO.
+          AND WAIT            /CHECK STOP COMMAND.
+          SZA CLA             /IS SW-3 DOWN?
+          JMP .-3             /NO,WAIT.
+          KCC                 /FETCH NEXT CHARACTER.
+          LAS
+          AND STOP            /CHECK FOR CR?
+          SNA CLA
+          JMP TOP             /NO
+          JMS RED             /READ NEXT NOW.
+          TAD MCR
+          SZA CLA             /CR FOUND?
+          JMP TOP             /NOT FOUND
+          TAD SLASH           /PRINT COMMENT FIELD INSTEAD.
+          JMS PNT 
+          JMS RED             /WAIT FOR A NON-CR TO COME INTO
+          TAD MCR             /THE KEYBOARD BUFFER.
+          SNA CLA
+          JMP .-3             /CONTINUE WAITING.
+          KCC                 /FETCH NEXT CHARACTER.
+COMENT,   JMS RED             /READ COMMENT FIELD.
+          DCA TEM             /SAVE ONE.
+          TAD TEM
+          JMS PNT             /PRINT AND PUNCH.
+          KCC                 /FETCH NEXT.
+          TAD TEM             /TEST LAST.
+          TAD MCR             /TEST FOR CR.
+          SNA CLA
+          JMP TOP             /RESUME NEXT LINE.
+          JMP COMENT          /CONTINUE COMMENT FIELD.
+///////
+PNT,      0                   /PRINT A LETTER.
+          TSF                 /PRINT A LETTER.
+          JMP .-1             /WAIT FOR THE LAST ONE TO 
+          TLS                 /TO FINISH;THEN TYPE.
+          CLA                 /CLEAR AC.
+          JMP I PNT           /RETURN.
+/////
+RED,      0
+          KSF                 /READ A LETTER.
+          JMP .-1
+          KRS
+          JMP I RED           /RETURN.
+///////
+CYCLE,    0                   /ENTRY POINT.
+          TAD MUMPH           /SETUP # OF TIMES TO DO
+          DCA TEM             /20000(8) X35MMS.
+          ISZ CNTR            /COUNT 2EXP(12).
+          JMP .-1             /WAIT
+          ISZ TEM             /COUNT CYCLES.
+          JMP .-3             /(NOP)-FOR 8/S.
+          JMP I CYCLE         /EXIT.
+///////
+CNTR,     0
+TEM,      0
+MUMPH,    -20
+MCR,      -215
+SLASH,    257
+WAIT,     400
+SKIP,     40
+STOP,     4
+SPEED,    7000
+MED,      3000
+LOW,      1000
+/////
+
+          $
+
+
