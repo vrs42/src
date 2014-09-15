@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+# Check for bare <td>
+
+foreach $f (@ARGV) {
+  open(INPUT, $f) || die "$f: $!";
+  $table = 0;
+  while (<INPUT>) {
+    $l = $_;
+    while ($l =~ s/<([^>]*)>//) {
+      $html = $1;
+      $table++ if $html =~ m:^table:i;
+      $table-- if $html =~ m:^/table:i;
+      if ($html =~ m:^td:i) {
+        warn "$f\n" unless $table == 1;
+      }
+    }
+  }
+}
+

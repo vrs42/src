@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+#
+# Check for nexted HTML tags.
+#
+
+#
+# These tags are typically not closed, so don't 
+# bother to keep track of them.
+%nocheck = (
+  "p", 1,
+  "br", 1,
+  "td", 1,
+  "tr", 1,
+  "col", 1,
+  "li", 1,
+);
+
+foreach $f (@ARGV) {
+  open(INPUT, $f) || die "$f: $!";
+  @context = ();
+  $line = 0;
+  while (<INPUT>) {
+    $line++;
+    y/A-Z/a-z/;
+    while (s/<([\/\w]+)[^>]*>//) {
+      $html = $1;
+      $end = ($html =~ s:/::);
+      next if $nocheck{$html};
+      if ($end) {
+        $context = pop(@context);
+        warn "Got /$html, expected /$context in $f, line $line\n"
+          unless $html eq $context;
+      } else {
+        push(@context, $html);
+      }
+    }
+  }
+}
