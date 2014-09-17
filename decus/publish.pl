@@ -129,7 +129,10 @@ sub process {
   "[5,8]+-7\\d\\d", "8-700",
   "[5,8]+-8\\d\\d", "8-800",
   "[5,8]+-9\\d\\d", "8-900",
-  "focal", "focal8",
+  "focal8-\\d{1,2}[^\\d]", "focal8-1",
+  "focal8-1\\d\\d", "focal8-100",
+  "focal8-2\\d\\d", "focal8-200",
+  "focal8-3\\d\\d", "focal8-300",
 );
 @patterns = (
   "[5,8]+-\\d{1,2}[^\\d]",
@@ -142,7 +145,10 @@ sub process {
   "[5,8]+-7\\d\\d",
   "[5,8]+-8\\d\\d",
   "[5,8]+-9\\d\\d",
-  "focal",
+  "focal8-\\d{1,2}[^\\d]",
+  "focal8-1\\d\\d",
+  "focal8-2\\d\\d",
+  "focal8-3\\d\\d",
 );
 
 #
@@ -163,7 +169,10 @@ print "<a href=#decus-8-600>8-600</a>\n";
 print "<a href=#decus-8-700>8-700</a>\n";
 print "<a href=#decus-8-800>8-800</a>\n";
 print "<a href=#decus-8-900>8-900</a>\n";
-print "<a href=#decus-focal8>focal8</a></div>\n";
+print "<a href=#decus-focal8-1>focal8-1</a>\n";
+print "<a href=#decus-focal8-100>focal8-100</a>\n";
+print "<a href=#decus-focal8-200>focal8-200</a>\n";
+print "<a href=#decus-focal8-300>focal8-300</a></div>\n";
 print "<div>You can scroll around, or you could try searching (i.e., 'disassembler').</div><p>\n";
 
 #
