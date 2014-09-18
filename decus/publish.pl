@@ -11,17 +11,18 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/decus";
 
 $head = <<'EOM';
 <?php
-  $title = "MAINDEC Software Files";
+  $title = "DECUS Software Files";
   include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/header.php';
 ?>
-<BODY>
+<BODY><FONT size=4>
 EOM
 
 $body = <<'EOM';
 <P>
 Here is my collection of things both DECUS and PDP-8.  The intent here is 
 to provide a home for the known surviving bits of the PDP-8 portions of 
-DECUS.
+DECUS.  However, I haven't yet done anything with the BASIC8, LINC, or 
+PDP-12 DECUS stuff.
 <P>
 Part numbers have been altered slightly.  "5/8-1.1" becomes "5,8-1.1"
 because slashes aren't valid in filenames.  In some cases, trailing "a",
@@ -158,7 +159,8 @@ print $body;
 
 #
 # Emit quick navigation links
-print "<div>Some quick navigation links:\n";
+print "<div>Some quick navigation links:</div>\n";
+print "<div style=padding-left:23px>\n";
 print "<a href=#decus-8-1>8-1</a>\n";
 print "<a href=#decus-8-100>8-100</a>\n";
 print "<a href=#decus-8-200>8-200</a>\n";
@@ -168,17 +170,18 @@ print "<a href=#decus-8-500>8-500</a>\n";
 print "<a href=#decus-8-600>8-600</a>\n";
 print "<a href=#decus-8-700>8-700</a>\n";
 print "<a href=#decus-8-800>8-800</a>\n";
-print "<a href=#decus-8-900>8-900</a>\n";
+print "<a href=#decus-8-900>8-900</a><br>\n";
 print "<a href=#decus-focal8-1>focal8-1</a>\n";
 print "<a href=#decus-focal8-100>focal8-100</a>\n";
 print "<a href=#decus-focal8-200>focal8-200</a>\n";
-print "<a href=#decus-focal8-300>focal8-300</a></div>\n";
-print "<div>You can scroll around, or you could try searching (i.e., 'disassembler').</div><p>\n";
+print "<a href=#decus-focal8-300>focal8-300</a>\n";
+print "</div>\n";
+print "<div>You can also scroll around, or you could try searching (i.e., 'disassembler').</div><p>\n";
 
 #
 # Walk the directory tree, looking for files.
 # Emit the big scrollable table.
-print "<div style='overflow-y: auto; height:60%; border:thick green ridge'>\n";
+print "<div style='overflow-y: auto; height:40%; border:thick green ridge'>\n";
 print "<table width=100% border=1>\n";
 print "<col width=15%><col width=50%><col width=35%>\n";
 $root = `pwd`;
