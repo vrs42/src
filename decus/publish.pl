@@ -181,7 +181,7 @@ print "<div>You can also scroll around, or you could try searching (i.e., 'disas
 #
 # Walk the directory tree, looking for files.
 # Emit the big scrollable table.
-print "<div style='overflow-y: auto; height:40%; border:thick green ridge'>\n";
+print "<div style='overflow-y: auto; height:35%; border:thick green ridge'>\n";
 print "<table width=100% border=1>\n";
 print "<col width=15%><col width=50%><col width=35%>\n";
 $root = `pwd`;

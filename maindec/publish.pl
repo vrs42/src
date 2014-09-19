@@ -16,7 +16,7 @@ $head = <<'EOM';
   $title = "MAINDEC Software Files";
   include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/header.php';
 ?>
-<BODY>
+<BODY></FONT size=4>
 EOM
 print $head;
 #
