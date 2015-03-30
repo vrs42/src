@@ -1,0 +1,269 @@
+BUFR=60
+
+	FIELD	0
+	*0200
+
+	0000
+	0000
+	0000
+	0000
+	0000
+	5051    / BUGBUG: Why this value here?
+	BUFR
+	UNUSED  / Unused program area
+
+/
+/ Line numbers are expressed in decimal, and stored as fixed point
+/ in a single word.  The part to the left of the decimal point is 
+/ multiplied by 128, and from 00 to 99 is added to represent the 
+/ part to the right of the decimal point.
+/
+/ The text strings end in '?M', the encoding for an ^M or carriage 
+/ return.  The TEXT pseudo-op will generate a subsequent word of
+/ 0000 for even length strings, which we elide with '*.-1' as 
+/ necessary.
+/
+/ The overall structure is a linked list of lines, where each 
+/ line has a forward link, a line number, and some text.
+
+        DECIMAL
+L0P=0^128
+L1P=1^128
+L2P=2^128
+L3P=3^128
+L4P=4^128
+L5P=5^128
+
+L0P00,	L1P10
+	L0P 00
+	TEXT 'C-PS/8 FOCAL, 1971?M'
+        *.-1
+L1P10,	L1P20
+	L1P 10  / 1.10
+	TEXT 'C: PS/8 FOCAL, 1971 BY D. SCHNEIDER & B. SMITH OF OMSI, 6/1/71?M'
+        *.-1
+L1P20,	L1P30
+	L1P 20
+        TEXT 'C: INTERRUPTING THE INITIAL DIALOGUE RETAINS STANDARD FEATURES?M'
+        *.-1
+L1P30,	L1P34
+	L1P 30
+        TEXT 'C: OMITTING OPTIONS 1, 2, AND 3 INCREASE THE NUMBER OF VARIABLES?M'
+        *.-1
+L1P34,	L1P40
+	L1P 34
+        TEXT 'C: OMITTING OPTION 4 PERMITS LARGER PROGRAMS?M'
+        *.-1
+L1P40,	L1P50
+	L1P 40
+	TEXT 'E?M'
+L1P50,	L1P55
+	L1P 50
+	TEXT 'S Q(141)=3.1;S Q(223)=2.1;S Q(255)=2.5;C SETS LINE NUMBER POINTERS?M'
+        *.-1
+L1P55,	L1P60
+	L1P 55
+	TEXT 'S Q(149)=2.4;S #=1;G 1.7?M'
+        *.-1
+L1P60,	L1P70
+	L1P 60
+        TEXT 'T !!"RETRY OR TYPE HELP:  ";G 2.1?M'
+L1P70,  L2P05
+        L1P 70
+        TEXT 'T !!"DO YOU WANT THE STANDARD FEATURES OF PS/8 FOCAL, 1971_  "?M'
+	*.-1
+L2P05,  L2P10
+        L2P 05
+        TEXT 'C: GET INPUT?M'
+	*.-1
+L2P10,  L2P20
+        L2P 10
+        TEXT 'S P=0;S V=0?M'
+L2P20,  L2P22
+        L2P 20
+        TEXT 'S P=P+1?M'
+L2P22,  L2P25
+        L2P 22
+        TEXT 'S S(P)=FIN()?M'
+	*.-1
+L2P25,  L2P30
+        L2P 25
+        TEXT 'I [(P-25)*(S(P)-141)*(S(P)-223)*(S(P)-255)*(S(P)-149)]2.2,2.3,2.2?M'
+L2P30,  L2P40
+        L2P 30
+        TEXT 'I (25-P),1.6;G Q(S(P))?M'
+	*.-1
+L2P40,  L2P50
+        L2P 40
+        TEXT 'T "^U"!;G 2.1;C RESET CHARACTER POINTER AND START OVER?M'
+	*.-1
+L2P50,  L3P05
+        L2P 50
+        TEXT 'S P=P-FSGN(P-1);T "\";G 2.22;C DELETES LAST CHARACTER?M'
+L3P05,  L3P07
+        L3P 05
+        TEXT 'C: EXAMINE INPUT LINE?M'
+L3P07,  L3P10
+        L3P 07
+        TEXT 'C: CHECK FOR Y, H, SPACE, COMMA, RETURN AND NON-DIGITS?M'
+	*.-1
+L3P10,  L3P15
+        L3P 10
+        TEXT 'T !;I (S(1)-217)3.2,3.15,3.2?M'
+	*.-1
+L3P15,  L3P20
+        L3P 15
+        TEXT 'D 4.3;D 4.4;D 4.5;D 4.6;G 4.95?M'
+	*.-1
+L3P20,  L3P22
+        L3P 20
+        TEXT 'I (S(1)-200)3.22,5.1?M'
+	*.-1
+L3P22,  L3P30
+        L3P 22
+        TEXT 'I (S(1)-141)3.3,3.15?M'
+	*.-1
+L3P30,  L3P40
+        L3P 30
+        TEXT 'S V=V+1;I (V-P)3.4,4.05?M'
+L3P40,  L3P50
+        L3P 40
+        TEXT 'I (FABS(S(V)-180.5)-5.1)3.6?M'
+L3P50,  L3P60
+        L3P 50
+        TEXT 'I [(S(V)-160)*(S(V)-172)]1.6,3.6,1.6?M'
+	*.-1
+L3P60,  L4P01
+        L3P 60
+        TEXT 'S U(S(V))=1;G 3.3?M'
+L4P01,  L4P05
+        L4P 01
+        TEXT 'C: ENCODE FLAGS?M'
+L4P05,  L4P10
+        L4P 05
+        TEXT 'I (U(185)),4.15?M'
+L4P10,  L4P15
+        L4P 10
+        TEXT 'F Z=177,180;S U(Z)=1?M'
+	*.-1
+L4P15,  L4P20
+        L4P 15
+        TEXT 'I (U(177)),4.25?M'
+L4P20,  L4P25
+        L4P 20
+        TEXT 'S A=1;S #=2?M'
+L4P25,  L4P30
+        L4P 25
+        TEXT 'I (U(178)),4.35?M'
+L4P30,  L4P35
+        L4P 30
+        TEXT 'S A=1;S B=1;S #=6?M'
+L4P35,  L4P40
+        L4P 35
+        TEXT 'I (U(179)),4.45?M'
+L4P40,  L4P45
+        L4P 40
+        TEXT 'S C=1;S #=#*5?M'
+L4P45,  L4P50
+        L4P 45
+        TEXT 'I (U(180)),4.55?M'
+L4P50,  L4P55
+        L4P 50
+        TEXT 'S D=1;S #=#*7?M'
+L4P55,  L4P60
+        L4P 55
+        TEXT 'I (U(181)),4.65?M'
+L4P60,  L4P65
+        L4P 60
+        TEXT 'S E=1;S #=#*11?M'
+	*.-1
+L4P65,  L4P70
+        L4P 65
+        TEXT 'I (U(182)),4.75?M'
+L4P70,  L4P75
+        L4P 70
+        TEXT 'S G=1;S #=#*13?M'
+	*.-1
+L4P75,  L4P80
+        L4P 75
+        TEXT 'I (U(183)),4.85?M'
+L4P80,  L4P85
+        L4P 80
+        TEXT 'S H=1;S #=#*17?M'
+	*.-1
+L4P85,  L4P90
+        L4P 85
+        TEXT 'I (U(184)),4.95?M'
+L4P90,  L4P95
+        L4P 90
+        TEXT 'S I=1;S #=#*(-1)?M'
+	*.-1
+L4P95,  L4P96
+        L4P 95
+        TEXT 'T %6.04,!"PROCEED."!!;;R;C: RETURNS TO MACHINE LANGUAGE PROGRAM?M'
+L4P96,  L5P05
+        L4P 96
+        TEXT 'C: WHICH CONFIGURES PS/8 FOCAL, 1971?M'
+	*.-1
+L5P05,  L5P10
+        L5P 05
+        TEXT 'C: HELP PRINTOUT?M'
+	*.-1
+L5P10,  L5P20
+        L5P 10
+        TEXT 'T !!!"ANSWER BY TYPING THE CODES TO RETAIN THE FEATURES:"!!?M'
+L5P20,  L5P30
+        L5P 20
+        TEXT 'T "1  SIN & COS"!?M'
+L5P30,  L5P40
+        L5P 30
+        TEXT 'T "2  SIN, COS, LOG, EXP & ATN"!?M'
+	*.-1
+L5P40,  L5P50
+        L5P 40
+        TEXT 'T "3  EXTENDED PRECISION"!?M'
+	*.-1
+L5P50,  L5P55
+        L5P 50
+        TEXT 'T "4  FILE COMMANDS"!?M'
+L5P55,  L5P60
+        L5P 55
+        TEXT @T "5  LEADING SPACE IN 'TYPE'"!?M@
+L5P60,  L5P70
+        L5P 60
+        TEXT @T "6  '=' IN 'TYPE' (OPTION 5 DISABLES THIS OPTION)"!?M@
+L5P70,  L5P80
+        L5P 70
+        TEXT @T "7  ':' IN 'ASK'"!?M@
+	*.-1
+L5P80,  L5P90
+        L5P 80
+        TEXT @T "8  '&' IN POWERS-OF-TEN NOTATION"!?M@
+L5P90,  L5P92
+        L5P 90
+        TEXT 'T "9  RETAINS FEATURES 2,3,4"!?M'
+	*.-1
+L5P92,  L5P94
+        L5P 92
+        TEXT 'T "0  RETAINS NONE OF LISTED FEATURES"!!?M'
+	*.-1
+L5P94,  L5P96
+        L5P 94
+        TEXT 'T "YES  RETAINS STANDARD FEATURES 2,3,4,5"!?M'
+L5P96,  L5P98
+        L5P 96
+        TEXT 'T "RUBOUT DELETES PRECEEDING CHARACTER"!?M'
+	*.-1
+L5P98,  L5P99
+        L5P 98
+        TEXT @T "'";S D=FOUT(223);T "' OR CTRL/U KILLS LINE"!!?M@
+	*.-1
+L5P99,  0000
+        L5P 99
+        TEXT 'G 1.4?M'
+UNUSED=.
+
+        OCTAL
+        6477    / BUGBUG: Don't know what this stuff is
+        TEXT 'L D DTA3:FILE.FD'
+$
