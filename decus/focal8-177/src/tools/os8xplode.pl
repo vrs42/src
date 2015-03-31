@@ -81,9 +81,10 @@ sub writefile {
   local($name, $start, $length) = @_;
   open(OUTPUT, ">$name") || die "$name: $!";
   $mask = 0377;
-  $mask = 0177 if $name =~ /[.]HL$/;
-  $mask = 0177 if $name =~ /[.]LS$/;
-  $mask = 0177 if $name =~ /[.]PA$/;
+  $mask = 0177 if $name =~ /[.]BI$/; # BATCH Input
+  $mask = 0177 if $name =~ /[.]HL$/; # HELP
+  $mask = 0177 if $name =~ /[.]LS$/; # Listing
+  $mask = 0177 if $name =~ /[.]PA$/; # PAL Source
   $eof = 0;
   while ($length--) {
     seek(INPUT, $start*01000, 0) || die "data seek: $!";
