@@ -1,7 +1,18 @@
-Subdirectories of this directory contain files related to 
-OMSI FOCAL, also known as PS/8 FOCAL.  Most of these files 
-are extracted from "focal-ps8-src.rk05", a SIMH compatible 
-image of an RK05 pack imaged by Dave McGuire in March of 2015.
+Thanks to David Gesswein's software archive, we have
+an image that is very close to the original DECtape
+distribution media for focal8-177.  These files can 
+be found in the image file foc71-omsi.tu56, or one
+at a time in foc71-omsi/.  A catalog similar to the
+one at the end of the DECUS write-up can be found in
+foc71-omsi.dir.  I am not sure if FACTOR.FC was ever 
+really distributed as described, but I have added 
+the file FACTOR.FO to foc71-omsi/ if you need it.
+
+Other subdirectories of this directory contain
+files related to later development based on PS/8
+FOCAL.  Most of these files are extracted from
+"focal-ps8-src.rk05", a SIMH compatible image of
+an RK05 pack imaged by Dave McGuire in March of 2015.
 
 The drive image contains two OS/8 file-systems -- a bootable 
 "SYS:" and a non-bootable "DSK:".  The files from these can 
