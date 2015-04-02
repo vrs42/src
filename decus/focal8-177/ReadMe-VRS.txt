@@ -55,6 +55,10 @@ in the source files named EFOC0*.PA.  Instructions
 for the old version are in the DECUS write-up
 (decus-focal8-177.pdf).
 
+If you're just looking for something to run, the file
+src/PFOCLC.ok is a BIN format file of the generic newer
+version, as can also be found in sys/PFOCAL.SV.
+
 Enjoy!
 
         Vince Slyngstad
