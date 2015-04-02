@@ -23,7 +23,7 @@ TOOLS = ./tools
 #   EFOCLC Tek 4010 support
 #   PFOCLC Interrupts on
 #   PFOCLD Timer function
-SRC = EFOCLB.pal EFOCLC.pal PFOCLB.pal PFOCLC.pal PFOCLD.pal
+SRC = EFOCLB.pal EFOCLC.pal PFOCLB.pal PFOCLC.pal PFOCLD.pal PFOCAL.pal
 #
 # In general, our goal is to create .bin files with the correct content.
 BIN = inital.bin $(SRC:.pal=.bin)
@@ -63,6 +63,10 @@ PFOCLD.pal: PFOC0D.PA PFOC1D.PA PFLOTC.PA PFOCNC.PA
 	cat $^ >$@+
 	mv $@+ $@
 
+PFOCAL.pal: FOCDEF.PA FOCOVR.PA FOCINT.PA FOCLIB.PA
+	cat $^ >$@+
+	mv $@+ $@
+
 # Invoke the assembler as neeeded to create .bin files.
 .pal.bin:
 	$(TOOLS)/pal.exe -d $< || (rm $@ && exit 1)
@@ -70,6 +74,10 @@ PFOCLD.pal: PFOC0D.PA PFOC1D.PA PFLOTC.PA PFOCNC.PA
 # Generally, foo.tmp is foo.bin with inital.bin concatenated.
 .bin.tmp: inital.bin
 	cat $< inital.bin >$@
+
+# An exception: pfocal.tmp requires relocation to field 1.
+PFOCAL.tmp: FOCAL.BN 4WDMOD.BN PFOCAL.bin INITAL.BN
+	$(TOOLS)/field1 $^ >$@ || (rm $@ && exit 1)
 
 # This rule is probably unnecessary.
 .SV.svb:
@@ -114,6 +122,9 @@ PFOCLC.err: PFOCLC.ok PFOCLC.tmp
 # problems.
 PFOCLD.err: PFOCLD.ok PFOCLD.tmp
 	$(TOOLS)/bincmp $^
+
+PFOCAL.err: PFOCAL.ok PFOCAL.tmp
+	$(TOOLS)/bincmp $^ >PFOCAL.log || cmp PFOCAL.log PFOCAL.lok
 
 # These are the PAL and ABSLDR strings on which this is based, 
 # as found by grep:

@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+@rem = '
+@echo off
+c:\perl5\bin\perl %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+goto endofperl
+@rem ' if @rem;
+
+for $f (@ARGV) {
+  next unless -f $f;
+  next if $f =~ /\.od$/;
+  next if $f =~ /\.bat$/;
+  next if $f =~ /^ToDo$/;
+  #
+  # Open the file in binary mode and read it in.
+  open(INPUT, $f) || die "$f: $!";
+  binmode(INPUT);
+  open(OUTPUT, ">$f.od") || die "$f.od: $!";
+# binmode(OUTPUT);
+  while (read(INPUT, $ch, 1)) {
+    $byte = unpack("C", $ch);
+    printf OUTPUT "0%03o\n", $byte;
+  }
+  close(INPUT);
+  close(OUTPUT);
+}
+
+__END__
+:endofperl

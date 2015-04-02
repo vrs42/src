@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+
+# Some file formats are more easily understood as
+# 12 bit words than as streams of 8 bit characters.
+# This tool converts 3 bytes to 2 words and dumps 
+# the file accordingly in octal.
+
+open(INPUT, $ARGV[0]) || die "$ARGV[0]: $!";
+binmode(INPUT);
+
+$half = 0;
+sub getword {
+  if ($half == 0) {
+    read(INPUT, $ccc, 3) || return undef; # 3 bytes is two words.
+    ($w1, $w2, $c3) = unpack("CCC", $ccc);
+    $w1 += ($c3 & 0xF0) << 4;
+    $w2 += ($c3 & 0x0F) << 8;
+    $half = 1;
+    return $w1;
+  }
+  $half = 0;
+  return $w2;
+}
+
+$offset = 0;
+while (1) {
+  $w = &getword;
+  last unless defined $w;
+  printf "\n%08o ", $offset if ($offset & 07) == 0;
+  printf "%04o ", $w;
+  $offset++;
+}
+print "\n";
+
+exit 0;

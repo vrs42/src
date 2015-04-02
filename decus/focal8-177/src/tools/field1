@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+
+# Merge a series of BIN format files, forcing the 
+# load into field one.  Output and equivalent, 
+# relocated binary.
+
+@rem = '
+@echo off
+c:\perl5\bin\perl %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+goto endofperl
+@rem ' if @rem;
+
+$max = 0;
+
+#
+# Open the files in binary mode and read them in.
+@core = ();
+foreach $file (@ARGV) {
+  open(INPUT, $file) || die "$file: $!";
+  binmode(INPUT);
+  $loc = $store = undef;
+  $sum = $add = $field = 0;
+$field = 1;
+  while (read(INPUT, $top, 1)) {
+    $top = unpack("C", $top);
+    if ($top == 0200) {	# Leader or Trailer
+      next unless defined $store; # Presumable Leader
+      $sum &= 07777;
+      printf STDERR "$file: Checksum is %04o, not %04o\n", $sum, $store
+        if $sum != $store;
+      $sum = 0;
+      $store = undef;
+      next;
+    }
+    if ($top == 0232) {
+      printf STDERR "stopped reading at OS/8 EOF in $file\n";
+      last;
+    }
+    if (defined($store)) {
+      $core[$field*4096+$loc] = $store;
+      $max = $field*4096+$loc unless $max > $field*4096+$loc;
+      $store = undef;
+      $loc = ($loc + 1) & 07777;
+      $sum += $add;
+    }
+    if ($top & 0200) { # Better be field setting!
+      die "$file: Invalid field setting" unless $top >= 0300;
+      die "$file: Invalid field setting" if $top & 0007;
+die "$file: Invalid field setting" if $top & 0060;
+      $field = ($top & 070) >> 3;
+#warn "field is now $field in $file\n";
+      next;
+    }
+    if (defined($store)) {
+      $core[$field*4096+$loc] = $store;
+      $max = $field*4096+$loc unless $max > $field*4096+$loc;
+      $store = undef;
+      $loc = ($loc + 1) & 07777;
+      $sum += $add;
+    }
+    read(INPUT, $bot, 1) || die "$file read: $!";
+    $bot = unpack("c", $bot);
+    die "$file: ".$bot." not in bin format ". tell(INPUT) unless $bot <= 077;
+    $word = ($top << 6) + $bot;
+    $add = $top + $bot; # Update checksum
+    if ($word > 07777) {
+      #
+      # Change location counter
+      $loc = $word & 07777;
+#printf STDERR "Loc == %04o, field == $field\n", $loc;
+      $sum += $add;
+    } else {
+      die "$file: no location counter" unless defined($loc);
+      $store = $word;
+    }
+  }
+  close(INPUT);
+  printf STDERR "$file: no trailer!\n" if defined $store;
+}
+
+# At this point we have "loaded" the file.
+# Now to dump it back out in BIN format.
+# The checksum is simply the 12-bit sum of all bytes 
+# except field settings and leader-trailer.
+binmode(STDOUT);
+# Leader
+for ($i = 0; $i < 64; $i++) {
+  print STDOUT "\200";
+}
+$oaddr = -2;
+$cksum = 0;
+for ($addr = 0; $addr <= 077777; $addr++) {
+  if (defined $core[$addr]) {
+    # Change fields if $oadder is different field from $addr
+    if (($oaddr & 070000) != ($addr & 070000)) {
+      print STDOUT pack("C", 0300 + (($addr >> 9) & 070));
+#warn "Dumping field ", $addr >> 12, "\n";
+#warn "Max == $max\n";
+      $oaddr = -2;
+    }
+    # Output an origin if needed.
+    if ($addr != $oaddr + 1) {
+      $c1 = 0100 + (($addr >> 6) & 077);
+      $c2 = $addr & 077;
+      print STDOUT pack("CC", $c1, $c2);
+#printf STDERR "Addr %04o\n", $addr;
+      $cksum += $c1 + $c2;
+    }
+    # Output the data.
+    $c1 = ($core[$addr] >> 6) & 077;
+    $c2 = $core[$addr] & 077;
+    print STDOUT pack("CC", $c1, $c2);
+    $cksum += $c1 + $c2;
+    # Remember the address.
+    $oaddr = $addr;
+#print STDERR ".";
+  }
+}
+# Output the 12 bit checksum.
+$c1 = ($cksum >> 6) & 077;
+$c2 = $cksum & 077;
+print STDOUT pack("CC", $c1, $c2);
+# Trailer
+for ($i = 0; $i < 64; $i++) {
+  print STDOUT "\200";
+}
+
+exit 0;
+
+__END__
+:endofperl
