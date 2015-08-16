@@ -1,0 +1,64 @@
+   1            
+   2            P00006=0006
+   3            D00007=0007
+   4            
+   5            / Loader for PARITY format.  PARITY format is a bit
+   6            / like BIN format, except that instead of a checksum 
+   7            / at the end, the 0100 bit sets odd parity for each 
+   8            / 6-bit byte.  The first 12 bits of any tape segment 
+   9            / sets the address, and data loads sequentially after 
+  10            / that.  Any code with 0200 set starts a new segment.
+  11            
+  12                    *7400
+  13 07400 6032 L07400, KCC
+  14 07401 4207 L07401, JMS P07407      / Get Addr
+  15 07402 3006         DCA P00006      / Save it
+  16 07403 4207 L07403, JMS P07407      / Get Data
+  17 07404 3406         DCA I P00006    / Save it
+  18 07405 2006         ISZ P00006      / Bump addr
+  19 07406 5203         JMP L07403      / Get more data
+  20 07407 7404 P07407, 7404
+  21 07410 4221         JMS P07421      / Get high byte
+  22 07411 7106         CLL RTL         / Rotate 6 left
+  23 07412 7006         RTL 
+  24 07413 7006         RTL 
+  25 07414 3007         DCA D00007      / Save it
+  26 07415 4221         JMS P07421      / Get low byte
+  27 07416 0257         AND D07457      / Ignore extr cruft
+  28 07417 1007         TAD D00007      / Merge with high byte
+  29 07420 5607         JMP I P07407    / Return result
+  30 07421 7416 P07421, 7416
+  31 07422 6031 L07422, KSF             / Wait for input
+  32 07423 5222         JMP L07422
+  33 07424 7300         CLA CLL         / Clear link (parity)
+  34 07425 6036         KRB             / Read a byte
+  35 07426 4242 L07426, JMS P07442      / Check parity, save a copy
+  36 07427 0260         AND D07460      / Leader?
+  37 07430 7440         SZA
+  38 07431 5201         JMP L07401      / Yes, start over
+  39 07432 1261         TAD D07461      / No, get saved copy
+  40 07433 7430         SZL             / Parity error?
+  41 07434 5621         JMP I P07421    / No, return data
+  42 07435 7402         HLT             / Yes, Halt
+  43 07436 7604         CLA OSR         / Read switches
+  44 07437 7450         SNA 
+  45 07440 5621         JMP I P07421    / Return 0 if switches 0
+  46 07441 5226         JMP L07426      / Go parity check switches value
+  47 07442 7427 P07442, 7427            / Returns with parity in link
+  48 07443 3261         DCA D07461      / Save the character
+  49 07444 1261         TAD D07461      / Get the character
+  50 07445 7510 L07445, SPA             / Parity shifted in?
+  51 07446 1262         TAD D07462      / Yes, complement sign bit, parity bit
+  52 07447 7010         RAR             / Rotate right
+  53 07450 7440         SZA             / last bit?
+  54 07451 5245         JMP L07445      / No, keep looking
+  55 07452 1261         TAD D07461      / Get the character
+  56 07453 5642         JMP I P07442    / and return it
+  57 07454 7400 P07454, L07400
+  58 07455 7402         HLT
+  59 07456 5654         JMP I P07454
+  60 07457 0077 D07457, 0077
+  61 07460 0200 D07460, 0200
+  62 07461 0054 D07461, 0054
+  63 07462 4000 D07462, 4000
+  64            $

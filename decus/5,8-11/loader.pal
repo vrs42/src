@@ -1,0 +1,64 @@
+
+P00006=0006
+D00007=0007
+
+/ Loader for PARITY format.  PARITY format is a bit
+/ like BIN format, except that instead of a checksum 
+/ at the end, the 0100 bit sets odd parity for each 
+/ 6-bit byte.  The first 12 bits of any tape segment 
+/ sets the address, and data loads sequentially after 
+/ that.  Any code with 0200 set starts a new segment.
+
+	*7400
+L07400,	KCC
+L07401,	JMS P07407      / Get Addr
+	DCA P00006      / Save it
+L07403,	JMS P07407      / Get Data
+	DCA I P00006    / Save it
+	ISZ P00006      / Bump addr
+	JMP L07403      / Get more data
+P07407,	7404
+	JMS P07421      / Get high byte
+	CLL RTL         / Rotate 6 left
+	RTL 
+	RTL 
+	DCA D00007      / Save it
+	JMS P07421      / Get low byte
+	AND D07457      / Ignore extr cruft
+	TAD D00007      / Merge with high byte
+	JMP I P07407    / Return result
+P07421,	7416
+L07422,	KSF             / Wait for input
+	JMP L07422
+	CLA CLL         / Clear link (parity)
+	KRB             / Read a byte
+L07426,	JMS P07442      / Check parity, save a copy
+	AND D07460      / Leader?
+	SZA
+	JMP L07401      / Yes, start over
+	TAD D07461      / No, get saved copy
+	SZL             / Parity error?
+	JMP I P07421    / No, return data
+	HLT             / Yes, Halt
+	CLA OSR         / Read switches
+	SNA 
+	JMP I P07421    / Return 0 if switches 0
+	JMP L07426      / Go parity check switches value
+P07442,	7427            / Returns with parity in link
+	DCA D07461      / Save the character
+	TAD D07461      / Get the character
+L07445,	SPA             / Parity shifted in?
+	TAD D07462      / Yes, complement sign bit, parity bit
+	RAR             / Rotate right
+	SZA             / last bit?
+	JMP L07445      / No, keep looking
+	TAD D07461      / Get the character
+	JMP I P07442    / and return it
+P07454,	L07400
+	HLT
+	JMP I P07454
+D07457,	0077
+D07460,	0200
+D07461,	0054
+D07462,	4000
+$
