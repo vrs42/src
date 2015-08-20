@@ -1,0 +1,74 @@
+        *7670
+D07670, *.+1            / Checksum storage
+S07671, *.+1            / Get a character
+L07672,	KSF             / Character ready?
+	JMP L07672      / No, check again
+	KRB             / Yes, read it
+	JMP I S07671    / and return it
+P07676, *.+1            / Location counter
+D07677, *.+1            / Remaining length of block
+D07700,	6201            / CDF prototype
+S07701, *.+1            / Assemble word, add to checksum
+	TAD D07764      / Merge in saved bits
+	DCA D07764      / Save result word
+	TAD D07764      / Get result word
+	TAD D07670      / Add to checksum
+	SZL             / Overflow?
+	CLL IAC         / Yes, increment checksum
+	DCA D07670      / Store new checksum
+	TAD D07764      / Get result word
+	JMP I S07701    / and return it
+S07713, *.+1            / Read two words (3 characters)
+	JMS S07671      / Get a character
+	CLL RTL         / Shift left 4
+	RTL 
+	DCA D07764      / Save it
+	JMS S07671      / Get a character
+	AND D07740      / Mask for bottom 4
+	JMS S07701      / Assemble and update checksum
+	DCA S07735      / Save first word
+	KRB             / Get middle character again
+	CLL RTL         / Shift left 4
+	RTL 
+	AND D07740      / Mask for upper 4
+	DCA D07764      / Save it
+	TAD P07676      / Display location counter during wait
+	JMS S07671      / Get a character
+	JMS S07701      / Assemble and update checksum
+	JMP I S07713    / return second word
+S07735, *.+1            / Store a word, adjust length, loc.
+	DCA I P07676    / Store a word
+	ISZ D07677      / Last word?
+D07740,	7417            / ?? SKP on PDP-5 ??
+	JMP L07765      / Yes, go start another block
+	ISZ P07676      / No, increment location counter
+	JMP I S07735    / and return
+L07744,	JMS S07713      / Get 2 words
+	CLA             / Ignore 2nd for now
+	TAD S07735      / Get first word
+	JMS S07735      / Store it
+	TAD D07764      / Get 2nd word
+	JMS S07735      / Store it
+	JMP L07771      / Go checksum if done
+L07753,	KCC             / Start here
+L07754,	JMS S07671      / Get a character
+	SZA             / Zero?
+	JMP L07754      / No, keep looking
+	JMS S07671      / Yes, Get next character
+	DCA D07670      / Save it
+	TAD D07700      / Get CDF instruction
+	KRS             / Merge in this character
+	DCA .+1         / Save merged word
+D07764, *.+1            / Change data field
+L07765,	JMS S07713      / Get 2 words
+	DCA D07677      / Store 2nd word (length)
+	TAD S07735      / Get first word
+	DCA P07676      / Set location counter
+L07771,	TAD D07677      / Get length remaining
+	SZA CLA         / Is it zero?
+	JMP L07744      / No, go do some loading
+	TAD D07670      / Yes, get checksum
+	ISZ D07670      / Better be -1
+	HLT             / Oops, checksum error
+	JMP L07753      / OK, go start another segment
+$
