@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+# PDP-8 floating point constants are exponent and
+# mantissa, where mantissa is between 1/2 and one 
+# (but not exactly one) or zero.
+
+# The first word is the signed exponent (power of 2), 
+# and the subsequent 2 (or more) words are the signed 
+# mantissa.
+
+@bits = @ARGV;
+$exp = oct(shift @bits);
+$exp = $exp - 4096 if $exp > 2047;
+$exp += 1;
+
+$bits = 0;
+$first = 1;
+$minus = 0;
+foreach $b (@bits) {
+  $d = oct($b);
+  if ($first && ($d > 2047)) {
+    $minus = 1;
+  }
+  $d = ~$d & 07777 if $minus;
+  $bits = ($bits << 12) + $d;
+  $exp -= 12;
+  $first = 0;
+}
+$bits++ if $minus;
+
+print "-" if $minus;
+printf "%f", (0.0 + $bits) * 2**$exp;
