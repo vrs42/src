@@ -1,0 +1,52 @@
+/ Here's my understanding of what to toggle in.
+/ There seems to be an error in the write-up, as 
+/ OSR makes no sense instead of the initial HLT.
+0030)7402
+0031)6036
+0032)7012
+0033)7010
+0034)3025
+0035)2034
+0036)5030
+/ Correct functioning is critically dependent
+/ on there being two nulls read in.  It is 
+/ possible that the "3025" deposited at 0034 
+/ should be a 3027, and no leader should be 
+/ read in.
+/ Anyway, it looks like we begin loading rotated
+/ data starting at 0025 (and carrying forward the
+/ Link bit, thus:
+0025)0000 0
+0026)0000 0
+0027)6031 1
+0030)5027 0
+0031)6036 1
+0032)7012 1
+0033)7010 1
+0034)3006 0
+0007)0005 0
+0010)6031 1
+0011)5010 0
+0012)6036 1
+0013)7006 1
+0014)7006 1
+0015)7006 1
+0016)3005 0
+0017)6031 1
+0020)5017 0
+0021)6036 1
+0022)1005 1
+0023)3023 0
+0024)2007 1
+0025)5010 1
+0026)5006 1
+0027)5010 0
+/ Once this JMP 10 is stored, execution of the two-frame
+/ loader begins.  The first location loaded changes the DCA:
+0023)3407
+/ Now we are loading at 0006.  First a HLT:
+0006)7402
+/ Then a new origin clobbers the old, and then is incremented:
+0007)7577
+/ and loading commences at 7600 for the rest of the tape.
+/ When the address overflows, the HLT at 0006 is reached.

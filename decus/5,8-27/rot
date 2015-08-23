@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+# Unrotate the tape image for readability.
+
+open(INPUT, "decus-5-27.bin") || die "decus-5-27.bin: $!";
+binmode(INPUT);
+
+print "0030)7402\n";
+print "0031)6036\n";
+print "0032)7012\n";
+print "0033)7010\n";
+print "0034)3025\n";
+print "0035)2034\n";
+print "0036)5030\n";
+$count = 0;
+$link = 0;
+$addr = 0025;
+while (read(INPUT, $char, 1)) {
+  $char = unpack("C", $char);
+  next if !$count && !$char;
+  # Simulate RTR; RAR
+  $char = ($char + $char + $link) << 9; # cc ccc c ccl 000000000
+  $bot = ($char >> 13) & 0037; # cc ccc
+  $char = ($char + $bot); # cc ccc c ccl 000 0cc ccc
+  $link = ($char >> 12) & 1;
+  $char &= 07777;
+  printf "%04o)%04o $link\n", $addr, $char;
+  $count++;
+  $addr++;
+  last if $count > 24;
+}

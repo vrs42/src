@@ -1,0 +1,137 @@
+/ This is an edited disassembly of the data loaded into 
+/ the last page.  Most of the symbol names are taken from
+/ the very similar DECUS 8-47 (ALBIN loader).
+
+	FIELD	0
+
+	*7600
+CLEAR,	CLA CLL         / Zero pointer
+	DCA MEM
+	DCA I MEM       / Store a zero
+	ISZ MEM         / Bump pointer
+	TAD MEM      
+	TAD MCLEAR
+	SNA CLA         / Done yet?
+	JMP JMPBIN      / Yes, go start BIN
+	JMP CLEAR+2     / No, keep going
+MCLEAR,	-CLEAR
+MEM,	.-.             / Pointer for mem. clear
+CKT,	0060
+CHKSM,	1642
+WORD,	1642
+ORIGIN,	7600
+	0200            / Unused stuff
+	0000
+	7600
+	HLT
+	JMP JMPBIN
+	0171
+	0000
+BEGG,	7730            / Get a character, check for 0200
+                        / Also ignore comments and field settings
+	DCA SWITCH      / Clear switch
+	JMS READIN      / Get the character
+	TAD M377        / Is it a RUBOUT?
+	SZA CLA 
+	JMP .+4         / No, go check if in comment
+	ISZ SWITCH      / Yes, complement switch
+	CMA 
+	JMP BEGG+1      / and keep going
+	TAD SWITCH      / Are we in a comment?
+	SZA CLA 
+	JMP BEGG+2      / Yes, ignore it
+	TAD CHAR        / No, get character
+	AND MASK        / Ignore data part
+	TAD M200        / Leader?
+	SNA 
+	JMP I BEGG      / Yes, take early return
+MASK,	SMA CLA         / No, Field setting?
+	JMP BEGG+2      / Yes, ignore it?!
+	ISZ BEGG        / No, take skip return
+	JMP I BEGG
+SWITCH,	0000
+M377,	7401
+M200,	7600
+CHAR,	0200
+READIN,	7631            / Read a character
+	JMP I FUNPTR    / ...go to correct routine
+FUNPTR,	LSRIN
+HSRIN,	RSF             / HSR ready?
+	JMP .-1
+	RRB             / Yes, read a char
+	RFC             / and start fetching next
+RIN,	DCA CHAR        / Store the char
+	TAD CHAR        / and also return it
+	JMP I READIN
+LSRIN,	KSF             / LSR ready?
+	JMP .-1
+	KRB             / Yes, read a char
+	JMP RIN         / Go save and return it
+BIN,	RFC             / BIN Loader -- Start HSR
+	KCC             / Start LSR
+	CLA OSR         / Use HSR or LSR?
+	SPA CLA 
+	TAD OLSRIN      / LSRIN-HSRIN
+	TAD PHSRIN      / HSRIN
+	DCA FUNPTR      / Set input function ptr
+	DCA CHKSM       / Clear initial checksum
+	JMS BEGG        / Get character, check for leader
+	JMP .-1         / Leader, go again
+GO,	TAD CHAR        / Get first char of frame
+	DCA CKT         / Add to frame checksum
+	TAD CHAR        / Position for assembled word
+	CLL RTL 
+	RTL 
+	RTL 
+	DCA WORD        / Store upper half of word
+	JMS READIN      / Get second half
+	TAD WORD        / Assemble the word
+	DCA WORD        / and save it
+	SZL             / Location setting?
+	CMA             / Remember if so
+	DCA MEM
+	TAD CHAR        / Add second half to frame sum
+	TAD CKT
+	DCA CKT
+	JMS BEGG        / Check for trailer
+	JMP BEND        / Found it
+	TAD WORD        / Get the assembled word
+	ISZ MEM         / Location setting?
+	JMP STORE       / No, go store it
+	DCA ORIGIN      / Yes, set origin
+CHEX,	TAD CKT         / Get frame checksum
+	TAD CHKSM       / Add to checksum
+	DCA CHKSM
+	JMP GO          / Go get another frame
+STORE,	DCA I ORIGIN    / Data -- store it
+	ISZ ORIGIN      / Bump ORIGIN
+	JMP CHEX        / Go add to checksum
+BEND,	TAD WORD        / End of tape -- show checksum
+	CIA
+	TAD CHKSM
+	HLT             / Halt -- continue will
+	JMP I ORIGIN    / JMP to the current origin
+PHSRIN,	HSRIN
+OLSRIN,	LSRIN-HSRIN
+	0210
+	2107
+	JMP I .-1
+RIM,	KCC             / RIM Loader -- Start the reader
+	KSF             / Wait for character
+	JMP .-1
+	KRB             / Read the character
+	CLL RTL 
+	RTL 
+	SPA             / Leader/Trailer?
+	JMP RIM+1       / Yes, try again
+	RTL             / No, position the content
+	KSF             / Wait for character
+	JMP .-1
+	KRS             / Merge it in
+	SNL             / Location setting?
+	DCA I K0BUS     / Nope, store data
+	DCA K0BUS       / Yes, set location
+	0026            / Borked JMP RIM (5356)??
+K0BUS,	0003            / Memory address for RIM
+JMPBIN,	JMP BIN         / JMP to BIN loader
+$

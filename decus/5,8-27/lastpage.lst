@@ -1,0 +1,137 @@
+   1            / This is an edited disassembly of the data loaded into 
+   2            / the last page.  Most of the symbol names are taken from
+   3            / the very similar DECUS 8-47 (ALBIN loader).
+   4            
+   5                    FIELD   0
+   6            
+   7                    *7600
+   8 07600 7300 CLEAR,  CLA CLL         / Zero pointer
+   9 07601 3212         DCA MEM
+  10 07602 3612         DCA I MEM       / Store a zero
+  11 07603 2212         ISZ MEM         / Bump pointer
+  12 07604 1212         TAD MEM      
+  13 07605 1211         TAD MCLEAR
+  14 07606 7650         SNA CLA         / Done yet?
+  15 07607 5377         JMP JMPBIN      / Yes, go start BIN
+  16 07610 5202         JMP CLEAR+2     / No, keep going
+  17 07611 0200 MCLEAR, -CLEAR
+  18 07612 0000 MEM,    .-.             / Pointer for mem. clear
+  19 07613 0060 CKT,    0060
+  20 07614 1642 CHKSM,  1642
+  21 07615 1642 WORD,   1642
+  22 07616 7600 ORIGIN, 7600
+  23 07617 0200         0200            / Unused stuff
+  24 07620 0000         0000
+  25 07621 7600         7600
+  26 07622 7402         HLT
+  27 07623 5377         JMP JMPBIN
+  28 07624 0171         0171
+  29 07625 0000         0000
+  30 07626 7730 BEGG,   7730            / Get a character, check for 0200
+  31                                    / Also ignore comments and field settings
+  32 07627 3253         DCA SWITCH      / Clear switch
+  33 07630 4257         JMS READIN      / Get the character
+  34 07631 1254         TAD M377        / Is it a RUBOUT?
+  35 07632 7640         SZA CLA 
+  36 07633 5237         JMP .+4         / No, go check if in comment
+  37 07634 2253         ISZ SWITCH      / Yes, complement switch
+  38 07635 7040         CMA 
+  39 07636 5227         JMP BEGG+1      / and keep going
+  40 07637 1253         TAD SWITCH      / Are we in a comment?
+  41 07640 7640         SZA CLA 
+  42 07641 5230         JMP BEGG+2      / Yes, ignore it
+  43 07642 1256         TAD CHAR        / No, get character
+  44 07643 0247         AND MASK        / Ignore data part
+  45 07644 1255         TAD M200        / Leader?
+  46 07645 7450         SNA 
+  47 07646 5626         JMP I BEGG      / Yes, take early return
+  48 07647 7700 MASK,   SMA CLA         / No, Field setting?
+  49 07650 5230         JMP BEGG+2      / Yes, ignore it?!
+  50 07651 2226         ISZ BEGG        / No, take skip return
+  51 07652 5626         JMP I BEGG
+  52 07653 0000 SWITCH, 0000
+  53 07654 7401 M377,   7401
+  54 07655 7600 M200,   7600
+  55 07656 0200 CHAR,   0200
+  56 07657 7631 READIN, 7631            / Read a character
+  57 07660 5661         JMP I FUNPTR    / ...go to correct routine
+  58 07661 7671 FUNPTR, LSRIN
+  59 07662 6011 HSRIN,  RSF             / HSR ready?
+  60 07663 5262         JMP .-1
+  61 07664 6012         RRB             / Yes, read a char
+  62 07665 6014         RFC             / and start fetching next
+  63 07666 3256 RIN,    DCA CHAR        / Store the char
+  64 07667 1256         TAD CHAR        / and also return it
+  65 07670 5657         JMP I READIN
+  66 07671 6031 LSRIN,  KSF             / LSR ready?
+  67 07672 5271         JMP .-1
+  68 07673 6036         KRB             / Yes, read a char
+  69 07674 5266         JMP RIN         / Go save and return it
+  70 07675 6014 BIN,    RFC             / BIN Loader -- Start HSR
+  71 07676 6032         KCC             / Start LSR
+  72 07677 7604         CLA OSR         / Use HSR or LSR?
+  73 07700 7710         SPA CLA 
+  74 07701 1352         TAD OLSRIN      / LSRIN-HSRIN
+  75 07702 1351         TAD PHSRIN      / HSRIN
+  76 07703 3261         DCA FUNPTR      / Set input function ptr
+  77 07704 3214         DCA CHKSM       / Clear initial checksum
+  78 07705 4226         JMS BEGG        / Get character, check for leader
+  79 07706 5305         JMP .-1         / Leader, go again
+  80 07707 1256 GO,     TAD CHAR        / Get first char of frame
+  81 07710 3213         DCA CKT         / Add to frame checksum
+  82 07711 1256         TAD CHAR        / Position for assembled word
+  83 07712 7106         CLL RTL 
+  84 07713 7006         RTL 
+  85 07714 7006         RTL 
+  86 07715 3215         DCA WORD        / Store upper half of word
+  87 07716 4257         JMS READIN      / Get second half
+  88 07717 1215         TAD WORD        / Assemble the word
+  89 07720 3215         DCA WORD        / and save it
+  90 07721 7430         SZL             / Location setting?
+  91 07722 7040         CMA             / Remember if so
+  92 07723 3212         DCA MEM
+  93 07724 1256         TAD CHAR        / Add second half to frame sum
+  94 07725 1213         TAD CKT
+  95 07726 3213         DCA CKT
+  96 07727 4226         JMS BEGG        / Check for trailer
+  97 07730 5344         JMP BEND        / Found it
+  98 07731 1215         TAD WORD        / Get the assembled word
+  99 07732 2212         ISZ MEM         / Location setting?
+ 100 07733 5341         JMP STORE       / No, go store it
+ 101 07734 3216         DCA ORIGIN      / Yes, set origin
+ 102 07735 1213 CHEX,   TAD CKT         / Get frame checksum
+ 103 07736 1214         TAD CHKSM       / Add to checksum
+ 104 07737 3214         DCA CHKSM
+ 105 07740 5307         JMP GO          / Go get another frame
+ 106 07741 3616 STORE,  DCA I ORIGIN    / Data -- store it
+ 107 07742 2216         ISZ ORIGIN      / Bump ORIGIN
+ 108 07743 5335         JMP CHEX        / Go add to checksum
+ 109 07744 1215 BEND,   TAD WORD        / End of tape -- show checksum
+ 110 07745 7041         CIA
+ 111 07746 1214         TAD CHKSM
+ 112 07747 7402         HLT             / Halt -- continue will
+ 113 07750 5616         JMP I ORIGIN    / JMP to the current origin
+ 114 07751 7662 PHSRIN, HSRIN
+ 115 07752 0007 OLSRIN, LSRIN-HSRIN
+ 116 07753 0210         0210
+ 117 07754 2107         2107
+ 118 07755 5754         JMP I .-1
+ 119 07756 6032 RIM,    KCC             / RIM Loader -- Start the reader
+ 120 07757 6031         KSF             / Wait for character
+ 121 07760 5357         JMP .-1
+ 122 07761 6036         KRB             / Read the character
+ 123 07762 7106         CLL RTL 
+ 124 07763 7006         RTL 
+ 125 07764 7510         SPA             / Leader/Trailer?
+ 126 07765 5357         JMP RIM+1       / Yes, try again
+ 127 07766 7006         RTL             / No, position the content
+ 128 07767 6031         KSF             / Wait for character
+ 129 07770 5367         JMP .-1
+ 130 07771 6034         KRS             / Merge it in
+ 131 07772 7420         SNL             / Location setting?
+ 132 07773 3776         DCA I K0BUS     / Nope, store data
+ 133 07774 3376         DCA K0BUS       / Yes, set location
+ 134 07775 5356         JMP RIM         / Keep going
+ 135 07776 0003 K0BUS,  0003            / Memory address for RIM
+ 136 07777 5275 JMPBIN, JMP BIN         / JMP to BIN loader
+ 137            $
