@@ -1,3 +1,4 @@
+#!/usr/bin/make
 ALL = focal.bin extend.bin # 2user.bin
 PAL = pal
 BINCMP = ../bincmp
@@ -19,4 +20,4 @@ extend.bin: extend.pa
 test: focal.bin extend.bin
 	$(BINCMP) focal.bin part1.bin
 	$(BINCMP) extend.bin part2.bin
-	# $(BINCMP) 2user.bin part3.bin
+	@# $(BINCMP) 2user.bin part3.bin
