@@ -36,12 +36,14 @@ sub readBin {
         $loc = ($loc + 1) & 07777;
         $sum += $add; # Update checksum
         $isbin = 1 unless $top & 0100;
+        $fortran = 0;
       }
       if (($top&0300) == 0300) {
         # Set data field and we're done. 
         $field = ($top & 070) >> 3;
 #print "Loading into field $field\n";
         $isbin = 1;     # Can't be RIM format
+        $fortran = 1 if $top == 00340;
       } else {
         # Assemble a word
         read(INPUT, $bot, 1) || die "read: $! $top at ", tell(INPUT);
@@ -65,6 +67,10 @@ sub readBin {
     }
     die "No trailer!" unless $top == 0200;
     if ($isbin) {
+      if ($fortran) {
+        printf STDERR "$file: 4K Fortran binary!\n";
+        $sum += 0640; # Fortran loader counts 0300 and 0340;
+      }
       $sum = ($sum - $store) & 07777;
       printf STDERR "$file: Checksum error -- %04o\n", $sum if $sum;
     } else {
@@ -92,6 +98,7 @@ $RREF = 8; # Return reference (JMP I xxxx target)
 $SREF = 16; # A JMS reference (possible "Sxxxx")
 # Kludge: location zero is a subroutine (ISR), if included.
 $ref[0000] = $SREF|$DREF|$RREF if defined $core[0000];
+$fpp = 0;
 foreach ($loc = 0; $loc <= $#core; $loc++) {
   next unless defined $core[$loc];
   $op = $core[$loc] >> 9;
@@ -122,6 +129,8 @@ foreach ($loc = 0; $loc <= $#core; $loc++) {
     next unless ($core[$ea] == 0)  || ($core[$ea] == $ea);
     # Mark the entry point as a possible entry point and as data.
     $ref[$ea] |= $SREF|$DREF;
+    # Kludge: Make note if JMS I 7 (04407) is encountered.
+    $fpp = 1 if $core[$loc] == 04407;
   } elsif ($op == 5) {
     #
     # Branch reference implied by effective address
@@ -133,6 +142,30 @@ foreach ($loc = 0; $loc <= $#core; $loc++) {
       $ref[$ea] |= $LREF;
     }
   }
+}
+
+#
+# If this looks like floating point, define some symbols.
+if ($fpp) {
+  print "FIXMRI FADD=1000\n";
+  print "FIXMRI FSUB=2000\n";
+  print "FIXMRI FMPY=3000\n";
+  print "FIXMRI FDIV=4000\n";
+  print "FIXMRI FGET=5000\n";
+  print "FIXMRI FPUT=6000\n";
+  print "FEXT=0000\n";
+  print "FSQR=0001\n";
+  print "FSQT=0002\n";
+  print "FSIN=0003\n";
+  print "FCOS=0004\n";
+  print "FATN=0005\n";
+  print "FEXP=0006\n";
+  print "FLOG=0007\n";
+  print "FNEG=0010\n";
+  print "FINP=0011\n";
+  print "FOUT=0012\n";
+  print "FNOR=7000\n";
+  print "FIXTAB\n";
 }
 
 #
@@ -157,6 +190,7 @@ sub ref {
 # Pass 2:
 # Print the disassembly with labels where needed.
 $org = -1; $fld = -1;
+$fpp = 0;
 @mri = ("AND", "TAD", "ISZ", "DCA", "JMS", "JMP");
 foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
   $name = &ref($loc);
@@ -196,6 +230,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       } else {
         printf "\t%04o", $core[$loc];
       }
+      $fpp = 1 if $core[$loc] == 04407;
       next;
     }
   }
@@ -203,6 +238,18 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
   # Disassemble as an instruction.
   $op = $core[$loc] >> 9;
   print "\t";
+  if ($fpp) {
+    &fpp;
+# } elsif ($linc) { &linc;
+  } else {
+    &pdp;
+  }
+}
+printf "\n\$\n";
+
+sub pdp {
+  #
+  # Disassemble as a normal PDP-8 instruction.
   if ($op <= 5) {
     #
     # Operation refences memory
@@ -210,16 +257,20 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
     $ea = $loc & 070000;
     $ea += $core[$loc] & 0177;
     $ea += $loc & 07600 if $core[$loc] & 0200; # Page bit set
-    if (($ea < 0200) &&  ($core[$loc] & 0200)) {
+    if ((($ea&07777) < 0200) &&  ($core[$loc] & 0200)) {
       # Assembler never generates on-page references to page 0,
       # so just output octal.
-      printf "\t%04o", $core[$loc];
-      next;
+      printf "%04o", $core[$loc];
+      return;
     }
     $ind = $core[$loc] & 0400; # Indirect reference
     print $mri[$op], " ";
     print "I " if $ind;
-    print &ref($ea);
+    $oea = &ref($ea);
+    print $oea if $oea;
+    printf "%04o", $ea & 07777 unless $oea;
+    # Make a note of calls to the floating point package
+    $fpp = 1 if $core[$loc] == 04407;
   } elsif ($op == 6) {
     $op = $core[$loc];
     if (($op & 07770) == 06000) {
@@ -234,7 +285,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "6005" if ($op & 0007) == 05;
       print "6006" if ($op & 0007) == 06;
       print "6007" if ($op & 0007) == 07;
-      next;
+      return;
     }
     if (($op & 07770) == 06010) {
       #
@@ -243,7 +294,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "RRB " if ($op & 0002);
       print "RFC " if ($op & 0004);
       printf "%04o", $op if ($op & 0007) == 0000;
-      next;
+      return;
     }
     if (($op & 07770) == 06030) {
       #
@@ -253,7 +304,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "KRS"  if ($op & 0006) == 0004;
       print "KRB"  if ($op & 0006) == 0006;
       printf "%04o", $op if ($op & 0007) == 0000;
-      next;
+      return;
     }
     if (($op & 07770) == 06040) {
       #
@@ -263,7 +314,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "TPC"  if ($op & 0006) == 0004;
       print "TLS"  if ($op & 0006) == 0006;
       printf "%04o", $op if ($op & 0007) == 0000;
-      next;
+      return;
     }
     if (($op & 07700) == 06200) {
       #
@@ -272,17 +323,18 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
         if (($op & 07) && (($op & 07) < 04)) {
           print "CDF " if $op & 01;
           print "CIF " if $op & 02;
-          print (($op & 070) >> 3);
-          next;
+          printf "%o", ($op & 070);
+          #print (($op & 070) >> 3);
+          return;
         }
-        if (($op & 070) < 050) {
+        if ((($op & 070) < 050) && (($op & 07) < 04)) {
           @RxF = ("6204", "RDF", "RIF", "RIB", "RMF");
           print $RxF[($op & 070) >> 3];
-          next;
+          return;
         }
       }
       printf "%04o", $op;
-      next;
+      return;
     }
 #   if (($op & 07770) == 06100) {
 #     #
@@ -291,10 +343,10 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
 #     print "SPL " if ($op & 0002);
 #     print "CMP " if ($op & 0004);
 #     printf "%04o", $op if ($op & 0007) == 0000;
-#     next;
+#     return;
 #   }
     printf "%04o", $op;
-    next;
+    return;
   } else {
     $op = $core[$loc];
     if (($op & 0400) == 0000) {
@@ -315,7 +367,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "BSW " if ($op & 0016) == 002; # T3
       print "IAC"  if ($op & 0041) == 001; # T4
       print "CIA"  if ($op & 0041) == 041; # T2, T4
-      next;
+      return;
     } elsif (($op & 0401) == 0400) {
       #
       # Group 2 -- Skips, halt, read switches
@@ -333,7 +385,7 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
       print "CLA "  if ($op & 0200); # T2
       print "OSR "  if ($op & 0004); # T3
       print "HLT"   if ($op & 0002); # T4
-      next;
+      return;
     } else {
       #
       # Group 3 -- Extended Arithmetic Unit
@@ -341,7 +393,65 @@ foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
     }
   }
 }
-printf "\n\$\n";
+
+sub fpp {
+  #
+  # Disassemble as a floating point instruction.
+  if ($op && $op <= 6) {
+    local(@mri) = ("FADD", "FSUB", "FMPY", "FDIV", "FGET", "FPUT");
+    #
+    # Operation refences memory
+    # Note: Direct EA is always in the current field!
+    $ea = $loc & 070000;
+    $ea += $core[$loc] & 0177;
+    $ea += $loc & 07600 if $core[$loc] & 0200; # Page bit set
+    if ((($ea&07777) < 0200) &&  ($core[$loc] & 0200)) {
+      # Assembler never generates on-page references to page 0,
+      # so just output octal.
+      printf "%04o", $core[$loc];
+      return;
+    }
+    $ind = $core[$loc] & 0400; # Indirect reference
+    print $mri[$op-1], " ";
+    print "I " if $ind;
+    $oea = &ref($ea);
+    print $oea if $oea;
+    printf "%04o", $ea unless $oea;
+  } elsif ($op == 0) {
+    $op = $core[$loc];
+    if (($op & 07760) == 0000) {
+      #
+      # Special functions
+      $fpp = 0      if ($op & 017) == 000;
+      print "FEXT"  if ($op & 017) == 000;
+      print "FSQR"  if ($op & 017) == 001;
+      print "FSQT"  if ($op & 017) == 002;
+      print "FSIN"  if ($op & 017) == 003;
+      print "FCOS"  if ($op & 017) == 004;
+      print "FATN"  if ($op & 017) == 005;
+      print "FEXP"  if ($op & 017) == 006;
+      print "FLOG"  if ($op & 017) == 007;
+      print "FNEG"  if ($op & 017) == 010;
+      print "FINP"  if ($op & 017) == 011;
+      print "FOUT"  if ($op & 017) == 012;
+      print "0013"  if ($op & 017) == 013;
+      print "0014"  if ($op & 017) == 014;
+      print "0015"  if ($op & 017) == 015;
+      print "0016"  if ($op & 017) == 016;
+      print "0017"  if ($op & 017) == 017;
+      return;
+    }
+    printf "%04o", $op;
+    return;
+  } else { # $op == 7
+    $op = $core[$loc];
+    print "FNOR"  if $op == 07000;
+    return if $op == 07000;
+    #
+    # FNOR with operand??
+    printf "%04o", $op;
+  }
+}
 
 __END__
 :endofperl
