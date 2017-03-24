@@ -1,0 +1,149 @@
+   1            /       FOCAL PATCH ROUTINES FOR KV8/I
+   2            / TO ERASE S G=FACC()
+   3            / TO PLOT S G=FNEW(X,Y,Z,W)
+   4            / X = X CO-ORD. Y = Y CO-ORD.
+   5            / Z     = 0,    SHORT VECTOR
+   6            /       = -1,   LONG VECTOR
+   7            / W     = 0,    VISIBLE
+   8            /       = -1,   INVISIBLE
+   9            / PATCH FADC AS AN ERASE FN.
+  10            *1343
+  11 01343 7200 XADC,   CLA
+  12 01344 1352         TAD SXIC / COMBINED ABS. MODE AND ERASE-RESET.
+  13 01345 6063         LDF
+  14 01346 6066         EXC / ERASE RESET
+  15 01347 7240         STA / SET STATUS DONE FOR INT. HANDLER.
+  16 01350 3753 IND,    DCA I FNSWA
+  17 01351 5536         JMP I EFUN3I
+  18 01352 0406 SXIC,   0406
+  19 01353 4576 FNSWA,  FNSW / INDIRECT TO STATUS.
+  20            /*************************************
+  21            
+  22            / PATCH INTERUPT HANDLER
+  23            *2652
+  24 02652 5653         JMP I .+1
+  25 02653 4511         INTPTR
+  26 02654 6244         RMF / FOR 8K FOCAL.
+  27            /*************************************
+  28            
+  29            
+  30            / PATCH FNEW ENTRY POINT.
+  31            *FNTABF+14
+  32 00410 4526 XFNEW   / PLOT FUNCTION.
+  33            
+  34            / PATCH USER AREA POINTER.
+  35            *35
+  36 00035 4510         BOTTOM
+  37            
+  38            
+  39            / INTERRUPT HANDLER EXTENSION.
+  40            *4511
+  41 04511 6071 INTPTR, SRF / SCREEN FLAG
+  42 04512 5725         JMP I HANDLER / NOT IT.
+  43 04513 1376         TAD FNSW / GET STATUS POINTER
+  44 04514 7750         SPA SNA CLA
+  45 04515 5323         JMP READY / FINISHED THIS ONE
+  46 04516 1374         TAD P / EXECUTE MODE.
+  47 04517 6066         EXC
+  48 04520 7240         STA
+  49 04521 3376 COMMN,  DCA FNSW / SET STATUS TO DONE
+  50 04522 5725         JMP I HANDLER / BACK TO INT. HANDLER
+  51 04523 6072 READY,  CRF
+  52 04524 5321         JMP COMMN
+  53 04525 2654 HANDLER, 2654 / RETURN TO INTERUPT HANDLER
+  54            /****************************
+  55            
+  56 04526 1376 XFNEW,  TAD FNSW
+  57 04527 7640         SZA CLA
+  58 04530 5326         JMP .-2 / WAIT IF PREVIOUS NOT FINISHED
+  59 04531 6002         IOF
+  60 04532 4453         JMS I INTEGER
+  61 04533 6064         LDX / SET X
+  62 04534 7200         CLA
+  63 04535 4360         JMS FIND
+  64 04536 3376         DCA FNSW / TEMP STORAGE FOR Y
+  65 04537 4360         JMS FIND / GET VECTOR TYPE
+  66 04540 7700         SMA CLA
+  67 04541 1377         TAD SIX / LONG
+  68 04542 1373         TAD FRC / SHORT
+  69 04543 3374         DCA P / SET SHORT OR LONG
+  70 04544 4360 RETN,   JMS FIND / GET VISIBLE OR INVISIBLE
+  71 04545 7001         IAC
+  72 04546 1374         TAD P / SET MODE
+  73 04547 3374         DCA P
+  74 04550 1376         TAD FNSW / GET Y
+  75 04551 6071         SRF
+  76 04552 5351         JMP .-1
+  77 04553 6065         LDY / LOAD Y
+  78 04554 7201         CLA IAC
+  79 04555 3376         DCA FNSW / SET LOADED
+  80 04556 6001         ION
+  81 04557 5536         JMP I EFUN3I
+  82 04560 0000 FIND,   00
+  83 04561 1066         TAD CHAR
+  84 04562 1375         TAD MCOMMA
+  85 04563 7640         SZA CLA
+  86 04564 4566         JMS I 166 / ERROR, NOT ENOUGH ARGUMENTS.
+  87 04565 4545         GETC / MOVE PAST COMMA
+  88 04566 4560         SPNOR / IGNOR BLANKS
+  89 04567 4540         PUSHJ
+  90 04570 1613         EVAL / GET ARG.
+  91 04571 4453         JMS I INTEGER
+  92 04572 5760         JMP I FIND
+  93 04573 0440 FRC,    440
+  94 04574 0000 P,      00
+  95 04575 7524 MCOMMA, -254
+  96 04576 0000 FNSW,   00 / PLOT STATUS POINTER.
+  97 04577 0140 SIX,    140
+  98            /******************************
+  99            / ASSIGN MNEMONICS
+ 100            / FOCAL NOTATION USED
+ 101            
+ 102            EXC=6066
+ 103            SRF=6071
+ 104            LDF=6063
+ 105            CRF=6072
+ 106            EFUN3I=136
+ 107            FNTABF=374
+ 108            LDX=6064
+ 109            LDY=6065
+ 110            CHAR=66
+ 111            GETC=JMS I 145
+ 112            SPNOR=JMS I 160
+ 113            PUSHJ=JMS I 140
+ 114            EVAL=1613
+ 115            INTEGER=53
+ 116            BOTTOM=4510
+ 117            $
+
+BOTTOM  4510
+CHAR    0066
+COMMN   4521
+CRF     6072
+EFUN3I  0136
+EVAL    1613
+EXC     6066
+FIND    4560
+FNSW    4576
+FNSWA   1353
+FNTABF  0374
+FRC     4573
+GETC    4545
+HANDLE  4525
+IND     1350 unreferenced
+INTEGE  0053
+INTPTR  4511
+LDF     6063
+LDX     6064
+LDY     6065
+MCOMMA  4575
+P       4574
+PUSHJ   4540
+READY   4523
+RETN    4544 unreferenced
+SIX     4577
+SPNOR   4560
+SRF     6071
+SXIC    1352
+XADC    1343 unreferenced
+XFNEW   4526
