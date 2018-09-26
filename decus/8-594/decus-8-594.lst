@@ -1,0 +1,1630 @@
+   1            / FP 8 EM       ANCR 1040
+   2            /       INSTRUCTION SUMMARY AND DEFINITION
+   3            /
+   4            / MNEMONIC      CODE    CLASS      DESCRIPTION
+   5            /
+   6            /       EFM     4176    CONTROL    ENTER INTERPRETIVE MODE.
+   7            /       SFLO    4565    CONTROL    SINGLE, SIGNED FLOAT AND EFM.
+   8            /       DFLO    4564    CONTROL    DOUBLE PRECISION FLOAT AND EFM.
+   9            /       FCDF    6060    CONTROL    CHANGE INTERPRETIVE DATA FIELD.
+  10            /       LFM     0000    CONTROL    LEAVE INTERPRETIVE MODE.
+  11            /       SFIX    6040    CONTROL    SINGLE FIX AND LFM.
+  12            /       DFIX    6030    CONTROL    DOUBLE FIX AND LFM.
+  13            /       LD      1000    MEM. REF.  LOAD FAC FROM MEMORY.
+  14            /       ST      1400    MEM. REF.  STORE FAC TO MEMORY.
+  15            /       AD      2000    MEM. REF.  ADD OPERAND TO FAC.
+  16            /       SB      2400    MEM. REF.  SUBTRACT OPERAND FROM FAC.
+  17            /       MP      3000    MEM. REF.  MULTIPLY FAC BY OPERAND.
+  18            /       DV      3400    MEM. REF.  DIVIDE FAC BY OPERAND.
+  19            /       RDV     4000    MEM. REF.  DIVIDE OPERAND BY FAC TO FAC.
+  20            /       JS      4400    MEM. REF.  JUMP TO SUBROUTINE
+  21            /       CMP     5000    MEM. REF.  COMPARE FAC, CONDITIONAL BRANCH.
+  22            /       JP      5400    MEM. REF.  JUMP TO NEW LOCATION.
+  23            /       ILA     0000    OPERATE    IMMEDIATE LOAD TO FAC.
+  24            /       ZAC     6000    OPERATE    SET FAC TO ZERO.
+  25            /       ABS     6010    OPERATE    ABSOLUTE VALUE TO FAC.
+  26            /       CHS     6020    OPERATE    CHANGE SIGN OF FAC.
+  27            /       FREAD   6050    OPERATE    FREE-FORMAT READ TO FAC.
+  28            /       WRITE   6051    OPERATE    FORMATTED OUTPUT FROM FAC.
+  29            /       FCRLF   6052    OPERATE    NEW LINE TO OUTPUT DEVICE.
+  30            /       FORMAT 6400     OPERATE    SET OUTPUT FORMAT.
+  31            /       FSQR    6070    FUNCTION   SQUARE OF FAC TO FAC.
+  32            /       FSQRT   6100    FUNCTION   SQUARE ROOT OF FAC.
+  33            /       FEXP    6110    FUNCTION   NATURAL EXPONENTIAL.
+  34            /       FLOG    6120    FUNCTION   NATURAL LOGARITHM.
+  35            /       FSIN    6130    FUNCTION   SINE OF FAC (RADIANS).
+  36            /       FCOS    6140    FUNCTION   COSINE OF FAC.
+  37            /       FATN    6150    FUNCTION   ARCTANGENT.
+  38            /
+  39                    FIELD   0         / EXAMPLE ACCESS FROM '0'
+  40            *164
+  41 00164 7404         XDFLO           / DOUBLE FLOAT LINKAGE.
+  42 00165 7412         XSFLO           / SINGLE FLOAT LINKAGE.
+  43 00166 7420         XRH0            / READ HIGH FAC LINKAGE.
+  44 00167 7426         XLH0            / LOAD HIGH FAC LINKAGE.
+  45            *175
+  46 00175 7400         XEE             / ENTER INTERPRETIVE
+  47 00176 7402         HLT             / MODE LINKAGE.
+  48 00177 5575         JMP I   .-2
+  49 00200 7402 READA,  HLT             / EXAMPLE INPUT ROUTINE
+  50 00201 7300         CLA CLL
+  51 00202 6214         RDF
+  52 00203 1212         TAD     .+7
+  53 00204 3210         DCA     .+4
+  54 00205 6031         KSF
+  55 00206 5205         JMP     .-1
+  56 00207 6036         KRB
+  57 00210 7402         HLT
+  58 00211 5600         JMP I   READA
+  59 00212 6202         CIF
+  60 00213 7402 PRINTA, HLT             / EXAMPLE OUTPUT ROUTINE
+  61 00214 6046         TLS
+  62 00215 6041         TSF
+  63 00216 5215         JMP     .-1
+  64 00217 6042         TCF
+  65 00220 7300         CLA CLL
+  66 00221 6214         RDF
+  67 00222 1212         TAD     .-10
+  68 00223 3224         DCA     .+1
+  69 00224 7402         HLT
+  70 00225 5613         JMP I   PRINTA
+  71            *7400
+  72 07400 6212 XEE,    CIF+10          / ASSUME INTERPRETER
+  73 07401 4603         JMS I   .+2       / IN MEMORY FIELD #1.
+  74 07402 5576         JMP I   176
+  75 07403 0226         EME
+  76 07404 7402 XDFLO,  HLT             / DOUBLE FLOAT AND ENTER
+  77 07405 6212         CIF+10          / FOR CROSS-BANK ACCESS.
+  78 07406 4611         JMS I   .+3
+  79 07407 4176         EFM
+  80 07410 7404         JP      XDFLO
+  81 07411 1210         AFLO
+  82 07412 7402 XSFLO,  HLT             / CROSS-BANK SINGLE, SIGNED
+  83 07413 6212         CIF+10          / FLOAT AND ENTER INTERPRETER.
+  84 07414 4617         JMS I   .+3
+  85 07415 4176         EFM
+  86 07416 7412         JP      XSFLO
+  87 07417 1216         BFLO
+  88            EXRHA=4566              / DEFINE READ HIGH FAC.
+  89 07420 7402 XRH0,   HLT             / READ HIGH FAC IN FIELD '1'
+  90 07421 6211         CDF+10          / FROM NORMAL MODE CODE
+  91 07422 1625         TAD I   .+3       / IN FIELD '0'.
+  92 07423 6201         CDF
+  93 07424 5620         JMP I   XRH0
+  94 07425 0170         ACH
+  95            EXLHA=4567              / DEFINE LOAD HIGH FAC.
+  96 07426 7402 XLH0,   HLT             / LOAD HIGH FAC,
+  97 07427 6211         CDF+10          / CROSS-BANKS '1' AND '0'.
+  98 07430 3625         DCA I   .-3
+  99 07431 6201         CDF
+ 100 07432 5626         JMP I   XLH0
+ 101            /       FP 8 EM
+ 102            /       PDP-8 FLOATING POINT
+ 103            /       EXTENDED MEMORY VERSION
+ 104            /       ANCR 1040
+ 105            /       W R MYERS
+ 106            /       FEBRUARY 1972
+ 107            / FLOATING MODE INSTRUCTIONS:
+ 108            UDF=6211                        / FP IN FIELD #1
+ 109            EFM=4176                        / ENTER INTERPRETER
+ 110            LFM=0                   / LEAVE FLOATING MODE
+ 111            ILA=0                   / IMMEDIATE LOAD FAC
+ 112            LD=1000                 / LOAD FAC
+ 113            ST=1400                 / STORE FAC
+ 114            AD=2000                 / ADD
+ 115            SB=2400                 / SUBTRACT
+ 116            MP=3000                 / MULTIPLY
+ 117            DV=3400                 / DIVIDE
+ 118            RDV=4000                        / DIVIDE INVERTED
+ 119            JS=4400                 / JUMP TO SUBROUTINE
+ 120            CMP=5000                        / THREE-WAY COMPARE
+ 121            JP=5400                 / JUMP TO LOCATION
+ 122            SFLO=4565                       / SINGLE FLOAT AND EFM
+ 123            DFLO=4564                       / DOUBLE FLOAT AND EFM
+ 124            ZAC=6000                / ZERO TO FAC
+ 125            ABS=6010                / ABSOLUTE VALUE
+ 126            CHS=6020                / CHANGE SIGN
+ 127            DFIX=6030               / DOUBLE FIX AND LFM
+ 128            SFIX=6040               / SIGNED FIX AND LFM
+ 129            FREAD=6050      / INPUT TO FAC
+ 130            WRITE=6051      / OUTPUT FROM FAC
+ 131            FCRLF=6052      / NEW OUTPUT LINE
+ 132            FORMAT=6400     / SET OUTPUT FORMAT
+ 133            FCDF=6060               / SET FLOATING DATA FIELD
+ 134            FSQR=6070               / SQUARE FAC
+ 135            FSQRT=6100      / SQUARE ROOT
+ 136            FEXP=6110               / EXPONENT
+ 137            FLOG=6120               / LOGARITHM
+ 138            FSIN=6130               / SINE
+ 139            FCOS=6140               / COSINE
+ 140            FATN=6150               / ARCTANGENT
+ 141            /       START OF ASSEMBLED CODE
+ 142                    FIELD   1         / EXAMPLE FP 8 IN FIELD '1'
+ 143            *151
+ 144 10151 0424 SVPC,   SPC1
+ 145 10152 0411 RSPC,   RPC1
+ 146 10153 0511 ACZ,    ACZA
+ 147 10154 0524 BCZ,    BCZA
+ 148 10155 0556 NOR,    NORA
+ 149 10156 0000 CHRX,   0               / INPUT CHARACTER COUNTER.
+ 150 10157 0000 ICHR,   0               / LAST INPUT CHARACTER.
+ 151 10160 0000 FMQ,    0               / 'MQ' REGISTER.
+ 152 10161 2512 OTR,    UOR             / OUTPUT ROUTINE.
+ 153 10162 1305 FMT,    1305            / FORMAT INDICATOR.
+ 154 10163 2520 INR,    UIR             / INPUT ROUTINE.
+ 155 10164 1204         FLOR            / DOUBLE FLOAT AND ENTER.
+ 156 10165 1200         FLOS            / SINGLE SIGNED FLOAT.
+ 157 10166 0000 ACS,    0               / FLOATING ACCUMULATOR.
+ 158 10167 0000 ACX,    0
+ 159 10170 0000 ACH,    0
+ 160 10171 0000 ACL,    0
+ 161 10172 0000 BCS,    0               / FLOATING OPERAND.
+ 162 10173 0000 BCX,    0
+ 163 10174 0000 BCH,    0
+ 164 10175 0000 BCL,    0
+ 165 10176 0000 E,      0               / INTERPRETER LOCAL ENTRY.
+ 166 10177 7300 R,      CLA CLL         / INTERPRETIVE RETURN.
+ 167 10200 4211         JMS     TENT
+ 168 10201 7000         NOP
+ 169 10202 1624         TAD I   EX
+ 170 10203 7440         SZA             / TEST FOR LFM.
+ 171 10204 5260         JMP     EGO
+ 172 10205 4211         JMS     TENT      / RESTORE INSTRUCTION
+ 173 10206 6202 XIF,    CIF             / AND DATA FIELDS
+ 174 10207 3176         DCA     E         / AND RETURN.
+ 175 10210 5624         JMP I   EX
+ 176 10211 7402 TENT,   HLT             / TEST ENTRY AND
+ 177 10212 1176         TAD     E         / FIX DATA FIELD FOR
+ 178 10213 7450         SNA             / INTERPRETER
+ 179 10214 5220         JMP     .+4       / INSTRUCTION FIELD.
+ 180 10215 2211         ISZ     TENT
+ 181 10216 6211         UDF
+ 182 10217 5222         JMP     .+3
+ 183 10220 6211 XDF,    UDF
+ 184 10221 1226         TAD     EME
+ 185 10222 3224         DCA     EX
+ 186 10223 5611         JMP I   TENT
+ 187 10224 0000 EX,     0
+ 188 10225 6201         CDF
+ 189 10226 0000 EME,    0               / CROSS-BANK ENTRY.
+ 190 10227 7300         CLA CLL
+ 191 10230 6214         RDF             / CALCULATE DATA FIELD
+ 192 10231 1225         TAD     EX+1      / AND RETURN LINKAGE.
+ 193 10232 3220         DCA     XDF
+ 194 10233 1220         TAD     XDF
+ 195 10234 7001         IAC
+ 196 10235 3206         DCA     XIF
+ 197 10236 5177         JMP     R
+ 198 10237 7402 IFPC,   HLT             / INCREMENT LOCAL OR
+ 199 10240 4211         JMS     TENT      / EXTENDED INSTRUCTION
+ 200 10241 5244         JMP     .+3       / POINTER.
+ 201 10242 2176         ISZ     E
+ 202 10243 7410         SKP
+ 203 10244 2226         ISZ     EME
+ 204 10245 6211         UDF
+ 205 10246 5637         JMP I   IFPC
+ 206 10247 0000 ADR,    0               / OPERAND ADDRESS
+ 207 10250 0000         0               / POINTERS.
+ 208 10251 0000         0
+ 209 10252 0177 P1,     177             / PAGE #1 CONSTANTS.
+ 210 10253 0200         200
+ 211 10254 7600         7600
+ 212 10255 4000         4000
+ 213 10256 3777         3777
+ 214 10257 0007         7
+ 215 10260 3160 EGO,    DCA     FMQ       / SAVE INSTRUCTION.
+ 216 10261 1160         TAD     FMQ
+ 217 10262 0252         AND     P1        / CALCULATE OPERAND ADDRESS.
+ 218 10263 3247         DCA     ADR
+ 219 10264 1160         TAD     FMQ
+ 220 10265 0253         AND     P1+1
+ 221 10266 7650         SNA CLA         / TEST PAGE INDICATOR.
+ 222 10267 5274         JMP     .+5
+ 223 10270 1224         TAD     EX
+ 224 10271 0254         AND     P1+2
+ 225 10272 1247         TAD     ADR
+ 226 10273 3247         DCA     ADR
+ 227 10274 1647         TAD I   ADR       / INDIRECT ADDRESSING
+ 228 10275 3247         DCA     ADR       / IS IMPLICIT.
+ 229 10276 1247         TAD     ADR
+ 230 10277 7001         IAC             / SET ADDRESS POINTERS.
+ 231 10300 3250         DCA     ADR+1
+ 232 10301 1250         TAD     ADR+1
+ 233 10302 7001         IAC
+ 234 10303 3251         DCA     ADR+2
+ 235 10304 4774         JMS I   F8DF      / SET OPERAND DATA FIELD.
+ 236 10305 1647         TAD I   ADR
+ 237 10306 3173         DCA     BCX       / MOVE OPERAND TO
+ 238 10307 1650         TAD I   ADR+1     / FLOATING OPERAND
+ 239 10310 0255         AND     P1+3      / REGISTER.
+ 240 10311 3172         DCA     BCS
+ 241 10312 1650         TAD I   ADR+1
+ 242 10313 0256         AND     P1+4
+ 243 10314 3174         DCA     BCH
+ 244 10315 1651         TAD I   ADR+2
+ 245 10316 3175         DCA     BCL
+ 246 10317 4237         JMS     IFPC
+ 247 10320 1160         TAD     FMQ       / GET OPERATION CODE.
+ 248 10321 7006         RTL
+ 249 10322 7006         RTL
+ 250 10323 0257         AND     P1+5
+ 251 10324 7004         RAL
+ 252 10325 7440         SZA
+ 253 10326 5333         JMP     .+5
+ 254 10327 1160         TAD     FMQ       / IMMEDIATE LOAD FAC,
+ 255 10330 4732         JMS I   .+2       / USE SINGLE FLOAT
+ 256 10331 5177         JMP     R         / ROUTINE.
+ 257 10332 1216         BFLO
+ 258 10333 1340         TAD     T1        / CALCULATE BRANCH
+ 259 10334 3157 FN2,    DCA     ICHR      / TO OTHER FUNCTIONS.
+ 260 10335 1557         TAD I   ICHR
+ 261 10336 3157         DCA     ICHR
+ 262 10337 5557         JMP I   ICHR
+ 263 10340 0433 T1,     OPT-2
+ 264 10341 4774 ST1,    JMS I   F8DF      / STORE FAC TO MEMORY.
+ 265 10342 1167         TAD     ACX
+ 266 10343 3647         DCA I   ADR
+ 267 10344 1170         TAD     ACH
+ 268 10345 1166         TAD     ACS
+ 269 10346 3650         DCA I   ADR+1
+ 270 10347 1171         TAD     ACL
+ 271 10350 3651         DCA I   ADR+2
+ 272 10351 5177         JMP     R
+ 273 10352 4211 JS1,    JMS     TENT
+ 274 10353 5361         JMP     .+6
+ 275 10354 1176         TAD     E
+ 276 10355 3647         DCA I   ADR
+ 277 10356 1250         TAD     ADR+1
+ 278 10357 3176 JP2,    DCA     E
+ 279 10360 5177         JMP     R
+ 280 10361 1226         TAD     EME
+ 281 10362 3647         DCA I   ADR
+ 282 10363 1250         TAD     ADR+1
+ 283 10364 3226 JP3,    DCA     EME
+ 284 10365 5177         JMP     R
+ 285 10366 4211 JP1,    JMS     TENT
+ 286 10367 5372         JMP     .+3
+ 287 10370 1247         TAD     ADR
+ 288 10371 5357         JMP     JP2
+ 289 10372 1247         TAD     ADR
+ 290 10373 5364         JMP     JP3
+ 291 10374 0400 F8DF,   FDF1
+ 292 10375 4777 LD1,    JMS I   XAB2
+ 293 10376 5177         JMP     R
+ 294 10377 0645 XAB2,   XAB1
+ 295 10400 7402 FDF1,   HLT
+ 296 10401 6211 FDF2,   UDF
+ 297 10402 5600         JMP I   FDF1
+ 298 10403 1160 CDX1,   TAD     FMQ       / FLOATING OPERAND
+ 299 10404 0217         AND     SPC1-5    / DATA FIELD SET.
+ 300 10405 7104         CLL RAL
+ 301 10406 7006         RTL
+ 302 10407 1221         TAD     SPC1-3
+ 303 10410 5215         JMP     .+5
+ 304 10411 0000 RPC1,   LFM             / RESTORE INSTRUCTION
+ 305 10412 1222         TAD     SPC1-2    / POINTER AND OPERAND
+ 306 10413 3176         DCA     E         / FIELD AND RETURN
+ 307 10414 1223         TAD     SPC1-1    / FROM FUNCTION.
+ 308 10415 3201         DCA     FDF2
+ 309 10416 5177         JMP     R
+ 310 10417 0007         7
+ 311 10420 6211         UDF
+ 312 10421 6201         CDF
+ 313 10422 7402         HLT
+ 314 10423 7402         HLT
+ 315 10424 7402 SPC1,   HLT             / SAVE LOCAL INSTRUCTION
+ 316 10425 1176         TAD     E         / POINTER AND DATA FIELD
+ 317 10426 3222         DCA     SPC1-2    / FOR FP8 USE OF FP8.
+ 318 10427 1201         TAD     FDF2
+ 319 10430 3223         DCA     SPC1-1
+ 320 10431 1220         TAD     SPC1-4
+ 321 10432 3201         DCA     FDF2
+ 322 10433 4176         EFM
+ 323 10434 5424         JP      SPC1
+ 324 10435 0375 OPT,    LD1             / OPERATION BRANCH TABLE.
+ 325 10436 0341         ST1
+ 326 10437 1060         AD1
+ 327 10440 1055         SB1
+ 328 10441 0772         MP1
+ 329 10442 1120         DV1
+ 330 10443 1117         RD1
+ 331 10444 0352         JS1
+ 332 10445 1354         CM1
+ 333 10446 0366         JP1
+ 334 10447 0454         FN1
+ 335 10450 2020         FM1
+ 336 10451 2525         USER    / USER-DEFINED FUNCTIONS; OP=7000.
+ 337 10452 0017         17
+ 338 10453 0463         OPF
+ 339 10454 1160 FN1,    TAD     FMQ
+ 340 10455 7010         RAR
+ 341 10456 7012         RTR
+ 342 10457 0252         AND     FN1-2
+ 343 10460 1253         TAD     FN1-1
+ 344 10461 5662         JMP I   .+1
+ 345 10462 0334         FN2
+ 346 10463 0570 OPF,    ZA1             / FUNCTION BRANCH TABLE.
+ 347 10464 0576         AB1
+ 348 10465 0574         CH1
+ 349 10466 1301         AFIX
+ 350 10467 1271         BFIX
+ 351 10470 0501         IO1
+ 352 10471 0403         CDX1
+ 353 10472 1771         SQAR
+ 354 10473 2243         SQRT
+ 355 10474 2073         EXP
+ 356 10475 2142         LOG
+ 357 10476 2423         SIN
+ 358 10477 2377         COS
+ 359 10500 2277         ATN
+ 360 10501 1160 IO1,    TAD     FMQ
+ 361 10502 0217         AND     SPC1-5
+ 362 10503 1305         TAD     .+2
+ 363 10504 5662         JMP I   OPF-1
+ 364 10505 0506         .+1
+ 365 10506 1530         IN1             / IO BRANCH TABLE.
+ 366 10507 1600         OT1
+ 367 10510 1764         CR1
+ 368 10511 7402 ACZA,   HLT             / TEST FAC FOR ZERO.
+ 369 10512 1170         TAD     ACH
+ 370 10513 7640         SZA CLA
+ 371 10514 5322         JMP     .+6
+ 372 10515 1171         TAD     ACL
+ 373 10516 7640         SZA CLA
+ 374 10517 5322         JMP     .+3
+ 375 10520 3167         DCA     ACX
+ 376 10521 5711         JMP I   ACZA
+ 377 10522 2311         ISZ     ACZA
+ 378 10523 5711         JMP I   ACZA
+ 379 10524 7402 BCZA,   HLT             / TEST OPERAND FOR ZERO.
+ 380 10525 1174         TAD     BCH
+ 381 10526 7640         SZA CLA
+ 382 10527 2324         ISZ     BCZA
+ 383 10530 5724         JMP I   BCZA
+ 384 10531 7402 RACL,   HLT             / ROTATE FAC LEFT
+ 385 10532 1171         TAD     ACL       / AND DECREMENT
+ 386 10533 7104         CLL RAL         / EXPONENT.
+ 387 10534 3171         DCA     ACL
+ 388 10535 1170         TAD     ACH
+ 389 10536 7004         RAL
+ 390 10537 3170         DCA     ACH
+ 391 10540 7040         CMA
+ 392 10541 1167         TAD     ACX
+ 393 10542 3167         DCA     ACX
+ 394 10543 5731         JMP I   RACL
+ 395 10544 7402 RACR,   HLT             / ROTATE FAC RIGHT
+ 396 10545 1170         TAD     ACH       / AND INCREMENT
+ 397 10546 7110         CLL RAR         / EXPONENT.
+ 398 10547 3170         DCA     ACH
+ 399 10550 1171         TAD     ACL
+ 400 10551 7010         RAR
+ 401 10552 3171         DCA     ACL
+ 402 10553 2167         ISZ     ACX
+ 403 10554 5744         JMP I   RACR
+ 404 10555 5744         JMP I   RACR
+ 405 10556 7402 NORA,   HLT             / NORMALIZE FAC.
+ 406 10557 4311         JMS     ACZA
+ 407 10560 5756         JMP I   NORA
+ 408 10561 1170         TAD     ACH
+ 409 10562 7700         SMA CLA
+ 410 10563 5366         JMP     .+3
+ 411 10564 4344         JMS     RACR
+ 412 10565 5756         JMP I   NORA
+ 413 10566 4331         JMS     RACL
+ 414 10567 5361         JMP     .-6
+ 415 10570 3171 ZA1,    DCA     ACL       / CLEAR FAC.
+ 416 10571 3170         DCA     ACH
+ 417 10572 3167         DCA     ACX
+ 418 10573 5376         JMP     AB1
+ 419 10574 7130 CH1,    STL RAR         / CHANGE SIGN.
+ 420 10575 1166         TAD     ACS
+ 421 10576 3166 AB1,    DCA     ACS       / ABSOLUTE VALUE.
+ 422 10577 5177         JMP     R
+ 423 10600 7402 DTAD,   HLT             / DOUBLE PRECISION ADD
+ 424 10601 7300         CLA CLL         / AC AND BC MANTISSAS.
+ 425 10602 1171         TAD     ACL
+ 426 10603 1175         TAD     BCL
+ 427 10604 3171         DCA     ACL
+ 428 10605 7204         CLA RAL
+ 429 10606 1170         TAD     ACH
+ 430 10607 1174         TAD     BCH
+ 431 10610 3170         DCA     ACH
+ 432 10611 5600         JMP I   DTAD
+ 433 10612 7402 MPTN,   HLT             / MULTIPLY FAC BY TEN.
+ 434 10613 1170         TAD     ACH
+ 435 10614 3174         DCA     BCH
+ 436 10615 1171         TAD     ACL
+ 437 10616 3175         DCA     BCL
+ 438 10617 4764         JMS I   RR3
+ 439 10620 4764         JMS I   RR3
+ 440 10621 4200         JMS     DTAD
+ 441 10622 2167         ISZ     ACX
+ 442 10623 7100         CLL
+ 443 10624 4555         JMS I   NOR
+ 444 10625 5612         JMP I   MPTN
+ 445 10626 7402 DVTN,   HLT             / DIVIDE FAC BY TEN.
+ 446 10627 1170         TAD     ACH
+ 447 10630 3160         DCA     FMQ
+ 448 10631 1171         TAD     ACL
+ 449 10632 4277         JMS     DIV
+ 450 10633 0766         RR3+2
+ 451 10634 3170         DCA     ACH
+ 452 10635 4277         JMS     DIV
+ 453 10636 0766         RR3+2
+ 454 10637 3171         DCA     ACL
+ 455 10640 1365         TAD     RR3+1
+ 456 10641 1167         TAD     ACX
+ 457 10642 3167         DCA     ACX
+ 458 10643 4555         JMS I   NOR
+ 459 10644 5626         JMP I   DVTN
+ 460 10645 7402 XAB1,   HLT             / EXCHANGE FAC
+ 461 10646 1171         TAD     ACL       / AND OPERAND.
+ 462 10647 3200         DCA     DTAD
+ 463 10650 1170         TAD     ACH
+ 464 10651 3212         DCA     MPTN
+ 465 10652 1167         TAD     ACX
+ 466 10653 3226         DCA     DVTN
+ 467 10654 1166         TAD     ACS
+ 468 10655 7104         CLL RAL
+ 469 10656 1172         TAD     BCS
+ 470 10657 3166         DCA     ACS
+ 471 10660 7010         RAR
+ 472 10661 3172         DCA     BCS
+ 473 10662 1173         TAD     BCX
+ 474 10663 3167         DCA     ACX
+ 475 10664 1174         TAD     BCH
+ 476 10665 3170         DCA     ACH
+ 477 10666 1175         TAD     BCL
+ 478 10667 3171         DCA     ACL
+ 479 10670 1200         TAD     DTAD
+ 480 10671 3175         DCA     BCL
+ 481 10672 1212         TAD     MPTN
+ 482 10673 3174         DCA     BCH
+ 483 10674 1226         TAD     DVTN
+ 484 10675 3173         DCA     BCX
+ 485 10676 5645         JMP I   XAB1
+ 486 10677 7402 DIV,    HLT             / DIVIDE FMQ,AC BY
+ 487 10700 3200         DCA     DTAD      / ADDRESSED NUMBER.
+ 488 10701 1677         TAD I   DIV
+ 489 10702 3212         DCA     MPTN      / QUOTIENT IN AC AND
+ 490 10703 1612         TAD I   MPTN      / REMAINDER IN FMQ.
+ 491 10704 7141         CIA CLL
+ 492 10705 3212         DCA     MPTN
+ 493 10706 1367         TAD     RR3+3
+ 494 10707 3245         DCA     XAB1
+ 495 10710 2277         ISZ     DIV
+ 496 10711 5322         JMP     .+11
+ 497 10712 1160         TAD     FMQ
+ 498 10713 7004         RAL
+ 499 10714 3160         DCA     FMQ
+ 500 10715 1160         TAD     FMQ
+ 501 10716 1212         TAD     MPTN
+ 502 10717 7430         SZL
+ 503 10720 3160         DCA     FMQ
+ 504 10721 7200         CLA
+ 505 10722 1200         TAD     DTAD
+ 506 10723 7004         RAL
+ 507 10724 3200         DCA     DTAD
+ 508 10725 2245         ISZ     XAB1
+ 509 10726 5312         JMP     .-14
+ 510 10727 1200         TAD     DTAD
+ 511 10730 5677         JMP I   DIV
+ 512 10731 7402 MPY,    HLT             / MULTIPLY AC BY
+ 513 10732 3200         DCA     DTAD      / ADDRESSED NUMBER.
+ 514 10733 3160         DCA     FMQ
+ 515 10734 1370         TAD     RR3+4     / HIGH PRODUCT IN FMQ,
+ 516 10735 3212         DCA     MPTN      / LOW PRODUCT IN AC.
+ 517 10736 1731         TAD I   MPY
+ 518 10737 3277         DCA     DIV
+ 519 10740 1677         TAD I   DIV
+ 520 10741 3277         DCA     DIV
+ 521 10742 2331         ISZ     MPY
+ 522 10743 7100         CLL
+ 523 10744 1200         TAD     DTAD
+ 524 10745 7010         RAR
+ 525 10746 3200         DCA     DTAD
+ 526 10747 1160         TAD     FMQ
+ 527 10750 7420         SNL
+ 528 10751 5354         JMP     .+3
+ 529 10752 7100         CLL
+ 530 10753 1277         TAD     DIV
+ 531 10754 7010         RAR
+ 532 10755 3160         DCA     FMQ
+ 533 10756 2212         ISZ     MPTN
+ 534 10757 5344         JMP     .-13
+ 535 10760 1200         TAD     DTAD
+ 536 10761 7010         RAR
+ 537 10762 7100         CLL
+ 538 10763 5731         JMP I   MPY
+ 539 10764 0544 RR3,    RACR
+ 540 10765 7774         7774
+ 541 10766 5000         5000
+ 542 10767 7763         7763
+ 543 10770 7764         7764
+ 544 10771 0531         RACL
+ 545 10772 4771 MP1,    JMS I   RR3+5     / MULTIPLY FAC
+ 546 10773 1167         TAD     ACX       / BY OPERAND.
+ 547 10774 1173         TAD     BCX
+ 548 10775 7001         IAC
+ 549 10776 3167         DCA     ACX
+ 550 10777 1166         TAD     ACS
+ 551 11000 1172         TAD     BCS
+ 552 11001 3166         DCA     ACS
+ 553 11002 1171         TAD     ACL
+ 554 11003 4765         JMS I   MP4
+ 555 11004 0175         BCL
+ 556 11005 7300         CLA CLL
+ 557 11006 1160         TAD     FMQ
+ 558 11007 3172         DCA     BCS
+ 559 11010 1171         TAD     ACL
+ 560 11011 4765         JMS I   MP4
+ 561 11012 0174         BCH
+ 562 11013 1172         TAD     BCS
+ 563 11014 3172         DCA     BCS
+ 564 11015 7204         GLK
+ 565 11016 1160         TAD     FMQ
+ 566 11017 3171         DCA     ACL
+ 567 11020 7204         GLK
+ 568 11021 3173         DCA     BCX
+ 569 11022 1170         TAD     ACH
+ 570 11023 4765         JMS I   MP4
+ 571 11024 0175         BCL
+ 572 11025 1172         TAD     BCS
+ 573 11026 7204         GLK
+ 574 11027 1171         TAD     ACL
+ 575 11030 3171         DCA     ACL
+ 576 11031 7204         GLK
+ 577 11032 1173         TAD     BCX
+ 578 11033 3173         DCA     BCX
+ 579 11034 1160         TAD     FMQ
+ 580 11035 1171         TAD     ACL
+ 581 11036 3171         DCA     ACL
+ 582 11037 7204         GLK
+ 583 11040 1173         TAD     BCX
+ 584 11041 3173         DCA     BCX
+ 585 11042 1170         TAD     ACH
+ 586 11043 4765         JMS I   MP4
+ 587 11044 0174         BCH
+ 588 11045 1171         TAD     ACL
+ 589 11046 3171         DCA     ACL
+ 590 11047 7204         GLK
+ 591 11050 1173         TAD     BCX
+ 592 11051 1160         TAD     FMQ
+ 593 11052 3170         DCA     ACH
+ 594 11053 4555         JMS I   NOR
+ 595 11054 5177         JMP     R
+ 596 11055 7130 SB1,    STL RAR         / SUBTRACT.
+ 597 11056 1172         TAD     BCS
+ 598 11057 3172         DCA     BCS
+ 599 11060 4554 AD1,    JMS I   BCZ       / ADD OPERAND TO FAC.
+ 600 11061 5177         JMP     R
+ 601 11062 4553         JMS I   ACZ
+ 602 11063 5766         JMP I   MP4+1
+ 603 11064 4767         JMS I   MP4+2
+ 604 11065 7740         CLA SMA SZA
+ 605 11066 4770         JMS I   MP4+3
+ 606 11067 1173         TAD     BCX
+ 607 11070 7041         CIA
+ 608 11071 1167         TAD     ACX
+ 609 11072 7700         SMA CLA
+ 610 11073 5276         JMP     .+3
+ 611 11074 4771         JMS I   MP4+4
+ 612 11075 5267         JMP     .-6
+ 613 11076 1166         TAD     ACS
+ 614 11077 1172         TAD     BCS
+ 615 11100 7650         SNA CLA
+ 616 11101 5312         JMP     .+11
+ 617 11102 1171         TAD     ACL
+ 618 11103 7141         CLL CIA
+ 619 11104 3171         DCA     ACL
+ 620 11105 1170         TAD     ACH
+ 621 11106 7040         CMA
+ 622 11107 7430         SZL
+ 623 11110 7001         IAC
+ 624 11111 3170         DCA     ACH
+ 625 11112 1172         TAD     BCS
+ 626 11113 3166         DCA     ACS
+ 627 11114 4772         JMS I   MP4+5
+ 628 11115 4555 AR3,    JMS I   NOR
+ 629 11116 5177         JMP     R
+ 630 11117 4770 RD1,    JMS I   MP4+3     / INVERSE DIVIDE.
+ 631 11120 4553 DV1,    JMS I   ACZ       / NORMAL DIVIDE.
+ 632 11121 5177         JMP     R
+ 633 11122 4554         JMS I   BCZ
+ 634 11123 5773         JMP I   MP4+6
+ 635 11124 1166         TAD     ACS
+ 636 11125 1172         TAD     BCS
+ 637 11126 3166         DCA     ACS
+ 638 11127 1173         TAD     BCX
+ 639 11130 7041         CIA
+ 640 11131 1167         TAD     ACX
+ 641 11132 3167         DCA     ACX
+ 642 11133 1175         TAD     BCL
+ 643 11134 7104         CLL RAL
+ 644 11135 3175         DCA     BCL
+ 645 11136 1174         TAD     BCH
+ 646 11137 7004         RAL
+ 647 11140 3174         DCA     BCH
+ 648 11141 1170         TAD     ACH
+ 649 11142 4765         JMS I   MP4
+ 650 11143 0175         BCL
+ 651 11144 4774         JMS I   MP4+7
+ 652 11145 0174         BCH
+ 653 11146 7141         CLL CIA
+ 654 11147 1171         TAD     ACL
+ 655 11150 3171         DCA     ACL
+ 656 11151 7420         SNL
+ 657 11152 7040         CMA
+ 658 11153 1170         TAD     ACH
+ 659 11154 3160         DCA     FMQ
+ 660 11155 1171         TAD     ACL
+ 661 11156 4774         JMS I   MP4+7
+ 662 11157 0174         BCH
+ 663 11160 3170         DCA     ACH
+ 664 11161 4774         JMS I   MP4+7
+ 665 11162 0174         BCH
+ 666 11163 3171         DCA     ACL
+ 667 11164 5315         JMP     AR3
+ 668 11165 0731 MP4,    MPY
+ 669 11166 0375         LD1
+ 670 11167 1324         CPQ
+ 671 11170 0645         XAB1
+ 672 11171 0544         RACR
+ 673 11172 0600         DTAD
+ 674 11173 0570         ZA1
+ 675 11174 0677         DIV
+ 676 11175 7402 SCR1,   HLT
+ 677 11176 7402         HLT
+ 678 11177 7402         HLT
+ 679 11200 7402 FLOS,   HLT             / SINGLE, SIGNED
+ 680 11201 4216         JMS     BFLO      / FLOAT AND ENTER.
+ 681 11202 4176         EFM
+ 682 11203 5600         JP      FLOS
+ 683 11204 7402 FLOR,   HLT             / DOUBLE PRECISION
+ 684 11205 4210         JMS     AFLO      / FLOAT AND ENTER.
+ 685 11206 4176         EFM
+ 686 11207 5604         JP      FLOR
+ 687 11210 7402 AFLO,   HLT
+ 688 11211 3171         DCA     ACL
+ 689 11212 3166         DCA     ACS
+ 690 11213 1210         TAD     AFLO
+ 691 11214 3216         DCA     BFLO
+ 692 11215 5230         JMP     CFLO
+ 693 11216 7402 BFLO,   HLT
+ 694 11217 7500         SMA
+ 695 11220 5225         JMP     .+5
+ 696 11221 7041         CIA
+ 697 11222 3171         DCA     ACL
+ 698 11223 7130         STL RAR
+ 699 11224 7410         SKP
+ 700 11225 3171         DCA     ACL
+ 701 11226 3166         DCA     ACS
+ 702 11227 3170         DCA     ACH
+ 703 11230 1314 CFLO,   TAD     T5
+ 704 11231 3167         DCA     ACX
+ 705 11232 4555         JMS I   NOR
+ 706 11233 6214         RDF
+ 707 11234 1315         TAD     T5+1
+ 708 11235 3236         DCA     .+1
+ 709 11236 7402         HLT
+ 710 11237 5616         JMP I   BFLO
+ 711 11240 7402 FXQ,    HLT
+ 712 11241 1167         TAD     ACX
+ 713 11242 7500         SMA
+ 714 11243 5250         JMP     .+5
+ 715 11244 7300         CLA CLL
+ 716 11245 3170         DCA     ACH
+ 717 11246 3171         DCA     ACL
+ 718 11247 5640         JMP I   FXQ
+ 719 11250 1316         TAD     T5+2
+ 720 11251 7500         SMA
+ 721 11252 5244         JMP     .-6
+ 722 11253 3210         DCA     AFLO
+ 723 11254 4717         JMS I   T5+3
+ 724 11255 2210         ISZ     AFLO
+ 725 11256 5254         JMP     .-2
+ 726 11257 1171         TAD     ACL
+ 727 11260 5640         JMP I   FXQ
+ 728 11261 7402 CFIX,   HLT
+ 729 11262 4240         JMS     FXQ
+ 730 11263 7620         SNL CLA
+ 731 11264 5661         JMP I   CFIX
+ 732 11265 2171         ISZ     ACL
+ 733 11266 5661         JMP I   CFIX
+ 734 11267 2170         ISZ     ACH
+ 735 11270 5661         JMP I   CFIX
+ 736 11271 4261 BFIX,   JMS     CFIX
+ 737 11272 1166         TAD     ACS       / SINGLE, SIGNED FIX
+ 738 11273 7104         CLL RAL         / AND LEAVE.
+ 739 11274 1171         TAD     ACL
+ 740 11275 7430         SZL
+ 741 11276 7041         CIA
+ 742 11277 3171         DCA     ACL
+ 743 11300 7410         SKP
+ 744 11301 4261 AFIX,   JMS     CFIX      / DOUBLE PRECISION
+ 745 11302 1720         TAD I   T5+4      / FIX AND LEAVE.
+ 746 11303 7101         IAC CLL
+ 747 11304 3261         DCA     CFIX
+ 748 11305 1721         TAD I   T5+5
+ 749 11306 3310         DCA     .+2
+ 750 11307 4722         JMS I   T5+6
+ 751 11310 7402         HLT
+ 752 11311 3176         DCA     E
+ 753 11312 1171         TAD     ACL
+ 754 11313 5661         JMP I   CFIX
+ 755 11314 0027 T5,     27
+ 756 11315 6202         CIF
+ 757 11316 7751         7751
+ 758 11317 0544         RACR
+ 759 11320 0224         EX
+ 760 11321 0206         XIF
+ 761 11322 0211         TENT
+ 762 11323 0237         IFPC
+ 763 11324 7402 CPQ,    HLT             / COMPARE OPERAND
+ 764 11325 1173         TAD     BCX       / MAGNITUDES.
+ 765 11326 7041         CIA
+ 766 11327 1167         TAD     ACX
+ 767 11330 7440         SZA
+ 768 11331 5724         JMP I   CPQ
+ 769 11332 1174         TAD     BCH
+ 770 11333 7041         CIA
+ 771 11334 1170         TAD     ACH
+ 772 11335 7440         SZA
+ 773 11336 5724         JMP I   CPQ
+ 774 11337 1175         TAD     BCL
+ 775 11340 7141         CIA CLL
+ 776 11341 1171         TAD     ACL
+ 777 11342 7020         CML
+ 778 11343 7440         SZA
+ 779 11344 7010         RAR
+ 780 11345 5724         JMP I   CPQ
+ 781 11346 1166 CZ,     TAD     ACS
+ 782 11347 7640         SZA CLA
+ 783 11350 5177         JMP     R
+ 784 11351 4723         JMS I   T5+7
+ 785 11352 4723         JMS I   T5+7
+ 786 11353 5177         JMP     R
+ 787 11354 4553 CM1,    JMS I   ACZ       / THREE-WAY BRANCH.
+ 788 11355 5375         JMP     RAZ
+ 789 11356 4554         JMS I   BCZ
+ 790 11357 5346         JMP     CZ
+ 791 11360 1166         TAD     ACS
+ 792 11361 1172         TAD     BCS
+ 793 11362 7640         SZA CLA
+ 794 11363 5346         JMP     CZ
+ 795 11364 4324         JMS     CPQ
+ 796 11365 7450         SNA
+ 797 11366 5352         JMP     CZ+4
+ 798 11367 7700         SMA CLA
+ 799 11370 5346         JMP     CZ
+ 800 11371 1172         TAD     BCS
+ 801 11372 7640         SZA CLA
+ 802 11373 5351         JMP     CZ+3
+ 803 11374 5177         JMP     R
+ 804 11375 4554 RAZ,    JMS I   BCZ
+ 805 11376 5352         JMP     CZ+4
+ 806 11377 5371         JMP     .-6
+ 807 11400 7402 CHAR,   HLT             / INPUT CHARACTER PROCESSOR.
+ 808 11401 4563         JMS I   INR
+ 809 11402 0314         AND     K5        / MASK TO SEVEN BITS.
+ 810 11403 7450         SNA             / IGNORE NULL.
+ 811 11404 5201         JMP     CHAR+1
+ 812 11405 3157         DCA     ICHR      / SAVE CHARACTER.
+ 813 11406 1157         TAD     ICHR
+ 814 11407 1315         TAD     K5+1      / TEST FOR RUB-OUT.
+ 815 11410 7450         SNA
+ 816 11411 5252         JMP     RBO
+ 817 11412 1316         TAD     K5+2      / TEST FOR 'E'.
+ 818 11413 7450         SNA
+ 819 11414 5365         JMP     EXPN
+ 820 11415 1317         TAD     K5+3      / TEST FOR DECIMAL POINT.
+ 821 11416 7450         SNA
+ 822 11417 5250         JMP     DC5
+ 823 11420 7001         IAC             / TEST FOR MINUS.
+ 824 11421 7450         SNA
+ 825 11422 5245         JMP     MN5
+ 826 11423 1320         TAD     K5+4      / IGNORE PLUS.
+ 827 11424 7450         SNA
+ 828 11425 5201         JMP     CHAR+1
+ 829 11426 1321         TAD     K5+5      / BLANK MAY TERMINATE.
+ 830 11427 7450         SNA
+ 831 11430 5255         JMP     BK5
+ 832 11431 1322         TAD     K5+6      / IGNORE LINE-FEED.
+ 833 11432 7450         SNA
+ 834 11433 5201         JMP     CHAR+1
+ 835 11434 1323         TAD     K5+7      / TERMINATE IF NOT
+ 836 11435 7540         SMA SZA         / DECIMAL DIGIT.
+ 837 11436 5260         JMP     INAN
+ 838 11437 1324         TAD     K5+10
+ 839 11440 7510         SPA
+ 840 11441 5260         JMP     INAN      / INCREMENT COUNTER,
+ 841 11442 3167         DCA     ACX       / RETURN FOUR-BIT
+ 842 11443 2156         ISZ     CHRX      / DIGIT IN ACX.
+ 843 11444 5600         JMP I   CHAR
+ 844 11445 7330 MN5,    STL CLA RAR
+ 845 11446 2200         ISZ     CHAR
+ 846 11447 5600         JMP I   CHAR
+ 847 11450 7240 DC5,    CLA CMA
+ 848 11451 5337         JMP     IN2-1
+ 849 11452 1302 RBO,    TAD     ROC
+ 850 11453 4561         JMS I   OTR
+ 851 11454 5330         JMP     IN1
+ 852 11455 1156 BK5,    TAD     CHRX
+ 853 11456 7650         SNA CLA
+ 854 11457 5201         JMP     CHAR+1
+ 855 11460 7300 INAN,   CLA CLL         / INTERPRET AND NORMALIZE
+ 856 11461 1317         TAD     K5+3      / INPUT NUMBER.
+ 857 11462 3167         DCA     ACX
+ 858 11463 4555         JMS I   NOR
+ 859 11464 1175         TAD     BCL
+ 860 11465 7104         CLL RAL
+ 861 11466 1174         TAD     BCH
+ 862 11467 7430         SZL
+ 863 11470 7141         CIA CLL
+ 864 11471 1172         TAD     BCS
+ 865 11472 7450         SNA
+ 866 11473 5177         JMP     R
+ 867 11474 3172         DCA     BCS
+ 868 11475 1172         TAD     BCS
+ 869 11476 7500         SMA
+ 870 11477 7041         CIA
+ 871 11500 3173         DCA     BCX
+ 872 11501 1172         TAD     BCS
+ 873 11502 7700 ROC,    SMA CLA
+ 874 11503 5306         JMP     .+3
+ 875 11504 1326         TAD     K5+12
+ 876 11505 7410         SKP
+ 877 11506 1325         TAD     K5+11
+ 878 11507 3200         DCA     CHAR
+ 879 11510 4600         JMS I   CHAR
+ 880 11511 2173         ISZ     BCX
+ 881 11512 5310         JMP     .-2
+ 882 11513 5177         JMP     R
+ 883 11514 0177 K5,     177
+ 884 11515 7601         7601
+ 885 11516 0072         72
+ 886 11517 0027         27
+ 887 11520 0002         2
+ 888 11521 0013         13
+ 889 11522 0026         26
+ 890 11523 7720         7720
+ 891 11524 0012         12
+ 892 11525 0612         MPTN
+ 893 11526 0626         DVTN
+ 894 11527 0731         MPY
+ 895 11530 3156 IN1,    DCA     CHRX
+ 896 11531 3171         DCA     ACL
+ 897 11532 3170         DCA     ACH
+ 898 11533 3166         DCA     ACS
+ 899 11534 3175         DCA     BCL
+ 900 11535 3174         DCA     BCH
+ 901 11536 3172         DCA     BCS
+ 902 11537 3173         DCA     BCX
+ 903 11540 4200 IN2,    JMS     CHAR
+ 904 11541 5344         JMP     .+3
+ 905 11542 3166         DCA     ACS
+ 906 11543 5340         JMP     IN2
+ 907 11544 1172         TAD     BCS
+ 908 11545 1173         TAD     BCX
+ 909 11546 3172         DCA     BCS
+ 910 11547 1170         TAD     ACH
+ 911 11550 4727         JMS I   K5+13
+ 912 11551 1524         K5+10
+ 913 11552 3170         DCA     ACH
+ 914 11553 1171         TAD     ACL
+ 915 11554 4727         JMS I   K5+13
+ 916 11555 1524         K5+10
+ 917 11556 1167         TAD     ACX
+ 918 11557 3171         DCA     ACL
+ 919 11560 7204         CLA RAL
+ 920 11561 1170         TAD     ACH
+ 921 11562 1160         TAD     FMQ
+ 922 11563 3170         DCA     ACH
+ 923 11564 5340         JMP     IN2
+ 924 11565 4200 EXPN,   JMS     CHAR
+ 925 11566 5371         JMP     .+3
+ 926 11567 3175         DCA     BCL
+ 927 11570 5365         JMP     EXPN
+ 928 11571 1174         TAD     BCH
+ 929 11572 4727         JMS I   K5+13
+ 930 11573 1524         K5+10
+ 931 11574 1167         TAD     ACX
+ 932 11575 3174         DCA     BCH
+ 933 11576 5365         JMP     EXPN
+ 934 11577 7402         HLT
+ 935 11600 1162 OT1,    TAD     FMT       / FIXED-POINT OUTPUT.
+ 936 11601 0344         AND     T6A
+ 937 11602 7041         CIA
+ 938 11603 3342         DCA     FRWD
+ 939 11604 1162         TAD     FMT
+ 940 11605 7012         RTR
+ 941 11606 7012         RTR
+ 942 11607 7012         RTR
+ 943 11610 0344         AND     T6A
+ 944 11611 7041         CIA
+ 945 11612 3343         DCA     INWD
+ 946 11613 1166         TAD     ACS
+ 947 11614 7700         SMA CLA
+ 948 11615 5220         JMP     .+3
+ 949 11616 1350         TAD     T6A+4
+ 950 11617 7410         SKP
+ 951 11620 1347         TAD     T6A+3
+ 952 11621 3353         DCA     T6A+7
+ 953 11622 3166         DCA     ACS
+ 954 11623 4551         JMS I   SVPC
+ 955 11624 1737         ST      T6B
+ 956 11625 0000         LFM
+ 957 11626 4553         JMS I   ACZ
+ 958 11627 5251         JMP     ZOT
+ 959 11630 1342         TAD     FRWD
+ 960 11631 7500         SMA
+ 961 11632 7240         CLA CMA
+ 962 11633 3355         DCA     SPAC
+ 963 11634 4176         EFM
+ 964 11635 0005         ILA     5
+ 965 11636 0000         LFM
+ 966 11637 4740         JMS I   T6B+1
+ 967 11640 2355         ISZ     SPAC
+ 968 11641 5237         JMP     .-2
+ 969 11642 4176         EFM
+ 970 11643 3737         AD      T6B
+ 971 11644 0000         LFM
+ 972 11645 1167         TAD     ACX
+ 973 11646 7740         SMA SZA CLA
+ 974 11647 5273         JMP     IGOT
+ 975 11650 5253         JMP     .+3
+ 976 11651 1352 ZOT,    TAD     T6A+6
+ 977 11652 3353         DCA     T6A+7
+ 978 11653 7001         IAC
+ 979 11654 1343         TAD     INWD
+ 980 11655 7510         SPA
+ 981 11656 4355         JMS     SPAC
+ 982 11657 1353         TAD     T6A+7
+ 983 11660 4561         JMS I   OTR
+ 984 11661 1342 FRO,    TAD     FRWD
+ 985 11662 7700         SMA CLA
+ 986 11663 5317         JMP     ODN
+ 987 11664 1351         TAD     T6A+5
+ 988 11665 4561         JMS I   OTR
+ 989 11666 2342         ISZ     FRWD
+ 990 11667 7610         SKP CLA
+ 991 11670 5317         JMP     ODN
+ 992 11671 4741         JMS I   T6B+2
+ 993 11672 5266         JMP     .-4
+ 994 11673 3156 IGOT,   DCA     CHRX
+ 995 11674 4740         JMS I   T6B+1
+ 996 11675 2156         ISZ     CHRX
+ 997 11676 1167         TAD     ACX
+ 998 11677 7740         SMA SZA CLA
+ 999 11700 5274         JMP     .-4
+1000 11701 1343         TAD     INWD
+1001 11702 1156         TAD     CHRX
+1002 11703 7510         SPA
+1003 11704 5322         JMP     OCN
+1004 11705 7200         CLA
+1005 11706 1342         TAD     FRWD
+1006 11707 1343         TAD     INWD
+1007 11710 3156         DCA     CHRX
+1008 11711 1347         TAD     T6A+3
+1009 11712 7410         SKP
+1010 11713 1351         TAD     T6A+5
+1011 11714 4561         JMS I   OTR
+1012 11715 2156         ISZ     CHRX
+1013 11716 5313         JMP     .-3
+1014 11717 4176 ODN,    EFM
+1015 11720 1737         LD      T6B
+1016 11721 5552         JP      RSPC
+1017 11722 7001 OCN,    IAC
+1018 11723 7510         SPA
+1019 11724 4355         JMS     SPAC
+1020 11725 1156         TAD     CHRX
+1021 11726 7040         CMA
+1022 11727 3156         DCA     CHRX
+1023 11730 1353         TAD     T6A+7
+1024 11731 4561         JMS I   OTR
+1025 11732 2156         ISZ     CHRX
+1026 11733 7610         SKP CLA
+1027 11734 5261         JMP     FRO
+1028 11735 4741         JMS I   T6B+2
+1029 11736 5332         JMP     .-4
+1030 11737 1175 T6B,    SCR1
+1031 11740 0626         DVTN
+1032 11741 2000         DGO
+1033 11742 7402 FRWD,   HLT
+1034 11743 7402 INWD,   HLT
+1035 11744 0077 T6A,    77
+1036 11745 0212         212
+1037 11746 0215         215
+1038 11747 0240         240
+1039 11750 0255         255
+1040 11751 0256         256
+1041 11752 0260         260
+1042 11753 7402         HLT
+1043 11754 7402         HLT
+1044 11755 7402 SPAC,   HLT
+1045 11756 3354         DCA     T6A+10
+1046 11757 1347         TAD     T6A+3
+1047 11760 4561         JMS I   OTR
+1048 11761 2354         ISZ     T6A+10
+1049 11762 5357         JMP     .-3
+1050 11763 5755         JMP I   SPAC
+1051 11764 1346 CR1,    TAD     T6A+2
+1052 11765 4561         JMS I   OTR
+1053 11766 1345         TAD     T6A+1
+1054 11767 4561         JMS I   OTR
+1055 11770 5177         JMP     R
+1056 11771 4551 SQAR,   JMS I   SVPC
+1057 11772 1737         ST      T6B
+1058 11773 3737         MP      T6B
+1059 11774 5552         JP      RSPC
+1060 11775 7402 SCR2,   HLT
+1061 11776 7402         HLT
+1062 11777 7402         HLT
+1063 12000 7402 DGO,    HLT             / PRINT FAC HIGH
+1064 12001 4632         JMS I   T7A       / DECIMAL DIGIT.
+1065 12002 4176         EFM
+1066 12003 3434         ST      T7A+2
+1067 12004 0000         LFM
+1068 12005 4633         JMS I   T7A+1
+1069 12006 3235         DCA     T7B
+1070 12007 1235         TAD     T7B
+1071 12010 1236         TAD     T7B+1
+1072 12011 4561         JMS I   OTR
+1073 12012 1235         TAD     T7B
+1074 12013 7041         CIA
+1075 12014 4565         SFLO
+1076 12015 2034         AD      T7A+2
+1077 12016 0000         LFM
+1078 12017 5600         JMP I   DGO
+1079 12020 1160 FM1,    TAD     FMQ       / SET OUTPUT FORMAT.
+1080 12021 0237         AND     T7B+2
+1081 12022 3235         DCA     T7B
+1082 12023 1160         TAD     FMQ
+1083 12024 0240         AND     T7B+3
+1084 12025 7104         CLL RAL
+1085 12026 7006         RTL
+1086 12027 1235         TAD     T7B
+1087 12030 3162         DCA     FMT
+1088 12031 5177         JMP     R
+1089 12032 0612 T7A,    MPTN
+1090 12033 1240         FXQ
+1091 12034 1775         SCR2
+1092 12035 7402 T7B,    HLT
+1093 12036 0260         260
+1094 12037 0007         7
+1095 12040 0370         370
+1096 12041 7402 SCR3,   HLT
+1097 12042 7402         HLT
+1098 12043 7402         HLT
+1099 12044 0001 PIOT,   1
+1100 12045 3110         3110
+1101 12046 3755         3755
+1102 12047 0001 ONE,    1
+1103 12050 2000         2000
+1104 12051 0000 HALF,   0
+1105 12052 2000         2000
+1106 12053 0000 ZERO,   0
+1107 12054 0000         0
+1108 12055 0000         0
+1109 12056 0000 XK2,    0
+1110 12057 2000         2000
+1111 12060 0000         0
+1112 12061 2047 XTA,    ONE
+1113 12062 2225         XK1
+1114 12063 1175         SCR1
+1115 12064 2230         XK1+3
+1116 12065 2056         XK2
+1117 12066 1775         SCR2
+1118 12067 2041         SCR3
+1119 12070 2053         ZERO
+1120 12071 2127         EXPS
+1121 12072 2114         EXPT
+1122 12073 4551 EXP,    JMS I   SVPC      / NATURAL EXPONENT.
+1123 12074 3062         MP      XTA+1
+1124 12075 3463         ST      XTA+2
+1125 12076 6040         SFIX
+1126 12077 3235         DCA     T7B
+1127 12100 1235         TAD     T7B
+1128 12101 7001         IAC
+1129 12102 3256         DCA     XK2
+1130 12103 1235         TAD     T7B
+1131 12104 7041         CIA
+1132 12105 4565         SFLO
+1133 12106 2063         AD      XTA+2
+1134 12107 3064         MP      XTA+3
+1135 12110 3463         ST      XTA+2
+1136 12111 3061         LD      XTA
+1137 12112 3466         ST      XTA+5
+1138 12113 0010         ILA     10
+1139 12114 3467 EXPT,   ST      XTA+6
+1140 12115 6063         RDV     XTA+2
+1141 12116 3066         MP      XTA+5
+1142 12117 2061         AD      XTA
+1143 12120 3466         ST      XTA+5
+1144 12121 3067         LD      XTA+6
+1145 12122 2461         SB      XTA
+1146 12123 7070         CMP     XTA+7
+1147 12124 7471         JP      XTA+10
+1148 12125 7471         JP      XTA+10
+1149 12126 7472         JP      XTA+11
+1150 12127 3066 EXPS,   LD      XTA+5
+1151 12130 3065         MP      XTA+4
+1152 12131 5552         JP      RSPC
+1153 12132 2200 LGK,    LGC
+1154 12133 2203         LGC+3
+1155 12134 2206         LGC+6
+1156 12135 2211         LGC+11
+1157 12136 2214         LGC+14
+1158 12137 2217         LGC+17
+1159 12140 2222         LGC+22
+1160 12141 2051         HALF
+1161 12142 1167 LOG,    TAD     ACX       / NATURAL LOGARITHM.
+1162 12143 3256         DCA     XK2
+1163 12144 7001         IAC
+1164 12145 3167         DCA     ACX
+1165 12146 3166         DCA     ACS
+1166 12147 4553         JMS I   ACZ
+1167 12150 5177         JMP     R
+1168 12151 4551         JMS I   SVPC
+1169 12152 2133         AD      LGK+1
+1170 12153 3466         ST      XTA+5
+1171 12154 2532         SB      LGK
+1172 12155 3466         DV      XTA+5
+1173 12156 3466         ST      XTA+5
+1174 12157 3066         MP      XTA+5
+1175 12160 3463         ST      XTA+2
+1176 12161 3135         MP      LGK+3
+1177 12162 2136         AD      LGK+4
+1178 12163 3063         MP      XTA+2
+1179 12164 2137         AD      LGK+5
+1180 12165 3063         MP      XTA+2
+1181 12166 2140         AD      LGK+6
+1182 12167 3066         MP      XTA+5
+1183 12170 3466         ST      XTA+5
+1184 12171 0000         LFM
+1185 12172 1256         TAD     XK2
+1186 12173 4565         SFLO
+1187 12174 2541         SB      LGK+7
+1188 12175 2066         AD      XTA+5
+1189 12176 3134         MP      LGK+2
+1190 12177 5552         JP      RSPC
+1191 12200 0002 LGC,    2
+1192 12201 2650         2650
+1193 12202 1172         1172
+1194 12203 0001         1
+1195 12204 2650         2650
+1196 12205 1172         1172
+1197 12206 0000         0
+1198 12207 2613         2613
+1199 12210 4414         4414
+1200 12211 7777         -1
+1201 12212 3362         3362
+1202 12213 5646         5646
+1203 12214 0000         0
+1204 12215 2234         2234
+1205 12216 6604         6604
+1206 12217 0000         0
+1207 12220 3661         3661
+1208 12221 6112         6112
+1209 12222 0002         2
+1210 12223 2705         2705
+1211 12224 2436         2436
+1212 12225 0001 XK1,    1
+1213 12226 2705         2705
+1214 12227 2436         2436
+1215 12230 0000         0
+1216 12231 2613         2613
+1217 12232 4414         4414
+1218 12233 1175 TSQ,    SCR1
+1219 12234 1775         SCR2
+1220 12235 0000         0
+1221 12236 2051         HALF
+1222 12237 2047         ONE
+1223 12240 7774         7774
+1224 12241 2267         SQRTL
+1225 12242 0000         0
+1226 12243 3166 SQRT,   DCA     ACS       / SQUARE ROOT.
+1227 12244 4553         JMS I   ACZ
+1228 12245 5177         JMP     R
+1229 12246 1167         TAD     ACX
+1230 12247 7510         SPA
+1231 12250 7020         CML
+1232 12251 7010         RAR
+1233 12252 3242         DCA     SQRT-1
+1234 12253 7204         GLK
+1235 12254 3167         DCA     ACX
+1236 12255 1240         TAD     TSQ+5
+1237 12256 3235         DCA     TSQ+2
+1238 12257 4551         JMS I   SVPC
+1239 12260 3633         ST      TSQ
+1240 12261 2237         AD      TSQ+4
+1241 12262 7641         JP      TSQ+6
+1242 12263 4176         EFM
+1243 12264 3634         ST      TSQ+1
+1244 12265 6233         RDV     TSQ
+1245 12266 2234         AD      TSQ+1
+1246 12267 3236 SQRTL,  MP      TSQ+3
+1247 12270 0000         LFM
+1248 12271 2235         ISZ     TSQ+2
+1249 12272 5263         JMP     .-7
+1250 12273 1167         TAD     ACX
+1251 12274 1242         TAD     SQRT-1
+1252 12275 3167         DCA     ACX
+1253 12276 5552         JMP I   RSPC
+1254 12277 1166 ATN,    TAD     ACS       / ARCTANGENT.
+1255 12300 3235         DCA     TSQ+2
+1256 12301 3166         DCA     ACS
+1257 12302 1167         TAD     ACX
+1258 12303 3242         DCA     TSQ+7
+1259 12304 4551         JMS I   SVPC
+1260 12305 7237         CMP     TSQ+4
+1261 12306 7745         JP      KAT+1
+1262 12307 7745         JP      KAT+1
+1263 12310 6237         RDV     TSQ+4
+1264 12311 3755 ATL,    ST      KAT+11
+1265 12312 3355         MP      KAT+11
+1266 12313 3754         ST      KAT+10
+1267 12314 3753         DV      KAT+7
+1268 12315 2352         AD      KAT+6
+1269 12316 6354         RDV     KAT+10
+1270 12317 2351         AD      KAT+5
+1271 12320 6354         RDV     KAT+10
+1272 12321 2350         AD      KAT+4
+1273 12322 6354         RDV     KAT+10
+1274 12323 2347         AD      KAT+3
+1275 12324 6354         RDV     KAT+10
+1276 12325 2346         AD      KAT+2
+1277 12326 6354         RDV     KAT+10
+1278 12327 2237         AD      TSQ+4
+1279 12330 3355         MP      KAT+11
+1280 12331 0000         LFM
+1281 12332 1242         TAD     TSQ+7
+1282 12333 7750         SPA SNA CLA
+1283 12334 5341         JMP     .+5
+1284 12335 4176         EFM
+1285 12336 6020         CHS
+1286 12337 2344         AD      KAT
+1287 12340 0000         LFM
+1288 12341 1235         TAD     TSQ+2
+1289 12342 3166         DCA     ACS
+1290 12343 5552         JMP I   RSPC
+1291 12344 2044 KAT,    PIOT
+1292 12345 2311         ATL
+1293 12346 2356         XAT
+1294 12347 2363         XAT+5
+1295 12350 2366         XAT+10
+1296 12351 2371         XAT+13
+1297 12352 2360         XAT+2
+1298 12353 2374         XAT+16
+1299 12354 1175         SCR1
+1300 12355 1775         SCR2
+1301 12356 0002 XAT,    2
+1302 12357 7000         7000
+1303 12360 0006         6
+1304 12361 6622         6622
+1305 12362 2322         2322
+1306 12363 0000         0
+1307 12364 6161         6161
+1308 12365 6351         6351
+1309 12366 0004         4
+1310 12367 7743         7743
+1311 12370 0460         0460
+1312 12371 7776         7776
+1313 12372 6456         6456
+1314 12373 2636         2636
+1315 12374 7775         7775
+1316 12375 7353         7353
+1317 12376 1611         1611
+1318 12377 3166 COS,    DCA     ACS       / COSINE.
+1319 12400 4551         JMS I   SVPC
+1320 12401 2407         AD      KR1
+1321 12402 7403         JP      .+1
+1322 12403 2424         SIN+1
+1323 12404 1175 KS1,    SCR1
+1324 12405 1775         SCR2
+1325 12406 2041         SCR3
+1326 12407 2044 KR1,    PIOT
+1327 12410 1240         FXQ
+1328 12411 2047         ONE
+1329 12412 0000         0
+1330 12413 2414 SCOS,   .+1
+1331 12414 7402 SCOX,   HLT
+1332 12415 6405         RDV     KS1+1
+1333 12416 3406         MP      KS1+2
+1334 12417 6020         CHS
+1335 12420 2411         AD      KR1+2
+1336 12421 3406         ST      KS1+2
+1337 12422 7414         JP      SCOX
+1338 12423 4551 SIN,    JMS I   SVPC      / SINE.
+1339 12424 0000         LFM
+1340 12425 1166         TAD     ACS
+1341 12426 3212         DCA     KR1+3
+1342 12427 3166         DCA     ACS
+1343 12430 4176         EFM
+1344 12431 3407         DV      KR1
+1345 12432 3404         ST      KS1
+1346 12433 0000         LFM
+1347 12434 4610         JMS I   KR1+1
+1348 12435 7012         RTR
+1349 12436 3214         DCA     SCOX
+1350 12437 7210         CLA RAR
+1351 12440 1212         TAD     KR1+3
+1352 12441 3212         DCA     KR1+3
+1353 12442 3170         DCA     ACH
+1354 12443 1171         TAD     ACL
+1355 12444 4564         DFLO
+1356 12445 6020         CHS
+1357 12446 2404         AD      KS1
+1358 12447 3404         ST      KS1
+1359 12450 0000         LFM
+1360 12451 1214         TAD     SCOX
+1361 12452 7500         SMA
+1362 12453 5260         JMP     .+5
+1363 12454 4176         EFM
+1364 12455 3411         LD      KR1+2
+1365 12456 2404         SB      KS1
+1366 12457 0000         LFM
+1367 12460 4176         EFM
+1368 12461 3407         MP      KR1
+1369 12462 3404         ST      KS1
+1370 12463 3404         MP      KS1
+1371 12464 3405         ST      KS1+1
+1372 12465 3411         LD      KR1+2
+1373 12466 3406         ST      KS1+2
+1374 12467 0322         322
+1375 12470 6413         JS      SCOS
+1376 12471 0234         234
+1377 12472 6413         JS      SCOS
+1378 12473 0156         156
+1379 12474 6413         JS      SCOS
+1380 12475 0110         110
+1381 12476 6413         JS      SCOS
+1382 12477 0052         52
+1383 12500 6413         JS      SCOS
+1384 12501 0024         24
+1385 12502 6413         JS      SCOS
+1386 12503 0006         6
+1387 12504 6413         JS      SCOS
+1388 12505 3404         MP      KS1
+1389 12506 0000         LFM
+1390 12507 1212         TAD     KR1+3
+1391 12510 3166         DCA     ACS
+1392 12511 5552         JMP I   RSPC
+1393            /       SAMPLE USER OUTPUT ROUTINE
+1394            /       USES 'PRINTA' ROUTINE IN FIELD '0'
+1395 12512 7402 UOR,    HLT
+1396 12513 6202         CIF+00
+1397 12514 4717         JMS I   .+3
+1398 12515 7300         CLA CLL
+1399 12516 5712         JMP I   UOR
+1400 12517 0213         PRINTA
+1401            /       SAMPLE USER INPUT ROUTINE
+1402            /       USES 'READA' ROUTINE IN FIELD '0'
+1403 12520 7402 UIR,    HLT
+1404 12521 6202         CIF+00
+1405 12522 4724         JMS I   .+2
+1406 12523 5720         JMP I   UIR
+1407 12524 0200         READA
+1408            /       SAMPLE USER-DEFINED FUNCTION
+1409 12525 4551 USER,   JMS I   SVPC      / SAVE FPC AND EFM.
+1410            /       ANY CODE (SEE TEXT)
+1411 12526 4552         JMS I   RSPC      / RESTORE AND RETURN.
+1412            /
+1413            /       THE FOLLOWING CODE OVERLAYS THE SOFTWARE
+1414            /       MULTIPLY AND DIVIDE ROUTINES.
+1415            /       REMOVE IF EAE NOT AVAILABLE.
+1416            /
+1417            *DIV
+1418 10677 7402         HLT             / FP8 EAE DIVIDE.
+1419 10700 7421         7421
+1420 10701 1677         TAD I   DIV
+1421 10702 2277         ISZ     DIV
+1422 10703 3212         DCA     MPTN
+1423 10704 1612         TAD I   MPTN
+1424 10705 3310         DCA     .+3
+1425 10706 1160         TAD     FMQ
+1426 10707 7407         7407
+1427 10710 7402         HLT
+1428 10711 3160         DCA     FMQ
+1429 10712 7501         7501
+1430 10713 5677         JMP I   DIV
+1431            *MPY
+1432 10731 7402         HLT
+1433 10732 3340         DCA     .+6       / FP8 EAE MULTIPLY.
+1434 10733 1731         TAD I   MPY
+1435 10734 2331         ISZ     MPY
+1436 10735 3212         DCA     MPTN
+1437 10736 1612         TAD I   MPTN
+1438 10737 7425         7425
+1439 10740 7402         HLT
+1440 10741 3160         DCA     FMQ
+1441 10742 7501         7501
+1442 10743 5731         JMP I   MPY
+1443            $
+
+AB1     0576
+ABS     6010 unreferenced
+ACH     0170
+ACL     0171
+ACS     0166
+ACX     0167
+ACZ     0153
+ACZA    0511
+AD      2000
+AD1     1060
+ADR     0247
+AFIX    1301
+AFLO    1210
+AR3     1115
+ATL     2311
+ATN     2277
+BCH     0174
+BCL     0175
+BCS     0172
+BCX     0173
+BCZ     0154
+BCZA    0524
+BFIX    1271
+BFLO    1216
+BK5     1455
+CDX1    0403
+CFIX    1261
+CFLO    1230
+CH1     0574
+CHAR    1400
+CHRX    0156
+CHS     6020
+CM1     1354
+COS     2377
+CPQ     1324
+CR1     1764
+CZ      1346
+DC5     1450
+DFIX    6030 unreferenced
+DFLO    4564
+DGO     2000
+DIV     0677
+DTAD    0600
+DV      3400
+DV1     1120
+DVTN    0626
+E       0176
+EFM     4176
+EGO     0260
+EME     0226
+EX      0224
+EXLHA   4567 unreferenced
+EXP     2073
+EXPN    1565
+EXPS    2127
+EXPT    2114
+EXRHA   4566 unreferenced
+F8DF    0374
+FATN    6150 unreferenced
+FCDF    6060 unreferenced
+FCOS    6140 unreferenced
+FCRLF   6052 unreferenced
+FDF1    0400
+FDF2    0401
+FEXP    6110 unreferenced
+FLOG    6120 unreferenced
+FLOR    1204
+FLOS    1200
+FM1     2020
+FMQ     0160
+FMT     0162
+FN1     0454
+FN2     0334
+FORMAT  6400 unreferenced
+FREAD   6050 unreferenced
+FRO     1661
+FRWD    1742
+FSIN    6130 unreferenced
+FSQR    6070 unreferenced
+FSQRT   6100 unreferenced
+FXQ     1240
+HALF    2051
+ICHR    0157
+IFPC    0237
+IGOT    1673
+ILA     0000
+IN1     1530
+IN2     1540
+INAN    1460
+INR     0163
+INWD    1743
+IO1     0501
+JP      5400
+JP1     0366
+JP2     0357
+JP3     0364
+JS      4400
+JS1     0352
+K5      1514
+KAT     2344
+KR1     2407
+KS1     2404
+LD      1000
+LD1     0375
+LFM     0000
+LGC     2200
+LGK     2132
+LOG     2142
+MN5     1445
+MP      3000
+MP1     0772
+MP4     1165
+MPTN    0612
+MPY     0731
+NOR     0155
+NORA    0556
+OCN     1722
+ODN     1717
+ONE     2047
+OPF     0463
+OPT     0435
+OT1     1600
+OTR     0161
+P1      0252
+PIOT    2044
+PRINTA  0213
+R       0177
+RACL    0531
+RACR    0544
+RAZ     1375
+RBO     1452
+RD1     1117
+RDV     4000
+READA   0200
+ROC     1502
+RPC1    0411
+RR3     0764
+RSPC    0152
+SB      2400
+SB1     1055
+SCOS    2413
+SCOX    2414
+SCR1    1175
+SCR2    1775
+SCR3    2041
+SFIX    6040
+SFLO    4565
+SIN     2423
+SPAC    1755
+SPC1    0424
+SQAR    1771
+SQRT    2243
+SQRTL   2267
+ST      1400
+ST1     0341
+SVPC    0151
+T1      0340
+T5      1314
+T6A     1744
+T6B     1737
+T7A     2032
+T7B     2035
+TENT    0211
+TSQ     2233
+UDF     6211
+UIR     2520
+UOR     2512
+USER    2525
+WRITE   6051 unreferenced
+XAB1    0645
+XAB2    0377
+XAT     2356
+XDF     0220
+XDFLO   7404
+XEE     7400
+XIF     0206
+XK1     2225
+XK2     2056
+XLH0    7426
+XRH0    7420
+XSFLO   7412
+XTA     2061
+ZA1     0570
+ZAC     6000 unreferenced
+ZERO    2053
+ZOT     1651
