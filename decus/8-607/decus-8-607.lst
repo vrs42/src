@@ -1,0 +1,646 @@
+   1            /CALCU1 - VERSION 1
+   2            
+   3            /THIS PROGRAM CAUSES THE PDP-8 TO SIMULATE A PRINTING
+   4            /CALCULATOR, CAPABLE OF ADDITION, SUBTRACTION,
+   5            /MULTIPLICATION, DIVISION, AND EXPONENTIATION.
+   6            /SUBTOTALS AND TOTALS ARE PRODUCED ON COMMAND.
+   7            /AN INITIAL DIALOG GIVES ESSENTIAL OPERATING IN-
+   8            /STRUCTIONS.
+   9            
+  10            /THIS PROGRAM IS DESIGNED TO UTILIZE ONE OF THE DEC
+  11            /FLOATING POINT PACKAGES.  THE BINARY FOR THE
+  12            /APPROPRIATE FLOATING POINT PACKAGE (EAE, NONEAE, 27-BIT)
+  13            /MUST BE LOADED WITH THE BINARY ASSEMBLED FROM
+  14            /THIS SOURCE PROGRAM OR RESULTS WILL BE UNPREDICTABLE.
+  15            
+  16            /FPP PSEUDO-INSTRUCTIONS:
+  17            
+  18                    FIXMRI  FADD=1000
+  19                    FIXMRI  FSUB=2000
+  20                    FIXMRI  FMPY=3000
+  21                    FIXMRI  FDIV=4000
+  22                    FIXMRI  FGET=5000
+  23                    FIXMRI  FPUT=6000
+  24                            FEXT=0000
+  25                            FEXP=0006
+  26                            FLOG=0007
+  27                            FNEG=0010
+  28                            FIN=0011
+  29                            FOUT=0012
+  30                            FFIX=0013
+  31                            FLOT=0014
+  32                            FSMA=7110
+  33                            FSZA=7050
+  34                            FSPA=7100
+  35                            FSNA=7040
+  36                            FNOP=7010
+  37                            FSKP=7020
+  38                            FPP=JMS I 7
+  39                            PRINT=JMS I TYPE
+  40                            CRLF=JMS I CRLF1
+  41            
+  42                    *20
+  43 00020 0000 TEMP1,  0
+  44 00021 0000         0
+  45 00022 0000         0
+  46 00023 0000 TEMP2,  0
+  47 00024 0000         0
+  48 00025 0000         0
+  49 00026 0264 CRLF1,  CRLF2
+  50 00027 0473 TYPE,   TYPE1
+  51 00030 0221 GTOP1,  GTOP
+  52 00031 0044 FAC0,   44
+  53 00032 0000 TEMP,   0
+  54                   *56
+  55 00056 0001         1               /SET OUTPUT FORMAT OF
+  56 00057 0016         16              /FLOATING POINT PKG
+  57 00060 0006         6               /TO E14.6
+  58            
+  59                    *70
+  60 00070 0000 GTCHK,  0               /ROUTINE TO INPUT A NUMBER
+  61                                    /AND CHECK FOR PROPER TER-
+  62                                    /MINATOR BEFORE PROCEEDING
+  63 00071 4407         FPP
+  64 00072 6020         FPUT TEMP1      /SAVE CONTENTS OF FAC
+  65 00073 0011         FIN             /GET NO. FROM KEYBOARD
+  66 00074 0000         FEXT
+  67 00075 7200         CLA             /AND CHECK FOR VALID INPUT
+  68 00076 1053         TAD 53          /C(53=TERMINATOR
+  69 00077 1107         TAD KM215       /ASCII FOR C.R.
+  70 00100 7450         SNA             /WAS IT A C.R.?
+  71 00101 5470         JMP I GTCHK     /YES, EXIT TO MAIN PROG
+  72 00102 4407         FPP             /NO, . . .
+  73 00103 5020         FGET TEMP1      /RESTORE CONTENTS OF FAC
+  74 00104 0000         FEXT
+  75 00105 4426         CRLF
+  76 00106 5430         JMP I GTOP1     /AND TRY AGAIN
+  77            
+  78 00107 7563 KM215,  -215
+  79            
+  80                    PAGE
+  81            
+  82            
+  83            
+  84            
+  85            
+  86            
+  87            
+  88            
+  89            
+  90            
+  91            
+  92            
+  93            
+  94            
+  95            
+  96            
+  97            
+  98            
+  99            
+ 100            
+ 101            
+ 102            
+ 103            
+ 104            
+ 105            
+ 106            
+ 107            
+ 108            
+ 109            
+ 110            
+ 111 00200 6046 START, TLS
+ 112 00201 6032         KCC
+ 113 00202 4671         JMS I INIT
+ 114 00203 4672         JMS I INIT3
+ 115 00204 7300         CLA CLL
+ 116 00205 4407         FPP
+ 117 00206 5311         FGET K0
+ 118 00207 6020         FPUT TEMP1
+ 119 00210 6023         FPUT TEMP2
+ 120 00211 0000         FEXT
+ 121 00212 4427         PRINT
+ 122 00213 4543         TEXT "%#CLEAR%##"
+     00214 0314 
+     00215 0501 
+     00216 2245 
+     00217 4343 
+     00220 0000 
+ 123 00221 7200 GTOP,   CLA
+ 124 00222 6031         KSF
+ 125 00223 5222         JMP .-1
+ 126 00224 6036         KRB             /GET OPERATOR
+ 127 00225 3032         DCA TEMP
+ 128 00226 1032         TAD TEMP
+ 129 00227 1307         TAD KM203
+ 130 00230 7650         SNA CLA         /CTRL/C?
+ 131 00231 5710         JMP I MON       /YES, BACK TO MONITOR
+ 132 00232 1032         TAD TEMP        /NO, GO ON
+ 133 00233 6041         TSF
+ 134 00234 5233         JMP .-1
+ 135 00235 6046         TLS             /ECHO OPERATOR
+ 136 00236 1306         TAD KM252
+ 137 00237 7450         SNA             /"*"?
+ 138 00240 5701         JMP I MULTI     /YES, GO TO MULTIPLY SUB
+ 139 00241 1305         TAD KM1         /(-253 OVERALL)
+ 140 00242 7450         SNA             /"+"?
+ 141 00243 5700         JMP I ADD       /YES, GO TO ADD SUB
+ 142 00244 1304         TAD KM2         /(-255)
+ 143 00245 7450         SNA             /"-"?
+ 144 00246 5677         JMP I SUBT      /YES, GO TO SUBTRACT ROUTINE
+ 145 00247 1304         TAD KM2         /(-257)
+ 146 00250 7450         SNA             /"/"?
+ 147 00251 5676         JMP I DIVD      /YES, GO TO DIVIDE ROUTINE
+ 148 00252 1303         TAD KM44        /(-323)
+ 149 00253 7450         SNA             /"S"?
+ 150 00254 5675         JMP I STOT      /YES, OUTPUT SUBTOTAL
+ 151 00255 1305         TAD KM1         /(-324)
+ 152 00256 7450         SNA             /"T"?
+ 153 00257 5674         JMP I GTOT      /YES, OUTPUT TOTAL AND CLEAR
+ 154 00260 1302         TAD KM12        /(-336)
+ 155 00261 7650         SNA CLA         /"^"?
+ 156 00262 5673         JMP I EXP       /YES, EXPONENTIATE
+ 157 00263 5221         JMP GTOP        /NO, IGNORE IT AND TRY AGAIN
+ 158            
+ 159 00264 0000 CRLF2, 0
+ 160 00265 4427         PRINT
+ 161 00266 4543         TEXT "%#"
+     00267 0000 
+ 162 00270 5664         JMP I CRLF2
+ 163            
+ 164 00271 0600 INIT,   INIT1
+ 165 00272 1000 INIT3,  INIT2
+ 166 00273 0430 EXP,    EXP1
+ 167 00274 1131 GTOT,   GTOT1
+ 168 00275 1123 STOT,   STOT1
+ 169 00276 0421 DIVD,   DIVD1
+ 170 00277 0405 SUBT,   SUBT1
+ 171 00300 0400 ADD,    ADD1
+ 172 00301 0414 MULTI,  MULTI1
+ 173            
+ 174 00302 7766 KM12,   -12
+ 175 00303 7734 KM44,   -44
+ 176 00304 7776 KM2,    -2
+ 177 00305 7777 KM1,    -1
+ 178 00306 7526 KM252,  -252
+ 179 00307 7575 KM203,  -203
+ 180 00310 7600 MON,    7600
+ 181 00311 0000 K0,     0
+ 182 00312 0000         0
+ 183 00313 0000         0
+ 184            
+ 185            PAGE
+ 186            
+ 187            
+ 188            
+ 189            
+ 190            
+ 191            
+ 192            
+ 193            
+ 194            
+ 195            
+ 196            
+ 197            
+ 198            
+ 199            
+ 200            
+ 201            
+ 202            
+ 203            
+ 204            
+ 205            
+ 206            
+ 207            
+ 208            
+ 209            
+ 210            
+ 211            
+ 212            
+ 213            
+ 214            
+ 215            
+ 216            
+ 217 00400 4070 ADD1,  JMS GTCHK       /GET AND CHECK OPERAND:
+ 218                                    /RETURN WITH PREVIOUS C(FAC IN
+ 219                                    /TEMP1 AND OPERAND IN FAC.
+ 220 00401 4407         FPP
+ 221 00402 1020         FADD TEMP1
+ 222 00403 0000         FEXT            /EXIT WITH TOTAL IN FAC
+ 223 00404 5430         JMP I GTOP1
+ 224            
+ 225 00405 4070 SUBT1,  JMS GTCHK
+ 226 00406 4407         FPP
+ 227 00407 6023         FPUT TEMP2      /SUBTRAHEND IN TEMP2
+ 228 00410 5020         FGET TEMP1
+ 229 00411 2023         FSUB TEMP2
+ 230 00412 0000         FEXT
+ 231 00413 5430         JMP I GTOP1
+ 232            
+ 233 00414 4070 MULTI1, JMS GTCHK
+ 234 00415 4407         FPP
+ 235 00416 3020         FMPY TEMP1
+ 236 00417 0000         FEXT
+ 237 00420 5430         JMP I GTOP1
+ 238            
+ 239 00421 4070 DIVD1,  JMS GTCHK
+ 240 00422 4407         FPP
+ 241 00423 6023         FPUT TEMP2
+ 242 00424 5020         FGET TEMP1
+ 243 00425 4023         FDIV TEMP2
+ 244 00426 0000         FEXT
+ 245 00427 5430         JMP I GTOP1
+ 246            
+ 247 00430 4070 EXP1,   JMS GTCHK
+ 248 00431 4407         FPP
+ 249 00432 6023         FPUT TEMP2
+ 250 00433 5020         FGET TEMP1
+ 251 00434 0007         FLOG
+ 252 00435 3023         FMPY TEMP2
+ 253 00436 0006         FEXP
+ 254 00437 0000         FEXT
+ 255 00440 5430         JMP I GTOP1
+ 256            
+ 257 00441 4427 ERR1,   PRINT
+ 258 00442 4543 TEXT "%#CANNOT EXPONENTIATE NEGATIVE NUMBER OR 0%#"
+     00443 0301 
+     00444 1616 
+     00445 1724 
+     00446 4005 
+     00447 3020 
+     00450 1716 
+     00451 0516 
+     00452 2411 
+     00453 0124 
+     00454 0540 
+     00455 1605 
+     00456 0701 
+     00457 2411 
+     00460 2605 
+     00461 4016 
+     00462 2515 
+     00463 0205 
+     00464 2240 
+     00465 1722 
+     00466 4060 
+     00467 4543 
+     00470 0000 
+ 259 00471 5672         JMP I START1
+ 260 00472 0204 START1, START+4
+ 261 00473 0000 TYPE1,  0               /TYPE MESSAGE FOLLOWING CALL;
+ 262                                    /"%#" OUTPUTS A CR/LF COMBO
+ 263 00474 7240         CLA CMA
+ 264 00475 1273         TAD TYPE1
+ 265 00476 3014         DCA 14
+ 266 00477 1414         TAD I 14        /NOTE: LOC 14 IS AUTOINDEX
+ 267 00500 3032         DCA TEMP
+ 268 00501 1032         TAD TEMP
+ 269 00502 7012         RTR; RTR; RTR
+     00503 7012 
+     00504 7012 
+ 270 00505 4311         JMS DECODE
+ 271 00506 1032         TAD TEMP
+ 272 00507 4311         JMS DECODE
+ 273 00510 5277         JMP TYPE1+4
+ 274 00511 0000 DECODE,        0
+ 275 00512 0345         AND MASK5       /MASK OFF BITS 0-5
+ 276 00513 7450         SNA             /END OF TEXT?
+ 277 00514 5414         JMP I 14        /YES, RETURN
+ 278 00515 1346         TAD KM40        /NO, CHECK IT OUT
+ 279 00516 7500         SMA             /<40?
+ 280 00517 5322         JMP DECODE+11   /NO
+ 281 00520 1347         TAD K340        /YES, ADD 340 (300 TO ORIG.)
+ 282 00521 5335         JMP PRI         /AND PRINT IT
+ 283 00522 1350         TAD KM3         /(-43 OVERALL)
+ 284 00523 7440         SZA             /WAS IT "#"?
+ 285 00524 5327         JMP DECODE+16   /NO
+ 286 00525 1351         TAD K212        /YES; GET ASCII FOR L.F.
+ 287 00526 5335         JMP PRI         /AND PRINT IT
+ 288 00527 1353         TAD KKM2        /(-45 IN ALL)
+ 289 00530 7440         SZA             /WAS IT "%"?
+ 290 00531 5334         JMP DECODE+23   /NO
+ 291 00532 1352         TAD K215        /YES, GET ASCII FOR C.R.
+ 292 00533 5335         JMP PRI         /AND PRINT IT
+ 293 00534 1354         TAD K245        /ADD 245 TO OTHERS
+ 294 00535 4337 PRI,    JMS TTYP        /AND PRINT
+ 295 00536 5711         JMP I DECODE
+ 296            
+ 297 00537 0000 TTYP,   0
+ 298 00540 6046         TLS
+ 299 00541 6041         TSF
+ 300 00542 5341         JMP .-1
+ 301 00543 7200         CLA
+ 302 00544 5737         JMP I TTYP
+ 303            
+ 304 00545 0077 MASK5,  0077
+ 305 00546 7740 KM40,   -40
+ 306 00547 0340 K340,   340
+ 307 00550 7775 KM3,    -3
+ 308 00551 0212 K212,   212
+ 309 00552 0215 K215,   215
+ 310 00553 7776 KKM2,   -2
+ 311 00554 0245 K245,   245
+ 312            
+ 313            PAGE
+ 314 00600 0000 INIT1, 0               /INITIAL DIALOG
+ 315 00601 4427         PRINT
+ 316 00602 0301 TEXT "CALCULATOR PROGRAM:%##AFTER 'CLEAR' IS PRINTED,%#"
+     00603 1403 
+     00604 2514 
+     00605 0124 
+     00606 1722 
+     00607 4020 
+     00610 2217 
+     00611 0722 
+     00612 0115 
+     00613 7245 
+     00614 4343 
+     00615 0106 
+     00616 2405 
+     00617 2240 
+     00620 4703 
+     00621 1405 
+     00622 0122 
+     00623 4740 
+     00624 1123 
+     00625 4020 
+     00626 2211 
+     00627 1624 
+     00630 0504 
+     00631 5445 
+     00632 4300 
+ 317 00633 4427         PRINT
+ 318 00634 0516 TEXT "ENTER #+%#      -%#      * (TO MULTIPLY)%#      "
+     00635 2405 
+     00636 2240 
+     00637 4353 
+     00640 4543 
+     00641 4040 
+     00642 4040 
+     00643 4040 
+     00644 5545 
+     00645 4340 
+     00646 4040 
+     00647 4040 
+     00650 4052 
+     00651 4050 
+     00652 2417 
+     00653 4015 
+     00654 2514 
+     00655 2411 
+     00656 2014 
+     00657 3151 
+     00660 4543 
+     00661 4040 
+     00662 4040 
+     00663 4040 
+     00664 0000 
+ 319 00665 4427        PRINT
+ 320 00666 5740 TEXT "/ (TO DIVIDE)%#      ^ (TO EXPONENTIATE)%#"
+     00667 5024 
+     00670 1740 
+     00671 0411 
+     00672 2611 
+     00673 0405 
+     00674 5145 
+     00675 4340 
+     00676 4040 
+     00677 4040 
+     00700 4036 
+     00701 4050 
+     00702 2417 
+     00703 4005 
+     00704 3020 
+     00705 1716 
+     00706 0516 
+     00707 2411 
+     00710 0124 
+     00711 0551 
+     00712 4543 
+     00713 0000 
+ 321 00714 4427         PRINT
+ 322 00715 4040 TEXT "      S (FOR SUBTOTAL), OR%#      T (FOR TOTAL);%##"
+     00716 4040 
+     00717 4040 
+     00720 2340 
+     00721 5006 
+     00722 1722 
+     00723 4023 
+     00724 2502 
+     00725 2417 
+     00726 2401 
+     00727 1451 
+     00730 5440 
+     00731 1722 
+     00732 4543 
+     00733 4040 
+     00734 4040 
+     00735 4040 
+     00736 2440 
+     00737 5006 
+     00740 1722 
+     00741 4024 
+     00742 1724 
+     00743 0114 
+     00744 5173 
+     00745 4543 
+     00746 4300 
+ 323 00747 5600         JMP I INIT1
+ 324            PAGE
+ 325            
+ 326 01000 0000 INIT2,  0
+ 327 01001 4427         PRINT
+ 328 01002 0122 TEXT "ARITHMETIC OPERATORS ARE TO BE FOLLLOWED BY%#"
+     01003 1124 
+     01004 1015 
+     01005 0524 
+     01006 1103 
+     01007 4017 
+     01010 2005 
+     01011 2201 
+     01012 2417 
+     01013 2223 
+     01014 4001 
+     01015 2205 
+     01016 4024 
+     01017 1740 
+     01020 0205 
+     01021 4006 
+     01022 1714 
+     01023 1414 
+     01024 1727 
+     01025 0504 
+     01026 4002 
+     01027 3145 
+     01030 4300 
+ 329 01031 4427         PRINT
+ 330 01032 0140 TEXT "A DECIMAL NUMBER IN E14.6 FORMAT, AND 'RETURN'%#"
+     01033 0405 
+     01034 0311 
+     01035 1501 
+     01036 1440 
+     01037 1625 
+     01040 1502 
+     01041 0522 
+     01042 4011 
+     01043 1640 
+     01044 0561 
+     01045 6456 
+     01046 6640 
+     01047 0617 
+     01050 2215 
+     01051 0124 
+     01052 5440 
+     01053 0116 
+     01054 0440 
+     01055 4722 
+     01056 0524 
+     01057 2522 
+     01060 1647 
+     01061 4543 
+     01062 0000 
+ 331 01063 4427        PRINT
+ 332 01064 4311 TEXT "#IF ERROR IN ENTRY, PRESS 'RUBOUT' INSTEAD OF 'RETURN.'%##"
+     01065 0640 
+     01066 0522 
+     01067 2217 
+     01070 2240 
+     01071 1116 
+     01072 4005 
+     01073 1624 
+     01074 2231 
+     01075 5440 
+     01076 2022 
+     01077 0523 
+     01100 2340 
+     01101 4722 
+     01102 2502 
+     01103 1725 
+     01104 2447 
+     01105 4011 
+     01106 1623 
+     01107 2405 
+     01110 0104 
+     01111 4017 
+     01112 0640 
+     01113 4722 
+     01114 0524 
+     01115 2522 
+     01116 1656 
+     01117 4745 
+     01120 4343 
+     01121 0000 
+ 333 01122 5600         JMP I INIT2
+ 334 01123 4407 STOT1, FPP
+ 335 01124 6020         FPUT TEMP1
+ 336 01125 0012         FOUT
+ 337 01126 5020         FGET TEMP1
+ 338 01127 0000         FEXT
+ 339 01130 5430         JMP I GTOP1
+ 340            
+ 341 01131 4407 GTOT1,  FPP
+ 342 01132 6020         FPUT TEMP1
+ 343 01133 0012         FOUT
+ 344 01134 5020         FGET TEMP1
+ 345 01135 0000         FEXT
+ 346 01136 5737         JMP I START3
+ 347 01137 0204 START3, START+4
+ 348            
+ 349            /ERROR TRAPS
+ 350            *7575
+ 351 07575 1140         ERR2            /DIVISION BY 0
+ 352 07576 0441         ERR1            /ILLEGAL LOG
+ 353            
+ 354            *START3+1
+ 355 01140 4427 ERR2,   PRINT
+ 356 01141 4543         TEXT "%#CAN'T DIVIDE BY 0%##"
+     01142 0301 
+     01143 1647 
+     01144 2440 
+     01145 0411 
+     01146 2611 
+     01147 0405 
+     01150 4002 
+     01151 3140 
+     01152 6045 
+     01153 4343 
+     01154 0000 
+ 357 01155 5737         JMP I START3
+ 358                    $$$$
+
+ADD     0300
+ADD1    0400
+CRLF    4426
+CRLF1   0026
+CRLF2   0264
+DECODE  0511
+DIVD    0276
+DIVD1   0421
+ERR1    0441
+ERR2    1140
+EXP     0273
+EXP1    0430
+FAC0    0031 unreferenced
+FADD    11000
+FDIV    14000
+FEXP    0006
+FEXT    0000
+FFIX    0013 unreferenced
+FGET    15000
+FIN     0011
+FLOG    0007
+FLOT    0014 unreferenced
+FMPY    13000
+FNEG    0010 unreferenced
+FNOP    7010 unreferenced
+FOUT    0012
+FPP     4407
+FPUT    16000
+FSKP    7020 unreferenced
+FSMA    7110 unreferenced
+FSNA    7040 unreferenced
+FSPA    7100 unreferenced
+FSUB    12000
+FSZA    7050 unreferenced
+GTCHK   0070
+GTOP    0221
+GTOP1   0030
+GTOT    0274
+GTOT1   1131
+INIT    0271
+INIT1   0600
+INIT2   1000
+INIT3   0272
+K0      0311
+K212    0551
+K215    0552
+K245    0554
+K340    0547
+KKM2    0553
+KM1     0305
+KM12    0302
+KM2     0304
+KM203   0307
+KM215   0107
+KM252   0306
+KM3     0550
+KM40    0546
+KM44    0303
+MASK5   0545
+MON     0310
+MULTI   0301
+MULTI1  0414
+PRI     0535
+PRINT   4427
+START   0200
+START1  0472
+START3  1137
+STOT    0275
+STOT1   1123
+SUBT    0277
+SUBT1   0405
+TEMP    0032
+TEMP1   0020
+TEMP2   0023
+TTYP    0537
+TYPE    0027
+TYPE1   0473
