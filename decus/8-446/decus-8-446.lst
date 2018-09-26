@@ -1,0 +1,196 @@
+   1            /FFT-R PATCH            PAL8    6/10/71
+   2            
+   3            /FFT-R PATCH
+   4            
+   5            MQL=DCA MQ
+   6            MQA=TAD MQ
+   7            SHL=JMS I SHLOC
+   8            LSR=JMS I LLOC
+   9            ASR1=JMS I AS1LOC
+  10            MUY=JMS I MPLOC
+  11            
+  12            *0566
+  13 00566 4516         LSR
+  14            *0761
+  15 00761 4517         ASR1
+  16            *0765
+  17 00765 4517         ASR1
+  18            *0770
+  19 00770 1110         MQA
+  20            *1004
+  21 01004 3110         MQL
+  22            *1014
+  23 01014 7010         RAR             /PART OF PATCH BELOW
+  24            *1016
+  25 01016 4520         MUY
+  26            *1020
+  27 01020 4515         SHL
+  28            *1023
+  29 01023 1235         TAD SIGN        /PATCH TO FIX ROUNDING ERROR; SEE
+  30 01024 4515         SHL             /DECUS 8-143 WRITE-UP
+  31 01025 0000         0
+  32 01026 1217         1217            /TAD ARG2
+  33 01027 7510         SPA 
+  34 01030 7350         CLA CLL CMA RAR 
+  35 01031 7000         NOP
+  36 01032 7430         SZL 
+  37 01033 7041         CIA
+  38 01034 5600         5600
+  39 01035 0000 SIGN,   0000
+  40            *1063
+  41 01063 3110         MQL
+  42            *1074
+  43 01074 4516         LSR
+  44            *1076
+  45 01076 4515         SHL
+  46            *1111
+  47 01111 4516         LSR
+  48            *1113
+  49 01113 4515         SHL
+  50            *1122
+  51 01122 4516         LSR
+  52            *1124
+  53 01124 4515         SHL
+  54            *1142
+  55 01142 4517         ASR1
+  56            *1146
+  57 01146 4517         ASR1
+  58            *1151
+  59 01151 1110         MQA
+  60            *1160
+  61 01160 3110         MQL
+  62 01161 1110         MQA
+  63            *1171
+  64 01171 1110         MQA
+  65            
+  66            *0110
+  67 00110 0000 MQ,     0
+  68 00111 0000 AC,     0
+  69 00112 0000 T1,     0
+  70 00113 0000 T2,     0
+  71 00114 0000 CTR,    0
+  72 00115 0221 SHLOC,  SH
+  73 00116 0200 LLOC,   LS
+  74 00117 0241 AS1LOC, AA1
+  75 00120 0271 MPLOC,  MP
+  76 00121 7764 KM12,   -14
+  77            
+  78            *0200
+  79            
+  80            /EAE SHIFT SIMULATORS
+  81            
+  82 00200 0000 LS,     0       /LSR
+  83 00201 3111         DCA AC
+  84 00202 1600         TAD I LS
+  85 00203 7040         CMA 
+  86 00204 3114         DCA CTR
+  87 00205 2200         ISZ LS
+  88 00206 1111 LR,     TAD AC
+  89 00207 7110         CLL RAR 
+  90 00210 3111         DCA AC
+  91 00211 1110         TAD MQ
+  92 00212 7010         RAR 
+  93 00213 3110         DCA MQ
+  94 00214 2114         ISZ CTR
+  95 00215 5206         JMP LR
+  96 00216 1111         TAD AC
+  97 00217 7100         CLL             /THIS OPERATOR ALWAYS CLEARS THE LINK
+  98 00220 5600         JMP I LS
+  99            
+ 100 00221 0000 SH,     0       /SHL
+ 101 00222 3111         DCA AC
+ 102 00223 1621         TAD I SH
+ 103 00224 7040         CMA 
+ 104 00225 3114         DCA CTR
+ 105 00226 1110 SHR,    TAD MQ
+ 106 00227 7104         CLL RAL 
+ 107 00230 3110         DCA MQ
+ 108 00231 1111         TAD AC
+ 109 00232 7004         RAL 
+ 110 00233 3111         DCA AC
+ 111 00234 2114         ISZ CTR
+ 112 00235 5226         JMP SHR
+ 113 00236 1111         TAD AC
+ 114 00237 2221         ISZ SH
+ 115 00240 5621         JMP I SH
+ 116            
+ 117 00241 0000 AA1,    0       /ASR ONCE
+ 118 00242 7100         CLL 
+ 119 00243 7510         SPA 
+ 120 00244 7120         STL
+ 121 00245 7010         RAR 
+ 122 00246 3111         DCA AC
+ 123 00247 1110         TAD MQ
+ 124 00250 7010         RAR 
+ 125 00251 7100         CLL 
+ 126 00252 3110         DCA MQ
+ 127 00253 1111         TAD AC
+ 128 00254 7510         SPA 
+ 129 00255 7120         STL 
+ 130 00256 2241         ISZ AA1
+ 131 00257 5641         JMP I AA1
+ 132            
+ 133 00260 0000 SH1,    0       /SHL ONCE
+ 134 00261 3111         DCA AC
+ 135 00262 1110         TAD MQ
+ 136 00263 7104         CLL RAL 
+ 137 00264 3110         DCA MQ
+ 138 00265 1111         TAD AC
+ 139 00266 7004         RAL 
+ 140 00267 2260         ISZ SH1
+ 141 00270 5660         JMP I SH1
+ 142            
+ 143 00271 0000 MP,     0       /MUY SIMULATOR
+ 144 00272 7200         CLA     /ENTER WITH ARGS FOLLOWING CALL AND IN MQ
+ 145 00273 3111         DCA AC  /EXIT WITH MOST SIGNIFICANT BITS OF PRODUCT
+ 146 00274 1671         TAD I MP        /AND LEAST SIGNIFICANT BITS OF PRODUCT
+ 147 00275 3112         DCA T1          /IN THE MQ
+ 148 00276 2271         ISZ MP
+ 149 00277 1121         TAD KM12
+ 150 00300 3114         DCA CTR
+ 151 00301 7100         CLL 
+ 152 00302 1110 MPREP,  TAD MQ
+ 153 00303 7010         RAR 
+ 154 00304 3110         DCA MQ
+ 155 00305 1111         TAD AC
+ 156 00306 7420         SNL 
+ 157 00307 5312         JMP .+3
+ 158 00310 7100         CLL 
+ 159 00311 1112         TAD T1
+ 160 00312 7010         RAR 
+ 161 00313 3111         DCA AC
+ 162 00314 2114         ISZ CTR
+ 163 00315 5302         JMP MPREP
+ 164 00316 1110         TAD MQ
+ 165 00317 7010         RAR 
+ 166 00320 7100         CLL 
+ 167 00321 3110         DCA MQ
+ 168 00322 1111         TAD AC
+ 169 00323 5671         JMP I MP
+ 170            $
+
+AA1     0241
+AC      0111
+AS1LOC  0117
+ASR1    4517
+CTR     0114
+KM12    0121
+LLOC    0116
+LR      0206
+LS      0200
+LSR     4516
+MP      0271
+MPLOC   0120
+MPREP   0302
+MQ      0110
+MQA     1110
+MQL     3110
+MUY     4520
+SH      0221
+SH1     0260
+SHL     4515
+SHLOC   0115
+SHR     0226
+SIGN    1035
+T1      0112
+T2      0113 unreferenced
