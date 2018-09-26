@@ -1,0 +1,81 @@
+
+/  BUZZTAPE READER - OCT 69
+XRCL=6334
+XRIN=6331
+        *7625
+START,  CMA
+        XRCL            / CLEAR EXTERNAL
+        CLA CLL         / REGISTER
+        JMS LISN        / GET PULSE
+        JMS ADTEST      / ADDRESS CODE?
+        JMP .-2         / YES
+        DCA GETHLD      / NO, STORE PULSE
+        TAD CNTRN
+        DCA CNTR        / SET UP TO COUNT BITS
+      DCA VALUE       / CLEAR DATA REGISTER
+        CLL
+        TAD GETHLD      / GET FIRST BIT
+GO,     RTL
+        RAL             / ROTATE INTO BIT 11 AND
+        CLL             / CLEAN OFF SYNCH PULSE
+        DCA GETHLD      / STORE RESULT
+        TAD VALUE       / GET DATA WORD
+        RAL
+        TAD GETHLD      / ADD IN NEXT BIT
+        DCA VALUE       
+        ISZ CNTR        / 12 BITS YET?
+        JMP .+3
+        TAD VALUE       / YES, GET WHOLE WORD
+        JMP .+3         / GO TO PROCESSING
+        JMS LISN        / NO, GET NEXT BIT
+        JMP GO
+BRANCH, NOP             / PROCESSING BRANCH
+        DCA I ADD       / DEPOSIT AS DATA
+        ISZ ADD         / INCREMENT ADDRESS
+        JMP START+2
+ADDRS,  DCA ADD         / DEPOSIT AS ADDRESS
+        TAD NORP
+        DCA BRANCH      / SET BRANCH FOR DATA
+        JMP START+2
+NORP,   NOP
+ADD,    0               / ADDRESS REGISTER
+GETHLD, 0
+CNTRN,  -14
+CNTR,   0
+VALUE,  0
+ADTEST, 0               / ROUTINE FOR SENSING
+        DCA ADHOLD      / ADDRESS CODE
+        TAD ADHOLD
+        TAD ADKEY
+        SZA CLA         / ADDRESS CODE?
+        JMP .+4
+        TAD ADPACH      / YES, SET BRANCH FOR
+        DCA BRANCH      / ADDRESS CHANGE
+        JMP I ADTEST
+        ISZ ADTEST
+        TAD ADHOLD      / NO, GET PULSE AND
+        JMP I ADTEST    / RETURN
+ADHOLD, 0
+ADKEY,  -2000
+ADPACH, JMP ADDRS
+LISN,   0
+        TAD SPD         / SET UP FOR
+        DCA WAIT        / 50 USEC LAG
+        XRIN            / LOOK FOR PULSE
+        XRCL
+        SNA             / SEE ONE?
+        JMP .-3         / NO, LOOK AGAIN
+        DCA HOLD        / YES, STORE PULSE
+        XRIN
+        XRCL
+        SZA
+        JMP .+3         / WAIT FOR 50 USEC
+        ISZ WAIT        / OR ANOTHER PULSE
+        JMP .-5
+        TAD HOLD        / ADD FIRST PULSE
+        JMP I LISN      / TO SECOND PULSE,
+SPD,    7775            / IF ANY, AND RETURN
+WAIT,   0
+HOLD,   0
+        $
+

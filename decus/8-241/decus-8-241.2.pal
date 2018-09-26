@@ -1,0 +1,66 @@
+
+/  BUZZTAPE WRITER - OCT 69
+ZTEN=6342
+OTEN=6344
+        *7625
+START,  CLA CLL
+        LAS             / GET INITIAL ADDRESS
+        DCA BEG         / SET ADDRESS REGISTER
+        HLT
+        LAS             / GET FINAL ADDRESS
+        CMA
+        TAD BEG         / CALCULATE BLOCK LENGTH
+        DCA NUM         / SET COUNTER FOR
+        HLT             / BLOCK LENGTH
+        TAD ADCODE
+        JMS PRINT       / OUTPUT ADDRESS CODE
+        TAD BEG
+        JMS WRITE       / OUTPUT INITIAL ADDRESS
+        TAD I BEG       / GET DATA WORD
+        JMS WRITE       / OUTPUT DATA WORD
+        ISZ BEG         / INCREMENT ADDRESS
+        ISZ NUM         / DONE WITH BLOCK?
+        JMP .-4         / NO, GET NEXT WORD
+        HLT             / YES, PREPARE FOR
+        JMP START       / NEXT BLOCK
+BEG,    0               / ADDRESS REGISTER
+NUM,    0
+ADCODE, 40
+WRITE,  0               / WORD OUTPUT ROUTINE
+        DCA WRHOLD      / STORE DATA WORD
+        TAD M14
+        DCA SET         / INITIALIZE COUNTER
+NEXT,   TAD WRHOLD
+        RAL             / ROTATE FIRST DATA BIT
+        DCA WRHOLD      / INTO LINK
+        SZL             / IS THE BIT A '1'?
+        TAD BIT         / YES, GET BIT CODE
+        TAD SYNCH       / NO, OUTPUT SYNCH CODE
+        JMS PRINT       / ALONE
+        ISZ SET         / DONE WITH WORD?
+        JMP NEXT        / NO, GET NEXT BIT
+        JMP I WRITE     / YES, RETURN
+WRHOLD, 0
+M14,    -14
+SET,    0
+SYNCH,  20
+BIT,    40
+PRINT,  0               / OUTPUT ROUTINE
+        ZTEN            / SET CONTINGENCY
+        OTEN            / OUTPUTS
+        TAD DELY1
+        DCA DELY3       / LEAVE ON FOR
+        ISZ DELY3       / 0.1 MSEC
+        JMP .-1
+        ZTEN            / CLEAR OUTPUTS
+        OTEN
+        TAD DELY2
+        DCA DELY3
+        ISZ DELY3       / WAIT FOR 0.2 MSEC
+        JMP .-1         / INTERPULSE INTERVAL
+        JMP I PRINT
+DELY1,  7752
+DELY2,  7724
+DELY3,  0
+        $
+
