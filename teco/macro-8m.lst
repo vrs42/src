@@ -1,0 +1,2008 @@
+   1            
+   2            /MACRO-8M
+   3            / 8 JUL 69      RBH
+   4            
+   5            /ASSEMBLY PARAMETERS:
+   6            INBUF=  6200
+   7            OUTBUF= 7000
+   8            MACBUF= 0000
+   9            FIN=    7577
+  10            BOT=    FIN-600
+  11            
+  12            
+  13            /MACRO-8M
+  14            / 3 APR 69      RBH
+  15            
+  16            /PAGE ZERO CHANGES
+  17            
+  18            /LOCATIONS 1-6 AND 10 & 11 ARE USED BY OS/8 FILE SYSTEM
+  19            /MACRO-8 NEEDS TO GET AT LOCATION 4, AND PROVIDE A POINTER
+  20            /IN LOCATION 5.
+  21            
+  22            SCATP=  4
+  23            SCAT=   JMP I 4         /INTERRUPT HANDLER EXIT
+  24            *5
+  25 00005 3470         INTHAN          /INT. HNDLRS FOR TTY & PUNCH
+  26            *17
+  27 00017 4777         sYMTAB-1        /PRESET TO COPY BASIC SYMBOLS
+  28 00020 1675 TPASI,  TSTPAS          /RELOCATED FROM 0005
+  29            *26
+  30 00026 7577 STAB,   FIN             /VERY TOP OF SYMBOLS
+  31 00027 6777 SEND,   BOT             /NEW VALUE OF LAST PERM
+  32            *42                     /
+  33 00042 6777 PERMA,  BOT             /SYMBOL TABLE LOCATION
+  34            *46
+  35 00046 0000 MACEND, 0               /SET BY INITIALIZATION
+  36            *76
+  37 00076 0000 NOW3,   0000            /PASS 3 FLAG FROM 0011
+  38 00077 5400 ZBUFE,  5400            /BUFFER FOR PAGE ZERO LITERALS
+  39 00100 5200 CBUFE,  5200            /BUFFER FOR C PAGE LNKS & LITS
+  40            *104
+  41 00104 3501 BINOUT, HSOUT           /BINARY PUNCH ROUTINE
+  42 00105 0000         0               /FREE LOCATION
+  43            *107
+  44 00107 0000         0               /FREE
+  45            *113
+  46 00113 5656 OUTPUT, DECPUT          /LISTING OUTPUT TO DECTAPE
+  47            *115
+  48 00115 5600 INPUT,  DECGET          /SOURCE CODE ON DECTAPE
+  49            *117
+  50 00117 1131 PUSH1,  PUSH2           /ROUTINE MOVED
+  51 00120 3440 DECOUT, TYOUT           /TELETYPE OUTPUT DRIVER
+  52            *122
+  53 00122 6600 WRITE,  6600            /DECTAPE
+  54 00123 7000 READ,   7000            /FILE SYSTEM
+  55 00124 7100 JOIN,   7100            /ENTRY POINTS
+  56 00125 0705 ERR,    DECERR          /DECTAPE ERROR TRAP
+  57 00126 1652 UNTRM1, UNTRIM          /TYPE OUT TRIMMED ASCII
+  58            *131
+  59 00131 0000 RESCAT, 0               /NORM INT. RETN PNTR
+  60            
+  61            
+  62            
+  63            /MACRO-8M
+  64            / 3 APR 69      RBH
+  65            
+  66            /SYMBOL DEFINITIONS:
+  67            /
+  68            /PAGE ZERO CONSTANTS
+  69            CM7=    142
+  70            CM1=    151
+  71            C600=   156
+  72            C6=     157
+  73            C4=     161
+  74            C200=   163
+  75            C7600=  164
+  76            C177=   165
+  77            CM12=   170
+  78            C3777=  172
+  79            C1777=  173
+  80            CM3=    174
+  81            C6000=  176
+  82            /
+  83            TYPE=   22
+  84            CON=    37
+  85            PASS=   47
+  86            TEM1A=  50
+  87            SKIP=   103
+  88            ERR1=   106
+  89            PAGE1=  112
+  90            /
+  91            GETYPE= 357
+  92            PAGEC=  610
+  93            PERIOD= 641
+  94            A=      1021
+  95            H=      1071
+  96            II=     1252
+  97            ORGIC=  1355
+  98            WAIT=   1427
+  99            TSTPAS= 1675
+ 100            EXMEM=  2156
+ 101            DECIM=  2241
+ 102            OCT=    2243
+ 103            OCTS=   2251
+ 104            ZUNCON= 3103
+ 105            MACROD= 4043
+ 106            MACREF= 4200
+ 107            ESCAPE= 4261
+ 108            FINIS=  4336
+ 109            
+ 110            
+ 111            /MACRO-8M
+ 112            / 4 APR 69      RBH
+ 113            
+ 114            /PAGE 1 CHANGES
+ 115            
+ 116            /SYMBOL DEFINITIONS:
+ 117            CONE=   261
+ 118            CURREN= 333
+ 119            EVAL=   43
+ 120            MAINEX= 102
+ 121            SADR=   24
+ 122            VADR=   23
+ 123            
+ 124            *200
+ 125 00200 7300 MACRO,  CLA CLL         /STARTING POINT
+ 126 00201 1004         TAD Z SCATP     /SAVE INT RETURN PNTR
+ 127 00202 3131         DCA Z RESCAT    /FOR I/O ROUTINES
+ 128 00203 5502         JMP I Z MAINEX  /THEN START PASS 1
+ 129            *276
+ 130 00276 1043         TAD Z EVAL      /RELOCATED FROM 303
+ 131 00277 3733         DCA I CURREN
+ 132 00300 5256         JMP CONE-3
+ 133 00301 0000 TISADR, 0               /TAD INDIRECT FROM FIELD 1
+ 134 00302 6211         CDF 10
+ 135 00303 1424         TAD I Z SADR
+ 136 00304 6201         CDF 00
+ 137 00305 5701         JMP I TISADR
+ 138 00306 4006 DVADRI, DIVADR          /DCA I Z VADR TO FLD 1
+ 139 00307 0000         0
+ 140 00310 0000         0
+ 141 00311 0000         0               /3 FREE LOCATIONS
+ 142            *344
+ 143 00344 4706         JMS I DVADRI    /DCA I Z VADR TO FLD 1
+ 144            *360
+ 145 00360 4301         JMS TISADR
+ 146            *364
+ 147 00364 4301         JMS TISADR
+ 148            *376
+ 149 00376 2316         MOVE2           /MOVE SYMBOL FROM FIELD 1
+ 150            
+ 151            
+ 152            /MACRO-8M
+ 153            / 3 APR 69      RBH
+ 154            
+ 155            /PAGE 2 CHANGES
+ 156            
+ 157            /SYMBOL DEFINITIONS:
+ 158            SAVE=   2127
+ 159            
+ 160            *401
+ 161 00401 4761         JMS I SAVE1     /POINTER REMOVED FROM PAGE 0
+ 162            *410
+ 163 00410 4354         JMS TADI16      /TAD I FROM FIELD 1
+ 164            *416
+ 165 00416 4354         JMS TADI16
+ 166            *424
+ 167 00424 4354         JMS TADI16
+ 168            *432
+ 169 00432 7141         CIA CLL         /13-BIT ARITHMETIC
+ 170            *434
+ 171 00434 7630         SZL CLA
+ 172            *437
+ 173 00437 7161         CIA STL         /MORE 13-BIT
+ 174            *441
+ 175 00441 7010         RAR             /LINK IS SIGN BIT
+ 176            *444
+ 177 00444 4354         JMS TADI16
+ 178            *455
+ 179 00455 7407         TOP             /SPLIT OPS FROM PSEUDOS
+ 180            *462
+ 181 00462 7141         CIA CLL         /MORE BIG COMPARISIONS
+ 182            *464
+ 183 00464 7620         SNL CLA
+ 184            *532
+ 185 00532 5762         JMP I MACRFI    /NEW POINTER LOCATION
+ 186            *554
+ 187 00554 0000 TADI16, 0               /TAD I Z 16 FROM FIELD 1
+ 188 00555 6211         CDF 10
+ 189 00556 1416         TAD I Z 16
+ 190 00557 6201         CDF 00
+ 191 00560 5754         JMP I TADI16
+ 192 00561 2127 SAVE1,  SAVE            /POINTER MOVED FROM PAGE 0
+ 193 00562 4200 MACRFI, MACREF          /RELOCATED FROM 0006
+ 194 00563 0000         0               /FREE LOCATION
+ 195            
+ 196            
+ 197            /MACRO-8M
+ 198            / 1 APR 69      RBH
+ 199            
+ 200            /PAGE 3 CHANGES
+ 201            
+ 202            /SYMBOL DEFINITIONS:
+ 203            RESET=  676
+ 204            
+ 205            *600
+ 206 00600 0000 DISADR, 0               /DCA INDIRECT TO FIELD 1
+ 207 00601 6211         CDF 10
+ 208 00602 3424         DCA I Z SADR
+ 209 00603 6201         CDF 00
+ 210 00604 5600         JMP I DISADR
+ 211 00605 0301 TSADRI, TISADR          /OFF-PAGE LINK
+ 212 00606 0000         0               /FREE LOCATION
+ 213 00607 0000         0               /ANOTHER
+ 214            *636
+ 215 00636 4276         JMS RESET       /REMOVES PAGE 0 POINTER
+ 216            *651
+ 217 00651 4605         JMS I TSADRI    /TAD I SADR
+ 218            *653
+ 219 00653 4200         JMS DISADR      /DCA I SADR
+ 220            *656
+ 221 00656 4605         JMS I TSADRI    /TAD I SADR
+ 222 00657 4200         JMS DISADR      /DCA I SADR
+ 223            *661
+ 224 00661 4605         JMS I TSADRI    /TAD I SADR
+ 225            *663
+ 226 00663 4200         JMS DISADR      /DCA I SADR
+ 227            *667
+ 228 00667 4605         JMS I TSADRI    /TAD I SADR
+ 229 00670 4200         JMS DISADR      /DCA I SADR
+ 230            
+ 231            
+ 232            /MACRO-8M
+ 233            / 1 APR 69      RBH
+ 234            
+ 235            /MORE PAGE 3 CHANGES
+ 236            
+ 237            *705
+ 238 00705 3200 DECERR, DCA DISADR      /SAVE ERROR CODE
+ 239 00706 4524         JMS I Z JOIN    /TURN OFF ERROR FLAG
+ 240 00707 7200         CLA             /ALREADY HAVE ERROR CODE
+ 241 00710 1157         TAD Z C6        /ERROR 6: FS
+ 242 00711 4506         JMS I Z ERR1    /TYPE MESSAGE
+ 243 00712 1200         TAD DISADR      /RETRIEVE ERROR CODE
+ 244 00713 5313         JMP .           /LIVE HALT
+ 245            /
+ 246 00714 0000 RSHL,   0               /LEFT SHIFT ROUTINE
+ 247 00715 7450         SNA             /LOOK OUT FOR ZERO
+ 248 00716 5714         JMP I RSHL      /DON'T DO ANYTHING
+ 249 00717 7041         CIA             /MAKE NEGATIVE
+ 250 00720 3200         DCA DISADR      /USE FOR COUNTING
+ 251 00721 1037         TAD Z CON       /NUMBER TO BE SHIFTED
+ 252 00722 7104         CLL RAL         /SHIFT IT
+ 253 00723 2200         ISZ DISADR      /MORE?
+ 254 00724 5322         JMP .-2         /YES
+ 255 00725 3037         DCA Z CON       /ALL THROUGH
+ 256 00726 5714         JMP I RSHL      /RETURN
+ 257            
+ 258            
+ 259            /MACRO-8M
+ 260            / 3 APR 69      RBH
+ 261            
+ 262            /PAGE 4 CHANGES
+ 263            
+ 264            /SYMBOL DEFINITIONS:
+ 265            SYMB=   1000
+ 266            USYMB=  2000
+ 267            BKSL=   2600
+ 268            SPACE=  5600
+ 269            ALL=    7600
+ 270            B1=     1037
+ 271            C=      1053
+ 272            CRIOR=  1167
+ 273            VAL=    25
+ 274            SGN=    44
+ 275            POINT=  60
+ 276            GETADR= 1200
+ 277            POPUP1= 1347
+ 278            
+ 279            *1002
+ 280 01002 4331         JMS PUSH2       /REMOVES PAGE 0 POINTER
+ 281            *1005
+ 282 01005 4331         JMS PUSH2
+ 283            *1010
+ 284 01010 4331         JMS PUSH2
+ 285            *1014
+ 286 01014 4331         JMS PUSH2
+ 287            *1017
+ 288 01017 4331         JMS PUSH2
+ 289            *1034
+ 290 01034 2737         B3+2-1000+BKSL  /IMPLEMENTS BACKSLASH OPERATOR
+ 291 01035 7707         G-1000+ALL      /SHUFFLE TABLES TO DO IT
+ 292 01036 0000         0               /FREE LOCATION
+ 293            *1045
+ 294 01045 5660         C+5-1000+SPACE  /MAKE SPACE AN IOR
+ 295            *1047
+ 296 01047 1135         B3-1000+SYMB    /MORE SHUFFLING
+ 297 01050 2135         B3-1000+USYMB   /AND TUGGING AT FORELOCK
+ 298            *1064
+ 299 01064 4515 J,      JMS I Z INPUT   /NEW INPUT ROUTINE POINTER
+ 300            *1070
+ 301 01070 0000         0               /FREE LOCATION
+ 302            
+ 303            /MACRO-8M
+ 304            / 4 APR 69      RBH
+ 305            
+ 306            /OORE PAGE 4 CHANGES
+ 307            
+ 308            *1103
+ 309 01103 4774         JMS I DEFIN1    /REMOVES PAGE 0 POINTER
+ 310 01104 4775 GET,    JMS I GETAD1    /DITTO
+ 311            *1106
+ 312 01106 4444         JMS I Z SGN     /TO DO MATH ON LITERAL ADDRESSES
+ 313 01107 4773 G,      JMS I POPU1     /GETS RID OF PAGE 0 POINTER
+ 314            *1115
+ 315 01115 4773         JMS I POPU1
+ 316            *1117
+ 317 01117 4773         JMS I POPU1
+ 318            *1123
+ 319 01123 4773         JMS I POPU1
+ 320            *1125
+ 321 01125 4773         JMS I POPU1
+ 322            *1131
+ 323 01131 0000 PUSH2,  0               /RELOCATED FROM 4000
+ 324 01132 3460         DCA I Z POINT
+ 325 01133 2060         ISZ Z POINT
+ 326 01134 5731         JMP I PUSH2
+ 327            
+ 328 01135 1025 B3,     TAD Z VAL       /MOVED FROM 1035
+ 329 01136 5241         JMP B1+2        /TO GET BACKSLASH
+ 330 01137 1341         TAD .+2         /PARSING OF BACKSLASH
+ 331 01140 5254         JMP C+1         /TREAT AS BINARY OPERATOR
+ 332 01141 0714         RSHL            /LEFT-SHIFT ROUTINE
+ 333 01142 0000 DICRIO, 0               /DCA I CRIOR-1 TO FLD 1
+ 334 01143 6211         CDF 10
+ 335 01144 3766         DCA I CRIOR-1
+ 336 01145 6201         CDF 00
+ 337 01146 5742         JMP I DICRIO
+ 338 01147 0000         0
+ 339            *1157
+ 340 01157 4342         JMS DICRIO      /DCA I CRIOR-1 TO FLD 1
+ 341            *1173
+ 342 01173 1347 POPU1,  POPUP1          /MOVED FROM PAGE 0
+ 343 01174 0333 DEFIN1, CURREN          /THIS TOO
+ 344 01175 1200 GETAD1, GETADR          /SO'S THIS ONE
+ 345            
+ 346            
+ 347            /MACRO-8M
+ 348            / 2 APR 69      RBH
+ 349            
+ 350            /PAGE 5 CHANGES
+ 351            
+ 352            /SYMBOL DEFINITIONS:
+ 353            ADR=    40
+ 354            CCON=   45
+ 355            CONC=   204
+ 356            CONZ=   317
+ 357            
+ 358            *1211
+ 359 01211 5235         JMP LEAVE-1     /ADDRESS IS DIFFERENT
+ 360            *1227
+ 361 01227 5236         JMP LEAVE       /SAME REASON
+ 362            *1232
+ 363 01232 4641         JMS I CONC1     /REMOVE PAGE 0 POINTER
+ 364 01233 1045         TAD Z CCON      /SQUEEZE OUT "LG" MESSAGE
+ 365 01234 1156         TAD Z C600      /WHICH LOST BIG
+ 366 01235 3040         DCA Z ADR
+ 367 01236 4347 LEAVE,  JMS POPUP1      /ELIMINATES PAGE 0 POINTER
+ 368 01237 3200         DCA GETADR
+ 369 01240 5600         JMP I GETADR    /RETURN FROM SUBROUTINE
+ 370 01241 0204 CONC1,  CONC            /MOVED FROM PAGE 0
+ 371 01242 0317 CONZ1,  CONZ            /ALSO FROM PAGE 0
+ 372            
+ 373            *1251
+ 374 01251 5235         JMP LEAVE-1     /ADDRESS CHANGED
+ 375            *1264
+ 376 01264 4641         JMS I CONC1     /INSTEAD OF VIA PAGE 0
+ 377            *1267
+ 378 01267 4642         JMS I CONZ1     /INSTEAD OF VIA PAGE 0
+ 379            *1272
+ 380 01272 4347         JMS POPUP1      /ROUTINE IS ON-PAGE
+ 381            
+ 382            
+ 383            /MACRO-8M
+ 384            / 3 APR 69      RBH
+ 385            
+ 386            /PAGE 6 CHANGES
+ 387            
+ 388            /SYMBOL DEFINITIONS:
+ 389            PASS3=  1557
+ 390            
+ 391            *1400
+ 392 01400 7200 MAIN,   CLA             /(-600) THIS ROUTINE KILLS
+ 393 01401 2027         ISZ Z SEND      /ITSELF AFTER COPYING
+ 394 01402 1417         TAD I Z 17      /BASIC SYMBOLS FROM
+ 395 01403 6211         CDF 10          /05000-05577 TO
+ 396 01404 3427         DCA I Z SEND    /17000-17577
+ 397 01405 6201         CDF 00
+ 398 01406 2200         ISZ MAIN        /MAIN IS RESET TO A JUMP
+ 399 01407 5201         JMP MAIN+1      /JUST BELOW
+ 400 01410 7200         CLA             /RE-EXECUTABLE CODE STARTS
+ 401 01411 1042 PASS1,  TAD Z PERMA     /HERE
+ 402 01412 3027         DCA Z SEND      /RESTORE TO BASIC SYMBOLS
+ 403 01413 1377         TAD CMCBF       /AND CLEAN OUT MACROS
+ 404            *1417
+ 405 01417 3076         DCA Z NOW3      /NEW ADDRESS
+ 406            *1430
+ 407 01430 1375         TAD LIST1       /MOVED FROM PAGE 0
+ 408            *1477
+ 409 01477 7740 CM40,   SMA SZA CLA     /USED AS CONSTANT
+ 410            *1524
+ 411 01524 1076         TAD Z NOW3      /NEW ADDRESS
+ 412            *1531
+ 413 01531 1277         TAD CM40        /INSTEAD OF (-40)
+ 414            *1550
+ 415 01550 6044 OCTS1,  REWIND          /SET UP FOR NEW PASS
+ 416            *1554
+ 417 01554 6026         THIRD           /INITIALIZE FOR PASS 3
+ 418            *1561
+ 419 01561 2076         ISZ Z NOW3      /NEW ADDRESS
+ 420            *1565
+ 421 01565 3776         DCA I CKSUMI    /CHECKSUM MOVED
+ 422            *1573
+ 423 01573 5357 CJMP1,  JMP PASS3       /GO ON TO PASS 3
+ 424            *1575
+ 425 01575 3333 LIST1,  LIST            /BOTTOM OF PUSHDOWN LIST
+ 426 01576 3034 CKSUMI, CKSUM           /BINARY CHECKSUM
+ 427 01577 0000 CMCBF,  MACBUF          /MACRO BUFFER ORIGIN
+ 428            
+ 429            
+ 430            /MACRO-8M
+ 431            / 3 JUN 69      RBH
+ 432            
+ 433            /PAGE 7 CHANGES
+ 434            
+ 435            /SYMBOL DEFINITIONS:
+ 436            ITEM=   62
+ 437            IDX=    2043
+ 438            
+ 439            *1600
+ 440 01600 0000 BIT6,   0               /TRANSLATE ASCII TO
+ 441 01601 1062         TAD Z ITEM      /FUNNY SIX-BIT
+ 442 01602 0165         AND Z C177      /OMITTING ] AND )
+ 443 01603 7450         SNA             /SKIP BLANK CHARS
+ 444 01604 5777         JMP I (IDX+1)
+ 445 01605 1376         TAD (-140)      /TEST FOR LOWER CASE
+ 446 01606 7500         SMA             /STILL + IF L.C.
+ 447 01607 1375         TAD (-40)       /MAKE L.C. INTO U.C.
+ 448 01610 1161         TAD Z C4        /GET RID OF ],^,& _
+ 449 01611 7540         SMA SZA
+ 450 01612 5236         JMP BIT6EX      /CLA THEN JMP IDX+1
+ 451 01613 1374         TAD (134-132)   /SKIM OFF [ AND \
+ 452 01614 7540         SMA SZA
+ 453 01615 5242         JMP BON         /ADD 73 TO C(AC)
+ 454 01616 1355         TAD CC32        /TAKE LETTERS
+ 455 01617 7540         SMA SZA
+ 456 01620 5600         JMP I BIT6      /AND EXIT DIRECTLY
+ 457 01621 1356         TAD CC20        /NUMERALS & HIGHER PUNCT.
+ 458 01622 7500         SMA
+ 459 01623 5247         JMP BON+5       /ADD 33 TO C(AC)
+ 460 01624 1356         TAD CC20        /LOWER PUNCT.
+ 461 01625 7500         SMA
+ 462 01626 5243         JMP BON+1       /ADD 54 TO C(AC)
+ 463 01627 1161         TAD Z C4        /LOOK FOR EOF
+ 464 01630 7450         SNA
+ 465 01631 4773         JMS I (REWIND)  /TO DO SOMETHING OBVIOUS
+ 466 01632 1372         TAD (34-15)     /LOOK FOR CR
+ 467 01633 7450         SNA
+ 468 01634 5241         JMP BON-1       /MAKE IT 46 (;)
+ 469 01635 1161         TAD Z C4        /LOOK FOR TAB
+ 470 01636 7650 BIT6EX, SNA CLA
+ 471 01637 5243         JMP BON+1       /MAKE IT 54 (SPACE)
+ 472 01640 5777         JMP I (IDX+1)   /IGNORE EVERYTHING ELSE
+ 473 01641 1371         TAD (-25)       /ADD 46
+ 474 01642 1372 BON,    TAD (17)        /ADD 73
+ 475 01643 1370         TAD (-11)       /ADD 54
+ 476 01644 7450         SNA             /LOOK FOR )
+ 477 01645 5777         JMP I (IDX+1    /IGNORE )
+ 478 01646 1355         TAD CC32        /ADD 65
+ 479 01647 1355         TAD CC32        /ADD 33
+ 480 01650 7001         IAC
+ 481 01651 5600         JMP I BIT6      /RETURN WITH MASHED CHARACTER
+ 482            
+ 483            /MACRO-8M
+ 484            / 3 JUN 69      RBH
+ 485            
+ 486            /ADDITIONAL PAGE 7 CHANGES
+ 487            
+ 488 01652 0000 UNTRIM, 0               /TYPE TRIMMED ASCII
+ 489 01653 1375         TAD (-40)       /SEPARATE OUT LETTERS
+ 490 01654 7510         SPA             /WHICH BECOME NEGATIVE
+ 491 01655 1261         TAD CC100       /ADD EXTRA 100 TO THEM
+ 492 01656 1363         TAD C240        /NOW ADD VALUE OF SPACE
+ 493 01657 4513         JMS I Z OUTPUT  /AND DO SOMETHING WITH IT
+ 494 01660 5652         JMP I UNTRIM
+ 495 01661 0100 CC100,  100
+ 496            
+ 497            /
+ 498            *1706
+ 499 01706 4513         JMS I Z OUTPUT  /DECTAPE OR TTY
+ 500            *1727
+ 501 01727 4515 STRING, JMS I Z INPUT   /INPUT FROM DECTAPE
+ 502            *1732
+ 503 01732 4515         JMS I Z INPUT
+ 504            *1744
+ 505 01744 4515         JMS I Z INPUT
+ 506            *1755
+ 507 01755 0032 CC32,   32
+ 508 01756 0020 CC20,   20
+ 509            *1763
+ 510 01763 0240 C240,   240             /ASCII SPACE
+ 511            
+ 512            
+ 513 01770 7767 PAGE
+     01771 7753 
+     01772 0017 
+     01773 6044 
+     01774 0002 
+     01775 7740 
+     01776 7640 
+     01777 2044 
+ 514            
+ 515            /MACRO-8M
+ 516            / 4 APR 69      RBH
+ 517            
+ 518            /PAGE 10 CHANGES
+ 519            
+ 520            *2002
+ 521 02002 4307         JMS DISEND      /DCA I Z SEND TO FIELD 1
+ 522            *2007
+ 523 02007 4307         JMS DISEND
+ 524            *2012
+ 525 02012 4307         JMS DISEND
+ 526            *2015
+ 527 02015 4307         JMS DISEND
+ 528            *2027
+ 529 02027 7141         CIA CLL         /13-BIT ARITHMETIC
+ 530            *2031
+ 531 02031 7630         SZL CLA         /LOOK FOR SYMBOL TABLE OVERFLOW
+ 532            *2041
+ 533 02041 5241         JMP .           /LIVE HALT
+ 534 02042 0000         0               /FREE LOCATION
+ 535            *2045
+ 536 02045 4515         JMS I Z INPUT   /POINTER NOW ON PAGE 0
+ 537            *2064
+ 538 02064 4302         JMS MACGET      /MACROS STORED IN FIELD 1
+ 539            *2074
+ 540 02074 4302         JMS MACGET
+ 541            *2102
+ 542 02102 0000 MACGET, 0               /UNPEEL A MACRO
+ 543 02103 6211         CDF 10
+ 544 02104 1701         TAD I MACGET-1
+ 545 02105 6201         CDF 00
+ 546 02106 5702         JMP I MACGET
+ 547 02107 0000 DISEND, 0               /DCA I Z SEND TO FIELD 1
+ 548 02110 6211         CDF 10
+ 549 02111 3427         DCA I Z SEND
+ 550 02112 6201         CDF 00
+ 551 02113 5707         JMP I DISEND
+ 552 02114 4515 COMMEN, JMS I Z INPUT   /SKIP A COMMENT
+ 553            *2162
+ 554 02162 1076         TAD Z NOW3      /NEW ADDRESS
+ 555            
+ 556            
+ 557            /MACRO-8M
+ 558            /28 MAR 69      RBH
+ 559            
+ 560            /PAGE 11 CHANGES
+ 561            
+ 562            *2316
+ 563 02316 0000 MOVE2,  0               /SHARED WITH RTDIG IN DPCV
+ 564 02317 1151         TAD Z CM1       /[-1
+ 565 02320 3016         DCA Z 16
+ 566 02321 7240         STA
+ 567 02322 1716         TAD I MOVE2     /ADDRESS OF TARGET
+ 568 02323 3017         DCA Z 17
+ 569 02324 6211         CDF 10          /GO TO FIELD 1
+ 570 02325 1416         TAD I Z 16
+ 571 02326 6201         CDF 00
+ 572 02327 0173         AND Z C1777     /[1777]
+ 573 02330 3417         DCA I Z 17
+ 574 02331 6211         CDF 10
+ 575 02332 1416         TAD I Z 16
+ 576 02333 6201         CDF 00
+ 577 02334 0172         AND Z C3777     /[3777]
+ 578 02335 3417         DCA I Z 17
+ 579 02336 6211         CDF 10
+ 580 02337 1416         TAD I Z 16
+ 581 02340 6201         CDF 00
+ 582 02341 3417         DCA I Z 17
+ 583 02342 2316         ISZ MOVE2       /SKIP OVER ARGUMENT
+ 584 02343 5716         JMP I MOVE2     /RETURN
+ 585 02344 4370 TDIVDR, TIVADR          /TAD I Z VADR FROM FLD 1
+ 586            *2361
+ 587 02361 4744         JMS I TDIVDR    /TAD I Z VADR FROM FLD 1
+ 588            
+ 589            
+ 590            /MACRO-8M
+ 591            / 4 JUN 69      RBH
+ 592            
+ 593            /PAGE 12 CHANGES
+ 594            
+ 595            *2411
+ 596 02411 0214 CAFF,   214             /ASCII FORM FEED
+ 597 02412 0000 ALPHA,  0               /LIST SYMBOLS
+ 598 02413 1211         TAD CAFF        /PUT OUT FORM FEED
+ 599 02414 4513         JMS I Z OUTPUT
+ 600            *2442
+ 601 02442 7141         CIA CLL         /13-BIT ARITHMETIC
+ 602            *2444
+ 603 02444 7630         SZL CLA         /13-BIT COMPARISON
+ 604            *2454
+ 605 02454 4776         JMS I MOVIE     /MOVE FROM FIELD 1
+ 606            *2505
+ 607 02505 4776         JMS I MOVIE
+ 608            *2507
+ 609 02507 4723         JMS I TAD16I    /TAD I 16 FROM FLD 1
+ 610            *2516
+ 611 02516 1326         TAD CAFS        /PUT OUT END-OF-FILE
+ 612 02517 4513         JMS I Z OUTPUT
+ 613 02520 1377         TAD CM4         /MAKE SURE LAST CHARS
+ 614 02521 4503         JMS I Z SKIP    /GET INTO BUFFER
+ 615 02522 5612         JMP I ALPHA     /RETURN
+ 616 02523 0554 TAD16I, TADI16          /TAD I Z 16 FROM FLD 1
+ 617            *2526
+ 618 02526 0234 CAFS,   234             /ASCII END-OF-FILE
+ 619            *2576
+ 620 02576 2316 MOVIE,  MOVE2           /MOVE FROM FIELD 1
+ 621 02577 7774 CM4,    -4
+ 622            
+ 623            
+ 624            /MACRO-8M
+ 625            / 1 APR 69      RBH
+ 626            
+ 627            /PAGE 13 CHANGES
+ 628            
+ 629            *2600
+ 630 02600 0000 MESSAG, 0               /TYPE OUT MESSAGE
+ 631 02601 0207         AND C77         /CREATED BY 'TEXT'
+ 632 02602 7450         SNA             /SKIP EXCEPT ON
+ 633 02603 5600         JMP I MESSAG    /00 STOP CODE
+ 634 02604 4526         JMS I Z UNTRM1  /UNTRIM SIX-BIT CODE
+ 635 02605 2200         ISZ MESSAG      /SKIP BECAUSE NOT
+ 636 02606 5600         JMP I MESSAG    /STOP CODE YET
+ 637 02607 0077 C77,    77              /SIX-BIT MASK
+ 638            *2634
+ 639 02634 4513         JMS I Z OUTPUT
+ 640            *2636
+ 641 02636 4513         JMS I Z OUTPUT
+ 642            *2707
+ 643 02707 4513         JMS I Z OUTPUT
+ 644            *2726
+ 645 02726 4513         JMS I Z OUTPUT
+ 646            
+ 647            
+ 648            /MACRO-8M
+ 649            / 3 APR 69      RBH
+ 650            
+ 651            /PAGE 14 CHANGES
+ 652            
+ 653            /SYMBOL DEFINITIONS:
+ 654            PUN=    3023
+ 655            
+ 656            *3025
+ 657 03025 3235         DCA UNPUN       /SAVE FOR CHECKSUM
+ 658 03026 1235         TAD UNPUN
+ 659 03027 4504         JMS I Z BINOUT  /PUNCH ONE LINE
+ 660 03030 1235         TAD UNPUN       /ACCUMULATE
+ 661 03031 1234         TAD CKSUM       /CHECKSUM
+ 662 03032 3234         DCA CKSUM
+ 663 03033 5623         JMP I PUN       /RETURN
+ 664 03034 0000 CKSUM,  0
+ 665 03035 0000 UNPUN,  0
+ 666 03036 1233         TAD .-3         /GIMMICK OUT PUNCH
+ 667            *3042
+ 668 03042 1234         TAD CKSUM       /NEW ADDRESS
+ 669            *3050
+ 670 03050 1234         TAD CKSUM       /NEW ADDRESS
+ 671            *3115
+ 672 03115 1076         TAD Z NOW3      /NEW ADDRESS
+ 673            
+ 674            
+ 675            /MACRO-8M
+ 676            /28 MAR 69      RBH
+ 677            
+ 678            /PAGE 15 CHANGES
+ 679            
+ 680            /SYMBOL DEFINITIONS:
+ 681            ERROR=  3201
+ 682            ENTS=   2000
+ 683            OPS=    2712
+ 684            OSYM=   2621
+ 685            SEARCH= 400
+ 686            TYCAR=  2632
+ 687            
+ 688            *3204
+ 689 03204 1076         TAD Z NOW3      /NEW ADDRESS
+ 690            *3206
+ 691 03206 5601         JMP I ERROR     /OR JMP ERRCHG+4 TO OUTPUT ON PASS 3
+ 692 03207 5252         JMP ERRCHG      /CHANGE "OUTPUT" TO TTY
+ 693 03210 4513         JMS I Z OUTPUT  /RUBOUT FOR BIN LOADER
+ 694 03211 4647         JMS I ERRCHG-3  /CR-LF
+ 695            *3215
+ 696 03215 4513         JMS I Z OUTPUT  /1ST LETTER
+ 697            *3224
+ 698 03224 4513         JMS I Z OUTPUT  /2ND LETTER
+ 699            *3226
+ 700 03226 4513         JMS I Z OUTPUT  /SPACE
+ 701 03227 4650         JMS I ERRCHG-2  /SYMBOL
+ 702            *3231
+ 703 03231 4513         JMS I Z OUTPUT  /"+"
+ 704            *3237
+ 705 03237 4647         JMS I ERRCHG-3  /CR-LF
+ 706 03240 7240         STA
+ 707 03241 4513         JMS I Z OUTPUT  /2ND RUBOUT FOR BIN LDR
+ 708 03242 1251         TAD ERRCHG-1    /RESTORE "OUTPUT"
+ 709 03243 3113         DCA Z OUTPUT
+ 710 03244 5601         JMP I ERROR     /RETURN
+ 711            *3247
+ 712 03247 2632         TYCAR
+ 713 03250 2621         OSYM
+ 714 03251 5656         DECPUT          /INITIAL VALUE IF PASS 3 ERRORS
+ 715 03252 1113 ERRCHG, TAD Z OUTPUT
+ 716 03253 3251         DCA ERRCHG-1    /SAVE WHAT'S THERE
+ 717 03254 1120         TAD Z DECOUT    /GET TTY POINTER
+ 718 03255 3113         DCA Z OUTPUT
+ 719 03256 7240         STA             /MAKE A RUBOUT
+ 720 03257 5210         JMP ERROR+7     /CONTINUE ON
+ 721            
+ 722            
+ 723            /MACRO-8M
+ 724            /23 MAR 69      RBH
+ 725            
+ 726            /MORE PAGE 15 CHANGES
+ 727            
+ 728            *3271
+ 729 03271 4731         JMS I SEAR1     /REMOVE POINTER FROM PAGE 0
+ 730            *3275
+ 731 03275 4732         JMS I ENTS1     /SAME GAME
+ 732            *3323
+ 733 03323 2306         2306            /FS FILE SYSTEM ERROR
+ 734            *3331
+ 735 03331 0400 SEAR1,  SEARCH
+ 736 03332 2000 ENTS1,  ENTS
+ 737            LIST=   .               /BEGINNING OF PUSH-DOWN AREA
+ 738            
+ 739            
+ 740            /MACRO-8M
+ 741            / 3 JUN 69      RBH
+ 742            
+ 743            /NEW PAGE 16 STUFF:
+ 744            /TELETYPE & PUNCH OUTPUT ROUTINES
+ 745            
+ 746            *3440
+ 747 03440 0000 TYOUT,  0               /TTY OUTPUT
+ 748 03441 3666         DCA I TYPNTI    /PUT INTO BUFFER
+ 749 03442 1266         TAD TYPNTI      /AND ADJUST POINTER
+ 750 03443 7001         IAC
+ 751 03444 0267         AND TYRING      /MAKE IT GO IN CIRCLES
+ 752 03445 3266         DCA TYPNTI
+ 753 03446 1353         TAD TYCNTR
+ 754 03447 1265         TAD TYSIZE
+ 755 03450 7700         SMA CLA         /BUFFER FILLED?
+ 756 03451 5246         JMP .-3         /YES, WAIT HERE
+ 757 03452 6002         IOF             /NOT FILLED NOW
+ 758 03453 2353         ISZ TYCNTR      /INCREMENT CHAR COUNT
+ 759 03454 5263         JMP TYRETN      /TTY ALREADY GOING
+ 760 03455 1754         TAD I TYPNTO    /WASN'T GOING, HAVE TO START IT
+ 761 03456 6046         TLS             /PUT OUT CHARACTER
+ 762 03457 7201         CLA IAC         /AND ADJUST POINTER
+ 763 03460 1354         TAD TYPNTO      /FOR INTERRUPT HANDLER
+ 764 03461 0267         AND TYRING      /BEND POINTER AROUND
+ 765 03462 3354         DCA TYPNTO
+ 766 03463 6001 TYRETN, ION             /RESTORE INTERRUPT NOW
+ 767 03464 5640         JMP I TYOUT     /AND PRETEND WE REALLY TYPED IT
+ 768            
+ 769 03465 7741 TYSIZE, 1-40            /-MAX VALUE OF TYCNTR
+ 770 03466 3400 TYPNTI, 3400            /FIRST WORD IN TTY BUFFER
+ 771 03467 3437 TYRING, 3437            /LAST DITTO
+ 772            
+ 773 03470 6021 INTHAN, PSF             /INTERRUPT HANDLER
+ 774 03471 7410         SKP             /WASN'T PUNCH
+ 775 03472 5355         JMP PANSR       /GO SERVICE PUNCH
+ 776 03473 6041         TSF             /SEE IF TTY OUT
+ 777 03474 7410         SKP             /NOPE
+ 778 03475 5333         JMP TANSR       /GO FIX IT UP
+ 779 03476 6114         IOT!114         /NUCLEAR DATA ADC FLAG
+ 780 03477 6032         KCC             /TTY KEYBOARD
+ 781 03500 5404         SCAT            /TRY TO TURN ON AGAIN
+ 782            
+ 783            
+ 784            /MACRO-8M
+ 785            / 3 JUN 69      RBH
+ 786            
+ 787 03501 0000 HSOUT,  0               /PUNCH OUTPUT
+ 788 03502 6211         CDF 10          /BUFFER IN FIELD 1
+ 789 03503 3730         DCA I HSPNTI    /PUT INTO BUFFER
+ 790 03504 1330         TAD HSPNTI
+ 791 03505 7001         IAC             /POINT TO NEXT BUFFER LOC
+ 792 03506 0331         AND HSRING      /BY GOING ROUND & ROUND
+ 793 03507 3330         DCA HSPNTI
+ 794 03510 1376         TAD HSCNTR
+ 795 03511 1327         TAD HSSIZE
+ 796 03512 7700         SMA CLA         /BUFFER FILLED?
+ 797 03513 5310         JMP .-3         /YES, WAIT WITH INTERRUPT ON
+ 798 03514 6002         IOF             /BUFFER NOT FILLED
+ 799 03515 2376         ISZ HSCNTR      /INC & TEST BUFFER COUNT
+ 800 03516 5324         JMP HSRETN+2    /PUNCHING MERRILY AWAY
+ 801 03517 1332         TAD HSSCAT      /JUST STARTING UP
+ 802 03520 3004         DCA Z SCATP     /SO PLAY TRICKS
+ 803 03521 5367         JMP HSNEXT      /BY TWEAKING INTERRUPT HANDLER
+ 804 03522 1131 HSRETN, TAD RESCAT      /FIX SCAT POINTER AGAIN
+ 805 03523 3004         DCA Z SCATP
+ 806 03524 6201         CDF 00          /BACK TO FIELD ZERO
+ 807 03525 6001         ION             /UNPLUG OUR EARS
+ 808 03526 5701         JMP I HSOUT     /LOOK AS IF WE DID SOMETHING
+ 809            
+ 810 03527 7601 HSSIZE, 1-200           /-MAX VALUE OF HSCNTR
+ 811 03530 7400 HSPNTI, OUTBUF+400&7400 /FIRST WORD IN PUNCH BUFFER
+ 812 03531 7577 HSRING, OUTBUF+577&7577 /LAST DITTO
+ 813 03532 3522 HSSCAT, HSRETN
+ 814            
+ 815            
+ 816            /MACRO-8M
+ 817            / 3 JUN 69      RBH
+ 818            
+ 819            
+ 820            /INTERRUPT SERVICE ROUTINES FOR PUNCH AND TTY
+ 821            
+ 822 03533 6042 TANSR,  TCF             /CLEAR FLAG
+ 823 03534 1353         TAD TYCNTR      /TEST BUFFER COUNT
+ 824 03535 7141         CIA CLL         /WHICH CAN'T GO PAST -1
+ 825 03536 7540         SMA SZA         /SKIP IF STILL OK
+ 826 03537 5342         JMP .+3         /ALREADY AT -1
+ 827 03540 7060         CMA CML         /REDUCES IT BY 1
+ 828 03541 3353         DCA TYCNTR
+ 829 03542 7620         SNL CLA         /FINISHED IF COUNT=-1
+ 830 03543 5404         SCAT
+ 831 03544 1754         TAD I TYPNTO    /GET CHARACTER
+ 832 03545 6046         TLS             /TYPE IT
+ 833 03546 7201         CLA IAC         /AND FIX RING POINTER
+ 834 03547 1354         TAD TYPNTO
+ 835 03550 0267         AND TYRING      /THIS MAKES THE RING
+ 836 03551 3354         DCA TYPNTO
+ 837 03552 5404         SCAT            /NOW GO AWAY
+ 838 03553 7777 TYCNTR, -1
+ 839 03554 3400 TYPNTO, 3400
+ 840            
+ 841            
+ 842 03555 6022 PANSR,  PCF             /CLEAR FLAG
+ 843 03556 1376         TAD HSCNTR      /TEST BUFFER COUNT
+ 844 03557 7141         CIA CLL         /WHICH CAN'T GO PAST -1
+ 845 03560 7540         SMA SZA         /SKIP IF STILL OK
+ 846 03561 5364         JMP .+3         /ALREADY AT -1
+ 847 03562 7060         CMA CML         /REDUCES IT BY 1
+ 848 03563 3376         DCA HSCNTR
+ 849 03564 7620         SNL CLA         /FINISHED IF COUNT=-1
+ 850 03565 5404         SCAT
+ 851 03566 6211         CDF 10          /BUFFER IN FIELD 1
+ 852 03567 1777 HSNEXT, TAD I HSPNTO    /GET CHARACTER
+ 853 03570 6026         PLS             /PUNCH IT
+ 854 03571 7201         CLA IAC         /AND FIX RING POINTER
+ 855 03572 1377         TAD HSPNTO
+ 856 03573 0331         AND HSRING      /THIS MAKES THE RING
+ 857 03574 3377         DCA HSPNTO
+ 858 03575 5404         SCAT            /NOW GO AWAY
+ 859 03576 7777 HSCNTR, -1              /RANGE TO +177
+ 860 03577 7400 HSPNTO, OUTBUF+400&7400
+ 861            
+ 862            
+ 863            /MACRO-8M
+ 864            / 4 APR 69      RBH
+ 865            
+ 866            /PAGE 17 CHANGES
+ 867            
+ 868            /SYMBOL DEFINITIONS:
+ 869            LSTSYM= 3601
+ 870            EMPTY=  3636
+ 871            
+ 872            *3602
+ 873 03602 5256         JMP PATCH2      /IGNORE BLANKS
+ 874 03603 1170         TAD Z CM12      /LOOK FOR LINE FEED
+ 875            *3621
+ 876 03621 1263         TAD LSTTOP      /LISTING HAS OWN BUFFER
+ 877            *3625
+ 878 03625 1077         TAD Z ZBUFE     /100[8] CHARS
+ 879            *3642
+ 880 03642 1263         TAD LSTTOP
+ 881            *3650
+ 882 03650 4513         JMS I Z OUTPUT  /USUALLY GOES TO DECTAPE
+ 883            *3656
+ 884 03656 1062 PATCH2, TAD Z ITEM
+ 885 03657 0165         AND Z C177
+ 886 03660 7450         SNA
+ 887 03661 5601         JMP I LSTSYM    /BLANK, IGNORE
+ 888 03662 5203         JMP LSTSYM+2    /CONTINUE ON
+ 889 03663 5477 LSTTOP, 5477            /TOP OF LISTING BUFFER
+ 890 03664 3103         ZUNCON
+ 891 03665 2412         ALPHA           /LIST SYMBOL TABLE
+ 892 03666 6016         WFN+4           /OUTPUT END-OF-FILE FLAG
+ 893 03667 5746         GW              /ACTUAL CALL ON FILE SYSTEM
+ 894 03670 4512 ENDPAS, JMS I Z PAGE1   /HERE ON DOLLAR SIGN
+ 895 03671 4664         JMS I ENDPAS-4  /DUMP PG 0 LITERALS
+ 896 03672 1047         TAD Z PASS      /SEE WHAT WE'RE DOING
+ 897 03673 7700         SMA CLA         /PASS 2 OR 3?
+ 898 03674 5311         JMP UNDEF       /1. LIST UNDEF SYMBS
+ 899 03675 1076         TAD Z NOW3      /SEE IF PASS 3
+ 900 03676 7650         SNA CLA
+ 901 03677 5502         JMP I Z MAINEX  /PASS 2. GO TO 3
+ 902 03700 4236         JMS EMPTY       /DUMP DOLLAR SIGN
+ 903 03701 4665         JMS I ENDPAS-3  /LIST SYMBOL TABLE
+ 904 03702 7240         STA             /AND CLOSE LISTING FILE
+ 905 03703 3666         DCA I ENDPAS-2  /SET END-OF-FILE FLAG
+ 906 03704 4667         JMS I ENDPAS-1  /WRITE LAST BUFFER
+ 907 03705 4710         JMS I .+3       /WAIT UNTIL THRU
+ 908 03706 6002         IOF             /QUIT
+ 909 03707 5564         JMP I Z C7600   /GO TO MONITOR
+ 910 03710 5765         OSWAIT          /USE SUBROUTINE IN DECTAPE PKG
+ 911            
+ 912            
+ 913            /MACRO-8M
+ 914            / 1 APR 69      RBH
+ 915            
+ 916            /MORE PAGE 17 CHANGES
+ 917            
+ 918 03711 1113 UNDEF,  TAD Z OUTPUT    /SAVE PNTR TO OUTPUT
+ 919 03712 3201         DCA LSTSYM      /LOCALLY
+ 920 03713 1120         TAD Z DECOUT    /AND CHANGE OUTPUT TO
+ 921 03714 3113         DCA Z OUTPUT    /TELETYPE SET
+ 922 03715 1174         TAD Z CM3       /BACK UP A POINTER
+ 923 03716 1027         TAD Z SEND      /TO BOTTOM SYMBOL
+ 924 03717 3024         DCA Z SADR      /IN ORDER TO SCAN TABLE
+ 925 03720 1161 UNDEF1, TAD Z C4        /MOVE TO NEXT SYMBOL
+ 926 03721 1024         TAD Z SADR
+ 927 03722 3024         DCA Z SADR
+ 928 03723 1042         TAD Z PERMA     /SEE IF LAST USER
+ 929 03724 7141         CIA CLL         /SYMBOL REACHED
+ 930 03725 1024         TAD Z SADR      /13-BIT COMPARISON
+ 931 03726 7630         SZL CLA
+ 932 03727 5362         JMP UNDOUT      /FINISHED
+ 933 03730 4767         JMS I UNDPNT    /GET TYPE BITS
+ 934 03731 1022         TAD Z TYPE      /CHECK FOR TYPE 2
+ 935 03732 1176         TAD Z C6000     /WHICH MEANS UNDEFINED
+ 936 03733 7640         SZA CLA
+ 937 03734 5320         JMP UNDEF1      /NOT UNDEFINED
+ 938 03735 1024         TAD Z SADR      /UNDEFINED, SO
+ 939 03736 4770         JMS I UNDPNT+1  /MOVE IT DOWN TO
+ 940 03737 0050         TEM1A           /FLD 0 TO PRINT IT
+ 941 03740 2365         ISZ UNDCNT      /BOOBY TRAP--1ST TIME?
+ 942 03741 5357         JMP UNDEF3+1    /NO, ELSE PRINT HEADING
+ 943            
+ 944            
+ 945            /MACRO-8M
+ 946            / 2 APR 69      RBH
+ 947            
+ 948            /MORE PAGE 17 CHANGES
+ 949            
+ 950 03742 4771 UNDEF2, JMS I UNDPNT+2  /TYPE A CR-LF
+ 951 03743 1766         TAD I MESPNT    /HEADING FOR UNDEF SYMBS
+ 952 03744 7112         CLL RTR         /LEFT HAND CHAR
+ 953 03745 7012         RTR
+ 954 03746 7012         RTR
+ 955 03747 4772         JMS I UNDPNT+3  /CALL MESSAGE SERVICE
+ 956 03750 5356         JMP UNDEF3      /STOP CODE SEEN
+ 957 03751 1766         TAD I MESPNT    /RIGHT HAND CHAR
+ 958 03752 4772         JMS I UNDPNT+3  /PRINT IT
+ 959 03753 5356         JMP UNDEF3      /STOP CODE
+ 960 03754 2366         ISZ MESPNT      /GO TO NEXT PAIR
+ 961 03755 5343         JMP UNDEF2+1
+ 962 03756 4771 UNDEF3, JMS I UNDPNT+2  /CARRIAGE RETURN
+ 963 03757 4773         JMS I UNDPNT+4  /PRINT SYMBOL
+ 964 03760 4771         JMS I UNDPNT+2  /CARRIAGE RETURN
+ 965 03761 5320         JMP UNDEF1      /LOOK FOR ANOTHER
+ 966            
+ 967 03762 1201 UNDOUT, TAD LSTSYM      /RESTORE OUTPUT PNTR
+ 968 03763 3113         DCA Z OUTPUT
+ 969 03764 5502         JMP I Z MAINEX  /GO ON TO PASS 2
+ 970            
+ 971 03765 7777 UNDCNT, -1              /BOOBY TRAP, NEVER RESET
+ 972 03766 4764 MESPNT, UDMESS          /THIS ALSO
+ 973            
+ 974 03767 0357 UNDPNT, GETYPE          /EXTRACT TYPE BITS
+ 975 03770 2316         MOVE2           /MOVE SYMBOL FROM FLD 1
+ 976 03771 2632         TYCAR           /OUTPUT CARRIAGE RETURN
+ 977 03772 2600         MESSAG          /OUTPUT A MESSAGE
+ 978 03773 2621         OSYM            /OUTPUT A SYMBOL
+ 979            
+ 980            
+ 981            /MACRO-8M
+ 982            /23 MAR 69      RBH
+ 983            
+ 984            /PAGE 20 CHANGES
+ 985            
+ 986            *4000
+ 987 04000 0000 DIMCND, 0               /DCA I Z MACEND TO FIELD 1
+ 988 04001 6211         CDF 10
+ 989 04002 3446         DCA I Z MACEND
+ 990 04003 6201         CDF 00
+ 991 04004 5600         JMP I DIMCND
+ 992 04005 4363 TMCNDI, TIMCND          /TAD I Z MACEND FROM FLD 1
+ 993 04006 0000 DIVADR, 0               /DCA I Z VADR TO FIELD 1
+ 994 04007 6211         CDF 10
+ 995 04010 3423         DCA I Z VADR
+ 996 04011 6201         CDF 00
+ 997 04012 5606         JMP I DIVADR
+ 998            *4020
+ 999 04020 4200         JMS DIMCND
+1000            *4024
+1001 04024 3200 RIGHT2, DCA DIMCND      /USE AS TEMPORARY
+1002 04025 4605         JMS I TMCNDI    /TAD I MACEND FROM FIELD 1
+1003            *4027
+1004 04027 1200         TAD DIMCND      /PICK UP AGAIN
+1005 04030 4200         JMS DIMCND      /STORE IT
+1006            *4033
+1007 04033 7141         CIA CLL         /13-BIT ARITHMETIC
+1008            *4035
+1009 04035 7620         SNL CLA         /LOOK FOR MACRO OVERFLOW
+1010            *4062
+1011 04062 4206         JMS DIVADR      /DCA I Z VADR
+1012            *4105
+1013 04105 4206         JMS DIVADR      /DCA I Z VADR
+1014            *4137
+1015 04137 4772         JMS I TVADRI    /TAD I Z VADR
+1016            *4165
+1017 04165 4515 IGNORE, JMS I Z INPUT
+1018            *4172
+1019 04172 4370 TVADRI, TIVADR          /TAD I Z VADR FROM FLD 1
+1020            
+1021            
+1022            /MACRO-8M
+1023            /28 MAR 69      RBH
+1024            
+1025            /PAGE 21 CHANGES
+1026            
+1027            *4363
+1028 04363 0000 TIMCND, 0               /TAD I Z MACEND FROM FLD 1
+1029 04364 6211         CDF 10
+1030 04365 1446         TAD I Z MACEND
+1031 04366 6201         CDF 00
+1032 04367 5763         JMP I TIMCND
+1033 04370 0000 TIVADR, 0               /TAD I Z VADR FROM FLD 1
+1034 04371 6211         CDF 10
+1035 04372 1423         TAD I Z VADR
+1036 04373 6201         CDF 00
+1037 04374 5770         JMP I TIVADR
+1038            
+1039 04375 0000         0
+1040 04376 0000         0
+1041 04377 0000         0               /3 FREE LOCATIONS
+1042            
+1043            /PAGE 22 CHANGES
+1044            
+1045            /SYMBOL DEFINITIONS:
+1046            PRSW=   4512
+1047            
+1048            *4422
+1049 04422 1312         TAD PRSW        /PERIOD SW. IS FP FLAG
+1050            *4571
+1051 04571 0000         0               /FREE
+1052            
+1053            
+1054            /MACRO-8M
+1055            / 8 JUL 69      RBH
+1056            
+1057            /PAGE 23 CHANGES
+1058            
+1059            /SYMBOL DEFINITIONS:
+1060            BEXP=   67
+1061            HIC=    70
+1062            LWC=    71
+1063            MAIN1=  111
+1064            IDX1=   116
+1065            MTSW=   2264
+1066            DECIMS= 2245
+1067            FINALL= 4400
+1068            DPN=    2346
+1069            ONEREG= 1443
+1070            
+1071            *4720
+1072 04720 1745 CNSTNT, TAD I CNSPTR    /DUBL & FLTG PSEUDO OPS
+1073 04721 3344         DCA CNSPRX      /PRESENT RADIX
+1074 04722 4746         JMS I CNSPTR+1  /CHANGE TO DECIMAL
+1075 04723 4516         JMS I Z IDX1    /HOP OVER % SIGN
+1076 04724 4750         JMS I CNSPTR+3  /FINALL
+1077 04725 1751         TAD I CNSPTR+4  /DPN
+1078 04726 7650         SNA CLA         /ANY DIGITS?
+1079 04727 5341         JMP CNSOUT      /NO, EXIT
+1080 04730 1747         TAD I CNSPTR+2  /LOOK AT PERIOD SWITCH
+1081 04731 7640         SZA CLA         /ZERO IF PERIOD IN #
+1082 04732 5335         JMP .+3         /NONE, SO DUBL INTEGER
+1083 04733 1067         TAD Z BEXP      /EXPONENT
+1084 04734 4752         JMS I CNSPTR+5  /PUT OUT ONE WORD
+1085 04735 1070         TAD Z HIC       /HIGH ORDER WORD
+1086 04736 4752         JMS I CNSPTR+5
+1087 04737 1071         TAD Z LWC       /LOW ORDER WORD
+1088 04740 4752         JMS I CNSPTR+5
+1089 04741 1344 CNSOUT, TAD CNSPRX      /RESTORE ORIGINAL RADIX
+1090 04742 3745         DCA I CNSPTR
+1091 04743 5511         JMP I Z MAIN1   /BACK TO MAINLINE
+1092 04744 0000 CNSPRX, 0               /TEMPORARY
+1093            
+1094 04745 2264 CNSPTR, MTSW
+1095 04746 2245         DECIMS
+1096 04747 4512         PRSW
+1097 04750 4400         FINALL
+1098 04751 2346         DPN
+1099 04752 1443         ONEREG
+1100            
+1101            
+1102            /MACRO-8M
+1103            / 1 APR 69      RBH
+1104            
+1105            /MORE PAGE 23 CHANGES
+1106            
+1107 04753 7407         TOP             /PNTR TO PERM SYMBOLS
+1108 04754 1027 FIXED,  TAD Z SEND      /FIXTAB
+1109 04755 7410         SKP
+1110 04756 1353 ERASE,  TAD FIXED-1     /EXPUNGE
+1111 04757 4420         JMS I Z TPASI   /ONLY ON PASS 1
+1112 04760 3042         DCA Z PERMA     /LIMIT OF FIXED SYMBOLS
+1113 04761 1042         TAD Z PERMA     /NOW ALSO BOTTOM
+1114 04762 3027         DCA Z SEND      /SYMBOL IN TABLE
+1115 04763 5511         JMP I Z MAIN1   /BACK TO MAINLINE
+1116            
+1117 04764 2516 UDMESS, TEXT "UNDEFINED SYMBOLS"
+     04765 0405 
+     04766 0611 
+     04767 1605 
+     04770 0440 
+     04771 2331 
+     04772 1502 
+     04773 1714 
+     04774 2300 
+1118            
+1119            
+1120            /MACRO-8M
+1121            /24 APR 69      RBH
+1122            
+1123            /BASIC SYMBOLS, LOADED INTO 5000-5577
+1124            /AND COPIED TO 17000-17577 AT STARTUP.
+1125            
+1126            *5000
+1127 05000 1247 SYMTAB, 1247;   4336;   0000;   6244    /RMF
+     05001 4336 
+     05002 0000 
+     05003 6244 
+1128 05004 1243         1243;   4112;   0000;   6234    /RIB
+     05005 4112 
+     05006 0000 
+     05007 6234 
+1129 05010 1243         1243;   4336;   0000;   6224    /RIF
+     05011 4336 
+     05012 0000 
+     05013 6224 
+1130 05014 1236         1236;   4336;   0000;   6214    /RDF
+     05015 4336 
+     05016 0000 
+     05017 6214 
+1131 05020 0170         0170;   4336;   0000;   6202    /CIF
+     05021 4336 
+     05022 0000 
+     05023 6202 
+1132 05024 0163         0163;   4336;   0000;   6201    /CDF
+     05025 4336 
+     05026 0000 
+     05027 6201 
+1133 05030 0762         0762;   4045;   0000;   7501    /MQA
+     05031 4045 
+     05032 0000 
+     05033 7501 
+1134 05034 1302         1302;   4045;   0000;   7441    /SCA
+     05035 4045 
+     05036 0000 
+     05037 7441 
+1135 05040 0762         0762;   4674;   0000;   7421    /MQL
+     05041 4674 
+     05042 0000 
+     05043 7421 
+1136 05044 0717         0717;   5232;   0000;   7417    /LSR
+     05045 5232 
+     05046 0000 
+     05047 7417 
+1137 05050 0070         0070;   5232;   0000;   7415    /ASR
+     05051 5232 
+     05052 0000 
+     05053 7415 
+1138 05054 1307         1307;   4674;   0000;   7413    /SHL
+     05055 4674 
+     05056 0000 
+     05057 7413 
+1139 05060 1023         1023;   4515;   0000;   7411    /NMI
+     05061 4515 
+     05062 0000 
+     05063 7411 
+1140 05064 0252         0252;   4515;   0000;   7407    /DVI
+     05065 4515 
+     05066 0000 
+     05067 7407 
+1141 05070 0766         0766;   5635;   0000;   7405    /MUY
+     05071 5635 
+     05072 0000 
+     05073 7405 
+1142 05074 1302         1302;   4674;   0000;   7403    /SCL
+     05075 4674 
+     05076 0000 
+     05077 7403 
+1143 05100 1360         1360;   5277;   0000;   6046    /TLS
+     05101 5277 
+     05102 0000 
+     05103 6046 
+1144 05104 1364         1364;   4157;   0000;   6044    /TPC
+     05105 4157 
+     05106 0000 
+     05107 6044 
+1145 05110 1347         1347;   4336;   0000;   6042    /TCF
+     05111 4336 
+     05112 0000 
+     05113 6042 
+1146 05114 1367         1367;   4336;   0000;   6041    /TSF
+     05115 4336 
+     05116 0000 
+     05117 6041 
+1147 05120 0651         0651;   4112;   0000;   6036    /KRB
+     05121 4112 
+     05122 0000 
+     05123 6036 
+1148 05124 0651         0651;   5277;   0000;   6034    /KRS
+     05125 5277 
+     05126 0000 
+     05127 6034 
+1149 05130 0632         0632;   4157;   0000;   6032    /KCC
+     05131 4157 
+     05132 0000 
+     05133 6032 
+1150 05134 0652         0652;   4336;   0000;   6031    /KSF
+     05135 4336 
+     05136 0000 
+     05137 6031 
+1151 05140 1134         1134;   5277;   0000;   6026    /PLS
+     05141 5277 
+     05142 0000 
+     05143 6026 
+1152 05144 1140         1140;   4157;   0000;   6024    /PPC
+     05145 4157 
+     05146 0000 
+     05147 6024 
+1153 05150 1123         1123;   4336;   0000;   6022    /PCF
+     05151 4336 
+     05152 0000 
+     05153 6022 
+1154 05154 1143         1143;   4336;   0000;   6021    /PSF
+     05155 4336 
+     05156 0000 
+     05157 6021 
+1155 05160 1240         1240;   4157;   0000;   6014    /RFC
+     05161 4157 
+     05162 0000 
+     05163 6014 
+1156 05164 1254         1254;   4112;   0000;   6012    /RRB
+     05165 4112 
+     05166 0000 
+     05167 6012 
+1157 05170 1255         1255;   4336;   0000;   6011    /RSF
+     05171 4336 
+     05172 0000 
+     05173 6011 
+1158 05174 0051         0051;   4157;   0000;   6004    /ADC
+     05175 4157 
+     05176 0000 
+     05177 6004 
+1159 05200 0534         0534;   4336;   0000;   6002    /IOF
+     05201 4336 
+     05202 0000 
+     05203 6002 
+1160 05204 0534         0534;   5006;   0000;   6001    /ION
+     05205 5006 
+     05206 0000 
+     05207 6001 
+1161 05210 0417         0417;   4627;   0000;   7204    /GLK
+     05211 4627 
+     05212 0000 
+     05213 7204 
+1162 05214 1323         1323;   4674;   0000;   7120    /STL
+     05215 4674 
+     05216 0000 
+     05217 7120 
+1163 05220 1323         1323;   4045;   0000;   7240    /STA
+     05221 4045 
+     05222 0000 
+     05223 7240 
+1164            
+1165            
+1166            /MACRO-8M
+1167            /26 MAR 69      RBH
+1168            
+1169 05224 0675         0675;   5277;   0000;   7604    /LAS
+     05225 5277 
+     05226 0000 
+     05227 7604 
+1170 05230 0170         0170;   4045;   0000;   7041    /CIA
+     05231 4045 
+     05232 0000 
+     05233 7041 
+1171 05234 0464         0464;   5344;   0000;   7402    /HLT
+     05235 5344 
+     05236 0000 
+     05237 7402 
+1172 05240 1076         1076;   5232;   0000;   7404    /OSR
+     05241 5232 
+     05242 0000 
+     05243 7404 
+1173 05244 1312         1312;   5120;   0000;   7410    /SKP
+     05245 5120 
+     05246 0000 
+     05247 7410 
+1174 05250 1331         1331;   4674;   0000;   7430    /SZL
+     05251 4674 
+     05252 0000 
+     05253 7430 
+1175 05254 1315         1315;   4674;   0000;   7420    /SNL
+     05255 4674 
+     05256 0000 
+     05257 7420 
+1176 05260 1315         1315;   4045;   0000;   7450    /SNA
+     05261 4045 
+     05262 0000 
+     05263 7450 
+1177 05264 1317         1317;   4045;   0000;   7510    /SPA
+     05265 4045 
+     05266 0000 
+     05267 7510 
+1178 05270 1331         1331;   4045;   0000;   7440    /SZA
+     05271 4045 
+     05272 0000 
+     05273 7440 
+1179 05274 1314         1314;   4045;   0000;   7500    /SMA
+     05275 4045 
+     05276 0000 
+     05277 7500 
+1180 05300 0516         0516;   4157;   0000;   7001    /IAC
+     05301 4157 
+     05302 0000 
+     05303 7001 
+1181 05304 1256         1256;   4674;   0000;   7006    /RTL
+     05305 4674 
+     05306 0000 
+     05307 7006 
+1182 05310 1233         1233;   4674;   0000;   7004    /RAL
+     05311 4674 
+     05312 0000 
+     05313 7004 
+1183 05314 1256         1256;   5232;   0000;   7012    /RTR
+     05315 5232 
+     05316 0000 
+     05317 7012 
+1184 05320 1233         1233;   5232;   0000;   7010    /RAR
+     05321 5232 
+     05322 0000 
+     05323 7010 
+1185 05324 0174         0174;   4674;   0000;   7020    /CML
+     05325 4674 
+     05326 0000 
+     05327 7020 
+1186 05330 0174         0174;   4045;   0000;   7040    /CMA
+     05331 4045 
+     05332 0000 
+     05333 7040 
+1187 05334 0173         0173;   4674;   0000;   7100    /CLL
+     05335 4674 
+     05336 0000 
+     05337 7100 
+1188 05340 0173         0173;   4045;   0000;   7200    /CLA
+     05341 4045 
+     05342 0000 
+     05343 7200 
+1189 05344 1025         1025;   5120;   0000;   7000    /NOP
+     05345 5120 
+     05346 0000 
+     05347 7000 
+1190 05350 1073         1073;   5232;   0000;   7000    /OPR
+     05351 5232 
+     05352 0000 
+     05353 7000 
+1191 05354 0534         0534;   5344;   0000;   6000    /IOT
+     05355 5344 
+     05356 0000 
+     05357 6000 
+1192 05360 0577         0577;   5120;   0000;   5000    /JMP
+     05361 5120 
+     05362 0000 
+     05363 5000 
+1193 05364 0577         0577;   5277;   0000;   4000    /JMS
+     05365 5277 
+     05366 0000 
+     05367 4000 
+1194 05370 0227         0227;   4045;   0000;   3000    /DCA
+     05371 4045 
+     05372 0000 
+     05373 3000 
+1195 05374 0540         0540;   5702;   0000;   2000    /ISZ
+     05375 5702 
+     05376 0000 
+     05377 2000 
+1196 05400 1345         1345;   4224;   0000;   1000    /TAD
+     05401 4224 
+     05402 0000 
+     05403 1000 
+1197 05404 0063         0063;   4224;   0000;   0000    /AND
+     05405 4224 
+     05406 0000 
+     05407 0000 
+1198            
+1199            
+1200            /MACRO-8M
+1201            /28 MAR 69      RBH
+1202            
+1203            /TOP OF INSTRUCTION DEFINITIONS
+1204            TOP=    .-SYMTAB+BOT
+1205            
+1206            /SPECIAL CHARACTERS AND PSEUDO-INSTRUCTIONS
+1207            
+1208 05410 2000         2000;   4000;   0056;   2400    /":ASCII VALUE
+     05411 4000 
+     05412 0056 
+     05413 2400 
+1209 05414 2000         2000;   4000;   0062;   3400    /&:BINARY AND
+     05415 4000 
+     05416 0062 
+     05417 3400 
+1210 05420 4000         4000;   0000;   0061;   CNSTNT  /%:OLD DUBL/FLTG
+     05421 0000 
+     05422 0061 
+     05423 4720 
+1211 05424 2000         2000;   4000;   0075;   5600    /\:LEFT-SHIFT (^2)
+     05425 4000 
+     05426 0075 
+     05427 5600 
+1212 05430 5056         5056;   1345;   0674;   OCT     /OCTAL
+     05431 1345 
+     05432 0674 
+     05433 2243 
+1213 05434 4231         4231;   0170;   0742;   DECIM   /DECIMAL
+     05435 0170 
+     05436 0742 
+     05437 2241 
+1214 05440 5351         5351;   1614;   0000;   STRING  /TEXT
+     05441 1614 
+     05442 0000 
+     05443 1727 
+1215 05444 4000         4000;   0000;   0060;   ENDPAS  /<DOLLAR>
+     05445 0000 
+     05446 0060 
+     05447 3670 
+1216 05450 4231         4231;   0347;   1013;   MACROD  /DEFINE
+     05451 0347 
+     05452 1013 
+     05453 4043 
+1217 05454 4347         4347;   1614;   0047;   FIXED   /FIXTAB
+     05455 1614 
+     05456 0047 
+     05457 4754 
+1218 05460 4321         4321;   1145;   1015;   ERASE   /EXPUNGE
+     05461 1145 
+     05462 1015 
+     05463 4756 
+1219 05464 5121         5121;   1434;   0271;   WAIT    /PAUSE
+     05465 1434 
+     05466 0271 
+     05467 1427 
+1220 05470 5121         5121;   0410;   0000;   PAGEC   /PAGE
+     05471 0410 
+     05472 0000 
+     05473 0610 
+1221 05474 4347         4347;   0305;   0224;   EXMEM   /FIELD
+     05475 0305 
+     05476 0224 
+     05477 2156 
+1222 05500 4000         4000;   0000;   0051;   FINIS   />:END MACRO
+     05501 0000 
+     05502 0051 
+     05503 4336 
+1223 05504 4000         4000;   0000;   0077;   ESCAPE  /MACRO ESCAPE
+     05505 0000 
+     05506 0077 
+     05507 4261 
+1224 05510 2000         2000;   4000;   0047;   1200    /<:BEGIN MACRO
+     05511 4000 
+     05512 0047 
+     05513 1200 
+1225 05514 2000         2000;   4000;   0046;   0200    /;:CARR RETN
+     05515 4000 
+     05516 0046 
+     05517 0200 
+1226 05520 4000         4000;   0000;   0074;   II      /[:PG 0 LIT
+     05521 0000 
+     05522 0074 
+     05523 1252 
+1227 05524 4000         4000;   0000;   0064;   II      /(:C PG LIT
+     05525 0000 
+     05526 0064 
+     05527 1252 
+1228 05530 2000         2000;   4000;   0055;   2200    /!:BINARY IOR
+     05531 4000 
+     05532 0055 
+     05533 2200 
+1229 05534 4000         4000;   0000;   0066;   ORGIC   /*:ORIGIN
+     05535 0000 
+     05536 0066 
+     05537 1355 
+1230 05540 4000         4000;   0000;   0072;   PERIOD  /.:C ADDR
+     05541 0000 
+     05542 0072 
+     05543 0641 
+1231 05544 2000         2000;   4000;   0070;   0600    /,:TAG DEF
+     05545 4000 
+     05546 0070 
+     05547 0600 
+1232 05550 2000         2000;   4000;   0050;   1400    /=:SYMB DEF
+     05551 4000 
+     05552 0050 
+     05553 1400 
+1233 05554 5702         5702;   0000;   0000;   A+1     /Z:(IGNORED)
+     05555 0000 
+     05556 0000 
+     05557 1022 
+1234 05560 4515         4515;   0000;   0000;   H       /I:IND ADDR
+     05561 0000 
+     05562 0000 
+     05563 1071 
+1235 05564 2000         2000;   4000;   0071;   5200    /-:BIN DIFF
+     05565 4000 
+     05566 0071 
+     05567 5200 
+1236 05570 2000         2000;   4000;   0067;   4600    /+:BIN SUM
+     05571 4000 
+     05572 0067 
+     05573 4600 
+1237 05574 2000         2000;   4000;   0054;   5600    /SPACE
+     05575 4000 
+     05576 0054 
+     05577 5600 
+1238            
+1239            
+1240            /MACRO-8M
+1241            / 3 JUN 69      RBH
+1242            
+1243            /I/O ROUTINES FOR 5/7 ASCII ON DECTAPE
+1244            
+1245            /SYMBOL DEFINTIONS:
+1246            SYMLST= 101
+1247            
+1248            *5600
+1249 05600 0000 DECGET, 0
+1250 05601 2344         ISZ DGBCNT      /TEST BYTE COUNT
+1251 05602 5227         JMP DECGTN      /O.K.
+1252 05603 2345         ISZ DGTCNT
+1253 05604 7610         SKP CLA         /BUFFER READY
+1254 05605 4365         JMS OSWAIT      /WAIT UNTIL READY
+1255 05606 6211         CDF 10          /GET THREE WORDS
+1256 05607 1414         TAD I 14
+1257 05610 3341         DCA DTG1
+1258 05611 1414         TAD I 14
+1259 05612 3342         DCA DTG2
+1260 05613 1414         TAD I 14
+1261 05614 3343         DCA DTG3
+1262 05615 6201         CDF 00
+1263 05616 1345         TAD DGTCNT
+1264 05617 1377         TAD (-177)
+1265 05620 7710         SPA CLA         /BUFFER NOW EMPTY?
+1266 05621 7040         CMA             /NO, SO DON'T READ
+1267 05622 1776         TAD I (RFN+4)   /YES, CHECK FILE STATUS
+1268 05623 7650         SNA CLA         /OK TO GET NEXT BUFFER LOAD?
+1269 05624 4327         JMS GR          /YES, REFILL IT
+1270 05625 1375         TAD (-5)
+1271 05626 3344         DCA DGBCNT      /RESET BYTE COUNT
+1272            
+1273            
+1274            /MACRO-8M
+1275            / 3 JUN 69      RBH
+1276            
+1277 05627 1142 DECGTN, TAD Z CM7
+1278 05630 3327         DCA GR          /SET SHIFT COUNT
+1279 05631 3062 DECGTS, DCA Z ITEM      /STORE INPUT CHARACTER
+1280 05632 1343         TAD DTG3
+1281 05633 7104         CLL RAL
+1282 05634 3343         DCA DTG3
+1283 05635 1342         TAD DTG2
+1284 05636 7004         RAL
+1285 05637 3342         DCA DTG2
+1286 05640 1341         TAD DTG1
+1287 05641 7004         RAL
+1288 05642 3341         DCA DTG1
+1289 05643 1062         TAD Z ITEM
+1290 05644 7004         RAL
+1291 05645 2327         ISZ GR
+1292 05646 5231         JMP DECGTS
+1293 05647 1163         TAD Z C200      /ADD 200'S BIT FOR HAPPINESS
+1294 05650 3062         DCA Z ITEM
+1295 05651 1076         TAD Z NOW3      /DOING PASS 3 LISTING?
+1296 05652 7640         SZA CLA
+1297 05653 4501         JMS I Z SYMLST  /YES
+1298 05654 1062         TAD Z ITEM      /CARRY BACK CHAR
+1299 05655 5600         JMP I DECGET
+1300            
+1301            
+1302            /MACRO-8M
+1303            /24 APR 69      RBH
+1304            
+1305 05656 0000 DECPUT, 0
+1306 05657 0165         AND Z C177
+1307 05660 1362         TAD DTP3        /INSERT NEW CHAR INTO TRIPLE
+1308 05661 3362         DCA DTP3
+1309 05662 7240         STA             /SHIFT 1 OR 7 BITS
+1310 05663 2363         ISZ DPBCNT
+1311 05664 1374         TAD (-6)
+1312 05665 3346         DCA GW          /USE ENTRY POINT FOR CNTR
+1313 05666 1362 DECPTS, TAD DTP3
+1314 05667 7104         CLL RAL
+1315 05670 3362         DCA DTP3
+1316 05671 1361         TAD DTP2
+1317 05672 7004         RAL
+1318 05673 3361         DCA DTP2
+1319 05674 1360         TAD DTP1
+1320 05675 7004         RAL
+1321 05676 3360         DCA DTP1
+1322 05677 2346         ISZ GW          /SHIFT COUNT
+1323 05700 5266         JMP DECPTS      /GO AGAIN
+1324 05701 1363         TAD DPBCNT
+1325 05702 7640         SZA CLA         /LAST BYTE?
+1326 05703 5656         JMP I DECPUT    /NO
+1327 05704 2364         ISZ DPTCNT      /YES, PREV BUFFER WRITTEN?
+1328 05705 7410         SKP             /YES
+1329 05706 4365         JMS OSWAIT      /NO, WAIT UNTIL DONE
+1330 05707 6211         CDF 10          /PUT THREE WORDS AWAY
+1331 05710 1360         TAD DTP1
+1332 05711 3415         DCA I 15
+1333 05712 1361         TAD DTP2
+1334 05713 3415         DCA I 15
+1335 05714 1362         TAD DTP3
+1336 05715 3415         DCA I 15
+1337 05716 6201         CDF 00
+1338 05717 3362         DCA DTP3        /CLEAR LOWEST BYTE
+1339 05720 1375         TAD (-5)
+1340 05721 3363         DCA DPBCNT      /SET BYTE COUNT
+1341 05722 1364         TAD DPTCNT
+1342 05723 1377         TAD (-177)
+1343 05724 7700         SMA CLA         /BUFFER FULL?
+1344 05725 4346         JMS GW          /YES, WRITE IT
+1345 05726 5656         JMP I DECPUT
+1346            
+1347            
+1348            /MACRO-8M
+1349            / 3 JUN 69      RBH
+1350            
+1351 05727 0000 GR,     0               /DECTAPE READ
+1352 05730 7240         STA             /RESET TRIPLE COUNT
+1353 05731 3345         DCA DGTCNT
+1354 05732 1373         TAD (INBUF-1)   /BUFFER IS AT 10000
+1355 05733 3014         DCA Z 14
+1356 05734 4523         JMS I Z READ
+1357 05735 6000         RFN             /FILE POINTER
+1358 05736 7440         SZA             /ANY ERRORS?
+1359 05737 5525         JMP I Z ERR     /YES, SORRY
+1360 05740 5727         JMP I GR        /NO, RETURN
+1361            
+1362 05741 0000 DTG1,   0
+1363 05742 0000 DTG2,   0
+1364 05743 0000 DTG3,   0
+1365 05744 7777 DGBCNT, -1              /BYTE COUNT
+1366 05745 7777 DGTCNT, -1              /TRIPLE COUNT
+1367            
+1368 05746 0000 GW,     0               /DECTAPE WRITE
+1369 05747 7240         STA             /RESET TRIPLE COUNT
+1370 05750 3364         DCA DPTCNT
+1371 05751 1372         TAD (OUTBUF-1)  /BUFFER IS AT 10600
+1372 05752 3015         DCA Z 15
+1373 05753 4522         JMS I Z WRITE
+1374 05754 6012         WFN             /FILE POINTER
+1375 05755 7440         SZA             /ANY ERRORS?
+1376 05756 5525         JMP I Z ERR     /YES, SORRY
+1377 05757 5746         JMP I GW        /NO, RETURN
+1378            
+1379 05760 0000 DTP1,   0
+1380 05761 0000 DTP2,   0
+1381 05762 0000 DTP3,   0
+1382 05763 7773 DPBCNT, -5              /BYTE COUNT
+1383 05764 7777 DPTCNT, -1              /TRIPLE COUNT
+1384            
+1385 05765 0000 OSWAIT, 0               /WAIT FOR TAPE TO CATCH UP
+1386 05766 4524         JMS I Z JOIN    /CALL FILE SYSTEM ROUTINE
+1387 05767 7440         SZA             /LOOK FOR ERRORS
+1388 05770 5525         JMP I Z ERR     /COMPLAIN!
+1389 05771 5765         JMP I OSWAIT    /FINISHED, ALL O.K.
+1390            
+1391 05772 6777 PAGE
+     05773 6177 
+     05774 7772 
+     05775 7773 
+     05776 6004 
+     05777 7601 
+1392            
+1393            
+1394            /MACRO-8M
+1395            /24 APR 69      RBH
+1396            
+1397            /ACTIVE FILE POINTERS
+1398            
+1399            *6000
+1400 06000 6002 RFN,    .+2             /COLLAPSE TWO VECTORS
+1401 06001 0003         3               /ON TOP OF EACH
+1402 06002 6211         CDF 10          /OTHER
+1403 06003 6200         INBUF           /BUFFER AT 10000
+1404 06004 0000         0000            /END-OF-FILE FLAG
+1405 06005 0000         0000            /READ MODE FLAG
+1406 06006 0001         1               /INITIAL BLOCK (SCRATCH TAPE)
+1407 06007 0000         0               /BLOCK COUNT, UNUSED
+1408 06010 0001         1               /UNIT NUMBER
+1409 06011 0001         1               /NEXT BLOCK
+1410 06012 6014 WFN,    .+2             /ALSO COLLAPSED
+1411 06013 0003         3               /3 PAGES
+1412 06014 6211         CDF 10
+1413 06015 7000         OUTBUF          /BUFFER AT 10600
+1414 06016 0000         0000            /END-OF-FILE FLAG
+1415 06017 4000         4000            /WRITE MODE FLAG
+1416 06020 0000         0               /FIRST BLOCK (ASSIGNED)
+1417 06021 0000         0               /BLOCK COUNT, TALLIED
+1418 06022 0002         2               /UNIT NUMBER
+1419 06023 0000         0               /NEXT BLOCK (ASSISGNED)
+1420 06024 6400         6400            /FREE BLOCK LIST BUFFER
+1421 06025 0000         0               /RUNNING FBL POINTER
+1422            
+1423            
+1424            /MACRO-8M
+1425            / 8 JUL 69      RBH
+1426            
+1427 06026 0000 THIRD,  0               /SET UP FOR PASS 3
+1428 06027 3216         DCA WFN+4       /CLEAR E-O-F FLAG
+1429 06030 3220         DCA WFN+6       /CLEAR INITIAL BLOCK #
+1430 06031 3221         DCA WFN+7       /AND COUNT
+1431 06032 3225         DCA WFN+13      /RESET RUNNING PNTR
+1432 06033 7240         STA
+1433 06034 3777         DCA I (DPTCNT)  /RESET TRIPLE COUNT
+1434 06035 1376         TAD (-5)        /RESET
+1435 06036 3775         DCA I (DPBCNT)  /BYTE COUNT
+1436 06037 7240         STA
+1437 06040 1215         TAD WFN+3       /AND BUFFER POINTER
+1438 06041 3015         DCA Z 15
+1439 06042 3774         DCA I (DTP3)    /CLEAR BYTE ACCUMULATOR
+1440 06043 5626         JMP I THIRD     /I THINK THAT'S ALL
+1441            
+1442 06044 0000 REWIND, 0               /INITIALIZE DECTAPE FOR
+1443 06045 6203         CIF CDF 00      /NEW PASS
+1444 06046 4773         JMS I (OCTS)    /RESET RADIX
+1445 06047 1206         TAD RFN+6       /SET 1ST BLOCK OF FILE
+1446 06050 3211         DCA RFN+11      /TO BE NEXT BLOCK
+1447 06051 4772         JMS I (GR)      /THEN READ 1ST BUFFER LOAD
+1448 06052 7240         STA             /RESET BYTE POINTER
+1449 06053 3771         DCA I (DGBCNT)  /BECAUSE NOTHING'S READY
+1450 06054 5644         JMP I REWIND    /GO BACK WITH INT. ON
+1451            
+1452            
+1453 06171 5744 $
+     06172 5727 
+     06173 2251 
+     06174 5762 
+     06175 5763 
+     06176 7773 
+     06177 5764 
+
+A       1021
+ADR     0040
+ALL     7600
+ALPHA   2412
+B1      1037
+B3      1135
+BEXP    0067
+BINOUT  0104
+BIT6    1600
+BIT6EX  1636
+BKSL    2600
+BON     1642
+BOT     6777
+C       1053
+C177    0165
+C1777   0173
+C200    0163
+C240    1763
+C3777   0172
+C4      0161
+C6      0157
+C600    0156
+C6000   0176
+C7600   0164
+C77     2607
+CAFF    2411
+CAFS    2526
+CBUFE   0100 unreferenced
+CC100   1661
+CC20    1756
+CC32    1755
+CCON    0045
+CJMP1   1573 unreferenced
+CKSUM   3034
+CKSUMI  1576
+CM1     0151
+CM12    0170
+CM3     0174
+CM4     2577
+CM40    1477
+CM7     0142
+CMCBF   1577
+CNSOUT  4741
+CNSPRX  4744
+CNSPTR  4745
+CNSTNT  4720
+COMMEN  2114 unreferenced
+CON     0037
+CONC    0204
+CONC1   1241
+CONE    0261
+CONZ    0317
+CONZ1   1242
+CRIOR   1167
+CURREN  0333
+DECERR  0705
+DECGET  5600
+DECGTN  5627
+DECGTS  5631
+DECIM   2241
+DECIMS  2245
+DECOUT  0120
+DECPTS  5666
+DECPUT  5656
+DEFIN1  1174
+DGBCNT  5744
+DGTCNT  5745
+DICRIO  1142
+DIMCND  4000
+DISADR  0600
+DISEND  2107
+DIVADR  4006
+DPBCNT  5763
+DPN     2346
+DPTCNT  5764
+DTG1    5741
+DTG2    5742
+DTG3    5743
+DTP1    5760
+DTP2    5761
+DTP3    5762
+DVADRI  0306
+EMPTY   3636
+ENDPAS  3670
+ENTS    2000
+ENTS1   3332
+ERASE   4756
+ERR     0125
+ERR1    0106
+ERRCHG  3252
+ERROR   3201
+ESCAPE  4261
+EVAL    0043
+EXMEM   2156
+FIN     7577
+FINALL  4400
+FINIS   4336
+FIXED   4754
+G       1107
+GET     1104 unreferenced
+GETAD1  1175
+GETADR  1200
+GETYPE  0357
+GR      5727
+GW      5746
+H       1071
+HIC     0070
+HSCNTR  3576
+HSNEXT  3567
+HSOUT   3501
+HSPNTI  3530
+HSPNTO  3577
+HSRETN  3522
+HSRING  3531
+HSSCAT  3532
+HSSIZE  3527
+IDX     2043
+IDX1    0116
+IGNORE  4165 unreferenced
+II      1252
+INBUF   6200
+INPUT   0115
+INTHAN  3470
+ITEM    0062
+J       1064 unreferenced
+JOIN    0124
+LEAVE   1236
+LIST    3333
+LIST1   1575
+LSTSYM  3601
+LSTTOP  3663
+LWC     0071
+MACBUF  0000
+MACEND  0046
+MACGET  2102
+MACREF  4200
+MACRFI  0562
+MACRO   0200 unreferenced
+MACROD  4043
+MAIN    1400
+MAIN1   0111
+MAINEX  0102
+MESPNT  3766
+MESSAG  2600
+MOVE2   2316
+MOVIE   2576
+MTSW    2264
+NOW3    0076
+OCT     2243
+OCTS    2251
+OCTS1   1550 unreferenced
+ONEREG  1443
+OPS     2712 unreferenced
+ORGIC   1355
+OSWAIT  5765
+OSYM    2621
+OUTBUF  7000
+OUTPUT  0113
+PAGE1   0112
+PAGEC   0610
+PANSR   3555
+PASS    0047
+PASS1   1411 unreferenced
+PASS3   1557
+PATCH2  3656
+PERIOD  0641
+PERMA   0042
+POINT   0060
+POPU1   1173
+POPUP1  1347
+PRSW    4512
+PUN     3023
+PUSH1   0117 unreferenced
+PUSH2   1131
+READ    0123
+RESCAT  0131
+RESET   0676
+REWIND  6044
+RFN     6000
+RIGHT2  4024 unreferenced
+RSHL    0714
+SADR    0024
+SAVE    2127
+SAVE1   0561
+SCAT    5404
+SCATP   0004
+SEAR1   3331
+SEARCH  0400
+SEND    0027
+SGN     0044
+SKIP    0103
+SPACE   5600
+STAB    0026 unreferenced
+STRING  1727
+SYMB    1000
+SYMLST  0101
+SYMTAB  5000
+TAD16I  2523
+TADI16  0554
+TANSR   3533
+TDIVDR  2344
+TEM1A   0050
+THIRD   6026
+TIMCND  4363
+TISADR  0301
+TIVADR  4370
+TMCNDI  4005
+TOP     7407
+TPASI   0020
+TSADRI  0605
+TSTPAS  1675
+TVADRI  4172
+TYCAR   2632
+TYCNTR  3553
+TYOUT   3440
+TYPE    0022
+TYPNTI  3466
+TYPNTO  3554
+TYRETN  3463
+TYRING  3467
+TYSIZE  3465
+UDMESS  4764
+UNDCNT  3765
+UNDEF   3711
+UNDEF1  3720
+UNDEF2  3742
+UNDEF3  3756
+UNDOUT  3762
+UNDPNT  3767
+UNPUN   3035
+UNTRIM  1652
+UNTRM1  0126
+USYMB   2000
+VADR    0023
+VAL     0025
+WAIT    1427
+WFN     6012
+WRITE   0122
+ZBUFE   0077
+ZUNCON  3103
