@@ -166,7 +166,7 @@ sub process {
       $link = &link();
       print "<table width=100%><col width=50%><col width=50%>\n";
       foreach $e (@exts) {
-        print "<td><a href=$link/$k$e>$dir-$n$e</a><td>($exts{$e})<tr>\n";
+        print "<td><a href=$link/$k$e>$n$e</a><td>($exts{$e})<tr>\n";
       }
       print "</table>\n";
     }
