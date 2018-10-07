@@ -109,6 +109,7 @@ sub process {
     @files = <$d/*>;
     foreach $f (sort @files) {
       $f =~ s/^$d.//;
+      next if $f eq "vv";
       $files++;
       print "<div><a href=$l/$f target=_blank>$f</a></div>\n";
     }

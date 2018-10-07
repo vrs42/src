@@ -98,7 +98,7 @@ $RREF = 8; # Return reference (JMP I xxxx target)
 $SREF = 16; # A JMS reference (possible "Sxxxx")
 # Kludge: location zero is a subroutine (ISR), if included.
 $ref[0000] = $SREF|$DREF|$RREF if defined $core[0000];
-$fpp = 0;
+$usedfpp = $fpp = 0;
 foreach ($loc = 0; $loc <= $#core; $loc++) {
   next unless defined $core[$loc];
   $op = $core[$loc] >> 9;
@@ -107,7 +107,21 @@ foreach ($loc = 0; $loc <= $#core; $loc++) {
   $ea += $core[$loc] & 0177;
   $ea += $loc & 07600 if $core[$loc] & 0200; # Page bit set
   $ind = $core[$loc] & 0400; # Indirect reference
-  if ($op <= 3) {
+  if ($fpp) {
+    if (($op > 0) && ($op < 7)) {
+      #
+      # Data reference implied by effective address
+      if ($ind) {
+        $ref[$ea] |= $IREF;
+        $ea = $core[$ea];
+        # Flag non-zero referent as a DREF
+        $ref[$ea] |= $DREF if $ea;
+      } else {
+        $ref[$ea] |= $DREF;
+      }
+    }
+    $fpp = 0 if $core[$loc] == 0;
+  } elsif ($op <= 3) {
     #
     # Data reference implied by effective address
     if ($ind) {
@@ -125,12 +139,12 @@ foreach ($loc = 0; $loc <= $#core; $loc++) {
       $ref[$ea] |= $IREF;
       $ea = $core[$ea];
     }
+    # Kludge: Make note if JMS I 7 (04407) is encountered.
+    $usedfpp = $fpp = 1 if $core[$loc] == 04407;
     # Kludge: Qualify the target -- it should contain 0 or $ea.
     next unless ($core[$ea] == 0)  || ($core[$ea] == $ea);
     # Mark the entry point as a possible entry point and as data.
     $ref[$ea] |= $SREF|$DREF;
-    # Kludge: Make note if JMS I 7 (04407) is encountered.
-    $fpp = 1 if $core[$loc] == 04407;
   } elsif ($op == 5) {
     #
     # Branch reference implied by effective address
@@ -145,8 +159,8 @@ foreach ($loc = 0; $loc <= $#core; $loc++) {
 }
 
 #
-# If this looks like floating point, define some symbols.
-if ($fpp) {
+# If this looks like it used floating point, define some symbols.
+if ($usedfpp) {
   print "FIXMRI FADD=1000\n";
   print "FIXMRI FSUB=2000\n";
   print "FIXMRI FMPY=3000\n";
@@ -195,7 +209,7 @@ $fpp = 0;
 foreach ($loc = 0; $loc <= ($#core|07777); $loc++) {
   $name = &ref($loc);
   if (!defined $core[$loc]) {
-    printf "\n$name=%04o", $loc if $name;
+    printf "\n$name=%04o", $loc&07777 if $name;
     next;
   }
   $fld = -1 if ($loc & 07777) == 0; # Force FIELD on field boundaries
@@ -416,7 +430,7 @@ sub fpp {
     print "I " if $ind;
     $oea = &ref($ea);
     print $oea if $oea;
-    printf "%04o", $ea unless $oea;
+    printf "%04o", $ea&07777 unless $oea;
   } elsif ($op == 0) {
     $op = $core[$loc];
     if (($op & 07760) == 0000) {
