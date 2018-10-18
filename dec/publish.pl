@@ -69,6 +69,18 @@ sub description {
   "-pa.lbl", "PAL Tape label",
   "-pa.txt", "PAL Source as text file",
   "-pa.od", "PAL image in octal",
+  "-pa1", "DEC PAL tape",
+  "-pa1.lbl", "PAL Tape label",
+  "-pa1.txt", "PAL Source as text file",
+  "-pa1.od", "PAL image in octal",
+  "-pa2", "DEC PAL tape",
+  "-pa2.lbl", "PAL Tape label",
+  "-pa2.txt", "PAL Source as text file",
+  "-pa2.od", "PAL image in octal",
+  "-pa3", "DEC PAL tape",
+  "-pa3.lbl", "PAL Tape label",
+  "-pa3.txt", "PAL Source as text file",
+  "-pa3.od", "PAL image in octal",
   "-pb", "BIN image",
   "-pb.lbl", "Tape label",
   "-pb.od", "BIN image in octal",
@@ -102,6 +114,9 @@ sub description {
   "-bn.htm", "Saved web page",
   "-sym", "DEC PAL tape",
   "-sym.od", "DEC PAL tape, octal image",
+  "-ps", "OS/8 .SV image (paper tape)",
+  "-ps.lbl", "OS/8 .SV image tape label",
+  "-ps.od", "OS/8 .SV image octal dump",
 );
 sub process {
   local($d) = @_;
