@@ -1,0 +1,163 @@
+   1            
+   2            /
+   3            / Compressed Binary Loader
+   4            / Bill Ferguson
+   5            / SA=3400
+   6            / Disassembled by V. Slyngstad 10/2018
+   7            
+   8                    FIELD   0
+   9            
+  10                    *3400
+  11 03400 6014 START,  RFC             / Start the reader.
+  12 03401 3316 SEGMNT, DCA CBLSUM      / Zero the checksum
+  13 03402 4246         JMS NXTCHR      / Get a character
+  14 03403 5202         JMP .-1         / Ignore until RUBOUT
+  15 03404 4246         JMS NXTCHR      / Ingnore character after RUBOUT
+  16 03405 7600 C7600,  CLA 7600
+  17 03406 4231         JMS GETWRD      / Assemble a word
+  18 03407 3224         DCA LOCPTR      / Store location counter
+  19 03410 5262         JMP DATALP      / Go to data loop
+  20            
+  21            BINSUM,
+  22 03411 0000 GETBYT, .-.
+  23 03412 4246         JMS NXTCHR
+  24 03413 5611         JMP I GETBYT    / Not a RUBOUT, return it
+  25 03414 4246         JMS NXTCHR      / Another RUBOUT?
+  26 03415 7610         SKP CLA         / No, end of segment
+  27 03416 5611         JMP I GETBYT    / Yes, return the RUBOUT
+  28 03417 4231         JMS GETWRD      / Assemble a word
+  29 03420 1316         TAD CBLSUM      / Add checksum
+  30 03421 7640         SZA CLA         / OK so far?
+  31 03422 7402         HLT             / No, halt!
+  32 03423 5201         JMP SEGMNT      / Yes, go start a new segment
+  33            
+  34 03424 0000 LOCPTR, .-.
+  35 03425 0000 WORD,   0000
+  36 03426 0000 CHAR,   .-.
+  37 03427 7401 N377,   -377
+  38 03430 0017 C17,    17
+  39            
+  40            /
+  41            / Assemble and return a word.
+  42 03431 0000 GETWRD, .-.
+  43 03432 1226         TAD CHAR        / Get first byte
+  44 03433 3304         DCA SAVWRD      / Save it away
+  45 03434 4246         JMS NXTCHR      / Get second byte
+  46 03435 3225         DCA WORD        / Save it away
+  47 03436 1304         TAD SAVWRD      / Get first byte
+  48 03437 7106         CLL RTL         / Shift 6 left
+  49 03440 7006         RTL 
+  50 03441 7006         RTL 
+  51 03442 1225         TAD WORD        / Add second byte
+  52 03443 3376         DCA SAVEWD      / Save it away
+  53 03444 1376         TAD SAVEWD      / Return the result
+  54 03445 5631         JMP I GETWRD
+  55            /
+  56            / Get a character, skip if RUBOUT
+  57 03446 0000 NXTCHR, .-.
+  58 03447 7200         CLA 
+  59 03450 6011         RSF 
+  60 03451 5250         JMP .-1
+  61 03452 6016         RRB RFC 
+  62 03453 3226         DCA CHAR
+  63 03454 1226         TAD CHAR
+  64 03455 1227         TAD N377
+  65 03456 7650         SNA CLA 
+  66 03457 2246         ISZ NXTCHR
+  67 03460 1226         TAD CHAR
+  68 03461 5646         JMP I NXTCHR
+  69            
+  70 03462 4211 DATALP, JMS GETBYT      / Get a byte
+  71 03463 7106         CLL RTL         / Shift left 4 bits
+  72 03464 7006         RTL 
+  73 03465 3376         DCA SAVEWD      / Save it
+  74 03466 4211         JMS GETBYT      / Get another byte
+  75 03467 7112         CLL RTR         / Shift right 4
+  76 03470 7012         RTR 
+  77 03471 0230         AND C17         / Use top 4 bits
+  78 03472 4304         JMS SAVWRD      / Form and store a word
+  79 03473 1226         TAD CHAR        / Get second byte
+  80 03474 7112         CLL RTR         / Shift left 8
+  81 03475 7012         RTR 
+  82 03476 7010         RAR 
+  83 03477 0205         AND C7600       / Get low bits
+  84 03500 3376         DCA SAVEWD      / Save it
+  85 03501 4211         JMS GETBYT      / Get another byte
+  86 03502 4304         JMS SAVWRD      / Form and store a word
+  87 03503 5262         JMP DATALP      / Do another pair
+  88            
+  89 03504 0000 SAVWRD, 0000
+  90 03505 1376         TAD SAVEWD      / Form the word
+  91 03506 3225         DCA WORD        / Save it
+  92 03507 1225         TAD WORD        / Add it to the checksum
+  93 03510 1316         TAD CBLSUM
+  94 03511 3316         DCA CBLSUM
+  95 03512 1225         TAD WORD        / Get the word
+  96 03513 3624         DCA I LOCPTR    / Store at location counter
+  97 03514 2224         ISZ LOCPTR      / Bump location counter
+  98 03515 5704         JMP I SAVWRD    / Return
+  99            
+ 100            CBLSUM,
+ 101 03516 0000 GETBIN, .-.
+ 102 03517 4246         JMS NXTCHR      / Get a character
+ 103 03520 5324         JMP LDRCHK      / Not a RUBOUT, go ??
+ 104 03521 4246         JMS NXTCHR      / Get another rubout?
+ 105 03522 5321         JMP .-1         / No, wait for one
+ 106 03523 5317         JMP GETBIN+1    / Yes, resume input
+ 107 03524 0356 LDRCHK, AND C200        / Leader/trailer?
+ 108 03525 7650         SNA CLA
+ 109 03526 2316         ISZ GETBIN      / No, skip return
+ 110 03527 5716         JMP I GETBIN    / Return
+ 111            
+ 112 03530 1376 BINCHK, TAD SAVEWD      / Get last word read
+ 113 03531 7041         CIA             / Subtract from Checksum
+ 114 03532 1211         TAD BINSUM
+ 115 03533 7402         HLT             / Halt with difference displayed
+ 116 03534 3211 BINLDR, DCA BINSUM
+ 117 03535 4316         JMS GETBIN      / Input, check for leader
+ 118 03536 5335         JMP .-1         / Leader, try again
+ 119 03537 4231 BLOAD,  JMS GETWRD      / Read a word, BIN format
+ 120 03540 4316         JMS GETBIN      / Get a byte
+ 121 03541 5330         JMP BINCHK      / Leader, go check sum
+ 122 03542 1376         TAD SAVEWD
+ 123 03543 7430         SZL             / Location setting?
+ 124 03544 5354         JMP LOCSET      / Yes, go do it
+ 125 03545 3624         DCA I LOCPTR    / No, store data
+ 126 03546 2224         ISZ LOCPTR      / Bump location for next
+ 127 03547 1304 BLOAD2, TAD SAVWRD      / Get the word
+ 128 03550 1225         TAD WORD
+ 129 03551 1211         TAD BINSUM
+ 130 03552 3211         DCA BINSUM
+ 131 03553 5337         JMP BLOAD
+ 132 03554 3224 LOCSET, DCA LOCPTR      / Store the location
+ 133 03555 5347         JMP BLOAD2      / Resume loading
+ 134 03556 0200 C200,   200
+ 135            
+ 136                    *3576
+ 137 03576 0000 SAVEWD, .-.
+ 138 03577 5334         JMP BINLDR
+ 139            $
+
+BINCHK  3530
+BINLDR  3534
+BINSUM  3411
+BLOAD   3537
+BLOAD2  3547
+C17     3430
+C200    3556
+C7600   3405
+CBLSUM  3516
+CHAR    3426
+DATALP  3462
+GETBIN  3516
+GETBYT  3411
+GETWRD  3431
+LDRCHK  3524
+LOCPTR  3424
+LOCSET  3554
+N377    3427
+NXTCHR  3446
+SAVEWD  3576
+SAVWRD  3504
+START   3400 unreferenced
+WORD    3425

@@ -1,0 +1,139 @@
+
+/
+/ Compressed Binary Loader
+/ Bill Ferguson
+/ SA=3400
+/ Disassembled by V. Slyngstad 10/2018
+
+	FIELD	0
+
+	*3400
+START,	RFC		/ Start the reader.
+SEGMNT,	DCA CBLSUM	/ Zero the checksum
+	JMS NXTCHR	/ Get a character
+	JMP .-1		/ Ignore until RUBOUT
+	JMS NXTCHR	/ Ingnore character after RUBOUT
+C7600,	CLA 7600
+	JMS GETWRD	/ Assemble a word
+	DCA LOCPTR	/ Store location counter
+	JMP DATALP	/ Go to data loop
+
+BINSUM,
+GETBYT,	.-.
+	JMS NXTCHR
+	JMP I GETBYT	/ Not a RUBOUT, return it
+	JMS NXTCHR	/ Another RUBOUT?
+	SKP CLA 	/ No, end of segment
+	JMP I GETBYT	/ Yes, return the RUBOUT
+	JMS GETWRD	/ Assemble a word
+	TAD CBLSUM	/ Add checksum
+	SZA CLA 	/ OK so far?
+	HLT		/ No, halt!
+	JMP SEGMNT	/ Yes, go start a new segment
+
+LOCPTR,	.-.
+WORD,	0000
+CHAR,	.-.
+N377,	-377
+C17,	17
+
+/
+/ Assemble and return a word.
+GETWRD,	.-.
+	TAD CHAR	/ Get first byte
+	DCA SAVWRD	/ Save it away
+	JMS NXTCHR	/ Get second byte
+	DCA WORD	/ Save it away
+	TAD SAVWRD	/ Get first byte
+	CLL RTL 	/ Shift 6 left
+	RTL 
+	RTL 
+	TAD WORD	/ Add second byte
+	DCA SAVEWD	/ Save it away
+	TAD SAVEWD	/ Return the result
+	JMP I GETWRD
+/
+/ Get a character, skip if RUBOUT
+NXTCHR,	.-.
+	CLA 
+	RSF 
+	JMP .-1
+	RRB RFC 
+	DCA CHAR
+	TAD CHAR
+	TAD N377
+	SNA CLA 
+	ISZ NXTCHR
+	TAD CHAR
+	JMP I NXTCHR
+
+DATALP,	JMS GETBYT	/ Get a byte
+	CLL RTL 	/ Shift left 4 bits
+	RTL 
+	DCA SAVEWD	/ Save it
+	JMS GETBYT	/ Get another byte
+	CLL RTR 	/ Shift right 4
+	RTR 
+	AND C17		/ Use top 4 bits
+	JMS SAVWRD	/ Form and store a word
+	TAD CHAR	/ Get second byte
+	CLL RTR 	/ Shift left 8
+	RTR 
+	RAR 
+	AND C7600	/ Get low bits
+	DCA SAVEWD	/ Save it
+	JMS GETBYT	/ Get another byte
+	JMS SAVWRD	/ Form and store a word
+	JMP DATALP	/ Do another pair
+
+SAVWRD,	0000
+	TAD SAVEWD	/ Form the word
+	DCA WORD	/ Save it
+	TAD WORD	/ Add it to the checksum
+	TAD CBLSUM
+	DCA CBLSUM
+	TAD WORD	/ Get the word
+	DCA I LOCPTR	/ Store at location counter
+	ISZ LOCPTR	/ Bump location counter
+	JMP I SAVWRD	/ Return
+
+CBLSUM,
+GETBIN,	.-.
+	JMS NXTCHR	/ Get a character
+	JMP LDRCHK	/ Not a RUBOUT, go ??
+	JMS NXTCHR	/ Get another rubout?
+	JMP .-1		/ No, wait for one
+	JMP GETBIN+1	/ Yes, resume input
+LDRCHK,	AND C200	/ Leader/trailer?
+	SNA CLA
+	ISZ GETBIN	/ No, skip return
+	JMP I GETBIN	/ Return
+
+BINCHK,	TAD SAVEWD	/ Get last word read
+	CIA		/ Subtract from Checksum
+	TAD BINSUM
+	HLT		/ Halt with difference displayed
+BINLDR,	DCA BINSUM
+	JMS GETBIN	/ Input, check for leader
+	JMP .-1		/ Leader, try again
+BLOAD,	JMS GETWRD	/ Read a word, BIN format
+	JMS GETBIN	/ Get a byte
+	JMP BINCHK	/ Leader, go check sum
+	TAD SAVEWD
+	SZL 		/ Location setting?
+	JMP LOCSET	/ Yes, go do it
+	DCA I LOCPTR	/ No, store data
+	ISZ LOCPTR	/ Bump location for next
+BLOAD2,	TAD SAVWRD	/ Get the word
+	TAD WORD
+	TAD BINSUM
+	DCA BINSUM
+	JMP BLOAD
+LOCSET,	DCA LOCPTR	/ Store the location
+	JMP BLOAD2	/ Resume loading
+C200,	200
+
+	*3576
+SAVEWD,	.-.
+	JMP BINLDR
+$
