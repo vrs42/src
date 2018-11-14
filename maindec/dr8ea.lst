@@ -1,0 +1,68 @@
+   1            X=00            / Device code adjustment
+   2            DBDI=6500 X     / Disable Input Interrupts
+   3            /DBEI=6501 X    / Enable Input Interrupts
+   4            DBSK=6502 X     / Skip if IN flag set
+   5            DBCI=6503 X     / Clear Selective Input Register
+   6            DBRI=6504 X     / Transfer Input to the AC
+   7            DBCO=6505 X     / Clear AC bits in output register
+   8            DBSO=6506 X     / Set AC bits in output register
+   9            /DBRO=6507 X    / Read the output register into AC
+  10            
+  11                    *0200
+  12                    *0200
+  13 00200 7240         CLA CMA 
+  14 00201 6503         DBCI            / Clear Input selections
+  15 00202 6505         DBCO            / Clear all output bits
+  16 00203 6500         DBDI            / Disable input interrupts
+  17 00204 6502 LOOP,   DBSK            / Input Ready?
+  18 00205 5204         JMP .-1
+  19 00206 6504         DBRI            / Yes, read it
+  20 00207 6503         DBCI            / Clear inputs
+  21 00210 0242         AND C4000       / High bit set?
+  22 00211 7450         SNA
+  23 00212 7402         HLT             / No, halt
+  24 00213 7300         CLA CLL         / Yes, proceed
+  25 00214 2240         ISZ LOWBTS      / Bump for next value
+  26 00215 1240         TAD LOWBTS      / Get next value
+  27 00216 0244         AND C0377       / Wrap if necessary
+  28 00217 3240         DCA LOWBTS      / Save the value
+  29 00220 1240         TAD LOWBTS
+  30 00221 0241         AND C0001       / Odd value?
+  31 00222 7640         SZA CLA 
+  32 00223 5226         JMP L00226
+  33 00224 1242         TAD C4000       / No, add 4000
+  34 00225 5227         JMP L00227
+  35 00226 1243 L00226, TAD C2000       / Yes, add 2000
+  36 00227 1240 L00227, TAD LOWBTS      / Merge next value
+  37 00230 3245         DCA OUTWD       / Save it
+  38 00231 7240         CLA CMA         / Get -1
+  39 00232 6505         DBCO            / Clear output register
+  40 00233 7300         CLA CLL         / Get merged value
+  41 00234 1245         TAD OUTWD
+  42 00235 6506         DBSO            / Set output to merged value
+  43 00236 7300         CLA CLL 
+  44 00237 5204         JMP LOOP
+  45 00240 0000 LOWBTS, 0000    / 8 bit value
+  46 00241 0001 C0001,  0001    / Even or odd?
+  47 00242 4000 C4000,  4000    / High bit mask
+  48 00243 2000 C2000,  2000    / Next bit mask
+  49 00244 0377 C0377,  0377    / 8 bit mask
+  50 00245 0000 OUTWD,  0000    / Output value
+  51            $
+
+C0001   0241
+C0377   0244
+C2000   0243
+C4000   0242
+DBCI    6503
+DBCO    6505
+DBDI    6500
+DBRI    6504
+DBSK    6502
+DBSO    6506
+L00226  0226
+L00227  0227
+LOOP    0204
+LOWBTS  0240
+OUTWD   0245
+X       0000

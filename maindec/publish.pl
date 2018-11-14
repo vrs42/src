@@ -65,6 +65,7 @@ sub description {
 %exts = (
   "-pb", "BIN image",
   "-pb.lbl", "Tape label",
+  "-pb.lbl.jpg", "Tape label image",
   "-pb.od", "BIN image in octal",
   "-pb1", "BIN image #1",
   "-pb1.lbl", "Tape label",

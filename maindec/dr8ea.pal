@@ -1,0 +1,51 @@
+X=00		/ Device code adjustment
+DBDI=6500 X	/ Disable Input Interrupts
+/DBEI=6501 X	/ Enable Input Interrupts
+DBSK=6502 X	/ Skip if IN flag set
+DBCI=6503 X	/ Clear Selective Input Register
+DBRI=6504 X	/ Transfer Input to the AC
+DBCO=6505 X	/ Clear AC bits in output register
+DBSO=6506 X	/ Set AC bits in output register
+/DBRO=6507 X	/ Read the output register into AC
+
+	*0200
+	*0200
+	CLA CMA 
+	DBCI		/ Clear Input selections
+	DBCO		/ Clear all output bits
+	DBDI		/ Disable input interrupts
+LOOP,	DBSK		/ Input Ready?
+	JMP .-1
+	DBRI		/ Yes, read it
+	DBCI		/ Clear inputs
+	AND C4000	/ High bit set?
+	SNA
+	HLT		/ No, halt
+	CLA CLL 	/ Yes, proceed
+	ISZ LOWBTS	/ Bump for next value
+	TAD LOWBTS	/ Get next value
+	AND C0377	/ Wrap if necessary
+	DCA LOWBTS	/ Save the value
+	TAD LOWBTS
+	AND C0001	/ Odd value?
+	SZA CLA 
+	JMP L00226
+	TAD C4000	/ No, add 4000
+	JMP L00227
+L00226,	TAD C2000	/ Yes, add 2000
+L00227,	TAD LOWBTS	/ Merge next value
+	DCA OUTWD	/ Save it
+	CLA CMA 	/ Get -1
+	DBCO		/ Clear output register
+	CLA CLL 	/ Get merged value
+	TAD OUTWD
+	DBSO		/ Set output to merged value
+	CLA CLL 
+	JMP LOOP
+LOWBTS,	0000	/ 8 bit value
+C0001,	0001	/ Even or odd?
+C4000,	4000	/ High bit mask
+C2000,	2000	/ Next bit mask
+C0377,	0377	/ 8 bit mask
+OUTWD,	0000	/ Output value
+$
