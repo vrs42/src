@@ -13,7 +13,7 @@ all: $(MS) $(BIN)
 %.bin: %.pal
 	./pal $<
 
-%.ms: %.bn
+%.ms: %.bn uncode
 	./uncode $< >$@
 
 %.bin: %.ms

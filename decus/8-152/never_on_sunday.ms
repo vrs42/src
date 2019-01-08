@@ -11,53 +11,53 @@ A1/E/ *3
 A1S/E/ D1S/E/ D1/E/ 
 D1S/E/ F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ 
-G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ A2S/E/ G1/H..../ 
+G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ A2S/E/ G1/W/ 
 *0
 A1/E/ *2
 A1S/E/ D1S/E/ D1/E/ D1S/E/ F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ 
 A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ G1/E/ 
-G1S/E/ F1/E/ G1/E/ D1S/H..../ *0
+G1S/E/ F1/E/ G1/E/ D1S/W/ *0
 A1/E/ *2
 A1S/E/ D1S/E/ D1/E/ D1S/E/ 
 F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ 
-A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ A2S/E/ G1/H..../ *0
+A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ A2S/E/ G1/W/ *0
 A1/E/ 
 *2
 A1S/E/ D1S/E/ D1/E/ D1S/E/ F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ A2S/E/ 
 G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ G1/E/ G1S/E/ 
-F1/E/ G1/E/ D1S/H..../ *0
+F1/E/ G1/E/ D1S/W/ *0
 A1/Q/ *3
-A2S/Q/ C2/Q/ D2/Q/ D2S/W/ D2/E/ 
-D2S/E/ F2/Q/ D2S/Q/ D2/W/ C2/E/ D2/E/ D2S/Q/ D2/Q/ C2/W/ 
-A2S/E/ C2/E/ D2/Q/ A2S/Q/ G1/H..../ *0
+A2S/Q/ C2/Q/ D2/Q/ D2S/W../ D2/E/ 
+D2S/E/ F2/Q/ D2S/Q/ D2/W../ C2/E/ D2/E/ D2S/Q/ D2/Q/ C2/W../ 
+A2S/E/ C2/E/ D2/Q/ A2S/Q/ G1/W/ *0
 A1/Q/ *3
 A2S/Q/ C2/Q/ D2/Q/ 
-D2S/W/ D2/E/ D2S/E/ F2/Q/ D2S/Q/ D2/W/ C2/E/ D2/E/ D2S/Q/ 
-D2/Q/ C2/W/ A2S/E/ C2/E/ D2/Q/ A2S/Q/ D1S/H..../ *0
+D2S/W../ D2/E/ D2S/E/ F2/Q/ D2S/Q/ D2/W../ C2/E/ D2/E/ D2S/Q/ 
+D2/Q/ C2/W../ A2S/E/ C2/E/ D2/Q/ A2S/Q/ D1S/W/ *0
 A1/E/ *2
 A1S/E/ 
 D1S/E/ D1/E/ D1S/E/ F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ A2S/E/ G1S/E/ 
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ 
-A2S/E/ G1/H..../ *0
+A2S/E/ G1/W/ *0
 A1/E/ *2
 A1S/E/ D1S/E/ D1/E/ D1S/E/ F1/E/ G1/E/ 
 G1S/E/ *3
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ 
-G1S/E/ G1/E/ G1S/E/ F1/E/ G1/E/ D1S/H..../ *0
+G1S/E/ G1/E/ G1S/E/ F1/E/ G1/E/ D1S/W/ *0
 A1/E/ *2
 A1S/E/ D1S/E/ 
 D1/E/ D1S/E/ F1/E/ G1/E/ G1S/E/ *3
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ 
 A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/E/ C2/E/ G1S/E/ A2S/E/ 
-G1/H..../ *0
+G1/W/ *0
 A1/E/ *2
 A1S/E/ D1S/E/ D1/E/ D1S/E/ F1/E/ G1/E/ G1S/E/ 
 *3
 A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ A2S/Q/ A2S/E/ G1S/E/ 
 G1/E/ G1S/E/ F1/E/ G1/E/ *2
-D1S/H..../ 
+D1S/W/ 
 >00 $

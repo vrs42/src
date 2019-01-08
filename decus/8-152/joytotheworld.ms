@@ -27,5 +27,5 @@ F1S/E/ F1S/E/ F1S/E/ F1S/E/ F1S/S/ G1/S/ A2/Q./ *2
 G1/S/ F1S/S/ 
 E1/E/ E1/E/ E1/E/ E1/S/ F1S/S/ G1/Q./ *3
 F1S/S/ E1/S/ D1/E/ 
-D2/Q/ B2/E/ A2/E./ G1/S/ F1S/E/ G1/E/ F1S/H/ E1/H/ D1/H..../ 
+D2/Q/ B2/E/ A2/E./ G1/S/ F1S/E/ G1/E/ F1S/H/ E1/H/ D1/W/ 
 >00 $
