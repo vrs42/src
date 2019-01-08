@@ -1,0 +1,155 @@
+#!/usr/bin/perl
+
+@rem = '
+@echo off
+c:\perl5\bin\perl %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+goto endofperl
+@rem ' if @rem;
+
+# Decompile a decus-8-152 music binary.
+
+#
+# Read a file in BIN loader format.
+sub readBin {
+  local($file, *core) = @_;
+  #
+  # Open the input file in binary mode and read it in.
+  open(INPUT, $file) || die "$file: $!";
+  binmode(INPUT);
+  @core = ();
+$mbase = $mcount = undef;
+  $isbin = 0;   # Might be RIM format (no checksum)
+  for (;;) {
+    $field = 0;
+    $loc = $store = undef;
+    $sum = $add = 0;
+    while (read(INPUT, $top, 1)) {
+      $top = unpack("C", $top);
+      last unless $top == 0200;
+    }
+    # EOF leaves $top eq ''
+    last if $top eq '';
+    # At the top of this loop the first character has been read
+    for (;;) {
+      last if $top == 0200;	# Trailer
+      # No trailer, so store data (if any)
+      if (defined($store)) {
+        $core[$field*010000 + $loc] = $store;
+$mbase = $store if $loc == 0020;
+$mcount = $store if $loc == 0022;
+        $store = undef;
+        $loc = ($loc + 1) & 07777;
+        $sum += $add; # Update checksum
+        $isbin = 1 unless $top & 0100;
+        $fortran = 0;
+      }
+      if (($top&0300) == 0300) {
+        # Set data field and we're done. 
+        $field = ($top & 070) >> 3;
+#print "Loading into field $field\n";
+        $isbin = 1;     # Can't be RIM format
+        $fortran = 1 if $top == 00340;
+      } else {
+        # Assemble a word
+        read(INPUT, $bot, 1) || die "read: $! $top at ", tell(INPUT);
+        $bot = unpack("C", $bot);
+        die "$file: not in bin format at ", tell(INPUT) unless $bot <= 077;
+        $word = ($top << 6) + $bot;
+        $add = $top + $bot; # Calculate Checksum delta
+        if ($word > 07777) {
+          #
+          # Change location counter
+          $loc = $word & 07777;
+          $sum += $add; # Update checksum
+        } else {
+          # Remember store in case this is the checksum, not data.
+          die "$file: no location counter" unless defined($loc);
+          $store = $word;
+        }
+      }
+      last unless read(INPUT, $top, 1);
+      $top = unpack("C", $top);
+    }
+    die "No trailer!" unless $top == 0200;
+    if ($isbin) {
+      if ($fortran) {
+        printf STDERR "$file: 4K Fortran binary!\n";
+        $sum += 0640; # Fortran loader counts 0300 and 0340;
+      }
+      $sum = ($sum - $store) & 07777;
+      printf STDERR "$file: Checksum error -- %04o\n", $sum if $sum;
+    } else {
+      # Last frame of what looks like a RIM tape!
+      printf STDERR "Found a RIM tape segment ending at %05o\n",
+                        $field*010000 + $loc;
+      $core[$field*010000 + $loc] = $store;
+    }
+  }
+  close(INPUT);
+}
+
+&readBin($ARGV[0], *core);
+
+die "No music base" unless defined $mbase;
+die "No music count" unless defined $mcount;
+
+@nnames = (
+  "A1", "A1S", "A2", "A2S", "A3", "A3S",
+  "B1", "B1S", "B2", "B2S", "B3", 
+  "C1", "C1S", "C2", "C2S", "C3", "C3S",
+  "D1", "D1S", "D2", "D2S",
+  "E1", "E1S", "E2",
+  "F1", "F1S", "F2", "F2S",
+  "G1", "G1S", "G2", "G2S",
+);
+
+@duration = ();
+$duration[0] = "S";
+$duration[1] = "S.";
+$duration[2] = "E";
+$duration[3] = "E.";
+$duration[4] = "Q";
+$duration[5] = "Q.";
+$duration[6] = "Q..";
+$duration[7] = "H";
+$duration[8] = "H.";
+$duration[9] = "H..";
+$duration[10] = "H...";
+$duration[11] = "H....";
+$duration[12] = "H.....";
+$duration[13] = "W";
+
+#
+# Iterate over the notes and print them in a 
+# style that is acceptable to decus-5-152a.
+$printed = 0;
+$oldamp = -1;
+print "<00\n";
+foreach ($loc = $mbase; $loc < $mbase+$mcount; $loc++) {
+  die "Missing note at offset ", $loc-$mbase unless defined $core[$loc];
+  $word = $core[$loc];
+  $damp = $word & 04000? 1 : 0;
+  $amp = ($word & 03000) >> 9;
+  $len = ($word & 00740) >> 5;
+  $note = $word & 00037;
+  die "No note name: $note" unless defined $nnames[$note];
+  die "No note duration: $len" unless defined $duration[$len];
+  if ($amp != $oldamp) {
+    printf "*%c\n", $amp + 0060;
+    $oldamp = $amp;
+  }
+  print "^" if $damp;
+  print $nnames[$note];
+  print "/$duration[$len]/ ";
+  if ($printed++ == 8) {
+    print "\n";
+    $printed = 0;
+  }
+}
+print "\n" unless $printed == 0;
+print ">00 \$\n";
+
+exit 0;
+
+__END__
+:endofperl

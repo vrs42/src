@@ -1,0 +1,50 @@
+DECUS-8-152a was a compiler for music files.
+
+The format of these files is more primitive than the 
+files for the later Wilson music compiler:
+
+Input apparently begins with an asterisk, followed by 
+a character whose least significant 2 bits determine
+the amplitude bits of each subsequent output note.
+
+After an asterisk directive, a variety of others are 
+allowed:
+
+A dollar sign triggers the output of the compiled data 
+in BIN format, suitable for loading over the player.
+
+An open pointy bracket ('<'), followed by a two digit 
+octal number, sets the LCO origin, and records the
+number of notes to date at that address.
+
+An close pointy bracket ('>'), followed by a two digit 
+octal number, sets the LCC origin, records the number 
+of notes to date at that address, and increments NLOOP.
+
+An uparrow ('^') sets the DAMP bit in the next note.
+
+The most complicated thing that can follow is note input:
+
+[ABCDEFG] initiate the description of a single note.
+'R' seems to designate a rest.  The notes set the FREQ0 
+bits of an output word, while a rest has a FREQ0 of 0.
+
+Notes may be followed by [123], which I think choose 
+the octave by bumping FREQ0 by 2 table entries or 4.
+
+After the [123], an 'S' will bump FREQ0 by 1, pointing 
+to the "sharp" version of the note.
+
+A '/' indicates the end of the frequency information, 
+and a transition to length information.
+
+Rests, unlike notes, have an amplitude and frequency 
+of zero.  Amplitude is cached, and restored by ??.
+
+Notes and rests must be followed by [EHQSW] to set a
+duration.  This may be followed by dots ('.') to
+increment the duration.
+
+Each note is represented in the output file by a word,
+formed from the length<<5, the frequency, the amplitude,
+and the DAMP bit.
