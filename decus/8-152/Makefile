@@ -1,5 +1,5 @@
-BN = joytotheworld.bn never_on_sunday.bn we_three_kings.bn \
-	yourmothershouldknow.bn
+BN = joytotheworld.bn never_on_sunday.bn pipeline.bn \
+	we_three_kings.bn yourmothershouldknow.bn
 MS = $(BN:.bn=.ms)
 SRC = decus-8-152.pal decus-8-152a.pal # newplay.pal vrs-152a.pal
 BIN = $(SRC:.pal=.bin) $(BN:.bn=.bin)
