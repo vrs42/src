@@ -1,0 +1,441 @@
+   1            /DECUS 8-152A MUSIC CODING
+   2            /
+   3            /VERSION 1.2
+   4            /
+   5            /
+   6            /
+   7            /EDITOR PAGE 1
+   8            /
+   9            /
+  10            *0600
+  11 00600 0000 END,    0
+  12 00601 7200         CLA 
+  13 00602 1031         TAD TEMP
+  14 00603 1322         TAD ARR         / Got '$'?
+  15 00604 7440         SZA
+  16 00605 5600         JMP I END       / No, return
+  17 00606 7402         HLT             / Yes, Halt
+  18 00607 4327         JMS LEADER      / Emit leader
+  19 00610 1323         TAD ORGW        / Emit Origin for WORKD0
+  20 00611 4277         JMS ORIGIN
+  21 00612 1020         TAD WORD0       / Emit WORD0
+  22 00613 4311         JMS PUNC
+  23 00614 1020         TAD WORD0       / No go there
+  24 00615 4277         JMS ORIGIN
+  25 00616 1063         TAD NLOOP       / Negate loop counter
+  26 00617 7041         CIA
+  27 00620 3063         DCA NLOOP
+  28 00621 1057         TAD LCO0        / Reset LCO
+  29 00622 3060         DCA LCO
+  30 00623 1061         TAD LCC0        / And LCC
+  31 00624 3062         DCA LCC
+  32 00625 3022         DCA NOTE0       / Zero NOTE0 (total notes)
+  33 00626 1462 LOOP0,  TAD I LCC       / Get word pointer
+  34 00627 7041         CIA
+  35 00630 1460         TAD I LCO       / Subtract the end pointer
+  36 00631 3031         DCA TEMP        / ...to form (negative) Word count
+  37 00632 1031         TAD TEMP        / Add word count to total
+  38 00633 7041         CIA
+  39 00634 1022         TAD NOTE0
+  40 00635 3022         DCA NOTE0
+  41 00636 1020         TAD WORD0
+  42 00637 1460         TAD I LCO
+  43 00640 3021         DCA WORD
+  44 00641 1421 LOOP1,  TAD I WORD      / Get a word
+  45 00642 4311         JMS PUNC        / ...and punch it
+  46 00643 7300         CLA CLL 
+  47 00644 2021         ISZ WORD        / Point to next word
+  48 00645 2031         ISZ TEMP        / Done?
+  49 00646 5241         JMP LOOP1       / No, go again
+  50 00647 2060         ISZ LCO         / Point to next block start
+  51 00650 2062         ISZ LCC         / Point to next block end
+  52 00651 2063         ISZ NLOOP       / All blocks done?
+  53 00652 5226         JMP LOOP0       / No, go again
+  54 00653 1324         TAD ORGN        / Get NOTE0 origin
+  55 00654 4277         JMS ORIGIN      / ...and punch it
+  56 00655 1022         TAD NOTE0       / Punch NOTE0 contents
+  57 00656 4311         JMS PUNC
+  58 00657 4311         JMS PUNC        / Punch 0000
+  59 00660 5345         JMP CKSUM       / ...and go emit checksum
+  60 00661 0000 PUNCH,  0
+  61 00662 6046         TLS             / Punch the byte
+  62 00663 6041         TSF 
+  63 00664 5263         JMP .-1
+  64 00665 1351         TAD CHKSUM      / Add it to the checksum
+  65 00666 3351         DCA CHKSUM
+  66 00667 7200         CLA 
+  67 00670 5661         JMP I PUNCH
+  68 00671 0000 FIX,    0               / Shift right six bits
+  69 00672 7012         RTR 
+  70 00673 7012         RTR 
+  71 00674 7012         RTR 
+  72 00675 0325         AND MASK        / Mask for 6 bits
+  73 00676 5671         JMP I FIX
+  74 00677 0000 ORIGIN, 0
+  75 00700 3034         DCA TA          / Store the word
+  76 00701 1034         TAD TA
+  77 00702 4271         JMS FIX         / Punch high byte
+  78 00703 1326         TAD ORG         / ...with 0100 set
+  79 00704 4261         JMS PUNCH
+  80 00705 1034         TAD TA          / Punch low byte
+  81 00706 0325         AND MASK
+  82 00707 4261         JMS PUNCH
+  83 00710 5677         JMP I ORIGIN
+  84 00711 0000 PUNC,   0
+  85 00712 3034         DCA TA          / Store the word
+  86 00713 1034         TAD TA
+  87 00714 4271         JMS FIX         / Punch high byte
+  88 00715 4261         JMS PUNCH
+  89 00716 1034         TAD TA
+  90 00717 0325         AND MASK        / Punch low byte
+  91 00720 4261         JMS PUNCH
+  92 00721 5711         JMP I PUNC
+  93 00722 0244 ARR,    0244            / '$'
+  94 00723 0020 ORGW,   0020
+  95 00724 0022 ORGN,   0022
+  96 00725 0077 MASK,   0077
+  97 00726 0100 ORG,    0100
+  98            / Leader/trailer and working checksums are a V1.2 thing.
+  99 00727 0000 LEADER, 0000
+ 100 00730 7300         CLA CLL 
+ 101 00731 1342         TAD M30         / Emit some leader/trailer
+ 102 00732 3343         DCA T1
+ 103 00733 1344         TAD P200
+ 104 00734 4261         JMS PUNCH
+ 105 00735 2343         ISZ T1
+ 106 00736 5333         JMP .-3
+ 107 00737 7300         CLA CLL 
+ 108 00740 3351         DCA CHKSUM      / Set new checksum to 0000
+ 109 00741 5727         JMP I LEADER
+ 110 00742 7750 M30,    -30
+ 111 00743 0000 T1,     0000
+ 112 00744 0200 P200,   0200
+ 113 00745 1351 CKSUM,  TAD CHKSUM      / Get checksum
+ 114 00746 4311         JMS PUNC        / ...and punch it
+ 115 00747 4327         JMS LEADER      / Emit trailer
+ 116 00750 7402         HLT             / We are done
+ 117 00751 0000 CHKSUM, 0000
+ 118            /
+ 119            /
+ 120            /
+ 121            *0020
+ 122 00020 1000 WORD0,  1000
+ 123 00021 0000 WORD,   0
+ 124 00022 0000 NOTE0,  0
+ 125 00023 0000 CNT,    0       / Rest flag
+ 126 00024 0377 RB,     0377    / RUBOUT
+ 127 00025 0212 LF0,    0212    / LF
+ 128 00026 0215 CR,     0215    / CR
+ 129 00027 0252 AST,    0252    / '*'
+ 130 00030 0240 SP,     0240    / ' '
+ 131 00031 0000 TEMP,   0
+ 132 00032 0000 LEN0,   0
+ 133 00033 0000 FREQ0,  0000
+ 134 00034 0000 TA,     0000
+ 135 00035 0257 BRA,    0257    / '/'
+ 136 00036 0044 SS0,    0044    / 'S'-'/'
+ 137 00037 0301 AA0,    0301    / 'A'
+ 138 00040 0013 RR0,    0013
+ 139 00041 0000 AMP0,   0000
+ 140 00042 0261 LL0,    0261    / '1'
+ 141 00043 0511 ASTI,   ASTK
+ 142 00044 0600 ENDI,   END
+ 143 00045 0400 LENI,   LEN
+ 144 00046 0003 MASKL,  0003
+ 145 00047 0260 CORR,   260     / '0'
+ 146 00050 0540 UPARRI, UPARR
+ 147 00051 0336 UPA,    336     / '^'
+ 148 00052 4000 DAMP,   4000
+ 149 00053 0000 DAMP0,  0
+ 150 00054 0200 FREQI,  FREQ
+ 151 00055 0274 OBR0,   0274    / '<'
+ 152 00056 0276 CBR0,   0276    / '>'
+ 153 00057 7400 LCO0,   7400
+ 154 00060 0000 LCO,    0
+ 155 00061 7500 LCC0,   7500
+ 156 00062 0000 LCC,    0
+ 157 00063 0000 NLOOP,  0
+ 158 00064 0350 OBRI,   OBR
+ 159 00065 0473 CBRI,   CBR
+ 160 00066 0333 READI,  READ
+ 161            
+ 162            /
+ 163            /EDITOR PAGE 2
+ 164            /
+ 165            /
+ 166            *0100
+ 167 00100 7300         CLA CLL
+ 168 00101 6014         RFC
+ 169 00102 1020         TAD WORD0       / Set up buffer pointer
+ 170 00103 3021         DCA WORD
+ 171 00104 3022         DCA NOTE0       / Zero note count
+ 172 00105 3063         DCA NLOOP       / Zero number of blocks
+ 173 00106 4116 START,  JMS ACCEPT      / Get a character
+ 174 00107 4443         JMS I ASTI      / Store and go again unless '*'
+ 175 00110 4444         JMS I ENDI      / Punch the output if '$'
+ 176 00111 4464 P00111, JMS I OBRI      / Handle '<'
+ 177 00112 4465         JMS I CBRI      / Handle '>'
+ 178 00113 4450         JMS I UPARRI    / Handle '^'
+ 179 00114 4454         JMS I FREQI
+ 180 00115 5106         JMP START
+ 181 00116 0000 ACCEPT, 0000
+ 182 00117 7300         CLA CLL         / Get a character
+ 183 00120 6011         RSF 
+ 184 00121 5120         JMP .-1
+ 185 00122 6016         RRB RFC 
+ 186 00123 7041         CIA             / Negate and save it
+ 187 00124 3031         DCA TEMP
+ 188 00125 1031         TAD TEMP
+ 189 00126 5516         JMP I ACCEPT    / ... also return it
+ 190            /
+ 191            /
+ 192            *0200
+ 193 00200 0000 FREQ,   0000            / Character should indicate a frequency
+ 194 00201 7300         CLA CLL 
+ 195 00202 1031         TAD TEMP        / Get character
+ 196 00203 1037         TAD AA0         / 'A'?
+ 197 00204 7450         SNA 
+ 198 00205 5234         JMP AA
+ 199 00206 7001         IAC             / 'B'?
+ 200 00207 7450         SNA 
+ 201 00210 5237         JMP BB
+ 202 00211 7001         IAC             / 'C'?
+ 203 00212 7450         SNA 
+ 204 00213 5242         JMP CC
+ 205 00214 7001         IAC             / 'D'?
+ 206 00215 7450         SNA 
+ 207 00216 5245         JMP DD
+ 208 00217 7001         IAC             / 'E'?
+ 209 00220 7450         SNA 
+ 210 00221 5250         JMP EE
+ 211 00222 7001         IAC             / 'F'?
+ 212 00223 7450         SNA 
+ 213 00224 5253         JMP FF
+ 214 00225 7001         IAC             / 'G'?
+ 215 00226 7450         SNA 
+ 216 00227 5256         JMP GG
+ 217 00230 1040         TAD RR0         / 'R'?
+ 218 00231 7450         SNA 
+ 219 00232 5261         JMP RR
+ 220 00233 5600         JMP I FREQ      / Unknown, return
+ 221 00234 7300 AA,     CLA CLL 
+ 222 00235 3033         DCA FREQ0       / Set up 'A' (baseline)
+ 223 00236 5272         JMP FINF
+ 224 00237 1365 BB,     TAD B           / Set up 'B'
+ 225 00240 3033         DCA FREQ0
+ 226 00241 5272         JMP FINF
+ 227 00242 1366 CC,     TAD C           / Set up 'C'
+ 228 00243 3033         DCA FREQ0
+ 229 00244 5272         JMP FINF
+ 230 00245 1367 DD,     TAD D           / Set up 'D'
+ 231 00246 3033         DCA FREQ0
+ 232 00247 5272         JMP FINF
+ 233 00250 1370 EE,     TAD E           / Set up 'E'
+ 234 00251 3033         DCA FREQ0
+ 235 00252 5272         JMP FINF
+ 236 00253 1371 FF,     TAD F           / Set up 'F'
+ 237 00254 3033         DCA FREQ0
+ 238 00255 5272         JMP FINF
+ 239 00256 1372 GG,     TAD G           / Set up 'G'
+ 240 00257 3033         DCA FREQ0
+ 241 00260 5272         JMP FINF
+ 242 00261 1041 RR,     TAD AMP0        / TA = AMP0
+ 243 00262 3034         DCA TA
+ 244 00263 3041         DCA AMP0        / AMP0 = 0
+ 245 00264 3033         DCA FREQ0       / Set FREQ0
+ 246 00265 7240         CLA CMA         / Set REST flag
+ 247 00266 3023         DCA CNT
+ 248 00267 2022         ISZ NOTE0       / One more note
+ 249 00270 2021         ISZ WORD        / Bump buffer pointer
+ 250 00271 5445         JMP I LENI      / Go get duration
+ 251                    / Common wrap-up for notes.
+ 252 00272 2022 FINF,   ISZ NOTE0       / One more note
+ 253 00273 2021         ISZ WORD        / Bump buffer pointer
+ 254 00274 4116         JMS ACCEPT      / Get another character
+ 255 00275 1042         TAD LL0         / '1'?
+ 256 00276 7450         SNA 
+ 257 00277 5316         JMP FINF1       / Yes, have FREQ0
+ 258 00300 7001         IAC             / '2'?
+ 259 00301 7450         SNA 
+ 260 00302 5307         JMP TW          / Yes, set up 2
+ 261 00303 7001         IAC             / '3'?
+ 262 00304 7450         SNA 
+ 263 00305 5313         JMP TH          / Yes, set up 3
+ 264 00306 5272         JMP FINF        / No, try again (bug here?)
+ 265 00307 1033 TW,     TAD FREQ0       / Set up frequency + TWO
+ 266 00310 1373         TAD TWO
+ 267 00311 3033         DCA FREQ0
+ 268 00312 5316         JMP FINF1
+ 269 00313 1033 TH,     TAD FREQ0       / Set up frequency + THREE
+ 270 00314 1374         TAD THREE
+ 271 00315 3033         DCA FREQ0
+ 272                    / Wrap-up after half/quarter
+ 273 00316 4116 FINF1,  JMS ACCEPT      / Get another character
+ 274 00317 1035         TAD BRA         / '/'?
+ 275 00320 7450         SNA 
+ 276 00321 5332         JMP FINFS       / Yes, go get duration
+ 277 00322 1036         TAD SS0         / No, 'S'?
+ 278 00323 7450         SNA
+ 279 00324 5326         JMP SS          / Yes, go increment
+ 280 00325 5316         JMP FINF1       / No, skip it
+ 281 00326 1033 SS,     TAD FREQ0       / Bump FREQ0
+ 282 00327 7001         IAC
+ 283 00330 3033         DCA FREQ0
+ 284 00331 5316         JMP FINF1       / And look for another '/'
+ 285 00332 5445 FINFS,  JMP I LENI      / Have FREQ0, Go get duration
+ 286 00333 0000 READ,   0000
+ 287 00334 7200         CLA 
+ 288 00335 4116         JMS ACCEPT      / Get next character
+ 289 00336 1047         TAD CORR        / Subtract '0'?
+ 290 00337 7041         CIA             / Get first digit 
+ 291 00340 7106         CLL RTL         / (octal)
+ 292 00341 7004         RAL 
+ 293 00342 3034         DCA TA          / Save it
+ 294 00343 4116         JMS ACCEPT      / Get next character
+ 295 00344 1047         TAD CORR        / Subtract '0'
+ 296 00345 7041         CIA             / Get second digit
+ 297 00346 1034         TAD TA          / Add it in
+ 298 00347 5733         JMP I READ      / Return octal value
+ 299 00350 0000 OBR,    0000
+ 300 00351 7300         CLA CLL 
+ 301 00352 1031         TAD TEMP        / Get character
+ 302 00353 1055         TAD OBR0        / 274 '<'?
+ 303 00354 7440         SZA 
+ 304 00355 5750         JMP I OBR       / Nope, bail
+ 305 00356 4333         JMS READ        / Yes, read some stuff
+ 306 00357 1057         TAD LCO0        / Reset LCO origin
+ 307 00360 3060         DCA LCO
+ 308 00361 1022         TAD NOTE0       / Store Number of notes + 1
+ 309 00362 7001         IAC
+ 310 00363 3460         DCA I LCO
+ 311 00364 5106         JMP START       / ... and keep going
+ 312 00365 0006 B,      6
+ 313 00366 0013 C,      13
+ 314 00367 0021 D,      21
+ 315 00370 0025 E,      25
+ 316 00371 0030 F,      30
+ 317 00372 0034 G,      34
+ 318 00373 0002 TWO,    2
+ 319 00374 0003 THREE,  3
+ 320            /
+ 321            /
+ 322            /
+ 323            /
+ 324            
+ 325            /EDITOR PAGE 3
+ 326            /
+ 327            *0400
+ 328 00400 4116 LEN,    JMS ACCEPT      / Get a character
+ 329 00401 1326         TAD EI0         / 'E'?
+ 330 00402 7450         SNA 
+ 331 00403 5221         JMP EI
+ 332 00404 1327         TAD HA0         / 'H'?
+ 333 00405 7450         SNA 
+ 334 00406 5224         JMP HA
+ 335 00407 1330         TAD QA0         / 'Q'?
+ 336 00410 7450         SNA 
+ 337 00411 5227         JMP QA
+ 338 00412 1331         TAD SI0         / 'S'?
+ 339 00413 7450         SNA 
+ 340 00414 5232         JMP SI
+ 341 00415 1332         TAD WH0         / 'W'?
+ 342 00416 7450         SNA 
+ 343 00417 5235         JMP WH
+ 344 00420 5200         JMP LEN         / Other, try again
+ 345 00421 1333 EI,     TAD ET          / Set 'E' length
+ 346 00422 3032         DCA LEN0
+ 347 00423 5240         JMP FINL
+ 348 00424 1334 HA,     TAD H0          / Set 'H' length
+ 349 00425 3032         DCA LEN0
+ 350 00426 5240         JMP FINL
+ 351 00427 1335 QA,     TAD Q           / Set 'Q' length
+ 352 00430 3032         DCA LEN0
+ 353 00431 5240         JMP FINL
+ 354 00432 7300 SI,     CLA CLL         / Set 'S' length (baseline)
+ 355 00433 3032         DCA LEN0
+ 356 00434 5240         JMP FINL
+ 357 00435 1336 WH,     TAD W           / Set 'W' length
+ 358 00436 3032         DCA LEN0
+ 359 00437 5240         JMP FINL
+ 360                    / Common length wrap-up
+ 361 00440 4116 FINL,   JMS ACCEPT      / Get a character
+ 362 00441 1337         TAD DOT0        / Is it '.'?
+ 363 00442 7450         SNA 
+ 364 00443 5250         JMP DOT         / Yes
+ 365 00444 7001         IAC             / Is it '/'?
+ 366 00445 7450         SNA 
+ 367 00446 5254         JMP FINL1       / Yes, we are done
+ 368 00447 5240         JMP FINL        / No, try again
+ 369 00450 1032 DOT,    TAD LEN0        / Bump LEN0
+ 370 00451 7001         IAC
+ 371 00452 3032         DCA LEN0
+ 372 00453 5240         JMP FINL        / ... and go again
+ 373                    / Got all the dots.
+ 374 00454 1032 FINL1,  TAD LEN0        / How many dots?
+ 375 00455 7106         CLL RTL         / Move to high bits
+ 376 00456 7006         RTL 
+ 377 00457 7004         RAL 
+ 378 00460 1041         TAD AMP0        / Add in AMP0
+ 379            /
+ 380            /VRS: The stuff below is missing from the write-up.
+ 381 00461 1033         TAD FREQ0       / Add in FREQ0
+ 382 00462 1053         TAD DAMP0       / and DAMP0
+ 383 00463 3421         DCA I WORD      / Store the assembled word!
+ 384 00464 2023         ISZ CNT         / Doing a rest?
+ 385 00465 5270         JMP .+3         / No, don't reset AMP0
+ 386 00466 1034         TAD TA          / AMP0 = TA
+ 387 00467 3041         DCA AMP0
+ 388 00470 3023         DCA CNT         / No longer doing a REST
+ 389 00471 3053         DCA DAMP0       / Clear DAMP0
+ 390 00472 5106         JMP START       / and keep going
+ 391            
+ 392 00473 0000 CBR,    0
+ 393 00474 7300         CLA CLL
+ 394 00475 1031         TAD TEMP        / Get character
+ 395 00476 1056         TAD CBR0        / 276 '>'?
+ 396 00477 7440         SZA
+ 397 00500 5673         JMP I CBR       / No, bail
+ 398 00501 4466         JMS I READI     / Yes, read some stuff
+ 399 00502 1061         TAD LCC0        / Reset LCC origin
+ 400 00503 3062         DCA LCC
+ 401 00504 1022         TAD NOTE0       / Store note count + 1
+ 402 00505 7001         IAC
+ 403 00506 3462         DCA I LCC
+ 404 00507 2063         ISZ NLOOP       / Bump number of segments
+ 405 00510 5106         JMP START
+ 406            
+ 407 00511 0000 ASTK,   0
+ 408 00512 7300         CLA CLL
+ 409 00513 1031         TAD TEMP        / Character == '*'?
+ 410 00514 1027         TAD AST
+ 411 00515 7440         SZA
+ 412 00516 5711         JMP I ASTK      / No, return
+ 413 00517 4116         JMS ACCEPT      / Yes, get next character
+ 414 00520 7041         CIA
+ 415 00521 0046         AND MASKL       / Mask for bottom 2 bits
+ 416 00522 7112         CLL RTR         / Shift to bits 1-2
+ 417 00523 7012         RTR
+ 418 00524 3041         DCA AMP0        / Store as AMP0
+ 419 00525 5106         JMP START       / ... and keep going
+ 420            
+ 421 00526 0305 EI0,    305             / 'E'
+ 422 00527 0003 HA0,    3               / 'H'-'E'
+ 423 00530 0011 QA0,    11              / 'Q'-'H'
+ 424 00531 0002 SI0,    2               / 'S'-'Q'
+ 425 00532 0004 WH0,    4               / 'W'-'S'
+ 426 00533 0002 ET,     2
+ 427 00534 0007 H0,     7
+ 428 00535 0004 Q,      4
+ 429 00536 0013 W,      13
+ 430 00537 0256 DOT0,   256             / '.'
+ 431            
+ 432 00540 0000 UPARR,  0
+ 433 00541 7300         CLA CLL
+ 434 00542 1031         TAD TEMP        / Get character
+ 435 00543 1051         TAD UPA         / 336 '^'?
+ 436 00544 7440         SZA
+ 437 00545 5740         JMP I UPARR     / No, bail
+ 438 00546 1052         TAD DAMP        / Yes, set new DAMP0
+ 439 00547 3053         DCA DAMP0
+ 440 00550 5106         JMP START       / ... and keep going
+ 441            $

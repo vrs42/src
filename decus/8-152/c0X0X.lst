@@ -1,0 +1,576 @@
+   1            /DECUS 8-152A MUSIC CODING
+   2            /
+   3            /VERSION ?.?
+   4            /
+   5            /
+   6            /
+   7            /EDITOR PAGE 1
+   8            /
+   9            /
+  10            *0600
+  11 00600 0000 END,    0
+  12 00601 7200         CLA 
+  13 00602 1031         TAD TEMP
+  14 00603 1320         TAD ARR         / Got '$'?
+  15 00604 7440         SZA
+  16 00605 5600         JMP I END       / No, return
+  17 00606 7402         HLT             / Yes, Halt
+  18 00607 7300         CLA CLL
+  19 00610 1321         TAD ORGW        / Emit Origin for WORKD0
+  20 00611 4275         JMS ORIGIN
+  21 00612 1020         TAD WORD0       / Emit WORD0
+  22 00613 4307         JMS PUNC
+  23 00614 1020         TAD WORD0       / No go there
+  24 00615 4275         JMS ORIGIN
+  25 00616 1063         TAD NLOOP       / Negate loop counter
+  26 00617 7041         CIA
+  27 00620 3063         DCA NLOOP
+  28 00621 1057         TAD LCO0        / Reset LCO
+  29 00622 3060         DCA LCO
+  30 00623 1061         TAD LCC0        / And LCC
+  31 00624 3062         DCA LCC
+  32 00625 3022         DCA NOTE0       / Zero NOTE0 (total notes)
+  33 00626 1462 LOOP0,  TAD I LCC       / Get word pointer
+  34 00627 7041         CIA
+  35 00630 1460         TAD I LCO       / Subtract the end pointer
+  36 00631 3031         DCA TEMP        / ...to form (negative) Word count
+  37 00632 1031         TAD TEMP        / Add word count to total
+  38 00633 7041         CIA
+  39 00634 1022         TAD NOTE0
+  40 00635 3022         DCA NOTE0
+  41 00636 1020         TAD WORD0
+  42 00637 1460         TAD I LCO
+  43 00640 3021         DCA WORD
+  44 00641 1421 LOOP1,  TAD I WORD      / Get a word
+  45 00642 4307         JMS PUNC        / ...and punch it
+  46 00643 7300         CLA CLL 
+  47 00644 2021         ISZ WORD        / Point to next word
+  48 00645 2031         ISZ TEMP        / Done?
+  49 00646 5241         JMP LOOP1       / No, go again
+  50 00647 2060         ISZ LCO         / Point to next block start
+  51 00650 2062         ISZ LCC         / Point to next block end
+  52 00651 2063         ISZ NLOOP       / All blocks done?
+  53 00652 5226         JMP LOOP0       / No, go again
+  54 00653 1322         TAD ORGN        / Get NOTE0 origin
+  55 00654 4275         JMS ORIGIN      / ...and punch it
+  56 00655 1022         TAD NOTE0       / Punch NOTE0 contents
+  57 00656 4307         JMS PUNC
+  58 00657 4307         JMS PUNC        / Punch 0000
+  59 00660 7402         HLT
+  60 00661 0000 PUNCH,  0
+  61 00662 6026         PLS             / Punch the byte
+  62 00663 6021         PSF 
+  63 00664 5263         JMP .-1
+  64 00665 7200         CLA 
+  65 00666 5661         JMP I PUNCH
+  66 00667 0000 FIX,    0               / Shift right six bits
+  67 00670 7012         RTR 
+  68 00671 7012         RTR 
+  69 00672 7012         RTR 
+  70 00673 0323         AND MASK        / Mask for 6 bits
+  71 00674 5667         JMP I FIX
+  72 00675 0000 ORIGIN, 0
+  73 00676 3034         DCA TA          / Store the word
+  74 00677 1034         TAD TA
+  75 00700 4267         JMS FIX         / Punch high byte
+  76 00701 1324         TAD ORG         / ...with 0100 set
+  77 00702 4261         JMS PUNCH
+  78 00703 1034         TAD TA          / Punch low byte
+  79 00704 0323         AND MASK
+  80 00705 4261         JMS PUNCH
+  81 00706 5675         JMP I ORIGIN
+  82 00707 0000 PUNC,   0
+  83 00710 3034         DCA TA          / Store the word
+  84 00711 1034         TAD TA
+  85 00712 4267         JMS FIX         / Punch high byte
+  86 00713 4261         JMS PUNCH
+  87 00714 1034         TAD TA
+  88 00715 0323         AND MASK        / Punch low byte
+  89 00716 4261         JMS PUNCH
+  90 00717 5707         JMP I PUNC
+  91 00720 0244 ARR,    0244            / '$'
+  92 00721 0020 ORGW,   0020
+  93 00722 0022 ORGN,   0022
+  94 00723 0077 MASK,   0077
+  95 00724 0100 ORG,    0100
+  96            /BEGIN NOTREACHED
+  97            / Filler for the rest of the page, to match the 
+  98            / original tape, which apparently dumped whole pages.
+  99 00725 4450  4450
+ 100 00726 4502  4502
+ 101 00727 0033  0033
+ 102 00730 1354  1354
+ 103 00731 4503  4503
+ 104 00732 5325  5325
+ 105 00733 4502  4502
+ 106 00734 0040  0040
+ 107 00735 1354  1354
+ 108 00736 4503  4503
+ 109 00737 5301  5301
+ 110 00740 4510  4510
+ 111 00741 2176  2176
+ 112 00742 5244  5244
+ 113 00743 1177  1177
+ 114 00744 7640  7640
+ 115 00745 5423  5423
+ 116 00746 2177  2177
+ 117 00747 3175  3175
+ 118 00750 3122  3122
+ 119 00751 1054  1054
+ 120 00752 3131  3131
+ 121 00753 5512  5512
+ 122 00754 0416  0416
+ 123 00755 7041  7041
+ 124 00756 7500  7500
+ 125 00757 4147  4147
+ 126 00760 3125  3125
+ 127 00761 1125  1125
+ 128 00762 7001  7001
+ 129 00763 1172  1172
+ 130 00764 7710  7710
+ 131 00765 4147  4147
+ 132 00766 1160  1160
+ 133 00767 5372  5372
+ 134 00770 1523  1523
+ 135 00771 7440  7440
+ 136 00772 3123  3123
+ 137 00773 2125  2125
+ 138 00774 5370  5370
+ 139 00775 1123  1123
+ 140 00776 5754  5754
+ 141 00777 1102  1102
+ 142            /END NOTREACHED
+ 143            /
+ 144            /
+ 145            /
+ 146            *0020
+ 147 00020 1000 WORD0,  1000
+ 148 00021 0000 WORD,   0
+ 149 00022 0000 NOTE0,  0
+ 150 00023 0000 CNT,    0       / Rest flag
+ 151 00024 0377 RB,     0377    / RUBOUT
+ 152 00025 0212 LF0,    0212    / LF
+ 153 00026 0215 CR,     0215    / CR
+ 154 00027 0252 AST,    0252    / '*'
+ 155 00030 0240 SP,     0240    / ' '
+ 156 00031 0000 TEMP,   0
+ 157 00032 0000 LEN0,   0
+ 158 00033 0000 FREQ0,  0000
+ 159 00034 0000 TA,     0000
+ 160 00035 0257 BRA,    0257    / '/'
+ 161 00036 0044 SS0,    0044    / 'S'-'/'
+ 162 00037 0301 AA0,    0301    / 'A'
+ 163 00040 0013 RR0,    0013
+ 164 00041 0000 AMP0,   0000
+ 165 00042 0261 LL0,    0261    / '1'
+ 166 00043 0511 ASTI,   ASTK
+ 167 00044 0600 ENDI,   END
+ 168 00045 0400 LENI,   LEN
+ 169 00046 0003 MASKL,  0003
+ 170 00047 0260 CORR,   260     / '0'
+ 171 00050 0540 UPARRI, UPARR
+ 172 00051 0336 UPA,    336     / '^'
+ 173 00052 4000 DAMP,   4000
+ 174 00053 0000 DAMP0,  0
+ 175 00054 0200 FREQI,  FREQ
+ 176 00055 0274 OBR0,   0274    / '<'
+ 177 00056 0276 CBR0,   0276    / '>'
+ 178 00057 7400 LCO0,   7400
+ 179 00060 0000 LCO,    0
+ 180 00061 7500 LCC0,   7500
+ 181 00062 0000 LCC,    0
+ 182 00063 0000 NLOOP,  0
+ 183 00064 0350 OBRI,   OBR
+ 184 00065 0473 CBRI,   CBR
+ 185 00066 0333 READI,  READ
+ 186            /BEGIN NOTREACHED
+ 187 00067 0644  0644
+ 188 00070 0647  0647
+ 189 00071 0012  0012
+ 190 00072 7506  7506
+ 191 00073 1055  1055
+ 192 00074 1144  1144
+ 193 00075 7642  7642
+ 194 00076 1136  1136
+ 195 00077 2114  2114
+ 196            /END NOTREACHED
+ 197            
+ 198            /
+ 199            /EDITOR PAGE 2
+ 200            /
+ 201            /
+ 202            *0100
+ 203 00100 7300         CLA CLL
+ 204 00101 6014         RFC
+ 205 00102 1020         TAD WORD0       / Set up buffer pointer
+ 206 00103 3021         DCA WORD
+ 207 00104 3022         DCA NOTE0       / Zero note count
+ 208 00105 3063         DCA NLOOP       / Zero number of blocks
+ 209 00106 4116 START,  JMS ACCEPT      / Get a character
+ 210 00107 4443         JMS I ASTI      / Store and go again unless '*'
+ 211 00110 4444         JMS I ENDI      / Punch the output if '$'
+ 212 00111 4464 P00111, JMS I OBRI      / Handle '<'
+ 213 00112 4465         JMS I CBRI      / Handle '>'
+ 214 00113 4450         JMS I UPARRI    / Handle '^'
+ 215 00114 4454         JMS I FREQI
+ 216 00115 5106         JMP START
+ 217 00116 0000 ACCEPT, 0000
+ 218 00117 7300         CLA CLL         / Get a character
+ 219 00120 6011         RSF 
+ 220 00121 5120         JMP .-1
+ 221 00122 6012         RRB
+ 222 00123 6014         RFC 
+ 223 00124 7041         CIA             / Negate and save it
+ 224 00125 3031         DCA TEMP
+ 225 00126 1031         TAD TEMP
+ 226 00127 5516         JMP I ACCEPT    / ... also return it
+ 227            /BEGIN NOTREACHED
+ 228            / Filler for the rest of the page, to match the 
+ 229            / original tape.
+ 230 00130 0000  0000
+ 231 00131 3200  3200
+ 232 00132 1054  1054
+ 233 00133 3131  3131
+ 234 00134 3172  3172
+ 235 00135 3171  3171
+ 236 00136 3170  3170
+ 237 00137 5423  5423
+ 238 00140 1171  1171
+ 239 00141 7410  7410
+ 240 00142 1172  1172
+ 241 00143 3125  3125
+ 242 00144 3116  3116
+ 243 00145 5546  5546
+ 244 00146 0233  0233
+ 245 00147 1500  1500
+ 246 00150 7600  7600
+ 247 00151 1007  1007
+ 248 00152 4476  4476
+ 249 00153 5452  5452
+ 250 00154 1177  1177
+ 251 00155 5501  5501
+ 252 00156 1211  1211
+ 253 00157 7560  7560
+ 254 00160 0170  0170
+ 255 00161 6026  6026
+ 256 00162 7777  7777
+ 257 00163 0000  0000
+ 258 00164 2200  2200
+ 259 00165 4564  4564
+ 260 00166 0255  0255
+ 261 00167 0004  0004
+ 262 00170 0000  0000
+ 263 00171 7003  7003
+ 264 00172 0015  0015
+ 265 00173 0000  0000
+ 266 00174 7003  7003
+ 267 00175 2444  2444
+ 268 00176 7003  7003
+ 269 00177 7033  7033
+ 270            /END NOTREACHED
+ 271            /
+ 272            /
+ 273            *0200
+ 274 00200 0000 FREQ,   0000            / Character should indicate a frequency
+ 275 00201 7300         CLA CLL 
+ 276 00202 1031         TAD TEMP        / Get character
+ 277 00203 1037         TAD AA0         / 'A'?
+ 278 00204 7450         SNA 
+ 279 00205 5234         JMP AA
+ 280 00206 7001         IAC             / 'B'?
+ 281 00207 7450         SNA 
+ 282 00210 5237         JMP BB
+ 283 00211 7001         IAC             / 'C'?
+ 284 00212 7450         SNA 
+ 285 00213 5242         JMP CC
+ 286 00214 7001         IAC             / 'D'?
+ 287 00215 7450         SNA 
+ 288 00216 5245         JMP DD
+ 289 00217 7001         IAC             / 'E'?
+ 290 00220 7450         SNA 
+ 291 00221 5250         JMP EE
+ 292 00222 7001         IAC             / 'F'?
+ 293 00223 7450         SNA 
+ 294 00224 5253         JMP FF
+ 295 00225 7001         IAC             / 'G'?
+ 296 00226 7450         SNA 
+ 297 00227 5256         JMP GG
+ 298 00230 1040         TAD RR0         / 'R'?
+ 299 00231 7450         SNA 
+ 300 00232 5261         JMP RR
+ 301 00233 5600         JMP I FREQ      / Unknown, return
+ 302 00234 7300 AA,     CLA CLL 
+ 303 00235 3033         DCA FREQ0       / Set up 'A' (baseline)
+ 304 00236 5272         JMP FINF
+ 305 00237 1365 BB,     TAD B           / Set up 'B'
+ 306 00240 3033         DCA FREQ0
+ 307 00241 5272         JMP FINF
+ 308 00242 1366 CC,     TAD C           / Set up 'C'
+ 309 00243 3033         DCA FREQ0
+ 310 00244 5272         JMP FINF
+ 311 00245 1367 DD,     TAD D           / Set up 'D'
+ 312 00246 3033         DCA FREQ0
+ 313 00247 5272         JMP FINF
+ 314 00250 1370 EE,     TAD E           / Set up 'E'
+ 315 00251 3033         DCA FREQ0
+ 316 00252 5272         JMP FINF
+ 317 00253 1371 FF,     TAD F           / Set up 'F'
+ 318 00254 3033         DCA FREQ0
+ 319 00255 5272         JMP FINF
+ 320 00256 1372 GG,     TAD G           / Set up 'G'
+ 321 00257 3033         DCA FREQ0
+ 322 00260 5272         JMP FINF
+ 323 00261 1041 RR,     TAD AMP0        / TA = AMP0
+ 324 00262 3034         DCA TA
+ 325 00263 3041         DCA AMP0        / AMP0 = 0
+ 326 00264 3033         DCA FREQ0       / Set FREQ0
+ 327 00265 7240         CLA CMA         / Set REST flag
+ 328 00266 3023         DCA CNT
+ 329 00267 2022         ISZ NOTE0       / One more note
+ 330 00270 2021         ISZ WORD        / Bump buffer pointer
+ 331 00271 5445         JMP I LENI      / Go get duration
+ 332                    / Common wrap-up for notes.
+ 333 00272 2022 FINF,   ISZ NOTE0       / One more note
+ 334 00273 2021         ISZ WORD        / Bump buffer pointer
+ 335 00274 4116         JMS ACCEPT      / Get another character
+ 336 00275 1042         TAD LL0         / '1'?
+ 337 00276 7450         SNA 
+ 338 00277 5316         JMP FINF1       / Yes, have FREQ0
+ 339 00300 7001         IAC             / '2'?
+ 340 00301 7450         SNA 
+ 341 00302 5307         JMP TW          / Yes, set up 2
+ 342 00303 7001         IAC             / '3'?
+ 343 00304 7450         SNA 
+ 344 00305 5313         JMP TH          / Yes, set up 3
+ 345 00306 5272         JMP FINF        / No, try again (bug here?)
+ 346 00307 1033 TW,     TAD FREQ0       / Set up frequency + TWO
+ 347 00310 1373         TAD TWO
+ 348 00311 3033         DCA FREQ0
+ 349 00312 5316         JMP FINF1
+ 350 00313 1033 TH,     TAD FREQ0       / Set up frequency + THREE
+ 351 00314 1374         TAD THREE
+ 352 00315 3033         DCA FREQ0
+ 353                    / Wrap-up after half/quarter
+ 354 00316 4116 FINF1,  JMS ACCEPT      / Get another character
+ 355 00317 1035         TAD BRA         / '/'?
+ 356 00320 7450         SNA 
+ 357 00321 5332         JMP FINFS       / Yes, go get duration
+ 358 00322 1036         TAD SS0         / No, 'S'?
+ 359 00323 7450         SNA
+ 360 00324 5326         JMP SS          / Yes, go increment
+ 361 00325 5316         JMP FINF1       / No, skip it
+ 362 00326 1033 SS,     TAD FREQ0       / Bump FREQ0
+ 363 00327 7001         IAC
+ 364 00330 3033         DCA FREQ0
+ 365 00331 5316         JMP FINF1       / And look for another '/'
+ 366 00332 5445 FINFS,  JMP I LENI      / Have FREQ0, Go get duration
+ 367 00333 0000 READ,   0000
+ 368 00334 7200         CLA 
+ 369 00335 4116         JMS ACCEPT      / Get next character
+ 370 00336 1047         TAD CORR        / Subtract '0'?
+ 371 00337 7041         CIA             / Get first digit 
+ 372 00340 7106         CLL RTL         / (octal)
+ 373 00341 7004         RAL 
+ 374 00342 3034         DCA TA          / Save it
+ 375 00343 4116         JMS ACCEPT      / Get next character
+ 376 00344 1047         TAD CORR        / Subtract '0'
+ 377 00345 7041         CIA             / Get second digit
+ 378 00346 1034         TAD TA          / Add it in
+ 379 00347 5733         JMP I READ      / Return octal value
+ 380 00350 0000 OBR,    0000
+ 381 00351 7300         CLA CLL 
+ 382 00352 1031         TAD TEMP        / Get character
+ 383 00353 1055         TAD OBR0        / 274 '<'?
+ 384 00354 7440         SZA 
+ 385 00355 5750         JMP I OBR       / Nope, bail
+ 386 00356 4333         JMS READ        / Yes, read some stuff
+ 387 00357 1057         TAD LCO0        / Reset LCO origin
+ 388 00360 3060         DCA LCO
+ 389 00361 1022         TAD NOTE0       / Store Number of notes + 1
+ 390 00362 7001         IAC
+ 391 00363 3460         DCA I LCO
+ 392 00364 5106         JMP START       / ... and keep going
+ 393 00365 0006 B,      6
+ 394 00366 0013 C,      13
+ 395 00367 0021 D,      21
+ 396 00370 0025 E,      25
+ 397 00371 0030 F,      30
+ 398 00372 0034 G,      34
+ 399 00373 0002 TWO,    2
+ 400 00374 0004 THREE,  4       / BUGBUG
+ 401            /BEGIN NOTREACHED
+ 402            / Filler for the rest of the page, to match the 
+ 403            / original tape.
+ 404 00375 0644  0644
+ 405 00376 1271  1271
+ 406 00377 1225  1225
+ 407            /END NOTREACHED
+ 408            /
+ 409            /
+ 410            /
+ 411            /
+ 412            
+ 413            /EDITOR PAGE 3
+ 414            /
+ 415            *0400
+ 416 00400 4116 LEN,    JMS ACCEPT      / Get a character
+ 417 00401 1326         TAD EI0         / 'E'?
+ 418 00402 7450         SNA 
+ 419 00403 5221         JMP EI
+ 420 00404 1327         TAD HA0         / 'H'?
+ 421 00405 7450         SNA 
+ 422 00406 5224         JMP HA
+ 423 00407 1330         TAD QA0         / 'Q'?
+ 424 00410 7450         SNA 
+ 425 00411 5227         JMP QA
+ 426 00412 1331         TAD SI0         / 'S'?
+ 427 00413 7450         SNA 
+ 428 00414 5232         JMP SI
+ 429 00415 1332         TAD WH0         / 'W'?
+ 430 00416 7450         SNA 
+ 431 00417 5235         JMP WH
+ 432 00420 5200         JMP LEN         / Other, try again
+ 433 00421 1333 EI,     TAD ET          / Set 'E' length
+ 434 00422 3032         DCA LEN0
+ 435 00423 5240         JMP FINL
+ 436 00424 1334 HA,     TAD H0          / Set 'H' length
+ 437 00425 3032         DCA LEN0
+ 438 00426 5240         JMP FINL
+ 439 00427 1335 QA,     TAD Q           / Set 'Q' length
+ 440 00430 3032         DCA LEN0
+ 441 00431 5240         JMP FINL
+ 442 00432 7300 SI,     CLA CLL         / Set 'S' length (baseline)
+ 443 00433 3032         DCA LEN0
+ 444 00434 5240         JMP FINL
+ 445 00435 1336 WH,     TAD W           / Set 'W' length
+ 446 00436 3032         DCA LEN0
+ 447 00437 5240         JMP FINL
+ 448                    / Common length wrap-up
+ 449 00440 4116 FINL,   JMS ACCEPT      / Get a character
+ 450 00441 1337         TAD DOT0        / Is it '.'?
+ 451 00442 7450         SNA 
+ 452 00443 5250         JMP DOT         / Yes
+ 453 00444 7001         IAC             / Is it '/'?
+ 454 00445 7450         SNA 
+ 455 00446 5254         JMP FINL1       / Yes, we are done
+ 456 00447 5240         JMP FINL        / No, try again
+ 457 00450 1032 DOT,    TAD LEN0        / Bump LEN0
+ 458 00451 7001         IAC
+ 459 00452 3032         DCA LEN0
+ 460 00453 5240         JMP FINL        / ... and go again
+ 461                    / Got all the dots.
+ 462 00454 1032 FINL1,  TAD LEN0        / How many dots?
+ 463 00455 7106         CLL RTL         / Move to high bits
+ 464 00456 7006         RTL 
+ 465 00457 7004         RAL 
+ 466 00460 1041         TAD AMP0        / Add in AMP0
+ 467            /
+ 468            /VRS: The stuff below is missing from the write-up.
+ 469 00461 1033         TAD FREQ0       / Add in FREQ0
+ 470 00462 1053         TAD DAMP0       / and DAMP0
+ 471 00463 3421         DCA I WORD      / Store the assembled word!
+ 472 00464 2023         ISZ CNT         / Doing a rest?
+ 473 00465 5270         JMP .+3         / No, don't reset AMP0
+ 474 00466 1034         TAD TA          / AMP0 = TA
+ 475 00467 3041         DCA AMP0
+ 476 00470 3023         DCA CNT         / No longer doing a REST
+ 477 00471 3053         DCA DAMP0       / Clear DAMP0
+ 478 00472 5106         JMP START       / and keep going
+ 479            
+ 480 00473 0000 CBR,    0
+ 481 00474 7300         CLA CLL
+ 482 00475 1031         TAD TEMP        / Get character
+ 483 00476 1056         TAD CBR0        / 276 '>'?
+ 484 00477 7440         SZA
+ 485 00500 5673         JMP I CBR       / No, bail
+ 486 00501 4466         JMS I READI     / Yes, read some stuff
+ 487 00502 1061         TAD LCC0        / Reset LCC origin
+ 488 00503 3062         DCA LCC
+ 489 00504 1022         TAD NOTE0       / Store note count + 1
+ 490 00505 7001         IAC
+ 491 00506 3462         DCA I LCC
+ 492 00507 2063         ISZ NLOOP       / Bump number of segments
+ 493 00510 5106         JMP START
+ 494            
+ 495 00511 0000 ASTK,   0
+ 496 00512 7300         CLA CLL
+ 497 00513 1031         TAD TEMP        / Character == '*'?
+ 498 00514 1027         TAD AST
+ 499 00515 7440         SZA
+ 500 00516 5711         JMP I ASTK      / No, return
+ 501 00517 4116         JMS ACCEPT      / Yes, get next character
+ 502 00520 7041         CIA
+ 503 00521 0046         AND MASKL       / Mask for bottom 2 bits
+ 504 00522 7112         CLL RTR         / Shift to bits 1-2
+ 505 00523 7012         RTR
+ 506 00524 3041         DCA AMP0        / Store as AMP0
+ 507 00525 5106         JMP START       / ... and keep going
+ 508            
+ 509 00526 0305 EI0,    305             / 'E'
+ 510 00527 0003 HA0,    3               / 'H'-'E'
+ 511 00530 0011 QA0,    11              / 'Q'-'H'
+ 512 00531 0002 SI0,    2               / 'S'-'Q'
+ 513 00532 0004 WH0,    4               / 'W'-'S'
+ 514 00533 0002 ET,     2
+ 515 00534 0007 H0,     7
+ 516 00535 0004 Q,      4
+ 517 00536 0013 W,      13
+ 518 00537 0256 DOT0,   256             / '.'
+ 519            
+ 520 00540 0000 UPARR,  0
+ 521 00541 7300         CLA CLL
+ 522 00542 1031         TAD TEMP        / Get character
+ 523 00543 1051         TAD UPA         / 336 '^'?
+ 524 00544 7440         SZA
+ 525 00545 5740         JMP I UPARR     / No, bail
+ 526 00546 1052         TAD DAMP        / Yes, set new DAMP0
+ 527 00547 3053         DCA DAMP0
+ 528 00550 5106         JMP START       / ... and keep going
+ 529            /BEGIN NOTREACHED
+ 530            / Filler for the rest of the page, to match the 
+ 531            / original tape.
+ 532 00551 7012  7012
+ 533 00552 5356  5356
+ 534 00553 7040  7040
+ 535 00554 3120  3120
+ 536 00555 1147  1147
+ 537 00556 0003  0003
+ 538 00557 3272  3272
+ 539 00560 1272  1272
+ 540 00561 1002  1002
+ 541 00562 7650  7650
+ 542 00563 5741  5741
+ 543 00564 2341  2341
+ 544 00565 1272  1272
+ 545 00566 1005  1005
+ 546 00567 5741  5741
+ 547 00570 1423  1423
+ 548 00571 7700  7700
+ 549 00572 1036  1036
+ 550 00573 4476  4476
+ 551 00574 5423  5423
+ 552 00575 1454  1454
+ 553 00576 0425  0425
+ 554 00577 0570  0570
+ 555            
+ 556            *0000
+ 557            / Filler for the beginning of the page, to match the 
+ 558            / original tape.
+ 559 00000 7010  7010
+ 560 00001 7400  7400
+ 561 00002 7701  7701
+ 562 00003 0077  0077
+ 563 00004 1537  1537
+ 564 00005 7740  7740
+ 565 00006 0100  0100
+ 566 00007 0277  0277
+ 567 00010 7400  7400
+ 568 00011 3244  3244
+ 569 00012 0000  0000
+ 570 00013 1206  1206
+ 571 00014 3235  3235
+ 572 00015 7774  7774
+ 573 00016 0140  0140
+ 574 00017 0177  0177
+ 575            /END NOTREACHED
+ 576            $

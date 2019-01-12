@@ -1,0 +1,296 @@
+   1            /DECUS  8-152 MUSIC PLAYING PROGRAM
+   2            /
+   3            /VERSION ?.?
+   4            /
+   5            /
+   6            /
+   7            /
+   8            *0200
+   9 00200 7300 PLAY,   CLA CLL 
+  10 00201 1020         TAD WORD0       / Reset music pointer
+  11 00202 3021         DCA WORD
+  12 00203 1022         TAD NOTE0       / Set up note counter
+  13 00204 7041         CIA
+  14 00205 3023         DCA NOTE
+  15 00206 1421 START,  TAD I WORD      / Get the current note
+  16 00207 7106         CLL RTL         / Get DAMP bit
+  17 00210 0041         AND MASKD
+  18 00211 1042         TAD DAMP0       / Add DAMP offset
+  19 00212 3043         DCA DAMP        / Set DAMP pointer
+  20 00213 1043         TAD DAMP        / Get DAMP pointer
+  21 00214 7001         IAC             / Point to our table
+  22 00215 7001         IAC
+  23 00216 3335         DCA DAMP2       / Store table ptr
+  24 00217 1735         TAD I DAMP2     / Get table entrty
+  25 00220 3335         DCA DAMP2       / Remember for later
+  26 00221 1443         TAD I DAMP      / Get DAMP value
+  27 00222 3043         DCA DAMP        / ...and remember it
+  28 00223 1333         TAD DFIX        / Get "TAD DAMP" instruction
+  29 00224 3275         DCA DAMPI       / Store it
+  30 00225 1334         TAD DDFIX       / Get "TAD DAMP2" instruction
+  31 00226 3301         DCA DAMPI2      / Store it
+  32 00227 1421         TAD I WORD      / Get the current note
+  33 00230 0024         AND MASKF       / Extract the frequency info
+  34 00231 1025         TAD CONSTF      / Point into the note table
+  35 00232 3026         DCA N0          / Store the frequency pointer
+  36 00233 1426         TAD I N0        / Get the frequency
+  37 00234 7041         CIA             / Negate it
+  38 00235 3026         DCA N0          / Store the frequency
+  39 00236 1421         TAD I WORD      / Get the current note
+  40 00237 0031         AND MASKA       / Extract the amplitude
+  41 00240 7110         CLL RAR         / Scale it
+  42 00241 7440         SZA             / Is it zero?
+  43 00242 5247         JMP STAMP       / No, just store it
+  44 00243 1332         TAD CDAM        / Yes, get a NOP
+  45 00244 3275         DCA DAMPI       / Store for later
+  46 00245 1275         TAD DAMPI       / Get NOP back
+  47 00246 3301         DCA DAMPI2      / Store for later
+  48 00247 3032 STAMP,  DCA AMP         / Store the amplitude
+  49 00250 1032         TAD AMP         / Get amplitude back
+  50 00251 3336         DCA AMP2        / Save a copy
+  51 00252 1421         TAD I WORD      / Get the current note
+  52 00253 0033         AND MASKL       / Get the duration
+  53 00254 7012         RTR 
+  54 00255 7112         CLL RTR 
+  55 00256 7010         RAR 
+  56 00257 1034         TAD CONSTL      / Add table offset
+  57 00260 3035         DCA L0          / Store duration pointer
+  58 00261 1435         TAD I L0        / Get duration table entry
+  59 00262 7041         CIA             / Negate it
+  60 00263 3035         DCA L0          / Save as loop counter value
+  61 00264 1035         TAD L0          / Get it back
+  62 00265 3036         DCA L           / Set up initial loop counter
+  63 00266 1037         TAD CNTR        / Reset tempo counter
+  64 00267 3040         DCA CNT
+  65 00270 1026 A,      TAD N0          / Get frequency value
+  66 00271 3027         DCA ONCNT       / Store it
+  67 00272 1027         TAD ONCNT       / Get it again
+  68 00273 3030         DCA OFFNT       / Store it again
+  69 00274 1032         TAD AMP         / Get amplitude
+  70 00275 1043 DAMPI,  TAD DAMP        / Add DAMP (or not)
+  71 00276 6551         6551            / Output it
+  72 00277 3032         DCA AMP         / Store it
+  73 00300 1336         TAD AMP2        / Get amplitude copy
+  74 00301 1335 DAMPI2, TAD DAMP2       / Add our table entry (or not)
+  75 00302 6552         6552            / Set output amplitude
+  76 00303 3336         DCA AMP2        / Save the command
+  77 00304 4321         JMS DELAY       / Do the note delay 
+  78 00305 2027         ISZ ONCNT       / ...frequency times
+  79 00306 5304         JMP .-2
+  80 00307 6553         6553            / Set output off
+  81 00310 4321         JMS DELAY       / Do the delay again
+  82 00311 2030         ISZ OFFNT       / ...frequency times
+  83 00312 5310         JMP .-2
+  84 00313 5270         JMP A           / Go again
+  85 00314 2021 FIN,    ISZ WORD        / Note is finished, point to the next
+  86            /
+  87            /
+  88            /
+  89            /
+  90            /
+  91            /
+  92            
+  93            /
+  94            /EDITOR PAGE 2
+  95            /
+  96            /
+  97 00315 2023         ISZ NOTE        / Last note?
+  98 00316 7410         SKP             / No, go get next
+  99 00317 7402         HLT             / Yes, halt
+ 100 00320 5206         JMP START
+ 101 00321 0000 DELAY,  0000            / Magic subroutine
+ 102 00322 2036         ISZ L           / Duration expired?
+ 103 00323 5331         JMP DELAYX      / No, return
+ 104 00324 2040         ISZ CNT         / Yes, bump tempo ounter
+ 105 00325 7410         SKP
+ 106 00326 5314         JMP FIN         / Tempo expired, go wrap up
+ 107 00327 1035         TAD L0          / Set up another duration
+ 108 00330 3036         DCA L
+ 109 00331 5721 DELAYX, JMP I DELAY     / Return to caller
+ 110 00332 7000 CDAM,   NOP
+ 111 00333 1043 DFIX,   TAD DAMP
+ 112 00334 1335 DDFIX,  TAD DAMP2
+ 113 00335 0000 DAMP2,  0
+ 114 00336 0000 AMP2,   0
+ 115            /
+ 116            /
+ 117            /
+ 118            /BEGIN NOTREACHED
+ 119            /Filler at start of page
+ 120            *0000
+ 121 00000 7010  7010
+ 122 00001 7400  7400
+ 123 00002 7701  7701
+ 124 00003 0077  0077
+ 125 00004 1537  1537
+ 126 00005 7740  7740
+ 127 00006 0100  0100
+ 128 00007 0277  0277
+ 129 00010 7400  7400
+ 130 00011 3244  3244
+ 131 00012 0000  0000
+ 132 00013 1206  1206
+ 133 00014 3235  3235
+ 134 00015 7774  7774
+ 135 00016 0140  0140
+ 136 00017 0177  0177
+ 137            /END NOTREACHED
+ 138            *0020
+ 139 00020 0000 WORD0,  0000    / Points to the loaded music
+ 140 00021 0000 WORD,   0000    / Points to the current note
+ 141 00022 0000 NOTE0,  0000    / Count of notes this music
+ 142 00023 0000 NOTE,   0000
+ 143 00024 0037 MASKF,  0037    / Mask for note frequency
+ 144 00025 0100 CONSTF, NOTTBL
+ 145 00026 0000 N0,     0000
+ 146 00027 0000 ONCNT,  0000    / Count down with note pulse on
+ 147 00030 0000 OFFNT,  0000    / Count down with note pulse off
+ 148 00031 3000 MASKA,  3000
+ 149 00032 0000 AMP,    0000
+ 150 00033 0740 MASKL,  0740    / Mask for duration bits
+ 151 00034 0150 CONSTL, DURTBL
+ 152 00035 0000 L0,     0000    / Current note loop counter initial value
+ 153 00036 0000 L,      0000    / Current note loop counter
+ 154            
+ 155 00037 7700 CNTR,   7700    /TEMPO COUNTER
+ 156 00040 0000 CNT,    0000
+ 157 00041 0001 MASKD,  0001
+ 158 00042 0170 DAMP0,  DAMPP
+ 159 00043 0000 DAMP,   0000
+ 160            /BEGIN NOTREACHED
+ 161            /Filler in unused gap
+ 162 00044 0600  0600
+ 163 00045 0400  0400
+ 164 00046 0003  0003
+ 165 00047 0260  0260
+ 166 00050 0540  0540
+ 167 00051 0336  0336
+ 168 00052 4000  4000
+ 169 00053 0000  0000
+ 170 00054 0200  0200
+ 171 00055 0274  0274
+ 172 00056 0276  0276
+ 173 00057 7400  7400
+ 174 00060 0000  0000
+ 175 00061 7500  7500
+ 176 00062 0000  0000
+ 177 00063 0000  0000
+ 178 00064 0350  0350
+ 179 00065 0473  0473
+ 180 00066 0333  0333
+ 181 00067 0644  0644
+ 182 00070 0647  0647
+ 183 00071 0012  0012
+ 184 00072 7506  7506
+ 185 00073 1055  1055
+ 186 00074 1144  1144
+ 187 00075 7642  7642
+ 188 00076 1136  1136
+ 189 00077 2114  2114
+ 190            /END NOTREACHED
+ 191            /
+ 192            /
+ 193            /
+ 194            /
+ 195            *0170
+ 196 00170 7776 DAMPP,  7776
+ 197 00171 7774         7774
+ 198            /This table parallels DAMPP
+ 199 00172 6010         6010
+ 200 00173 6070         6070
+ 201            
+ 202            /BEGIN NOTREACHED
+ 203            /Filler to end of page
+ 204 00174 7003  7003
+ 205 00175 2444  2444
+ 206 00176 7003  7003
+ 207 00177 7033  7033
+ 208            /END NOTREACHED
+ 209            /
+ 210            /
+ 211            /
+ 212            /
+ 213            /
+ 214            /
+ 215            /
+ 216            /
+ 217            /NOTE FREQUENCIES
+ 218            /
+ 219            /
+ 220            *0100
+ 221            NOTTBL=.        / Note table
+ 222            /These are generally scaled by a factor of 1.2X.
+ 223 00100 0456 A1,     456
+ 224 00101 0435 A1S,    435
+ 225 00102 0227 A2,     227
+ 226 00103 0216 A2S,    216
+ 227 00104 0113 A3,     113
+ 228 00105 0106 A3S,    106
+ 229 00106 0417 B1,     417
+ 230 00107 0417         417
+ 231 00110 0206 B2,     206
+ 232 00111 0206         206
+ 233 00112 0103 B3,     103
+ 234 00113 0376 C1,     376
+ 235 00114 0357 C1S,    357
+ 236 00115 0176 C2,     176
+ 237 00116 0167 C2S,    167
+ 238 00117 0077 C3,     77
+ 239 00120 0073 C3S,    73
+ 240 00121 0342 D1,     342
+ 241 00122 0325 D1S,    325
+ 242 00123 0161 D2,     161
+ 243 00124 0152 D2S,    152
+ 244 00125 0311 E1,     311
+ 245 00126 0311         311
+ 246 00127 0144 E2,     144
+ 247 00130 0276 F1,     276
+ 248 00131 0263 F1S,    263
+ 249 00132 0136 F2,     136
+ 250 00133 0131 F2S,    131
+ 251 00134 0251 G1,     251
+ 252 00135 0240 G1S,    240
+ 253 00136 0124 G2,     124
+ 254 00137 0117 G2S,    117
+ 255            /BEGIN NOTREACHED
+ 256            /Filler in unused gap
+ 257 00140 1171  1171
+ 258 00141 7410  7410
+ 259 00142 1172  1172
+ 260 00143 3125  3125
+ 261 00144 3116  3116
+ 262 00145 5546  5546
+ 263 00146 0233  0233
+ 264 00147 1500  1500
+ 265            /END NOTREACHED
+ 266            /
+ 267            /
+ 268            /NOTE LENGTHS
+ 269            /
+ 270            /
+ 271            *0150
+ 272            DURTBL=.        / Duration table
+ 273            SCALEF=20
+ 274 00150 0200 SIXT,   0010^SCALEF
+ 275 00151 0300 SIXT1,  0014^SCALEF
+ 276 00152 0400 EIGHT,  0020^SCALEF
+ 277 00153 0600 EIGHT1, 0030^SCALEF
+ 278 00154 1000 QUART,  0040^SCALEF
+ 279 00155 1400 QUART1, 0060^SCALEF
+ 280 00156 1200 QUARTS, 0050^SCALEF
+ 281 00157 2000 HALF,   0100^SCALEF
+ 282 00160 3000 HALF1,  0140^SCALEF
+ 283 00161 2200 HALFS,  0110^SCALEF
+ 284 00162 2400 HALFE,  0120^SCALEF
+ 285 00163 4000 WHOLE,  0200^SCALEF
+ 286 00164 6000 WHOLE1, 0300^SCALEF
+ 287 00165 5000 WHOLEQ, 0240^SCALEF
+ 288 00166 7000 WHOLHQ, 0340^SCALEF
+ 289 00167 0000 WHOLW,  0400^SCALEF
+ 290            /
+ 291            /
+ 292            /
+ 293            /
+ 294            /
+ 295            /
+ 296            $

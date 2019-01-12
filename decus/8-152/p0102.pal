@@ -1,0 +1,194 @@
+/DECUS	8-152 MUSIC PLAYING PROGRAM
+/
+/VERSION 1.2
+/
+/
+/
+/
+*0200
+PLAY,	CLA CLL 
+	TAD WORD0	/ Reset music pointer
+	DCA WORD
+	TAD NOTE0	/ Set up note counter
+	CIA
+	DCA NOTE
+START,	TAD I WORD	/ Get the current note
+	CLL RTL 	/ Get DAMP bit
+	AND MASKD
+	TAD DAMP0	/ Add DAMP offset
+	DCA DAMP	/ Set DAMP pointer
+	TAD I DAMP	/ Get DAMP value
+	DCA DAMP	/ ...and remember it
+	TAD DFIX	/ Get "TAD DAMP" instruction
+	DCA DAMPI	/ Store it
+	TAD I WORD	/ Get the current note
+	AND MASKF	/ Extract the frequency info
+	TAD CONSTF	/ Point into the note table
+	DCA N0		/ Store the frequency pointer
+	TAD I N0	/ Get the frequency
+	DCA N0		/ Store the frequency
+	TAD I WORD	/ Get the current note
+	AND MASKA	/ Extract the amplitude
+	CLL RAR 	/ Scale it
+	SZA 		/ Is it zero?
+	JMP STAMP	/ No, just store it
+	TAD CDAM	/ Yes, get a NOP
+	DCA DAMPI	/ Store for later
+STAMP,	DCA AMP		/ Store the amplitude
+	TAD I WORD	/ Get the current note
+	AND MASKL	/ Get the duration
+	RTR 
+	CLL RTR 
+	RAR 
+	TAD CONSTL	/ Add table offset
+	DCA L0		/ Store duration pointer
+	TAD I L0	/ Get duration table entry
+	CIA		/ Negate it
+	DCA L0		/ Save as loop counter value
+	TAD L0		/ Get it back
+	DCA L		/ Set up initial loop counter
+	TAD CNTR	/ Reset tempo counter
+	DCA CNT
+	TAD N0		/ Get frequency value
+	6554		/ and output it
+	CLA CLL
+A,	ISZ L		/ Wait for duration
+	JMP A
+	TAD AMP		/ Get amplitude
+DAMPI,	TAD DAMP	/ Add DAMP (or not)
+	RTR		/ Scale it
+	6551		/ Output it
+	RTL		/ Unscale it
+	DCA AMP		/ Store it
+	ISZ CNT		/ Bump tempo counter
+	SKP
+	JMP FIN
+	TAD L0		/ Set up another duration
+	DCA L
+	JMP A		/ Sustain for another duration
+FIN,	ISZ WORD	/ Note is finished, point to the next
+	6552		/ Set output low
+/
+/
+/
+/
+/
+/
+
+/
+/EDITOR PAGE 2
+/
+/
+	ISZ NOTE	/ Last note?
+	SKP		/ No, go get next
+	HLT		/ Yes, halt
+	JMP START
+	*0376
+CDAM,	NOP
+DFIX,	TAD DAMP
+/
+/
+/
+*0020
+WORD0,	0000	/ Points to the loaded music
+WORD,	0000	/ Points to the current note
+NOTE0,	0000	/ Count of notes this music
+NOTE,	0000
+MASKF,	0037	/ Mask for note frequency
+CONSTF,	NOTTBL
+N0,	0000
+MASKA,	3000
+AMP,	0000
+MASKL,	0740	/ Mask for duration bits
+CONSTL,	DURTBL
+L0,	0000	/ Current note loop counter initial value
+L,	0000	/ Current note loop counter
+
+CNTR,	7740	/TEMPO COUNTER
+CNT,	0000
+MASKD,	0001
+DAMP0,	DAMPP
+DAMP,	0000
+/
+/
+/
+/
+*0170
+DAMPP,	7777
+	7777
+/
+/
+/
+/
+/
+/
+/
+/
+/NOTE FREQUENCIES
+/
+/
+*0100
+NOTTBL=.	/ Note table
+A1,	373
+A1S,	355
+A2,	175
+A2S,	166
+A3,	76
+A3S,	72
+B1,	337
+	337
+B2,	157
+	157
+B3,	67
+C1,	323
+C1S,	307
+C2,	151
+C2S,	143
+C3,	64
+C3S,	61
+D1,	274
+D1S,	261
+D2,	135
+D2S,	130
+E1,	247
+	247
+E2,	123
+F1,	236
+F1S,	225
+F2,	116
+F2S,	112
+G1,	214
+G1S,	204
+G2,	106
+G2S,	102
+/
+/
+/NOTE LENGTHS
+/
+/
+*0150
+DURTBL=.	/ Duration table
+SCALEF=1
+SIXT,	0010^SCALEF
+SIXT1,	0014^SCALEF
+EIGHT,	0020^SCALEF
+EIGHT1,	0030^SCALEF
+QUART,	0040^SCALEF
+QUART1,	0060^SCALEF
+QUARTS,	0050^SCALEF
+HALF,	0100^SCALEF
+HALF1,	0140^SCALEF
+HALFS,	0110^SCALEF
+HALFE,	0120^SCALEF
+WHOLE,	0200^SCALEF
+WHOLE1,	0300^SCALEF
+WHOLEQ,	0240^SCALEF
+WHOLHQ,	0340^SCALEF
+WHOLW,	0400^SCALEF
+/
+/
+/
+/
+/
+/
+$
