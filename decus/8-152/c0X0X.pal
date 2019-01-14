@@ -175,9 +175,9 @@ DAMP0,	0
 FREQI,	FREQ
 OBR0,	0274	/ '<'
 CBR0,	0276	/ '>'
-LCO0,	7400
+LCO0,	7400	/ Base of the OBR table
 LCO,	0
-LCC0,	7500
+LCC0,	7500	/ Base of the CBR tablr
 LCC,	0
 NLOOP,	0
 OBRI,	OBR
@@ -367,7 +367,7 @@ FINFS,	JMP I LENI	/ Have FREQ0, Go get duration
 READ,	0000
 	CLA 
 	JMS ACCEPT	/ Get next character
-	TAD CORR	/ Subtract '0'?
+	TAD CORR	/ Subtract '0'
 	CIA		/ Get first digit 
 	CLL RTL 	/ (octal)
 	RAL 
@@ -383,12 +383,12 @@ OBR,	0000
 	TAD OBR0	/ 274 '<'?
 	SZA 
 	JMP I OBR	/ Nope, bail
-	JMS READ	/ Yes, read some stuff
-	TAD LCO0	/ Reset LCO origin
-	DCA LCO
-	TAD NOTE0	/ Store Number of notes + 1
+	JMS READ	/ Yes, read octal number
+	TAD LCO0	/ Add LCO table base
+	DCA LCO		/ Set LCO origin
+	TAD NOTE0	/ Store note count + 1
 	IAC
-	DCA I LCO
+	DCA I LCO	/ in the OBR table
 	JMP START	/ ... and keep going
 B,	6
 C,	13
@@ -483,14 +483,14 @@ CBR,	0
 	TAD CBR0	/ 276 '>'?
 	SZA
 	JMP I CBR	/ No, bail
-	JMS I READI	/ Yes, read some stuff
-	TAD LCC0	/ Reset LCC origin
-	DCA LCC
+	JMS I READI	/ Yes, read octal number
+	TAD LCC0	/ Add LCC table base
+	DCA LCC		/ Reset LCC origin
 	TAD NOTE0	/ Store note count + 1
 	IAC
-	DCA I LCC
+	DCA I LCC	/ in the CBR table
 	ISZ NLOOP	/ Bump number of segments
-	JMP START
+	JMP START	/ and keep going
 
 ASTK,	0
 	CLA CLL

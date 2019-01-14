@@ -150,12 +150,12 @@ DELAYX,	JMP I DELAY	/ Return to caller
 #else
 	*0376
 #endif
-CDAM,	NOP
+CDAM,	NOP		/ One of these two will be at DAMPI
 DFIX,	TAD DAMP
 #ifdef UNKNOWN
-DDFIX,	TAD DAMP2
-DAMP2,	0
-AMP2,	0
+DDFIX,	TAD DAMP2	/ This or CDAM (NOP) will be at DAMPI2
+DAMP2,	0		/ Copy of DAMP
+AMP2,	0		/ Copy of AMP
 #endif
 /
 /
@@ -188,16 +188,16 @@ WORD,	0000	/ Points to the current note
 NOTE0,	0000	/ Count of notes this music
 NOTE,	0000
 MASKF,	0037	/ Mask for note frequency
-CONSTF,	NOTTBL
+CONSTF,	NOTTBL	/ Table of notes we can play
 N0,	0000
 #ifdef UNKNOWN
 ONCNT,	0000	/ Count down with note pulse on
 OFFNT,	0000	/ Count down with note pulse off
 #endif
-MASKA,	3000
+MASKA,	3000	/ Mask for note amplitude
 AMP,	0000
-MASKL,	0740	/ Mask for duration bits
-CONSTL,	DURTBL
+MASKL,	0740	/ Mask for note duration
+CONSTL,	DURTBL	/ Table of durations we can play
 L0,	0000	/ Current note loop counter initial value
 L,	0000	/ Current note loop counter
 

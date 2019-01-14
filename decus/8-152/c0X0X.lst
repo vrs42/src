@@ -175,9 +175,9 @@
  175 00054 0200 FREQI,  FREQ
  176 00055 0274 OBR0,   0274    / '<'
  177 00056 0276 CBR0,   0276    / '>'
- 178 00057 7400 LCO0,   7400
+ 178 00057 7400 LCO0,   7400    / Base of the OBR table
  179 00060 0000 LCO,    0
- 180 00061 7500 LCC0,   7500
+ 180 00061 7500 LCC0,   7500    / Base of the CBR tablr
  181 00062 0000 LCC,    0
  182 00063 0000 NLOOP,  0
  183 00064 0350 OBRI,   OBR
@@ -367,7 +367,7 @@
  367 00333 0000 READ,   0000
  368 00334 7200         CLA 
  369 00335 4116         JMS ACCEPT      / Get next character
- 370 00336 1047         TAD CORR        / Subtract '0'?
+ 370 00336 1047         TAD CORR        / Subtract '0'
  371 00337 7041         CIA             / Get first digit 
  372 00340 7106         CLL RTL         / (octal)
  373 00341 7004         RAL 
@@ -383,12 +383,12 @@
  383 00353 1055         TAD OBR0        / 274 '<'?
  384 00354 7440         SZA 
  385 00355 5750         JMP I OBR       / Nope, bail
- 386 00356 4333         JMS READ        / Yes, read some stuff
- 387 00357 1057         TAD LCO0        / Reset LCO origin
- 388 00360 3060         DCA LCO
- 389 00361 1022         TAD NOTE0       / Store Number of notes + 1
+ 386 00356 4333         JMS READ        / Yes, read octal number
+ 387 00357 1057         TAD LCO0        / Add LCO table base
+ 388 00360 3060         DCA LCO         / Set LCO origin
+ 389 00361 1022         TAD NOTE0       / Store note count + 1
  390 00362 7001         IAC
- 391 00363 3460         DCA I LCO
+ 391 00363 3460         DCA I LCO       / in the OBR table
  392 00364 5106         JMP START       / ... and keep going
  393 00365 0006 B,      6
  394 00366 0013 C,      13
@@ -483,14 +483,14 @@
  483 00476 1056         TAD CBR0        / 276 '>'?
  484 00477 7440         SZA
  485 00500 5673         JMP I CBR       / No, bail
- 486 00501 4466         JMS I READI     / Yes, read some stuff
- 487 00502 1061         TAD LCC0        / Reset LCC origin
- 488 00503 3062         DCA LCC
+ 486 00501 4466         JMS I READI     / Yes, read octal number
+ 487 00502 1061         TAD LCC0        / Add LCC table base
+ 488 00503 3062         DCA LCC         / Reset LCC origin
  489 00504 1022         TAD NOTE0       / Store note count + 1
  490 00505 7001         IAC
- 491 00506 3462         DCA I LCC
+ 491 00506 3462         DCA I LCC       / in the CBR table
  492 00507 2063         ISZ NLOOP       / Bump number of segments
- 493 00510 5106         JMP START
+ 493 00510 5106         JMP START       / and keep going
  494            
  495 00511 0000 ASTK,   0
  496 00512 7300         CLA CLL
