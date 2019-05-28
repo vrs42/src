@@ -225,7 +225,7 @@ sub description {
   "-lst.lbl", "PAL listing tape label",
   "-lst.od", "PAL listing as octal image",
   "-lst.txt", "PAL listing as a text file",
-  ".lst", "PAL listing",
+  "\\.lst", "PAL listing",
   ".pal", "PAL source",
   "-sv", "OS/8 save image",
   "-sv.htm", "Saved web page",
@@ -262,6 +262,13 @@ sub description {
   "-ps6.lbl.jpg", "OS/8 .SV image tape label",
   "-ps6.od", "OS/8 .SV image octal dump",
 );
+# Fixed a subtle bug: the order of results from 
+# "keys %desc" is random, even from one run to 
+# the next.  We need longer matches to be tried 
+# first, so enforce that here.
+sub bylength {
+  return length($b) <=> length($a);
+}
 sub process {
   local($d) = @_;
   local(@sub);
@@ -293,7 +300,7 @@ sub process {
       next if $f =~ /[.]pl$/i;
       next if $f =~ /[.]url$/i;
       $match = 0;
-      foreach $e (keys %exts) {
+      foreach $e (sort bylength keys %exts) {
         next unless $f =~ /(.*)$e$/;
         $r = $1;
         if (defined($files{$r})) {
