@@ -303,6 +303,7 @@ sub process {
       foreach $e (sort bylength keys %exts) {
         next unless $f =~ /(.*)$e$/;
         $r = $1;
+$e =~ s/\\//g;
         if (defined($files{$r})) {
           $files{$r} .= " $e";
         } else {
