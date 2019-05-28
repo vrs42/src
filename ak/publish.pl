@@ -107,6 +107,13 @@ sub description {
   "-software-bom.pdf", "Bill of Materials",
   ".pdf", "PDF write-up",
 );
+# Fixed a subtle bug: the order of results from 
+# "keys %desc" is random, even from one run to 
+# the next.  We need longer matches to be tried 
+# first, so enforce that here.
+sub bylength {
+  return length($b) <=> length($a);
+}
 sub process {
   local($d) = @_;
   local(@sub);
@@ -138,7 +145,7 @@ sub process {
       next if $f =~ /[.]pl$/i;
       next if $f =~ /[.]url$/i;
       $match = 0;
-      foreach $e (keys %exts) {
+      foreach $e (sort bylength keys %exts) {
         next unless $f =~ /(.*)$e$/;
         $r = $1;
         if (defined($files{$r})) {
@@ -162,7 +169,10 @@ sub process {
       # Get a description for the key
       $m = "$d/$k"; $m =~ s:^[.]/*::;
       $n = $m; $n =~ s:/:-:g;
+@desc = %desc;
+warn "desc: @desc\n" unless defined $desc{$m};
       warn "No description for $m (@exts)\n" unless defined $desc{$m};
+#     $desc{$m} = "No description" unless defined $desc{$m};
       print "<td>$desc{$m}\n<td>";
       $link = &link();
       print "<table width=100%><col width=50%><col width=50%>\n";
