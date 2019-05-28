@@ -303,7 +303,6 @@ sub process {
       foreach $e (sort bylength keys %exts) {
         next unless $f =~ /(.*)$e$/;
         $r = $1;
-$e =~ s/\\//g;
         if (defined($files{$r})) {
           $files{$r} .= " $e";
         } else {
@@ -330,7 +329,8 @@ $e =~ s/\\//g;
       $link = &link();
       print "<table width=100%><col width=50%><col width=50%>\n";
       foreach $e (@exts) {
-        print "<td><a href=$link/$k$e>$dir-$n$e</a><td>($exts{$e})<tr>\n";
+        $e1 = $e; $e1 =~ s/\\//g;
+        print "<td><a href=$link/$k$e1>$dir-$n$e1</a><td>($exts{$e})<tr>\n";
       }
       print "</table>\n";
     }
