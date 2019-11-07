@@ -1,0 +1,63 @@
+
+/ INTERRUPT ROUTINE CINET-BASIC
+/ PATCH BY KLEMENS KRAUSE
+/ REMOVE MEM-PARITY STOP
+/ MAKE ENTRY BIT-7 INDEPENDENT
+
+        CHAR=2723
+
+        *2605
+AC,     0000
+LINK,   0000
+M0003,  7775
+/
+INTRPT, DCA     AC      / SAVE AC
+        RAR
+        DCA     LINK    / SAVE LINK
+        KSF
+        JMP     NOTKBD
+        KRB
+        AND     0026    / 0177
+        DCA     CHAR
+        TAD     CHAR
+        SNA
+        JMP     NOTKBD
+        TAD     2607    / 7775
+        SNA CLA
+        JMP     2757    / CTL-C ?	
+        TAD     2666
+        SZA CLA
+        JMS I   0134
+        TAD     CHAR
+        TAD     P0200
+        DCA     2666
+NOTKBD, TSF
+        JMP     NOTPRT
+        TCF             / CLEAR TELEPRINTER FLAG
+        DCA     2662
+        TAD I   2665
+        SNA
+        JMP     NOTPRT
+        TPC             / LOAD TELEPRINTER PRINT
+        DCA     2662
+        DCA I   2665
+        TAD     2665
+        IAC             / INC OUT_POINTER
+        AND     0031    / 0017
+        TAD     2663
+        DCA     2665
+NOTPRT, RMF             / RESTORE MEM-FIELD
+        TAD     LINK
+        CLL RAL
+        TAD     AC
+        ION
+        JMP I   0000    / RET FROM INTERRUPT
+P0200,  0200
+/
+        0000 
+        3220            / OBFR
+        3237
+        3237
+        0000
+        2471
+$
