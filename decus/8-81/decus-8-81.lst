@@ -1,0 +1,81 @@
+   1            *6000
+   2 06000 6032           KCC                 /INITIALISATION
+   3 06001 3277           DCA CHKSUM
+   4 06002 1274           TAD K100
+   5 06003 7040           CMA
+   6 06004 3275           DCA P
+   7 06005 3276 BEGIN,    DCA DMP
+   8 06006 6031           KSF                 / GET CHARACTER
+   9 06007 5206           JMP .-1
+  10 06010 6036           KRB
+  11 06011 1272           TAD M272
+  12 06012 7500           SMA                 /IS IT LETTER OR NUMBER?
+  13 06013 5232           JMP INST            /LETTER
+  14 06014 1271           TAD K12             /NUMBER
+  15 06015 7104           RAL CLL
+  16 06016 7006           RTL
+  17 06017 1276           TAD DMP
+  18 06020 3276           DCA DMP             /STORE MOST SIG. HALF
+  19 06021 6031           KSF
+  20 06022 5221           JMP .-1
+  21 06023 6036           KRB
+  22 06024 0273           AND M7
+  23 06025 1276           TAD DMP             /ASSEMBLE WORD
+  24 06026 6046           TLS
+  25 06027 1277           TAD CHKSUM          /UPDATE CHECKSUM
+  26 06030 3277           DCA CHKSUM
+  27 06031 5205           JMP BEGIN
+  28 06032 1267 INST,     TAD KON             /WHICH LETTER?
+  29 06033 3234           DCA .+1
+  30 06034 0000           0
+  31 06035 5251           JMP ORIGIN          /A
+  32 06036 5253           JMP LEADER          /B
+  33 06037 1277           TAD CHKSUM          /C
+  34 06040 7112           CLL RTR             /OUTPUT CHECKSUM
+  35 06041 7012           RTR
+  36 06042 7012           RTR
+  37 06043 0270           AND M77
+  38 06044 4261           JMS PUNCH
+  39 06045 1277           TAD CHKSUM
+  40 06046 0270           AND M77
+  41 06047 4261           JMS PUNCH
+  42 06050 5253           JMP LEADER          / PUNCH TRAILER
+  43 06051 1274 ORIGIN,   TAD K100            /DEFINE ORIGIN
+  44 06052 5205           JMP BEGIN
+  45 06053 1274 LEADER,   TAD K100            /PUNCH LEADER
+  46 06054 1274           TAD K100
+  47 06055 4261           JMS PUNCH
+  48 06056 2275           ISZ P
+  49 06057 5253           JMP LEADER
+  50 06060 5201           JMP BEGIN-4
+  51 06061 0000 PUNCH,    0
+  52 06062 6046           TLS
+  53 06063 6041           TSF
+  54 06064 5263           JMP .-1
+  55 06065 7200           CLA
+  56 06066 5661           JMP I PUNCH
+  57 06067 5226 KON,      5226
+  58 06070 0077 M77,      77
+  59 06071 0012 K12,      12
+  60 06072 7506 M272,     7506
+  61 06073 0007 M7,       7
+  62 06074 0100 K100,     100
+  63 06075 0000 P,        0
+  64 06076 0000 DMP,      0
+  65 06077 0000 CHKSUM,   0
+  66            $
+
+BEGIN   6005
+CHKSUM  6077
+DMP     6076
+INST    6032
+K100    6074
+K12     6071
+KON     6067
+LEADER  6053
+M272    6072
+M7      6073
+M77     6070
+ORIGIN  6051
+P       6075
+PUNCH   6061
