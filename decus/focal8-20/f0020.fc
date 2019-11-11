@@ -1,0 +1,51 @@
+@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL , 8/68
+
+02.01 E
+02.03 A ?TRACE?,!;A "# CHANNELS",NC,!
+02.09 A "START CH #",CN,!;A "ASSUME % MAX DEV",DS,!
+02.10 S CN=CN+3;F I=1,8;A C(I);S T=T+C(I)
+02.20 S A=T/9;T !;F I=1,NC-8;D 3
+02.25 D 4
+
+03.10 A C(9);S A=A+(C<9>-C<0>)/9;S T=T+C<9>
+03.20 S D=(C<5>-A)*100/A;S CN=CN+1;I (FABS<D>-FABS<MD>)3.4;S MD=D
+03.40 S E=DS*FITR(<10*D/DS>+.5);I (TR)3.5;T %9.02,CN,D,!
+03.50 S ND(E)=ND(E)+1;I (DS-FABS<MD>)5.1;F J=0,8;S C(J)=C(J+1)
+
+04.10 F I=-DS,DS/10,DS;S TD=TD+ND(I*10)*I^2/(NC-8)
+04.15 S TD=FSQT(TD);S D=100/FSQT(T/NC);S J=FSQT(FABS<TD^2-D^2>);T ,!
+04.30 T %7,"AVG. ",T/NC,!,"DEVIATION",!
+04.35 T %6.02," MEA MAX",MD," %",!," MEA STD",TD," %",!
+04.40 T " CAL STD",D," % STAT",!," CAL STD",J," % DIF NON-LIN",!
+04.61 T ,!,"% DEVIATION   # CH AT DEV",!;F I=-DS,DS/10,DS;D 4.7
+04.62 Q
+04.70 T %8.02,!,I,ND(I*10)," ";F J=0,NC/90,ND(I*10);T "X"
+
+05.10 T ,!;T %4.02,"MAX DEV >",DS,"% INCREASE SPAN";Q
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL , 8/68
+
+02.01 E
+02.03 A ?DISREGARD?,!;A ?TRACE?,!;A "# CHANNELS",NC,!;S NC=NC-DI
+02.09 A "START CH #",CN,!;A "ASSUME % MAX DEV",DS,!;F I=1,DI;*;A J;*
+02.10 S CN=CN+3+DI;F I=1,8;*;A C(I);*;S T=T+C(I)
+02.20 S A=T/9;F I=1,NC-8;D 3
+02.25 D 4
+
+03.10 *;A C(9);*;S A=A+(C<9>-C<0>)/9;S T=T+C<9>
+03.20 S D=(C<5>-A)*100/A;S CN=CN+1;I (FABS<D>-FABS<MD>)3.4;S MD=D
+03.40 S E=DS*FITR(<10*D/DS>+.5);I (TR)3.5;T %9.02,CN,D,!
+03.50 S ND(E)=ND(E)+1;I (DS-FABS<MD>)5.1;F J=0,8;S C(J)=C(J+1)
+
+04.10 F I=-DS,DS/10,DS;S TD=TD+ND(I*10)*I^2/(NC-8)
+04.15 S TD=FSQT(TD);S D=100/FSQT(T/NC);S J=FSQT(FABS<TD^2-D^2>);T ,!
+04.30 T %7,"AVG. ",T/NC,!,"DEVIATION",!
+04.35 T %6.02," MEA MAX",MD," %",!," MEA STD",TD," %",!
+04.40 T " CAL STD",D," % STAT",!," CAL STD",J," % DIF NON-LIN",!
+04.61 T ,!,"% DEVIATION   # CH AT DEV",!;F I=-DS,DS/10,DS;D 4.7
+04.62 Q
+04.70 T %8.02,!,I,ND(I*10)," ";F J=0,NC/90,ND(I*10);T "X"
+
+05.10 T ,!;T %4.02,"MAX DEV >",DS,"% INCREASE SPAN";Q
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

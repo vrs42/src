@@ -1,0 +1,30 @@
+
+C-FOCAL , 8/68
+
+01.01 E
+01.02 A "G"G;S J=1
+01.04 A "N"N;S P=1;S S=0
+01.05 A "S"X(P);S S=S+X(P)
+01.07 S P=P+1;I (N-P)1.08,1.05,1.05
+01.08 DO 2
+01.09 S J=J+1;I (G-J)1.10,1.04,1.04
+01.10 F J=1,G;S SZ=SZ+N*M(J)/SN
+01.11 T "ANALYSIS OF VARIANCE TABLE:",!!!;G 3.01
+
+02.01 S M(J)=S/N;S KR=N-1;S SX=0;S SN=SN+N
+02.02 F P=1,N;S SX=SX+(X(P)-M(J))^2;S XM(P)=XM(P)+X(P)/G
+02.03 S V(J)=SX/KR;S SD=FSQT(V(J));T !
+02.04 T "GROUP   DF        MEAN          VARIANCE      STAND. DEV.",!
+02.06 T %2 J,"  ",KR,"  ";T %, M(J),"  ",V(J),"  ",SD,!!!
+
+03.01 F J=1,G;S SB=SB+N*(M(J)-SZ)^2;S SW=SW+KR*V(J)
+03.02 S KB=G-1;S MB=SB/KB;S ST=SB+SW;S KE=KB*KR;S KT=KB+KR+KE
+03.03 T "    VARIATION          DF           SS                MS",!!
+03.04 T %4,"BETWEEN:            "KB;T %,"    "SB,"    "MB,!!
+03.05 F P=1,N;S SR=SR+G*(XM(P)-SZ)^2
+03.06 S SE=SW-SR;S MR=SR/KR;S ME=SE/KE
+03.07 T %4,"REPLICATION:        "KR;T %,"    "SR,"    "MR,!!
+03.08 T %4,"ERROR:              "KE;T %,"    "SE,"    "ME,!!
+03.09 T %4,"TOTAL:              "KT;T %,"    "ST,!!!
+03.10 T "RATIO:  BETWEEN/ERROR ",MB/ME,!!;Q
+*

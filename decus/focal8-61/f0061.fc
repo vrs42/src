@@ -1,0 +1,43 @@
+
+C-FOCAL,1969
+
+01.06 E
+01.07 A NA,NB,L1
+01.09 F J1=1,L1;A X(J1),Y(J1)
+01.10 T !!"DATA POINTS :",!!," NO.          X                Y",!
+01.11 F J1=1,L1;T %2,J1,"   ",%,X(J1),"   ",Y(J1),!
+01.15 F L=NA,NB;D 2
+01.20 Q
+
+02.17 S N2=2*L-1
+02.20 F J1=1,N2;S SX(J1)=0
+02.22 F J1=1,L;S YX(J1)=0
+02.25 F J2=1,N2;F J1=1,L1;S SX(J2)=SX(J2)+X(J1)^(J2-1)
+02.27 F J2=1,L;F J1=1,L1;S YX(J2)=YX(J2)+Y(J1)*(X(J1)^(J2-1))
+02.28 T !!"NO. OF ADJUSTABLE COEFFICIENTS",%2,L
+02.30 F J2=1,L;F J1=1,L;S A(J2+J1*L)=SX(J1+(J2-1))
+02.35 D 15.0
+02.78 F K=1,L; T !"B(",%2,K,")  ",%,B(K)
+02.80 F J1=1,L1;S YX(J1)=0
+02.82 S SD=0
+02.84 T !!" NO.        Y OBS.           Y CALC.            DIF",!
+02.85 F J1=1,L1;S YX=0;D 8.0
+02.86 S SD=FSQT(SD/(L1-L))
+02.88 T !"MEAN SQUARE DEVIATION",SD;R
+
+08.10 F J2=1,L;S YX=YX+B(J2)*(X(J1)^(J2-1))
+08.15 S D=Y(J1)-YX;S SD=SD+D*D
+08.20 T %2,J1,"   ",%,Y(J1),"   ",YX,"   ",D,!;R
+
+14.05 S N=K+1; S DD=A(N+II*L)/A(II+II*L)
+14.10 F J=II,L; S A(N+J*L)=A(N+J*L)-A(II+J*L)*DD
+14.15 S YX(N)=YX(N)-YX(II)*DD; R
+
+15.05 S MM=L-1
+15.10 F II=1,MM; F K=II,MM; D 14.0
+15.15 S B(L)=YX(L)/A(L+L*L)
+15.20 F M=2,L;S N=L+1-M;S KK=N+1;S B(N)=YX(N)/A(N+N*L);D 15.25
+15.21 G 15.30
+15.25 F K=KK,L; S B(N)=B(N)-A(N+K*L)*B(K)/A(N+N*L)
+15.30 R
+*x

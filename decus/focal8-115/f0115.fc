@@ -1,0 +1,172 @@
+@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.80 C DEMONSTRATION PROGRAMME FOR THE NORMAL CURVE.
+01.90 S X=FSQT(2*3.142)
+
+02.10 A "STANDARD DEVIATION VALUE",SD,!
+02.20 F T=-2,.1,2;T "*",!;F Y=0,[800/(SD*X)]*FEXP<-T^2>;T " "
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.50 C "ROUTINE FOR FINDING MEAN AND STANDARD DEVIATION"
+
+02.10 A "HOW MANY ITEMS IN THE SAMPLE",N,!
+02.20 S Y=0;S Z=0;T "GIVE ",N," VALUES",!
+02.30 F A=1,1,N;A X(A)
+02.50 F A=1,1,N;S Y=Y+X(A)
+02.60 S M=Y/N;T !, "              MEAN",M,!
+02.70 F A=1,1,N;S Z=Z+[X(A)]^2
+02.80 S S=FSQT(Z/N-M^2);T "STANDARD DEVIATION",S,!
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.50 C "STUDENT'S T CALCULATION
+
+02.10 A "ITEMS IN GROUP",N,!;T "GIVE",N," VALUES,1ST GROUP",!
+02.11 S R=0;S S3=0;S S1=0;S Q=0;S L=0
+02.30 F A=1,N;A X(A)
+02.31 F A=1,N;S Q=Q+X(A);
+02.32 F A=1,N;S S1=S1+[X(A)]^2
+02.33 S M1=Q/N;S S2=FSQT(S1/N-M1^2)
+02.34 T !, "1ST.MEAN",M1,"  S.D.",S2,!
+02.60 T !, "GIVE",N," VALUES,2ND GROUP",!
+02.70 F A=1,1,N;A Y(A)
+
+03.10 F A=1,1,N;S R=R+Y(A);
+03.11 F A=1,N;S S3=S3+[Y(A)]^2
+03.12 S M2=R/N;S S4=FSQT(S3/N-M2^2)
+03.13 T !, "2ND SAMPLE MEAN",M2,"   S.D.",S4,!
+03.30 F A=1,1,N;S L=L+[X(A)-Y(A)]^2
+03.40 S S=FSQT([L/N]-<M1-M2>^2)
+03.50 S T=<FABS(M1-M2)*FSQT[N-1]>/S;
+03.60 T !," 'T' VALUE",T," FOR",N-1," D.F.",!!
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.50 C 2X2 CHI SQUARED GIVING SIGNIFICANCE LIMITS.
+
+02.10 T "GIVE ME THE SAMPLES IN THE FOLLOWING ORDER"
+02.20 T !!, "A  B",!,"C  D",!!
+02.30 A "A",A," B",B,!,"C",C," D",D;S N=A+B+C+D;T !,"GRAND TOTAL",N
+02.40 S X=[(B*C-A*D)^2*N]/(A+B)*(C+D)*(A+C)*(B+D)
+02.50 IF (X-6.635) 3.1;
+02.60 T !,"CHI SQUARE",X," SIGNIFICANT AT 1% LEVEL";QUIT
+
+03.10 IF (X-3.841) 3.3;
+03.20 T !,"CHI SQUARE",X," SIGNIFICANT AT 5% LEVEL";QUIT
+03.30 T !,"CHI SQUARE NOT SIGNIFICANT";QUIT
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+02.10 C CHI SQUARED PROGRAMME ALLOWING CONTINUATION.
+02.20 A " HOW MANY PREVIOUS SAMPLES HAVE YOU GIVEN",P,!
+02.30 A " WHAT IS THE CONTINUATION FIGURE ",C,!
+02.40 A " HOW MANY SAMPLES DO YOU WANT TO GIVE NOW",N,!
+02.50 T " GIVE ME",N," OBSERVED READINGS",!
+02.60 F A=1,1,N;A X(A)
+02.80 T !;T "O.K. NOW GIVE ME",N," EXPECTED READINGS",!
+02.90 F A=1,1,N;A Y(A)
+
+03.10 T !
+03.20 F A=1,1,N;S CI=CI+[X(A)-Y(A)]^2/Y(A)
+03.30 T " CHI SQUARED RESULT FOR ",(P+N)-1," D.F.",CI+C,!!
+03.40 S CI=0
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+11.10 T "PROGRAM FOR 'R'"
+11.20 A !, "HOW MANY SUBJECTS",N,!
+11.30 T "GIVE",N," VALUES",!,"IST SAMPLE",!
+11.31 S X=0;S Y=0;S M=0;S P=0;S Q=0
+11.40 F A=1,N;A X(A)
+11.60 F A=1,1,N;S X=X+X(A)
+11.70 T !, "2ND. SAMPLE",!
+11.80 F A=1,N;A Y(A)
+11.90 F A=1,N;S Y=Y+Y(A)
+
+12.20 F A=1,1,N;S M=M+<X(A)*Y(A)>;S P=P+(X(A))^2;S Q=Q+(Y(A))^2
+12.80 S P=FSQT(N*P-X^2);S Q=FSQT(N*Q-Y^2)
+12.90 S R=(N*M-X*Y)/P*Q;T !!,"R VALUE ",R,!
+
+13.10 S Z=R^2*[(N-2)/<1-R^2>];S T=R*FSQT([N-2]/<1-R^2>)
+13.20 T "F RATIO ",Z,"     STUDENT T VALUE",T,!
+13.30 T "FOR 1 AND",N-2,"  DEGREES OF FREEDOM",!!
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.80 C SPEARMAN RHO RANK CORRELATION.
+
+02.10 A "NUMBER OF SAMPLES TO BE USED ",N,!
+02.20 T " O.K. GIVE ME ",N, " FIRST VALUES",!;S D2=0;S R=0
+02.30 F A=1,1,N;A X(A)
+02.50 T !;T " O.K. NOW GIVE ME ",N, " SECOND VALUES",!
+02.60 F A=1,1,N;A Y(A)
+02.80 F A=1,1,N;S D2=D2+<Y[A]-X(A)>^2
+02.90 S R=1-[(6*D2)/<N^3-N>];T !!," RHO-COEFFICIENT ",R,!!
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+01.50 C RANKING OF MIXED VALUES PRIOR TO SPEARMAN RHO.
+01.80 C SPEARMAN RHO RANK CORRELATION.
+
+02.10 A "HOW MANY SAMPLES FOR RANKING",N
+02.20 T % 8.04, !, "GIVE ME",N," VALUES"
+02.30 F A=1,N;A X(A)
+02.40 T !!;S P=0
+02.50 F A=1,N; DO 2.7
+02.60 T "LARGEST VALUE",P;S Q=N;S S=1; GOTO 4.11
+02.70 IF (P-X(A)) 2.8;RETURN
+02.80 S P=X(A);RETURN
+02.90 S R=1-[(6*D2)/<N^3-N>];T !!," RHO-COEFFICIENT ",R,!!
+
+04.11 F A=1,N;DO 4.3
+04.20 S A=1;S S=S+1;G 4.11
+04.30 IF (X(A)-S) 4.11,4.4;RETURN
+04.40 S X(A)=P+1;S Y(A)=Q;S Q=Q-1;GOTO 5.1
+
+05.10 IF (Q) 6.1,6.1;RETURN
+
+06.10 T !!,"RANK ORDER AS FOLLOWS",!;DO 7
+
+07.10 F A=1,N;T % 2, Y(A)
+07.20 QUIT
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+C-FOCAL,1969
+
+02.10 C ANALYSIS OF VARIANCE: 2 SAMPLES:ACCEPTS UNEQUAL SIZE
+02.11 S W1=0;S W2=0;S Y1=0;S X1=0;S D1=0;S D3=0
+02.20 A "HOW MANY ITEMS IN FIRST SAMPLE?",N1
+02.30 T %8.04,!,"OK GIVE ME",N1," ITEMS",!!,"FIRST SAMPLE"
+02.40 F A=1,N1;A X(A)
+02.50 F A=1,N1;S X1=X1+X(A)
+02.60 S X2=X1/N1;T !!,"    FIRST SAMPLE MEAN:",X2
+02.62 F A=1,N1;S D1=D1+(X(A))^2
+02.64 S D2=FSQT(D1/N1-X2^2);T "  STANDARD DEVIATION:",D2,!!
+02.70 A "HOW MANY ITEMS IN SECOND SAMPLE",N2,!
+02.80 T "OK GIVE ME ",N2," ITEMS",!!,"SECOND SAMPLE"
+02.90 F A=1,N2;A Y(A)
+
+03.10 F A=1,N2;S Y1=Y1+Y(A)
+03.20 S Y2=Y1/N2;T !! "   SECOND SAMPLE MEAN:",Y2
+03.21 F A=1,N2;S D3=D3+(Y(A))^2
+03.22 S D4=FSQT(D3/N2-Y2^2);T "  STANDARD DEVIATION:",D4
+03.30 S T1=X1+Y1;S GA=T1/(N1+N2)
+03.40 T !!"         GRAND AVERAGE",GA,!!
+
+04.10 T "                        SUMS OF SQUARES
+04.11 T "       D.F.       VARIANCE",!!
+04.20 S S1=(X2-GA)^2*N1;S S2=(Y2-GA)^2*N2;
+04.21 S SS=S1+S2
+04.30 T "BETWEEN SAMPLES:     ",SS,"       ",1
+04.31 T "   ",SS
+
+05.10 F A=1,N1;S W1=W1+(X2-X(A))^2
+05.20 F A=1,N2;S W2=W2+(Y2-Y(A))^2
+05.40 S WS=W1+W2;T !! "WITHIN  SAMPLES:     ",WS
+05.50 T "      ",(N1+N2)-2,"   ",WS/[(N1+N2)-2],!!!
+
+06.10 T  "          TOTAL:     ",SS+WS,"       "
+06.20 T (N1+N2)-1,"   ",[SS+WS]/<(N1+N2)-1>,!!
+06.30 T !!"        F RATIO:    ",SS/<WS/([N1+N2]-2)>,!!!
+*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

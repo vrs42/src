@@ -1,0 +1,48 @@
+C-FOCAL,1969
+
+01.50 F I=1-P,0;F J=1-P,I;S A(-J-I*P-I)=A(-J-I*P)
+01.55 S B=0;F Q=1,N;D 5
+01.70 S D(P)=Y;S R(P)=M;S X=X-B;F J=0,P;S A(P*J+J+P)=V(J)
+01.80 I (B*A/X-W)10.1;T %3,P,D(P),%8.02,B*A/X,!;I (6-P)10.1;S P=P+1;G
+
+02.10 T "SCREENING REGRESSION",!
+02.20 A "P",N,!,"N",A,!,"S Y",R,!,"SS Y",X,!,"F",W,!
+02.30 T "PASS SELVAR  F",!;S P=1;S X=X-R^2/A G
+
+03.70 F J=1,P;S I=P;F L=0,J-1;D 9
+03.85 A R(P);S J=P;S I=P;F L=0,J-1;D 6
+
+04.10 S Q=Q-1;G 1.7
+
+05.05 F J=0,P-1;D 7
+05.07 S D(P)=Q;I (N-Q)4.1;F L=0,N;A T;F J=0,P;D 8
+05.30 D 3;S T=R(P)^2/A(P^2+2*P);I (B-T)5.5;R
+05.50 S B=T;S Y=Q;S M=R(P);F J=0,P;S V(J)=A(P*J+J+P)
+
+06.20 S T=J-1-L;S T=R(T)*A(P*T+T+J)/A(P*T+2*T);S R(P)=R(P)-T
+
+07.10 I (Q-D(J))7.2,7.3
+07.20 R
+07.30 S J=P;S Q=Q+0;F L=-1,N;A T
+
+08.10 I (L-D(J))8.2,8.3
+08.20 R
+08.30 S A(J+P+J*P)=T
+
+09.20 S T=J-1-L;S T=A(I+T*P+T)*A(P*T+T+J)/A(T*P+2*T)
+09.30 S A(I+P*J+J)=A(I+P*J+J)-T
+
+10.10 F I=0,P;S A(P+I*(P+1))=R(I)
+10.20 F J=0,P-1;F K=J-P,0;D 12
+10.30 S V(P-1)=A((P+1)^2-P-2);F J=2-P,0;D 11
+10.40 F I=0,P-1;T %2,"B",D(I),"  ",%6.05,V(I),!
+10.50 Q
+
+11.10 S V(-J)=A((P+1)^2-1-(P+1)*(P+J))
+11.20 S T=0;F K=1,P+J-1;D 13
+11.30 S V(-J)=V(-J)+T
+
+12.10 S A(J+(P+1)*J-K)=A(J+(P+1)*J-K)/A(J+(P+1)*J)
+
+13.10 S T=T-A(-J+(P+1)*(-J)+K)*V(-J+K)
+*
