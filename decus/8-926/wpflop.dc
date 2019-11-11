@@ -1,0 +1,185 @@
+
+
+
+
+
+
+                           WPFLOP User's Guide                           WPFLOP User's Guide                           WPFLOP User's Guide
+
+    This document describes the operation of the word processing to OS/8
+conversion program, WPFLOP.
+
+USAGEUSAGEUSAGE
+
+    WPFLOP is used to transfer documents  from  word  processing  floppy
+disks to OS/8 media or from OS/8 media to word processing diskettes. The
+WPS floppy is accessed using the COS compatible floppy handlers included
+in this package. There are various modes of  conversion  which  will  be
+explained later.
+
+OPERATIONOPERATIONOPERATION
+
+WPS->OS/8_________
+
+    Before using WPFLOP to access a WPS floppy, one must know the number
+of the document which is to be read from the WPS floppy. For example, in
+the sample index below, the column  labeled  "Document  number"  is  the
+number that WPFLOP uses to reference a document.
+
+-- DOCUMENT INDEX --
+
+Drive: 3, Name: DOC3 , # of Docs: 3, Blocks left: 621 (of 627)
+-------------------------------------------------------------------------------
+Document                                                         Elapsed Time
+Number  Name                 Created  Modified       Size Version  Last   Total
+-------------------------------------------------------------------------------
+  3     Floppy Index
+                             12/7/79  NO/DA/TE        3     1      0:00   0:00
+
+  2     WPFLOP User's Guide
+                             12/7/79  12/7/79 13:09   2     1      0:07   0:07
+
+  1
+                             12/3/79  12/7/79 13:10   1     4      0:00   0:00
+
+
+
+    The document "WPFLOP User's Guide" is document number 2.
+
+    Before running WPFLOP, the COS mode floppy handlers must be install-
+ed in your OS/8 system. See the BUILD chapter in the  OS/8  System  Ref-
+erence manual for details on using BUILD. See the  document  "COSHAN.DC"                                                              _________
+for further information on the handlers. This document assumes that  the
+handlers have been installed with names of "RXB0:" for drive  zero,  and
+"RXB1:" for drive one.
+
+    To copy the document "WPFLOP User's Guide" to a  file  on  the  OS/8
+system device called WPFLOP.DC, use the following commands:
+
+    .R WPFLOP           (User input underlined)     ________
+
+    *WPFLOP.DC<RXB0:2$  (Assumes WPS floppy in drive 0. $=ESC,     _________________
+                        ALT or SEL, depending on the terminal.)
+
+    If no OS/8 output file is specified, the program  assumes  that  the
+user wants the output on the  console  terminal  (TTY:).  Therefore,  to
+print the same document on the console:
+
+    .R WPFLOP     ________
+
+    *RXB0:2$            The "2" here is the number of the WPS     _______
+                        document which is to be transferred.
+
+
+    The general WPS->OS/8 command syntax is as follows:
+
+   *[dev:file.ex]<wdev:docn[/S][/S...][$]
+       |     |      |    |   |         |       !     !      !    !   !         !       ^     ^      ^    ^   ^         ^
+       !     !      !    !   !         |__ALT or ESC to exit when done.       |     |      |    |   |         !
+       |     |      |    |   |       !     !      !    !   !
+       |     |      |    |   |_Optional switches       !     !      !    !   !
+       |     |      |    |       !     !      !    !
+       |     |      |    |_WPS Document number       !     !      !    !
+       |     |      |       !     !      !
+       |     |      |_Name for the OS/8 handler for the WPS floppy       !     !      !
+       |     |       !     !
+       |     |_OS/8 Output file specification       !     !
+       !       |
+       |_OS/8 output device       !
+
+
+
+    The asterisk (*) is printed by the OS/8 command decoder.  The  items
+enclosed in braces [] are optional. For example, if no OS/8 output  file
+is specified, TTY: is assumed. If the command line ends with an altmode,
+the program returns to OS/8 when it is finished. If  it  does  not,  the
+program responds with another "*" and inputs another command string.
+
+    There are two options accepted when transferring from WPS  to  OS/8.
+These are the version switch (/V) and the compatibility switch (/C).  If
+the version switch is in the command line,  WPFLOP  prints  its  version
+number before executing the command. If the compatibility mode switch is
+present, WPFLOP transfers the WPS document in  a  form  compatible  with
+OS/8 system programs. In this mode, underlines, dead keys,  and  bolding
+are ignored, but tabs are converted to tabs (ASCII 11). Also, the file
+is not justified. In normal mode, the output file contains  overprinting
+as necessary to duplicate the WPS file.
+
+    Compatibility mode is used to transfer a WPS file to OS/8 in a  form
+that can be used by, for example, OS/8 BASIC. This allows WPS to be used
+to enter and edit a BASIC program. To do this, create the file under WPS
+and transfer it to OS/8 using  compatibility  mode.  If  there  are  any
+errors, transfer it back to WPS, edit it there, and then back  to  OS/8,
+etc.
+
+OS/8->WPS_________
+
+    To transfer an OS/8 File to WPS, use the following syntax:
+
+    *wdev:<dev:file.ex/O[/S][$]
+
+    Note that this is similar to the above example. The  most  important
+differences are the output switch (/O) and the fact that no WPS document
+number is given in the command line. WPFLOP will use the next  available
+document for the new file. The number that WPFLOP uses will be  reported
+as a message of the form:
+
+"Creating document number:n"
+
+Where "n" is the number of the document created.
+
+    The /O switch is required to specify to WPFLOP that the output  file
+is on the WPS floppy. Without this switch the program will  assume  that
+the input file is the WPS file.
+
+    The other switch allowed is  the  /W  (word-wrap)  switch.  If  this
+switch is specified, the returns in the OS/8 file will be  converted  to
+word-wrap returns. If there are two returns in a row, hard  returns  are
+used. Normally, all the returns in the OS/8 file are converted  to  hard
+returns.
+
+    The document created on the WPS device  is  not  totally  compatible
+with WPS as it is initially created. The most obvious  problem  is  that
+tabs are output as only one space. To correct this, the WPS editor  must
+be allowed to scroll thru the document. The initial ruler MUST be chang-
+ed in order for the editor to correct the document. To facilitate  this,
+the ruler that WPFLOP creates has tabs at locations 8 and 9.  The  first
+tab, at location 8, is incorrect. It is included to be deleted in  order
+for the WPS editor to re-tabluate the  document.  Therefore,  the  corr-
+ection sequence is:
+
+    1.Create the WPS document from OS/8
+    2.Call the WPS editor to correct the document
+    3.At the top of the document, type GOLD Ruler.
+    4.Space to column 8 with ADVANCE WORD.
+    5.Type  the  space  bar.  The  first  of  the  adjacent   T's   will
+    disappear.
+    6.Type RETURN to embed the new ruler.
+    7.Type GOLD ADVANCE to scroll thru the document and correct it.
+    8.Type GOLD File to re-file the corrected document.
+
+RESTRICTIONSRESTRICTIONSRESTRICTIONS
+
+    The ruler created for the WPS document has a  ragged  ruler  with  a
+width of 80 columns and tabs every eight columns. This is the only ruler
+that can be created. However, you can change the ruler under  WPS  after
+the conversion.
+
+    The WPS to OS/8 code does not support bolded dead keys. The dead key
+sequence prints properly, but the sequence is not bolded.
+
+    The document created on the WPS device does not have an index entry.
+It will show up in the index as just the document number.  To  give  the
+file a name, edit the index document,(document 1) to  include  an  entry
+for the document. For example, if you created document 4, and want it to
+be called "Foobar", include the following line in the index:
+
+<n>Foobar <#>4<>
+
+    The form used is:
+<n>Name space <#>doc#<>
+
+    The n in the <> must be lower case, and the name  must  end  with  a
+space.
+
+                                                                                                                                                                                                                                                       
