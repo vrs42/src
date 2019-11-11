@@ -1,0 +1,93 @@
+C-8K FOCAL @1969
+
+01.05 E
+01.10 A ? ROWS COLUMNS ?,!
+01.15 F I=1,RO;T !;F J=1,CO;D 9
+01.20 F I=1,RO;S QR=QR+XR(I)^2/NR(I)
+01.30 F I=1,CO; S QC=QC+XC(I)^2/NC(I)
+01.40 S CT=XT*XT/NT; S Z=(QT-QG)/(NT-CO*RO)
+01.44 T !!,"PRELIMINARY ANOVA
+01.45 T !,%7.03,"SOURCE           SS         DF     MS      F
+01.50 T !,"COL.         ",QC-CT,%7.00,CO-1,%7.03
+01.55 T !,"ROWS         ",QR-CT,%7.00,RO-1,%7.03
+01.60 T !,"GROUPS       ",QG-CT,%7.00,RO*CO-1-Q,%7.03,(QG-CT)/(CO*RO-1-Q)
+01.62 T ,((QG-CT)/(CO*RO-1-Q))/Z
+01.65 T !,"SUBTOT       ",(QT-QG),%7.00,NT-(RO*CO-1+Q)-1,%7.03,Z
+01.80 T !,"TOTAL        ",QT-CT,%7.00,NT-1,%7.03,!!
+01.85 F I=1,CO; D 3
+01.86 D 12;D 20
+
+02.01 S N=N+1;S TA=0;F K=1,N; S TA=TA-X(K)
+02.02 S X(N)=TA;S LF=0
+02.03 T !,"COLUMN FACTORS",!;F K=1,N; T %8.05,X(K);D 22
+02.04 S SX=0
+02.05 F I=1,RO; D 8.0
+02.06 T !, "GRAND MEAN",SX/RO;S LF=0
+02.07 S SX=SX/RO; T !,"ROW FACTORS",!; F I=1,RO;T B(I)-SX;D 22
+02.08 T !,"ADJUSTED MEANS",!; F I=1,RO; T !;F J=1,CO; T B(I)+X(J)
+02.09 S SX=-XT^2/NT; F I=1,CO;S SX=SX+X(I)*XC(I)
+02.11 F I=1,RO;S SX=SX+B(I)*XR(I)
+02.13 T ! "REDUCTION DUE TO FACTORS",SX
+02.14 S X=QG-CT-SX;S D=CO*RO-(CO+RO)+1-Q
+02.75 T !!!,"FINAL ANOVA";S Y=QC+QR-2*CT-SX
+02.77 D 1.45
+02.80 T !,"COL.         ",QC-CT-Y,%7.00,CO-1,%7.03
+02.83 T (QC-CT-Y)/(CO-1),((QC-CT-Y)/(CO-1))/Z
+02.85 T !,"ROWS         ",QR-CT-Y,%7.00,RO-1,%7.03
+02.86 T ,(QR-CT-Y)/(RO-1),((QR-CT-Y)/(RO-1))/Z
+02.88 T !,"INTERAC.     ",X,%7.00,D,%7.03,X/D,(X/D)/Z
+02.90 D 1.6;D 1.65;D 1.8;T !!;Q
+
+03.10 F J=1,CO; D 4
+03.15 S B=0; F J=1,RO; S B=B+N((J-1)*CO+I)*XR(J)/NR(J)
+03.20 S B(I)=B-XC(I)
+
+04.10 S B=0; F K=1,RO; D 4.9
+04.20 I (I-J)4.4,4.3,4.4
+04.30 S B=B-NC(I)
+04.40 S A(10*I+J)=B;R
+04.90 S B=B+N((K-1)*CO+I)*N((K-1)*CO+J)/NR(K)
+
+08.10 S B(I)=XR(I)/NR(I)
+08.20 F J=1,CO;S B(I)=B(I)-((N((I-1)*CO+J)/NR(I)))*X(J)
+08.30 S SX=SX+B(I)
+
+09.10 S S=0; S  SS=0; S K=((I-1)*CO+J)
+09.20 T !,"N(",%3.00,K,"):  ";A N(K);I (N(K))9.9,9.9,9.22
+09.22 F L=1,N(K);D 10.1
+09.25 S XC(J)=XC(J)+S; S NC(J)=NC(J)+N(K)
+09.30 S XR(I)=XR(I)+S;S NR(I)=NR(I)+N(K)
+09.40 S XT=XT+S;S NT=NT+N(K)09.50 S QG=QG+S*S/N(K); S QT=QT+SS
+09.51 R
+09.90 S Q=Q+1;
+
+10.10 A X; S S=S+X; S SS=SS+X*X
+
+12.10 S N=CO-1; F I=1,N;F J=1,N;D 12.9
+12.50 R
+12.90 S A(I*10+J)=A(I*10+J)-A(I*10+CO)
+
+20.05 I (1-N)20.1;D 20.2;R
+20.10 F K=1,N-1; F I=K+1,N; D 21
+20.20 S X(N)=B(N)/A(10*N+N)
+20.30 S I=N-1
+20.40 S S=0
+20.50 F J=I+1,N;S S=S+A(10*I+J)*X(J)
+20.60 S X(I)=(B(I)-S)/A(10*I+I)
+20.70 I (1-I) 20.75; R
+20.75 S I=I-1;G 20.4
+
+21.10 S M=-A(10*I+K)/A(10*K+K)
+21.20 F J=K,N; S A(I*10+J)=A(10*I+J)+M*A(K*10+J)
+21.30 S B(I)=B(I)+M*B(K)
+
+22.10 S LF=LF+1;I (5-LF)22.2;R
+22.20 T !;S LF=0
+T !!!!,"REST OFF TAPE CONVERTS TO HSR INPUT"
+*
+01.12 *
+01.15 F I=1,RO;F J=1,CO;D 9
+02.90 D 1.6;D 1.65;D 1.8;T !!;*;Q
+09.20 A N(K);I (N(K))9.9,9.9,9.22
+*
+W

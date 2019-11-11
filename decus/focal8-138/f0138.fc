@@ -1,0 +1,58 @@
+
+C-FOCAL,1969
+
+01.05 T !,"WILCOXON T",!!
+01.07 E
+01.10 A "N",N,!!;S M=N;T "       X     Y",!!
+01.20 F I=1,N;T %2.0,"I"I;T %4.2;A "  "X,"   "Y,!;S D(I)=Y-X
+01.24 A "OK",A;I (A-0Y)1.25,1.29
+01.25 A !"I?",I;
+01.26 A "     X?",X,"   Y?",Y;S D(I)=Y-X;G 1.24
+01.29 T !
+01.30 S X=0;F I=1,N;D 2
+01.33 I (X)1.3
+01.35 S T=0
+01.40 F I=1,N-1; S K=I+1;D 3
+01.50 I (T)1.35,1.6
+01.60 F I=1,N-1;S K=I+1;S Y=2;D 4
+01.70 D 6;T %2.0, "N",N,!!!!
+01.80 G 1.07
+
+02.05 I (I-N)2.1,2.1
+02.06 R
+02.10 I (D<I>)2.5,2.3,2.5
+02.30 S N=N-1
+02.40 F T=I,N;S K=T+1;S D(T)=D(K);
+02.45 S X=-1
+02.50 C
+
+03.10 I (FABS<D[I]>-FABS<D[K]>)3.2,3.2,3.3
+03.20 G 3.4
+03.30 S H=D(I);S D(I)=D(K);S D(K)=H;S T=-1
+03.40 C
+
+04.10 I (FABS<D[I]>-FABS<D[K]>)4.2,4.25,4.2
+04.20 S D(I)=I*FSGN(D<I>);S H=I;DO 5;G 4.7
+04.25 S J=K
+04.30 S J=J+1;I (N-J)4.5,4.4,4.4
+04.40 I (FABS<D[K]>-FABS<D[J]>)4.5,4.3,4.5
+04.50 F C=I,J-1;S D(C)=((I+J-1)/Y)*FSGN(D<C>);S H=C;D 5
+04.60 S I=J-1;I (J-N)4.9,4.65,4.9
+04.65 S K=J;G 4.8
+04.70 I (K-N)4.9,4.8,4.8
+04.80 S D(K)=K*FSGN(D<K>);S H=K;D 5
+04.90 C
+
+05.10 I (D<H>)5.2,5.4,5.3
+05.20 S SN=SN+FABS(D<H>);G 5.5
+05.30 S SP=SP+D<H>;G 5.5
+05.40 T "PROGRAM ERROR";Q
+05.50 C
+
+06.05 I (N)5.4,6.5,6.1
+06.10 I (SN-SP)6.2,6.4,6.3
+06.20 T "NEGS SMALLER:    T",SN,"     ","(SP  ",SP,"    ";R
+06.30 T "POSV SMALLER:    T",SP,"     ","(SN  ",SN,"    ";R
+06.40 T "NEG AND POSV EQUAL:  SUMS:",SP,"     ";R
+06.50 T "ALL PAIRS EQUAL";Q
+*
