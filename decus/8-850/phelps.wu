@@ -1,0 +1,760 @@
+
+
+
+
+
+
+
+
+
+
+                 SPECIAL PURPOSE SUBROUTINES FOR OS/8 FORTRAN IV
+
+
+
+                    This  is  a collection of subroutines written to
+              extend the capabilities of  D.E.C.'s  FORTRAN  IV  for
+              the  PDP-8  and  PDP-12.  Most of the subroutines will
+              run on either PDP-8 or PDP-12 systems with or  without
+              a  hardware  FPP.   A  few are obviously unique to the
+              PDP-12 because they use devices such as  the  LINCtape
+              or LINCscope.  
+
+                    These routines were written by:
+
+                    Robert W. Phelps
+                    Dept. of Rad. Biol.  Biophysics
+                    University of Rochester Medical Center
+                    Rochester,NY 14642
+
+
+                    This write up was adapted for DECUS submission
+                    by:
+
+                    Bob Hassinger
+                    Liberty Mutual Research Center
+                    71 Frankland Road
+                    Hopkinton, Mass. 01748
+
+
+      Subroutines included in this collection are:  
+
+      USR     Subroutine to allow run-time declaration of files.  
+      MODE8   Subroutine to call 8-mode subroutines from FORTRAN.  
+      READB2  Subroutines  READB  and  WRITEB  to  read and write binary (12
+              bit) data  in  OS/8  files  and  RLINK  to  read  DIAL  format
+              LINCtapes.  
+      IOT     Subroutine to issue an 8-mode IOT.  
+      TV      Allows display of text on PDP-12 scope as a background task.  
+      NULL    Used with TV for scope oriented teletype input.  
+      XYPLOT  Modified  version of DEC's CALCOMP routines.  Allows plot data
+              to be written in a file for later plotting or viewing.  
+      PLOTIT  Subroutine to read a file produced  with  XYPLOT  and  produce
+              the plot on a CALCOMP type plotter as a backgrond task.  
+      PREVU   Subroutine  to  display  the data in a file produced by XYPLOT
+              on a storage scope.  
+      FMTX    Experimental      'FORTRAN      Multi-Tasking      Executive'.
+              Documentation is included in the file FMTX.WR.  
+
+
+
+
+
+
+
+
+
+
+
+                                                                      PAGE 2
+
+
+
+
+                                       USR
+                                       ---
+
+
+            This  routine  allows  run-time  declaration  of files in D.E.C.
+      OS/8 FORTRAN IV.  
+
+              Description of parameters:  
+
+              SUBROUTINE USR (UNIT, NAME, FUNCT, ERROR) 
+
+              UNIT  - Logical unit number.
+                      Only numbers 5 thru 9 are allowed.
+                      Fewer logical units may be  allowed  depending
+                      on  core  availability -- see programming note
+                      below.  
+              NAME  -  dev:file.ex   stored   in   3A6   format   or
+                      equivalent.   Device assumed to be DSK: if not
+                      explicitly stated.  This  parameter  may  also
+                      be   a  Hollerith  literal.   Null  characters
+                      ('@') and spaces are ignored in this field.  
+              FUNCT - Function: 2 - open file for input
+                                3 - open file for output
+                                4 - close output file
+                      The output file name given for  a  CLOSE  must
+                      agree  with  the  corresponding OPEN file name
+                      for that unit.  Closing a file with  0  blocks
+                      or  an  input  (FUNCT=2) file will delete that
+                      file name from the directory.  
+              ERROR - Return error condition:
+                      0 - no errors.
+                      1 - illegal device
+                      2 - illegal file name
+                      3 - illegal unit number (core
+                           exceeded!?)
+                      4 - illegal function code
+
+              User errors may  terminate  execution  unless  the  /E
+              option  was  specified  to  FRTS.   The following user
+              errors from USR are defined:  
+
+              0002 -  The user has  defined  a  non-resident  device
+                      handler external to USR.  
+
+      PROGRAMMING NOTE:  
+            Each  unit  is  assigned  1000(8) locations in the highest field
+      for buffer and handler (400 for its buffer and 400 for  its  handler).
+      These  locations are not dynamically allocated but are used for device
+      buffer and handlers only if they are not used by the program.  To  use
+      core  most  efficiently for large programs, use the highest order unit
+      numbers possible.  That is, using unit 5 allows  1000(8)  fewer  words
+      for source code than if unit 6 were the lowest unit number used.  
+
+
+
+
+
+
+                                                                      PAGE 3
+
+
+
+
+      RESTRICTIONS:  
+            Because  FRTS  loads  non-resident handlers from the top of core
+      down, and USR also uses that area, the user is  not  allowed  to  make
+      load  time I/O unit declarations to devices with non-resident handlers
+      external to USR.  To do so will cause a fatal USER  ERROR  2.   It  is
+      recommended,  and  generally  more convienent to use internal handlers
+      and declare all other files at  execution  time  with  calls  to  this
+      subroutine.   The  use  of  FRTS  internal handlers, SYS:, and devices
+      co-resident with SYS: are legal, even  if  defined  external  to  this
+      subroutine.  
+
+
+      EXAMPLES:  
+          1.  Define  unit  9  to  be  the  existing  file NEW.DA on
+              device DSK:  
+
+                    CALL USR (9, 'NEW.DA', 2, ERROR) 
+
+          2.  Define unit 8 to  be  the  existing  file  JUNK.TX  on
+              device LTA0:  
+
+                    CALL USR (8, 'LTA0:JUNK.TX', 2, ERROR) 
+
+          3.  Read  the  name  of  a file from the keyboard terminal
+              (unit 4), (if no  device  is  included  in  the  input
+              statement,  DSK:'  is  assumed).   Open  the  file for
+              output.  When the program is done, close the file.  
+
+                            DIMENSION NAME(3)
+                            READ (4, 100) NAME
+                    100     FORMAT (3A6)
+                            CALL USR (7, NAME, 3, ERROR)
+                               <continue program>
+                            CALL USR (7, NAME, 4, ERROR)
+
+      GETTING 'USR' ON THE AIR:  
+            USR is written in RALF language  and  can  be  included  in  the
+      FORTRAN IV  library.  The following commands will assemble the program
+      and include it in the user's FORTRAN IV library:  
+
+            .R RALF        /Run the RALF assembler
+            *USR<USR       /Assemble 'USR' 
+                           /Loader module to file USR.RL'
+            .R LIBRA       /Run the FORTRAN IV librarian program
+            *FORLIB<USR    /Insert USR' into the library.
+                           / If there is insufficient space
+                           / in the library or its directory, the
+                           / following command may be necessary:
+                           /*FORLIB[10]<FORLIB,USR/Z=50
+            *^C            /Return to the OS/8 monitor
+
+
+            One patch must be made to FRTS so USR will know  how  much  core
+
+
+
+
+
+                                                                      PAGE 4
+
+
+
+
+      is  available.   The patch deletes code which initializes FRTS when an
+      Analex line printer is present in the system.  The following  commands
+      will insert this patch:  
+
+            .GET SYS:FRTS
+            .ODT
+            *12475/ XXXX 7300;1311;3010;1023;3410;3410;1025;3410;1026
+            *12506/ XXXX 3410;7000;5766;0120
+            *^C
+            .SAVE SYS:FRTS
+
+      The  following additional patch must be made if an Analex line printer
+      is included in the system:  
+
+
+            *12507/ 7000 6652
+            *240/ 7450 0
+            *511/ 6663 6651
+            *513/ 6667 6652
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      PAGE 5
+
+
+
+
+                                      MODE8
+                                      -----
+
+
+            MODE8  is  an  8-mode  subroutine  that  may  be   called   from
+      FORTRAN IV by the following statements:  
+
+            EXTERNAL <name>
+            CALL MODE8 (<name>,<arg1>,<arg2>, ... )
+
+            A  maximum  of  six arguments are allowed and arguments not used
+      may be omitted.  Thus the simplest call is:  
+
+            EXTERNAL <name>
+            CALL MODE8 (<name>)
+
+            If arguments are passed, they are truncated  to  integer  values
+      between  0  and  4095.  The values of the arguments are passed in both
+      directions just as in any other FORTRAN  subroutine,  however,  arrays
+      may NOT be passed.  
+
+            8-mode  code  must  be  assembled by RALF and must be completely
+      page  relocatable.   The  subroutine  is  effectively  called  by  the
+      following code:  
+
+            CDF <calling field>
+            CIF <field of subroutine being called>
+            JMS <name>
+              <value of argument 1>
+              <value of argument 2>
+                .
+                .
+                .
+
+      A sample program is included in the source of MODE8.  
+
+            Insert  MODE8  in your FORTRAN library in the same way shown for
+      USR.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      PAGE 6
+
+
+
+
+                             READB,WRITEB and RLINK
+                             ----------------------
+
+
+            File READB2 contains the subroutines READB,WRITEB and  RLINK  as
+      a single RALF module.  
+            READB  and WRITEB allow reading/writing binary files in FORTRAN.
+      The calling sequence is:  
+
+            DIMENSION BUFR(256)
+            CALL READB (UNIT, BUFR)
+              or
+            CALL WRITEB (UNIT, BUFR)
+
+      This reads/writes the next block of 256 12-bit  binary  words  from/to
+      logical  unit  number  UNIT into/from the 256 element array BUFR.  The
+      values read/written are between 0 and 4095.  
+
+            These routines will not read past an end of file.  To check  for
+      end of file, code the following:  
+
+             EXTERNAL EOF
+             LOGICAL EOF
+             IF (EOF) GO TO 900
+                .
+             <continue source code>
+                .
+       900    <process end of file>
+
+            RLINK  allows a PDP-12 to read single LINCtape blocks into a 256
+      element array.  The calling sequence is:  
+
+             DIMENSION BUFFER (256)
+             CALL RLINK (BLOCK, BUFFER )
+
+      Integer values between 0 and 4095 are read from block  BLOCK  and  are
+      returned  as  elements of array BUFFE.  The patch described in the USR
+      writeup must be included in FRTS so RLINK can  determine  the  highest
+      field  of  core for a data buffer.  Unpredictable results may occur if
+      more than one device with  a  non-resident  handler  is  used  without
+      using USR to open the files.  
+
+            To  insert  READB,WRITEB  and  RLINK  in your FORTRAN IV library
+      assemble and insert the file READB2 in the same way as shown for  USR.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      PAGE 7
+
+
+
+
+                                       IOT
+                                       ---
+
+
+            Subroutine  IOT  allows  8-mode IOT's to be issued.  The calling
+      sequence is:  
+
+            CALL IOT (INST, AC) 
+
+      INST is the 8-mode IOT instruction  (note:  the  octal  code  must  be
+      converted to a decimal value for use here).  
+
+      When  IOT  is  called,  AC  contains  the  value  that is to be in the
+      accumulator when the IOT is issued.   If  the  execution  of  the  IOT
+      changes  the  contents  of the accumulator, the new value is returned.
+      This feature may be used to read the switch  regester  if  the  8-mode
+      instruction LAS is issued in place of an IOT.  
+
+            Insert  IOT  in  your  FORTRAN library in the same way shown for
+      USR.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      PAGE 8
+
+
+
+
+                                TV,TVIN and NULL
+                                ----------------
+
+
+            Subroutine TV allows ASCII (i.e. formatted)  information  to  be
+      displayed  on  the  PDP-12  scope  in  the  background  when executing
+      FORTRAN programs.  The routine is designed for more rapid  interaction
+      with  users  than  is possible using the teletype as an output device.
+      The calling sequence is:  
+
+            EXTERNAL TV
+            CALL MODE8 (TV, UNIT)
+
+      Where UNIT is the logical unit number used to output  the  ASCII  data
+      (this  logical  unit  is  usually  designated to output to NULL:).  TV
+      will display the current contents of the OS/8 buffer  associated  with
+      this  logical  unit  on the scope.  The FORTRAN command BACKSPACE will
+      allow overwriting a  line  and  the  command  REWIND  will  erase  the
+      screen.   (Note:  logical  unit  UNIT  must be associated with an OS/8
+      device handler which will have an OS/8 I/O buffer associated  with  it
+      rather  than  one  of  the internal drivers for units 1 thru 4 because
+      they do not have OS/8 I/O buffers - if  this  handler  is  other  than
+      NULL:  the data output to the scope will also be output to that device
+      (and file) in the usual way).  
+
+            TVIN is an OS/8 device handler designed to make  possible  input
+      from  the keyboard using the PDP-12's scope to display the typed line.
+      To use TVIN, the NULL handler (which is co-resident  with  TVIN)  must
+      be  used  as  the output device associated with the TV display and the
+      buffers for both NULL and TVIN must be in the same field.  (This  will
+      be  the  case  if  USR  was  used  to  open  these logical units.) All
+      standard formatted read commands are allowed, e.g.  
+
+             READ (7, 100) I
+      100    FORMAT (I5)
+
+      where 7 is the unit number associated with TVIN.  A  device  error  is
+      printed  if  NULL  does  not exist or if the buffer fields of NULL and
+      TVIN are different.  TVIN can only be used under OS/8 FORTRAN IV.  
+
+            The NULL and TVIN  device  handlers  may  be  inserted  in  your
+      system with the following commands:  
+
+            .R PAL8
+            *NULL<NULL
+            .R BUILD
+
+            $LO NULL
+            $IN NULL,NULL
+            $IN NULL,TVIN
+            $BOOT
+
+
+
+
+
+
+
+                                                                      PAGE 9
+
+
+
+
+      The  version  of  BUILD used should be the one which is configured for
+      your current system.  For further details on using BUILD refer to  the
+      OS/8 documentation from D.E.C.  
+
+            Insert  TV  in  your  FORTRAN  library in the same way shown for
+      USR.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                     PAGE 10
+
+
+
+
+                             XYPLOT,PLOTIT and PREVU
+                             -----------------------
+
+                DYNAMIC PLOTTING UNDER OS/8(and OS/12) FORTRAN IV
+
+
+      I.  INTRODUCTION 
+            The plotting routines supplied for use  with  DEC's  FORTRAN  IV
+      provide  for  on-line plotting but require total dedication of the CPU
+      while the plot is being produced.  For long plots, this requires  long
+      periods  of time during which the CPU is idle but cannot be used.  The
+      routines described here allow plots to  be  produced  under  interrupt
+      control  while  the  CPU  performs  other  tasks.  In particular, they
+      allow the user to create a plot file, preview it on ta  storage  scope
+      if  one is available, select the plot(s) he wants to be plotted on the
+      CALCOMP plotter, and while they are being plotted, preview  additional
+      plots and add selected ones to the plot file.  
+
+      II.  CREATING AND PLOTTING DISK FILES 
+            The  routines  in  the FORTRAN library have been modified so use
+      of the standard FORTRAN plot package  will  produce  a  plot  file  on
+      logical  unit  9.   (The user must remember to open unit 9 to avoid an
+      I/O error.) To plot  the  file  currently  being  created  or  a  file
+      created  previously,  the  following  code should be inserted into the
+      FORTRAN program:  
+
+             EXTERNAL PLOTIT
+             CALL MODE8 (PLOTIT, UNIT)
+
+      PLOTIT is a routine in the FORTRAN library  written  in  8-mode  code.
+      The  subroutine  MODE8 is a RALF coded subroutine which allows calling
+      8-mode programs from FORTRAN.  
+
+      UNIT is the logical unit number of the file to be plotted.   This  may
+      be  the  same  file as the one being created with the plotter routines
+      or it may be a different file.  If UNIT=0, the plotting will  continue
+      from  the point in the file where it previously stopped.  This feature
+      has been added in case the user is plotting the file (s)he is  in  the
+      process  of  creating,  but  because  of  a  telephone call, etc., has
+      allowed the plotter to "catch up".  
+
+            An external variable PDONE exists which indicates the  state  of
+      the  plotter.   PDONE=0  if  the  plotter  is  busy and PDONE=1 if the
+      plotter is not busy.  PLOTIT should never  be  called  when  PDONE  is
+      zero.   To  prevent  this  from  happening,  the following code can be
+      inserted into the FORTRAN source program:  
+
+             EXTERNAL PDONE, PLOTIT
+             LOGICAL PDONE
+             IF (PDONE) CALL MODE8 (PLOTIT, UNIT)
+
+      It is especially important to do this if UNIT=0.  
+
+
+
+
+
+
+                                                                     PAGE 11
+
+
+
+
+      III.  PREVIEWING A PLOT 
+            For the purpose of previewing, plots are divided into  "frames".
+      A  "frame" is the amount of the total plot which is to appear together
+      as one unit. To define the end of a frame, the user must  call  XYPLOT
+      with a pen control equal -1, thus:  
+
+             CALL XYPLOT (0, 0, -1) 
+
+            Once  a plot is written to a disk file, it can be previewed on a
+      storage oscilloscope (not the PDP-12 scope)  by  using  the  following
+      code:  
+
+             EXTERNAL PREVU
+             CALL MODE8 (PREVU, UNIT, SIZE)
+
+      PREVU  is  an 8-mode subroutine in the FORTRAN library.  It returns to
+      the calling program after each frame has been  plotted.   To  continue
+      to the next frame, it must be called with the value of UNIT=0.  
+
+      UNIT  is  the  logical  unit number of the file to be previewed.  This
+      may be the same file  as  the  one  being  created  with  the  plotter
+      routines  or  it  may  be a diffrent file.  If UNIT=0, previewing will
+      continue from the point in the file where it previously stopped.  
+
+      SIZE can be used to increase the size of the display.  SIZE  can  have
+      values  0, 1 or 2 which represent multiplicative increases in the size
+      of the display of 1, 2 or 4 times, respectively.  
+
+      IV.  INTERNAL OPERATION 
+            XYPLOT is called with three parameters, an  X  coordinate,  a  Y
+      coordinate  and a PEN control.  To generate a plot file, these numbers
+      are simply output to a (unformatted)  FORTRAN  file  after  the  three
+      parameters  are packed, X, Y, and PEN from one call to XYPLOT into the
+      three words of a single floating point variable and 85 floating  point
+      variables  per  record.   Thus, each OS/8 block of the file contains a
+      list of parameters used in the various calls to XYPLOT.  
+            Negative PEN control values are handled in a  special  way:   If
+      PEN  is any negative value other than -3 (which redefines the origin),
+      it is used by XYPLOT, and PREVU to define a new "frame".  
+            The file must always be terminated by a PEN control of  zero  to
+      indicate  to  PLOTIT  and PREVU that the end of file has been reached.
+      Normally, the user need not be concerned about this.  PLOTS  writes  a
+      zero  and  then  BACKSPACEs  over  it.  Also, XYPLOT writes a zero and
+      BACKSPACEs over it after every end  of  frame  is  written.   Finally,
+      PLEXIT  writes  a  final  zero  to terminate a plot before closing the
+      file.  If  the  user  chooses  to  copy  a  frame  using  the  FORTRAN
+      unformatted  read and write routines, he must remember to handle these
+      zero's properly.  The correct code to copy one frame of  a  plot  from
+      unit 9 to unit 8 is:  
+
+             DIMENSION A(85)
+      10     READ (9) A
+             WRITE (8) A
+
+
+
+
+
+                                                                     PAGE 12
+
+
+
+
+      C        DONE, BACKSPACE OVER THE ZERO IF DESIRED
+             BACKSPACE 8
+      C        REWIND 9 IF DESIRED
+             REWIND 9
+
+      V.  GETTING THE PLOT ROUTINES ON THE AIR 
+
+            Three  RALF modules must be inserted into the FORTRAN IV library
+      in order for dynamic plotting to work.  The  following  commands  will
+      do this:  
+
+            .R RALF
+            *XYPLOT<XYPLOT
+            .R RALF
+            *PREVU<PREVU
+            .R RALF
+            *PLOTIT<PLOTIT
+            .R LIBRA
+            *FORLIB<XYPLOT,PLOTIT,PREVU/R
+            *^C
+            .
+
+      At  this  point, the computer will list several duplicate entry points
+      because of the replacement of the old XYPLOT with the new.   If  there
+      is  insufficent  room  in the library, or some other problem, refer to
+      the LIBRA section of the OS/8 FORTRAN IV documentation from D.E.C.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
