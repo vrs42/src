@@ -1,0 +1,310 @@
+program dummy(output);{ elementary functions as implemented for PDP8 Pascal }
+
+{--------------------------------------------------------------------}
+
+  { These functions are specially coded for the PDP8 FPP,
+    and assume the machine has a guard digit.
+    Coded by James F. Miner and John T. Easton,
+    University of Minnesota.
+
+    References.
+
+    1. "Software Manual for the Elementary Functions",
+       William J. Cody, Jr.   Argonne National Laboratory
+       and
+       William Waite.	      Department of Electrical Engineering
+			      University of Colorado.
+
+       Copyright 1980 Prentice-Hall, Inc., Englewood Cliffs,
+		      New Jersey  07632.
+
+    2. "FPP8-A Maintenance Manual"  EK-FPP8A-MM-001
+       Digital Equipment Corporation, Maynard Massachusetts.
+
+  }
+{$L-}
+
+{--------------------------------------------------------------------}
+
+  function sin(x: real): real;
+
+    const  eps = { 2 ** (-23/2) } 0.0003452;
+	   c1 = 3.140625;
+	   c2 = 9.67653589793e-4;
+	   ymax = 9099.0242; { pi * 2 ** (23/2) }
+	   PiInverse = { 1/pi } 0.31830988618379067154;
+
+    var   y, z, sgn, xn, f, g: real;
+	  n: integer;
+
+  begin { sin }
+    z := abs(x);
+    y := z { for comparibility with cos };
+    if x < 0 then sgn := -1.0 else sgn := 1.0;
+    if y > ymax then
+      begin
+	writeln(output,'*** magnitude of sin operand is too large.');
+	sin := 0 { halt }
+      end
+    else
+      begin
+	n := round(y * PiInverse);
+	xn := n;
+	if odd(n) then sgn := - sgn;
+	f := (z - xn * c1) - xn * c2;
+	if abs(f) < eps then sin := sgn * f
+	else
+	  begin  g := sqr(f);
+	    sin := sgn * ( f + f * ( ( ( ( 0.2601903036e-5 * g
+					  -0.1980741872e-3)* g
+					+  0.8333025139e-2)* g
+				      -    0.1666665668e+0)* g
+				   )
+			 )
+	  end
+      end
+  end { sin } ;
+
+{--------------------------------------------------------------------}
+
+  function cos(x: real): real;
+
+    const  eps = { 2 ** (-23/2) } 0.0003452;
+	   c1 = 3.140625;
+	   c2 = 9.67653589793e-4;
+	   ymax = 9099.0242; { pi * 2 ** (23/2) }
+	   PiInverse = { 1/pi } 0.31830988618379067154;
+	   PiOver2 = { pi/2 } 1.57079632679489661923;
+
+    var   y, z, sgn, xn, f, g: real;
+	  n: integer;
+
+  begin { cos }
+    z := abs(x);
+    y := z + PiOver2;
+    sgn := 1.0;
+    if y > ymax then
+      begin
+	writeln(output,'*** magnitude of cos operand is too large.');
+	cos := 0 { halt }
+      end
+    else
+      begin
+	n := round(y * PiInverse);
+	xn := n - 0.5 { cos only };
+	if odd(n) then sgn := - sgn;
+	f := (z - xn * c1) - xn * c2;
+	if abs(f) < eps then cos := sgn * f
+	else
+	  begin  g := sqr(f);
+	    cos := sgn * ( f + f * ( ( ( ( 0.2601903036e-5 * g
+					  -0.1980741872e-3)* g
+					+  0.8333025139e-2)* g
+				      -    0.1666665668e+0)* g
+				   )
+			 )
+	  end
+      end
+  end { cos } ;
+
+{--------------------------------------------------------------------}
+
+  function arctan(x: real): real;
+
+    const  eps = { 2 ** (-23/2) } 0.0003452;
+	   k1 = 0.26794919243112270647 { 2-sqrt(3) };
+	   k2 = 1.73205080756887729353 { sqrt(3) };
+	   k3 = 0.73205080756887729353 { sqrt(3)-1 };
+
+    var   f, result, g: real;
+	  n: 0..3;
+
+  begin { arctan }
+    f := abs(x);
+    if f > 1.0 then begin n := 2; f := 1.0 / f end
+    else n := 0;
+    if f > k1 then
+      begin  n := n + 1;
+	f := ( ( (k3 * f - 0.5) - 0.5) + f) / (k2 + f)
+      end;
+    if abs(f) < eps then result := f
+    else
+      begin  g := sqr(f);
+	result := f + f * ( ( -0.5090958253e-1 * g - 0.4708325141e0 ) * g
+			   /(g + 0.1412500740e1) )
+      end;
+    if n > 1 then result := - result;
+    case n of
+      0:  { null } ;
+      1:  result := result + 0.52359877559829887308 { pi/6 };
+      2:  result := result + 1.57079632679489661923 { pi/2 };
+      3:  result := result + 1.04719755119659774615 { pi/3 }
+    end;
+    if x < 0 then arctan := - result else arctan := result
+  end { arctan } ;
+
+{--------------------------------------------------------------------}
+
+  function intxp(x : real) : integer;
+    type
+      trick = record case boolean of
+		false: (reel:real);
+		true:  (expon: -2048..2047; hi,lo: 0..4095)
+	      end;
+    var z : trick;
+  begin { intxp }
+    z.reel := x;
+    intxp := z.expon
+  end	{ intxp };
+
+{--------------------------------------------------------------------}
+
+  function setxp(x : real; n : integer) : real;
+    type
+      trick = record case boolean of
+		false: (reel:real);
+		true:  (expon: -2048..2047; hi,lo: 0..4095)
+	      end;
+    var z : trick;
+  begin { setxp }
+    z.reel := x;
+    z.expon := n;
+    setxp := z.reel
+  end	{ setxp };
+
+{--------------------------------------------------------------------}
+
+  function adx(x : real; n : integer) : real;
+    type
+      trick = record case boolean of
+		false: (reel:real);
+		true:  (expon: -2048..2047; hi,lo: 0..4095)
+	      end;
+    var z : trick;
+  begin { adx }
+    z.reel := x;
+    z.expon := z.expon + n;
+    adx := z.reel
+  end	{ adx };
+
+{--------------------------------------------------------------------}
+
+  function exp(x : real) : real;
+
+    const
+      ln2inverse = 1.4426950408889634074 { 1.0/ln(2) };
+      c1 = 0.693359375 { 355/512  or .543 octal };
+      c2 = -2.1219444005469058277e-4;
+      bigx = 1416.0898 { <~ln(maxreal) };
+      smallx = -1416.0898 { >~ln(leastreal) };
+      eps = 5.9604645e-8 { (2**(-23)) / 2 };
+
+      p0 = 0.24999999950;
+      p1 = 0.41602886268e-2;
+      q0 = 0.5;
+      q1 = 0.49987178778e-1;
+
+    var
+      n : integer;
+      xn, g, r, z, gpz : real;
+
+  begin { exp }
+    if x > bigx then
+      begin
+	writeln(output,' ** operand of exp is too large');
+	exp := 0.0 { halt }
+      end
+    else if x < smallx then
+      begin
+	writeln(output,' ** operand of exp is too small');
+	exp := 0.0 { halt }
+      end
+    else if abs(x) < eps then exp := 1.0
+    else
+      begin
+	n := round(x * ln2inverse);
+	xn := n;
+	g := (x - xn * c1) - xn * c2;
+	z := sqr(g);
+	gpz := (p1 * z + p0) * g;
+	r := gpz / ((q1 * z + q0) - gpz) + 0.5;
+	exp := adx(r,(n+1)) { r * 2**(n+1) }
+      end
+  end { exp };
+
+{--------------------------------------------------------------------}
+
+  function ln(x : real) : real;
+
+    const
+      c0 = 0.70710678118654752440 { sqrt(0.5) };
+      c1 = 0.6933593 { 355/512	or in octal .543 };
+      c2 = -2.121944400546905827679e-4;
+      a0 = -0.5527074855;
+      b0 = -0.6632718214e1;
+
+    var
+      n : integer;
+      f, znum, zden, w, z : real;
+  begin { ln }
+    if x <= 0.0 then
+      begin
+	writeln(output,' ** operand of ln must be positive');
+	ln := 0.0 { halt }
+      end
+    else
+      begin
+	n := intxp(x);
+	f := setxp(x,0);
+	if f <= c0 then
+	  begin
+	    n := n - 1;
+	    znum := f - 0.5;
+	    zden := 0.5 * znum + 0.5
+	  end
+	else
+	  begin
+	    znum := (f - 0.5) - 0.5;
+	    zden := 0.5 * f + 0.5
+	  end;
+	z := znum / zden;
+	w := sqr(z);
+	ln := ( ( ( w*a0 / (w+b0) )*z + z ) + c2*n ) + c1*n
+      end
+  end	{ ln };
+
+{--------------------------------------------------------------------}
+
+  function sqrt(x : real) : real;
+
+    var
+      n : integer;
+      f, y, z : real;
+
+  begin { sqrt }
+    if x < 0.0 then
+      begin
+	writeln(output,' ** argument to SQRT is negative');
+	sqrt := 0.0 { halt }
+      end
+    else if x = 0.0 then sqrt := 0.0
+    else
+      begin
+	n := intxp(x);
+	f := setxp(x,0);
+	y := 0.41731 + 0.59016 * f;
+	z := y + f / y;
+	y := 0.25 * z  +  f / z;
+	if odd(n) then
+	  begin
+	    y := y * 0.707106781186547 { sqrt(0.5) };
+	    n := n + 1
+	  end;
+	sqrt := adx(y, n div 2) { (2 ** (n div 2) ) * y }
+      end
+  end { sqrt };
+
+{--------------------------------------------------------------------}
+
+begin { dummy }
+end   { dummy }.

@@ -1,0 +1,506 @@
+(**	COMPARE - Compare two text files and report their differences.
+*
+*	Copyright (C) 1977, 1978, 1981
+*	James F. Miner
+*	Social Science Research Facilities Center
+*	University of Minnesota
+*
+*	General permission to make fair use in non-profit activities
+*	of all or part of this material is granted provided that
+*	this notice is given. To obtain permission for other uses
+*	write to:
+*
+*		The Director
+*		Social Science Research Facilities Center
+*		25 Blegen Hall
+*		269 19th Ave. So.
+*		University of Minnesota
+*		Minneapolis, Minnesota	55455
+*		U S A
+*)								(*$L-*)
+
+
+(**	Compare is used to display on "Output" the differences
+*	between two similar texts ("Filea" and "Fileb"). Notable
+*	characteristics are:
+*
+*	- Compare is line oriented. The smallest unit of comparison
+*	  is the text line (ignoring trailing blanks).	The present
+*	  implementation has a fixed maximum line length.
+*
+*	- By manipulating a program parameter, the user can affect
+*	  Compare's sensitivity to the "locality" of differences.
+*	  Moreent
+*	  implementation has a fixed maximum line length.
+*
+*	- By manipulating a program param on each file
+*	  which must match in order that they be considered as
+*	  terminating the prior mismatch.  A large value of
+*	  "Minlinesformatch" tends to produce fewer but larger
+*	  mismatches than does a small value.  The value six appears
+*	  to give good results on Pascal source files but may be
+*	  inappropriate for other applications.
+*
+*	  If compare is to be used as a general utility program,
+*	  "Minlinesformatch" should be treated as a program
+*	  parameter of some sort.  It is declared as a constant here
+*	  for portability's sake.
+*
+*	- Compare employs a simple backtracking search algorithm to
+*	  isolate mismatches from their surrounding matches.  This
+*	  requires (heap) storage roughly proportional the the size
+*	  of the largest mismatch, and time roughly proportional to
+*	  the square of the size of the mismatch for each mismatch.
+*	  For this reason it may not be feasible to use Compare on
+*	  files with very long mismatches.
+*
+*	- To the best of the author's knowledge, Compare utilizes
+*	  only features of Standard Pascal.
+*)
+
+(**	Compare was originally published in Pascal News #12 (pagesry long mismatches.
+*
+*	- To the best of the author's knowledge, Compare utilizes
+*	  only fe 28-30), and some of those
+*	improvements are incorporated in this version.	In addition,
+*	this version has been improved by J. F. Miner to allocate
+*	variable-length line buffers.
+*)
+{$T-,N-,P- }
+
+PROGRAM COMPARE(FILEA, FILEB, OUTPUT);
+
+  CONST
+    VERSION = '1.4 (PDP8)  (1981-03-30)';
+    LINELENGTH = 255;		  (* MAXIMUM SIGNIFICANT INPUT LINE LENGTH *)
+    MINLINESFORMATCH = 6;	  (* NUMBER OF CONSECUTIVE EQUIVALENT *)
+				  (* LINES TO END A MIS-MATCH *)
+    CHUNKSIZE = 20;		  (* CHARACTERS PER PIECE OF LINE *)
+    BLANKCHUNK = '		      ';
+    IGNORELEADINGBLANKS = TRUE;   (* TRUE IF LEADING BLANKS ARE NOT SIGNIFICANT *)
+
+  TYPE
+    CHUNKPTR = ^ CHUNK;
+    CHUNK =			  (* PIECE OF A LINE *)
+      PACKED RECORD
+	IMAGE: PACKED ARRAY [1..CHUNKSIZE] OF CHAR;
+	NEXTCHUNK: CHUNKPTR
+      END;
+    LINEPOINTER = ^LINE;
+    LINE =			  (* SINGLE LINE BUFFER *)
+      PACKED RECORD
+	NEXTLINE : LINEPOINTER;
+	LEADINGBLANKS,
+	LENGTH : 0..LINELENGTH;   (* IF IGNORELEADINGBLANKS THEN	   *)
+				  (*   LENGTH = # CHARS BEFORE LEADING BL. *)
+				  (* ELSE LENGTH = TOTAL LINE LENGTH	   *)
+	FIRSTCHUNK: CHUNKPTR
+      END;H : 0..LINELENGTH;   (* IF IGNORELEADINGBLANKS THEN	   *)
+				  (*   LENGTH = # CHARS BEFORE LEHEAD, TAIL : LINEPOINTER;
+	CURSORLINENO, HEADLINENO, TAILLINENO : INTEGER;
+	ENDFILE : BOOLEAN
+      END;
+
+  VAR
+    FILEA, FILEB : TEXT;
+    A, B : STREAM;
+
+    MATCH : BOOLEAN;
+    ENDEITHERFILE : BOOLEAN;	  (* SET IF END OF STREAM A OR B *)
+
+    FREELINES : LINEPOINTER;	  (* FREE LIST OF LINE BUFFERS *)
+    FREECHUNKS: CHUNKPTR;	  (* FREE LIST OF CHUNKS *)
+
+    SAME : BOOLEAN;		  (* FALSE IF MIS-MATCHES OCCUR *)
+    LINESTOOLONG: BOOLEAN;	  (* TRUE IF ANY LINE EXCEEDS LINELENGTH *)
+
+
+  PROCEDURE COMPAREFILES;
+
+    FUNCTION ENDSTREAM(VAR X : STREAM) : BOOLEAN;
+    BEGIN (* ENDSTREAM *)
+      ENDSTREAM := (X.CURSOR = NIL) AND X.ENDFILE
+    END;  (* ENDSTREAM *)
+
+    PROCEDURE MARK(VAR X : STREAM);
+
+      (* CAUSES BEGINNING OF STREAM TO BE POSITIONED BEFORE *)
+      (* CURRENT STREAM CURSOR.  BUFFERS GET RECLAIMED, LINE *)
+      (* COUNTERS RESET, ETC. *)
+
+      VAR
+	P : LINEPOINTER;
+	CP1, CP2: CHUNKPTR;
+
+    BEGIN (* MARK *)
+      WITH X DO
+	IF HEAD <> NIL THEN
+	  BEGIN
+	    WHILE HEAD <> CURSOR DO (* RECLAIM BUFFERS *)
+	      BEGIN
+		WITH HEAD^ DO
+		  BEGIN  P := NEXTLINE;
+		    NEXTLINE :EGIN (* MARK *)
+      WITH X DO
+	IF HEAD <> NIL THEN
+	  BEGIN
+	    WHILE HEAD <> CURSOR DO (GIN  CP2 := CP1;
+			WHILE CP2^.NEXTCHUNK <> NIL DO CP2 := CP2^.NEXTCHUNK;
+			CP2^.NEXTCHUNK := FREECHUNKS;  FREECHUNKS := CP1
+		      END
+		  END;
+		HEAD := P
+	      END;
+	    HEADLINENO := CURSORLINENO;
+	    IF CURSOR = NIL THEN
+	      BEGIN  TAIL := NIL;  TAILLINENO := CURSORLINENO  END
+	  END
+    END;  (* MARK *)
+
+    PROCEDURE MOVECURSOR(VAR X : STREAM;  VAR FILEX : TEXT);
+
+      (* FILEX IS THE INPUT FILE ASSOCIATED WITH STREAM X.  THE *)
+      (* CURSOR FOR X IS MOVED FORWARD ONE LINE, READING FROM X *)
+      (* IF NECESSARY, AND INCREMENTING THE LINE COUNT.  ENDFILE *)
+      (* IS SET IF EOF IS ENCOUNTERED ON EITHER STREAM. *)
+
+      PROCEDURE READLINE;
+	VAR
+	  NEWLINE : LINEPOINTER;
+	  LEN : 0..LINELENGTH;
+	  NEWCHUNK, LASTCHUNK: CHUNKPTR;
+	  BLANKS: INTEGER;
+
+	PROCEDURE READCHUNK;
+	  VAR
+	    CI, CIMAX: 0..CHUNKSIZE;
+	    LCP: CHUNKPTR;
+	BEGIN (* READCHUNK *)
+	  IF FREECHUNKS = NIL THEN NEW(LCP)
+	  ELSE BEGIN LCP := FREECHUNKS;  FREECHUNKS := LCP^.NEXTCHUNK END;
+	  LCP^.IMAGE := BLANKCHUNK;
+	  IF LINELENGTH - LEN > CHUNKSIZE THEN CIMAX := CHUNKSIZE
+	  ELSE CIMAX := LINELENGTH - LEN;
+	  CI EGIN LCP := FREECHUNKS;  FREECHUNKS := LCP^.NEXTCHUNK END;
+	  LCP^.IMAGE := BLANKCHUNK;
+	  IF LANKS - (CIMAX - CI);	CI := CIMAX END
+	      ELSE BEGIN CI := CI + BLANKS;  BLANKS := 0 END;
+	    WHILE (FILEX^ <> ' ') AND (CI < CIMAX) DO
+	      BEGIN CI := CI + 1;  READ(FILEX, LCP^.IMAGE[CI]) END;
+	    WHILE NOT EOLN(FILEX) AND (FILEX^ = ' ') DO
+	      BEGIN BLANKS := BLANKS + 1;  GET(FILEX) END
+	  UNTIL EOLN(FILEX) OR (CI = CIMAX);
+	  LEN := LEN + CI; NEWCHUNK := LCP
+	END (* READCHUNK *) ;
+
+      BEGIN (* READLINE *)
+	IF NOT X.ENDFILE THEN
+	  BEGIN
+	    NEWLINE := FREELINES;
+	    IF NEWLINE = NIL THEN NEW(NEWLINE)
+	    ELSE  FREELINES := FREELINES^.NEXTLINE;
+	    NEWLINE^.NEXTLINE := NIL;
+	    NEWLINE^.FIRSTCHUNK := NIL;
+	    BLANKS := 0;
+	    WHILE NOT EOLN(FILEX) AND (FILEX^ = ' ') DO
+	      BEGIN  BLANKS := BLANKS + 1;  GET(FILEX) END;
+	    IF EOLN(FILEX) OR (BLANKS >= LINELENGTH) THEN
+	      BEGIN  NEWLINE^.LENGTH := 0; NEWLINE^.LEADINGBLANKS := 0 END
+	    ELSE
+	      BEGIN  NEWLINE^.LEADINGBLANKS := BLANKS;
+		LEN := BLANKS;	BLANKS := 0;  READCHUNK;
+		NEWLINE^.FIRSTCHUNK := NEWCHUNK;  LASTCHUNK := NEWCHUNK;
+		WHILE NOT EOLN(FILEX) AND (LEN+BLANKS < LINELENGTH) DO
+		  BEGIN  READCHUNK;
+		    LASTCHN := BLANKS;	BLANKS := 0;  READCHUNK;
+		NEWLINE^.FIRSTCHUNK := NEWCHUNK;  LASTCHUNK := NEWCHUNKIF IGNORELEADINGBLANKS THEN
+		  NEWLINE^.LENGTH := LEN - NEWLINE^.LEADINGBLANKS
+		ELSE NEWLINE^.LENGTH := LEN
+	      END;
+	    IF NOT EOLN(FILEX) THEN LINESTOOLONG := TRUE;
+	    READLN(FILEX);
+	    IF X.TAIL = NIL THEN
+	      BEGIN  X.HEAD := NEWLINE;
+		X.TAILLINENO := 1;  X.HEADLINENO := 1
+	      END
+	    ELSE
+	      BEGIN X.TAIL^.NEXTLINE := NEWLINE;
+		X.TAILLINENO := X.TAILLINENO + 1
+	      END;
+	    X.TAIL := NEWLINE;
+	    X.ENDFILE := EOF(FILEX);
+	  END
+      END;  (* READLINE *)
+
+    BEGIN (* MOVECURSOR *)
+      IF X.CURSOR <> NIL THEN
+	BEGIN
+	  IF X.CURSOR = X.TAIL THEN READLINE;
+	  X.CURSOR := X.CURSOR^.NEXTLINE;
+	  IF X.CURSOR = NIL THEN ENDEITHERFILE := TRUE;
+	  X.CURSORLINENO := X.CURSORLINENO + 1
+	END
+      ELSE
+	IF NOT X.ENDFILE THEN (* BEGINNING OF STREAM *)
+	  BEGIN
+	    READLINE; X.CURSOR := X.HEAD;
+	    X.CURSORLINENO := X.HEADLINENO
+	  END
+	ELSE  (* END OF STREAM *)
+	  ENDEITHERFILE := TRUE;
+    END;  (* MOVECURSOR *)
+
+    PROCEDURE BACKTRACK(VAR X : STREAM;  VAR XLINES : INTEGER);
+
+      (* CAUSES THE CURRENT POSITION OF STREAM X TO BECOME THAT *)
+      (* OF THE LAST MARK OPE  END;  (* MOVECURSOR *)
+
+    PROCEDURE BACKTRACK(VAR X : STREAM;  VAR XLINES : INTEGER);
+
+ URSOR. *)
+      (* XLINES IS SET TO THE NUMBER OF LINES FROM THE NEW CURSOR *)
+      (* TO THE OLD CURSOR, INCLUSIVE. *)
+
+    BEGIN (* BACKTRACK *)
+      XLINES := X.CURSORLINENO + 1 - X.HEADLINENO;
+      X.CURSOR := X.HEAD;  X.CURSORLINENO := X.HEADLINENO;
+      ENDEITHERFILE := ENDSTREAM(A) OR ENDSTREAM(B)
+    END;  (* BACKTRACK *)
+
+    PROCEDURE COMPARELINES(VAR MATCH : BOOLEAN);
+
+      (* COMPARE THE CURRENT LINES OF STREAMS A AND B, RETURNING *)
+      (* MATCH TO SIGNAL THEIR (NON-) EQUIVALENCE.  EOF ON BOTH STREAMS *)
+      (* IS CONSIDERED A MATCH, BUT EOF ON ONLY ONE STREAM IS A MISMATCH *)
+
+      VAR
+	LCPA, LCPB: CHUNKPTR;
+
+    BEGIN (* COMPARELINES *)
+      IF (A.CURSOR = NIL) OR (B.CURSOR = NIL) THEN
+	MATCH := ENDSTREAM(A) AND ENDSTREAM(B)
+      ELSE
+	IF A.CURSOR^.LENGTH = B.CURSOR^.LENGTH THEN
+	  BEGIN  LCPA := A.CURSOR^.FIRSTCHUNK; LCPB := B.CURSOR^.FIRSTCHUNK;
+	    WHILE (LCPA <> NIL) AND (LCPB <> NIL) DO
+	      IF LCPA^.IMAGE = LCPB^.IMAGE THEN
+		BEGIN LCPA := LCPA^.NEXTCHUNK; LCPB := LCPB^.NEXTCHUNK END
+	      ELSE LCPA := NIL;
+	    MATCH := LCPA = LCPB
+	  END
+	ELSE MATCH := FALSE
+    EN      IF LCPA^.IMAGE = LCPB^.IMAGE THEN
+		BEGIN LCPA := LCPA^.NEXTCHUNK; LCPB := LCPB^.NEXTCHUNT ENDFILE AND MATCH *)
+      REPEAT  (* COMPARENEXTLINES *)
+	MOVECURSOR(A, FILEA); MOVECURSOR(B,FILEB);
+	MARK(A); MARK(B);
+	COMPARELINES(MATCH)
+      UNTIL ENDEITHERFILE OR NOT MATCH;
+    END;  (* FINDMISMATCH *)
+
+    PROCEDURE FINDMATCH;
+      VAR
+	ADVANCEB : BOOLEAN; (* TOGGLE ONE-LINE LOOKAHEAD BETWEEN STREAMS *)
+
+      PROCEDURE SEARCH(VAR X : STREAM; (* STREAM TO SEARCH *)
+		       VAR FILEX : TEXT;
+		       VAR Y : STREAM; (* STREAM TO LOOKAHEAD *)
+		       VAR FILEY : TEXT);
+
+	(* LOOK AHEAD ONE LINE ON STREAM Y, AND SEARCH FOR THAT LINE *)
+	(* BACKTRACKING ON STREAM X. *)
+
+	VAR
+	  COUNT : INTEGER;  (* NUMBER OF LINES BACKTRACKED ON X *)
+
+	PROCEDURE CHECKFULLMATCH;
+	  (* FROM THE CURRENT POSITIONS IN X AND Y, WHICH MATCH, *)
+	  (* MAKE SURE THAT THE NEXT MINLINESFORMATCH-1 LINES ALSO *)
+	  (* MATCH, OR ELSE SET MATCH := FALSE.  *)
+	  VAR
+	    N : INTEGER;
+	    SAVEXCUR, SAVEYCUR : LINEPOINTER;
+	    SAVEXLINE, SAVEYLINE : INTEGER;
+	BEGIN (* CHECKFULLMATCH *)
+	  SAVEXCUR := X.CURSOR;  SAVEYCUR := Y.CURSOR;
+	  SAVEXLINE := X.CURSORLINENO;	SAVEYLINE := Y.CURSORLINENO;
+	  COMPARELINES(MATCH);
+	  N :AVEYLINE : INTEGER;
+	BEGIN (* CHECKFULLMATCH *)
+	  SAVEXCUR := X.CURSOR;  SAVEYCUR := Y.CURSORCURSOR(Y, FILEY);
+	      COMPARELINES(MATCH);  N := N - 1
+	    END;
+	  X.CURSOR := SAVEXCUR;  X.CURSORLINENO := SAVEXLINE;
+	  Y.CURSOR := SAVEYCUR;  Y.CURSORLINENO := SAVEYLINE;
+	END;  (* CHECKFULLMATCH *)
+
+      BEGIN (* SEARCH *)
+	MOVECURSOR(Y, FILEY);  BACKTRACK(X, COUNT);
+	CHECKFULLMATCH;  COUNT := COUNT - 1;
+	WHILE (COUNT <> 0) AND NOT MATCH DO
+	  BEGIN
+	    MOVECURSOR(X, FILEX);  COUNT := COUNT - 1;
+	    CHECKFULLMATCH
+	  END
+      END;  (* SEARCH *)
+
+      PROCEDURE PRINTMISMATCH;
+	VAR
+	  EMPTYA, EMPTYB : BOOLEAN;
+
+	PROCEDURE WRITEONELINE(NAME: CHAR; LN: INTEGER; P: LINEPOINTER);
+	  VAR
+	    LEN: 0..LINELENGTH;
+	    LCP: CHUNKPTR;
+	BEGIN (* WRITEONELINE *)
+	  WRITE(' ', NAME, LN:5);
+	  IF IGNORELEADINGBLANKS THEN LEN := P^.LENGTH
+	  ELSE LEN := P^.LENGTH - P^.LEADINGBLANKS;
+	  IF LEN = 0 THEN WRITELN
+	  ELSE
+	    BEGIN WRITE(' ': P^.LEADINGBLANKS+2);
+	      LCP := P^.FIRSTCHUNK;
+	      WHILE LEN > CHUNKSIZE DO
+		BEGIN WRITE(LCP^.IMAGE); LEN := LEN - CHUNKSIZE;
+		  LCP := LCP^.NEXTCHUNK
+		END;
+	      WRITELN(LCP^.IMAGE:LEN)
+	    END
+	END (* WRITEONELINE *) ;
+
+	PROCEDURE WRITETEXT(VAR X :  DO
+		BEGIN WRITE(LCP^.IMAGE); LEN := LEN - CHUNKSIZE;
+		  LCP := LCP^.NEXTCHUNK
+		END;
+	   = X.HEAD;	Q := X.CURSOR;	LINENO := X.HEADLINENO;
+	  WHILE (P <> NIL) AND (P <> Q) DO
+	    BEGIN  WRITEONELINE(X.NAME, LINENO, P);
+	      P := P^.NEXTLINE;  LINENO := LINENO + 1
+	    END;
+	  IF P = NIL THEN WRITELN(' *** EOF ***');
+	  WRITELN
+	END;  (* WRITETEXT *)
+
+	PROCEDURE WRITELINENO(VAR X : STREAM);
+	  VAR
+	    FIRST, LAST : INTEGER;
+	BEGIN (* WRITELINENO *)
+	  FIRST := X.HEADLINENO;  LAST := X.CURSORLINENO - 1;
+	  WRITE('line');
+	  IF FIRST = LAST THEN WRITE(' ', FIRST:1)
+	  ELSE WRITE('s ', FIRST:1, ' thru ', LAST:1);
+	  IF X.CURSOR = NIL THEN WRITE(' (Before EOF)');
+	END;  (* WRITELINENO *)
+
+	PROCEDURE PRINTEXTRATEXT(VAR X, Y : STREAM);
+	BEGIN (* PRINTEXTRATEXT *)
+	  WRITE(' Extra text:  on file ', X.NAME, ', ');
+	  IF Y.HEAD = NIL THEN
+	    WRITELN(' before EOF on file ', Y.NAME)
+	  ELSE
+	    WRITELN(' between lines ', Y.HEADLINENO-1:1, ' and ',
+		    Y.HEADLINENO:1, ' of file ', Y.NAME);
+	  WRITELN;
+	  WRITETEXT(X)
+	END;  (* PRINTEXTRATEXT *)
+
+      BEGIN (* PRINTMISMATCH *)
+	WRITELN(' ***********************************');
+	EMPTYA := (A.HEAD = A.CURSOR);
+	EMPTYB := (B.HEAD = B.CURSOR);
+	ITEXT(X)
+	END;  (* PRINTEXTRATEXT *)
+
+      BEGIN (* PRINTMISMATCH *)
+	WRITELN(' ************ELSE
+	  BEGIN
+	    WRITE(' Mismatch:');
+	    WRITE('  file A, ');  WRITELINENO(A);  WRITE('  not equal to  ');
+	    WRITE('file B, ');	WRITELINENO(B);  WRITELN(':');	WRITELN;
+	    WRITETEXT(A);  WRITETEXT(B)
+	  END
+      END;  (* PRINTMISMATCH *)
+
+    BEGIN (* FINDMATCH *)
+      (* NOT MATCH *)
+      ADVANCEB := TRUE;
+      REPEAT
+	IF NOT ENDEITHERFILE THEN ADVANCEB := NOT ADVANCEB
+	ELSE ADVANCEB := ENDSTREAM(A);
+	IF ADVANCEB THEN SEARCH(A, FILEA, B, FILEB)
+	  ELSE SEARCH(B, FILEB, A, FILEA)
+      UNTIL MATCH;
+      PRINTMISMATCH;
+    END;  (* FINDMATCH *)
+
+  BEGIN (* COMPAREFILES *)
+    MATCH := TRUE;  (* I.E., BEGINNINGS-OF-FILES MATCH *)
+    REPEAT
+      IF MATCH THEN FINDMISMATCH ELSE BEGIN SAME := FALSE; FINDMATCH END
+    UNTIL ENDEITHERFILE AND MATCH;
+    (* MARK(A);  MARK(B);   MARK END OF FILES, THEREBY DISPOSING BUFFERS *)
+  END;	(* COMPAREFILES *)
+
+  PROCEDURE INITIALIZE;
+
+    PROCEDURE INITSTREAM(VAR X : STREAM; VAR FILEX : TEXT; FNAME: CHAR);
+
+      PROCEDURE WRITEFILENAME(VAR F: TEXT);
+	VAR
+	  FN: PACKED ARRAY [1..14] OF CHAR;
+	  FNI: 1..14;
+      BEGIN (* WRITEFILENAME *)
+{$X+}	GETFNSTREAM; VAR FILEX : TEXT; FNAME: CHAR);
+
+      PROCEDURE WRITEFILENAME(VAR F: TEXT);
+	VAR
+	 (* WRITEFILENAME *) ;
+
+    BEGIN (* INITSTREAM *)
+      WITH X DO
+	BEGIN  NAME := FNAME;
+	  CURSOR := NIL;  HEAD := NIL;	TAIL := NIL;
+	  CURSORLINENO := 0; HEADLINENO := 0;  TAILLINENO := 0
+	END;
+      RESET(FILEX);  X.ENDFILE := EOF(FILEX);
+      WRITE(' File ', FNAME, ':  ');
+      WRITEFILENAME(FILEX);
+      IF X.ENDFILE THEN WRITE('  is empty.');
+      WRITELN
+    END;  (* INITSTREAM *)
+
+    PROCEDURE PRINTHEADING;
+      VAR
+	TODAY: PACKED ARRAY [1..10] OF CHAR;
+    BEGIN (* PRINTHEADING *)
+{$X+} DATE(TODAY);	{$X-}
+      PAGE(OUTPUT);
+      WRITELN(' Compare.   Version ', VERSION, '     ', TODAY);
+      WRITELN;
+      WRITELN(' Match criterion:  ', MINLINESFORMATCH:1, ' lines.');
+      IF IGNORELEADINGBLANKS THEN WRITELN(' Leading blanks are insignificant.');
+      WRITELN;
+    END (* PRINTHEADING *) ;
+
+  BEGIN (* INITIALIZE *)
+    PRINTHEADING;
+    INITSTREAM(A, FILEA, 'A'); INITSTREAM(B, FILEB, 'B');
+    ENDEITHERFILE := A.ENDFILE OR B.ENDFILE;
+    FREELINES := NIL;  FREECHUNKS := NIL;
+    LINESTOOLONG := FALSE;
+  END; (*INITIALIZE*)
+
+
+BEGIN (*COMPARE*)
+  INITIALIZE;
+  IF NOT ENDEITHERFILE THERFILE := A.ENDFILE OR B.ENDFILE;
+    FREELINES := NIL;  FREECHUNKS := NIL;
+    LINESTOOLONG.');
+      IF LINESTOOLONG THEN
+	BEGIN WRITELN;
+	  WRITELN(' WARNING:  Some lines are longer than ', LINELENGTH:1,
+			    ' characters.');
+	  WRITELN('	      They were not compared past that point.')
+	END
+    END
+END.  (* COMPARE *)

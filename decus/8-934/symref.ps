@@ -1,0 +1,233 @@
+{V0.2 } program SYMREF(source,listing,input,output) {1983-06-21};
+
+{ Simple cross reference generator for general text files.
+  John Easton, SSRFC, U of M, 1981.
+
+  To use, do:			   (PDP8 Pascal)
+
+     X,SYMREF,SOURCE,LISTING
+
+
+  Limitations:
+
+    -- amount of memory available limits the size of source text processable.
+    -- upper-lower case are not distinct; all characters are forced to
+       be uppercase.
+
+  This program is adapted from Niklaus Wirth's program 4.5 in 'Algorithms +
+  Data Structures = Programs', Prentice Hall 1976, section 4.4, pp 206-208.
+
+  Please retain the above names in all uses of this program.
+}
+{$L-}
+
+  const
+    wordlength =     10  {length of identifiers};
+    tablewidth =      70  {cross-reference table};
+    {width of listing is not limited}
+    digitspernumber =  4;
+
+  type
+    idstring = packed array [1..wordlength] of char;
+    natural =  0..maxint;
+    entryptr =	^ entry;
+    refptr =  ^ reference;
+
+    entry =
+      record
+	key: idstring;
+	left, right: entryptr;
+	last: refptr {last reference points to first}
+      end	     {reference in a circular list};
+
+    reference =
+      packed record
+	lno: natural;
+	next: refptr
+      end;
+
+    charset = set of char;
+
+  var
+    source, listing: text;
+    root:   entryptr;
+    wordcount, refcount, refsperline: natural;
+    firstchars, remchars, lowerchars: charset;
+
+  procedure Initialize;
+  begin
+    root := nil;   wordcount := 0;   refcount := 0;
+    lowerchars :=['a','b','c','d','e','f','g','h','i','j','k','l','m',
+		  'n','o','p','q','r','s','t','u','v','w','x','y','z'];
+    firstchars :=['A','B','C','D','E','F','G','H','I','J','K','L','M',
+		  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+		 + lowerchars;
+    remchars :=  firstchars + ['0'..'9'];
+    writeln(output,'Enter extra first chars:');
+    if not eof(input) then
+      begin
+	while not eoln(input) do
+	  begin
+	    if input^ <> ' ' then firstchars := firstchars + [input^];
+	    get(input)
+	  end;
+	readln(input);
+	writeln(output,'Enter extra remainder chars:');
+	if not eof(input) then
+	  begin
+	    while not eoln(input) do
+	      begin
+		if input^ <> ' ' then remchars := remchars + [input^];
+		get(input)
+	      end
+	  end
+      end
+  end {Initialize};
+
+  procedure Scan(var f: text);
+    var
+      lastidlength: 0..wordlength;
+      id:	    idstring;
+      linenumber:   natural  {current source line number};
+
+    procedure EnterID(id: idstring; var w1: entryptr);
+
+      procedure Enter(var w1: entryptr);
+	var
+	  w: entryptr;
+	  x: refptr;
+      begin {Enter}
+	w := w1;
+	if w = nil then
+	  begin
+	    new(w);   wordcount := wordcount + 1;   new(x);
+	    with w^ do
+	      begin
+		key := id;
+		left := nil;   right := nil;
+		last := x
+	      end;
+	    refcount := refcount + 1;
+	    x^.lno := linenumber;
+	    x^.next := x {circular list};
+	    w1 :=w
+	  end
+	else if id < w^.key then Enter(w^.left)
+	else if id > w^.key then Enter(w^.right)
+	else
+	  begin
+	    new(x);
+	    refcount := refcount + 1;
+	    x^.lno := linenumber;   x^.next := w^.last^.next;
+	    w^.last^.next := x;     w^.last := x
+	  end
+      end {Enter};
+
+    begin {EnterID}
+      Enter(w1)
+    end {Enter ID};
+
+    procedure OpenLine;
+    begin {OpenLine}
+      linenumber := linenumber + 1;
+      write(listing,linenumber:digitspernumber,' ')
+    end {OpenLine};
+
+    procedure NextCH;
+    begin {NextCH}
+      if eoln(f) then
+	begin writeln(listing); OpenLine end
+      else write(listing,f^);
+      get(f)
+    end {NextCH};
+
+    procedure ScanIdent;
+      var idlen: 0..wordlength;
+    begin {ScanIdent}
+      idlen := 0;
+      repeat
+	if idlen < wordlength then
+	  begin
+	    idlen := idlen + 1;
+	    if f^ in lowerchars
+	      then id[idlen] := chr(ord(f^)-ord('a')+ord('A'))
+	      else id[idlen] := f^
+	  end;
+	write(listing,f^);
+	get(f)
+      until not (f^ in remchars);
+      if idlen >= lastidlength then lastidlength := idlen
+      else
+	repeat
+	  id[lastidlength] := ' ';
+	  lastidlength := lastidlength - 1
+	until lastidlength = idlen;
+      EnterID(id,root)
+    end {ScanIdent};
+
+  begin {Scan}
+    linenumber := 0;  lastidlength := wordlength;
+    while not eof(f) do
+      begin
+	OpenLine;
+	while not eoln(f) do
+	  begin
+	    if f^ = ' ' then {very frequent}
+	      begin write(listing,f^); get(f) end
+	    else if f^ in firstchars then ScanIdent
+	    else {all other chars}
+	      begin write(listing,f^); get(f) end
+	  end {while not eoln(f)};
+	writeln(listing); get(f) {readln(f)}
+      end {while not eof(f)}
+  end {Scan};
+
+  procedure Printtree(w: entryptr);
+
+    procedure PrintWord(w:entry);
+      var
+	c: natural;
+	x: refptr;
+    begin {PrintWord}
+      write(listing,' ',w.key);
+      x := w.last^.next;
+      w.last^.next := nil {break the ring};
+      c := 0;
+      repeat
+	if c = refsperline then
+	  begin
+	    writeln(listing);
+	    c := 0;
+	    write(listing,' ':wordlength+1)
+	  end;
+	c := c + 1;
+	write(listing,' ',x^.lno:digitspernumber);
+	x := x^.next
+      until x = nil;
+      writeln(listing)
+    end {PrintWord};
+
+  begin {Printtree}
+    if w <> nil then
+      begin
+	Printtree(w^.left);
+	PrintWord(w^);
+	Printtree(w^.right)
+      end
+  end {Printtree};
+
+begin {SYMREF V0.1a}
+  Initialize;
+  rewrite(listing);
+  page(listing);
+  reset(source);
+  Scan(source);
+  page(listing);
+  refsperline := (tablewidth - wordlength - 1) div
+		 (digitspernumber + 1);
+  Printtree(root);
+  writeln(output);
+  writeln(output,'Word count = ',wordcount:1,
+	  '    Reference count = ',refcount:1)
+end {SYMREF V0.1a}.
+

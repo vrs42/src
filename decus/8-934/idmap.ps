@@ -1,0 +1,849 @@
+{$X+}
+Program IdMap(Source	: 'DSK:.ps',
+	      Listing	: 'LP:listing.ls',
+	      Output	: 'TT:',
+	      UsageTable: 'temp.tm');  {$T-,P-,N- }
+
+  { Pascal Source Cross Referencer, 1980-03-18.
+
+    Copyright (c) 1980, by
+
+      James F. Miner
+      Social Science Research Facilities Center
+      University of Minnesota
+      Minneapolis, MN  55455
+      U.S.A.
+
+    Al-18.
+
+    Copyright (c) 1980, by
+
+      James F. Miner
+      Social Science Research Facilities Center
+      University of Minnesota
+      Minneapolis, MN  55455
+      U.S.A.
+
+    Al10;	{ number of chars per Alpha, must be }
+				{ > length of every reserved word. }
+    HashSize =	      1499;	{ number of entries in hash table, }
+				{ must be odd, preferably prime. }
+    HashFactor =      3;	{ used in hash function, must be > 0. }
+    MaxSourceWidth =  150;	{ significant characters per source line. }
+    LinesOnPage =     60;	{ non-blank lines printed per page. }
+    TopMargin =       3;	{ blank lines at top of page, >= 0. }
+    NumsOnLine =      13;	{ line number slots per line in map; }
+				{ map width = 1 + NumsOnLine*NumWidth. }
+    NumWidth =	      6;	{ width of line number slots in map. }
+    NameUndent =      2;	{ line number slots used for short names. }
+    ShiftBias =       -32;	{ = ord (upper case) - ord(lower case), }
+				{ = -32 (ASCII), 64 (EBCDIC), 0 (single case)}
+    MaxSimilar =      8;	{ significant characters in similarity test. }
+    MaxBlock =	      4095;	{ maximum index for usage file. }
+    UsagesPerBlock =  64;	{ in UsageTable. }
+
+  type
+    Natural = 0..MaxInt;
+    HashIndex = 0..HashSize;
+    AlphaRange = 1..AlphaLength;
+    Alpha = packed array [AlphaRange] of Char
+    UsagesPerBlock =  64;	{ in UsageTable. }
+
+  type
+    Natural = 0..MaxInt;
+    HashIndexRecord =		{ piece of an identifier. }
+      packed record
+	Image: Alpha;
+	CaseShift: CaseSet;
+	NextSegment: SegmentPointer
+      end;
+
+    IdentRecord =		{ representing an identifier. }
+      packed record
+	Length: 0..MaxSourceWidth;   { chars in identifier. }
+	FirstSegment: SegmentRecord  { first segment in list. }
+      end;
+
+    UsagePointer =
+      packed record
+	BlockNum: 0..MaxBlock;
+	BlockInx: 1..UsagesPerBlock
+      end;
+    UsageRecord =		{ record of a use of an identifier. }
+      packed record
+	LineNum: Natural;
+      case { pass 1 : } Boolean of
+	True:	(IdIndex: HashIndex);
+	False:	(NextUsage: UsagePointer)
+      end;
+
+    EntryPointer = ^ HashEntry;
+    HashEntry = 		{ each entry in the hash table. }
+      record
+	Ident: IdentRecord;
+	ConsistentCase: Boolean;  { all uses are consistently capitalized. }
+      case Reserved: Boolean of
+	False: (UsageList: UsagePointer); { first component of a linear list. }
+	True:  ()
+      end;
+
+  var
+    Listing, Source: Text;
+    ListingInfo:
+      recordcase Reserved: Boolean of
+	False: (UsageList: UsagePointer); { first component of a linear list. }
+	True:  ()
+      end;
+
+  var
+    Listing, Source: Text;
+    ListingInfo:
+      record	{ the number of reserved entries. }
+	EntryCount: HashIndex;	{ the number of non-empty entries. }
+	MaxHashSum: Natural	{ to avoid overflow in the hash function. }
+      end;
+    UsageTable:
+      file [1..MaxBlock] of
+	array [1..UsagesPerBlock] of
+	  UsageRecord;
+    HighUsage, NilUsage: UsagePointer;
+    CurrentBlock: 0..MaxBlock;
+    UpdateBlock: Boolean;
+    UsageCount: Natural;
+
+
+  procedure StartLineOfListing;
+    var
+      Count:  0..TopMargin;
+  begin { StartLineOfListing }
+    with ListingInfo do
+      if LinesRemainingOnPage = 0 then
+	begin
+	  PageCount := PageCount + 1;
+	  Page(Listing);
+	  Count := TopMargin;
+	  while Count > 0 do begin Count := Count - 1; WriteLn(Listing) end;
+	  LinesRemainingOnPage := LinesOnPage - 1
+	end
+      else
+	LinesRemainingOnPage := LinesRemainingOnPage - 1;
+    Write(Listing, ' ');
+  end { StartLineOfListing } ;
+
+  function NonNil(UsePtr: UsagePointer): Boolean;
+  begin
+    NonNil := UsePtr.BlockNum <> 0
+  end { NonNil } ;
+
+  procedure NewUsage(var UsePtr: UsagePointer);
+  begin
+    with HighUsage do
+      if BlockInx = UsagesPerBlock then
+	begin BlockInx NonNil := UsePtr.BlockNum <> 0
+  end { NonNil } ;
+
+  procedure NewUsage(var UsePtr: UsagePoiage
+  end { NewUsage } ;
+
+  procedure GetUsage(UsePtr: UsagePointer;  var Use: UsageRecord);
+  begin
+    with UsePtr do
+      begin
+	if BlockNum <> CurrentBlock then
+	  begin
+	    if UpdateBlock then Put(UsageTable, CurrentBlock);
+	    Get(UsageTable, BlockNum);
+	    CurrentBlock := BlockNum;
+	    UpdateBlock := False
+	  end;
+	Use := UsageTable^[BlockInx]
+      end
+  end { GetUsage } ;
+
+  procedure PutUsage(UsePtr: UsagePointer;  Use: UsageRecord);
+  begin
+    with UsePtr do
+      begin
+	if BlockNum <> CurrentBlock then
+	  begin
+	    if UpdateBlock then Put(UsageTable, CurrentBlock);
+	    if BlockNum <= Length(UsageTable) then
+	      Get(UsageTable, BlockNum);
+	    CurrentBlock := BlockNum
+	  end;
+	UsageTable^[BlockInx] := Use;
+	UpdateBlock := True
+      end
+  end { PutUsage } ;
+
+  procedure ScanSource;
+
+    var
+      SourceInfo:
+	record
+	  CharCount:  Natural;	       { chars seen on current line. }
+	  LineCount:  Natural;	       { current line number. }
+	  InComment:  Boolean;	       { scanning a co   SourceInfo:
+	record
+	  CharCount:  Natural;	       { chars seen on current line. }
+	  LineCount:  Natural;	       { current line number. }
+	  InComment:  Boolean;	       { scanning a co"... }
+      Digits,
+      DigitsE,
+      UpperCaseLetters,
+      LettersAndDigits,
+      IDContinuators,
+      ImportantChars:  set of Char;
+
+    procedure StartSourceLine;
+    begin { StartSourceLine }
+      StartLineOfListing;
+      with SourceInfo do
+	begin
+	  LineCount := LineCount + 1;
+	  Write(Listing, LineCount:5);
+	  if InComment then Write(Listing, '.') else Write(Listing, ' ');
+	  CharCount := 1;  Write(Listing, Source^)
+	end
+    end { StartSourceLine } ;
+
+    procedure NextChar;
+    begin { NextChar }
+      { not Eof(Source) }
+      with SourceInfo do
+	if Eoln(Source) then
+	  begin  WriteLn(Listing);  ReadLn(Source);
+	    if not Eof(Source) then StartSourceLine
+	  end
+	else
+	  if CharCount >= MaxSourceWidth then
+	    repeat Get(Source); Write(Listing, Source^) until Eoln(Source)
+	  else
+	    begin Get(Source); Write(Listing, Source^);
+	      CharCount := CharCount + 1
+	    end
+    end { NextChar } ;
+
+    procedure DoIdentifier;
+
+      var
+	SourceId:
+	  record
+	    Id: IdentRecord;
+	    LastSeg: SegmentPointer;
+	    HashCode:  HashIndex;
+	  end;
+
+      procedure GetSourceId;
+
+
+    procedure DoIdentifier;
+
+      var
+	SourceId:
+	  record
+	    Id: IdentRecord;
+	     HashSum: Natural;
+
+	procedure NewSegment;
+	begin { NewSegment }
+	  with SpareSegments do
+	    if First <> Last then
+	      begin Seg := First;  First := Seg^.NextSegment end
+	    else New(Seg)
+	end { NewSegment } ;
+
+	procedure GatherSegment;
+	  var
+	    SegIndex:  0..AlphaLength;
+	    LowerCh: Char;
+	begin { GatherSegment }
+	  SegIndex := 0;  SegImage := NullImage;  SegShift := [];
+	  repeat { Source^ in IDContinuators }
+	    SegIndex := SegIndex + 1;
+	    if Source^ in UpperCaseLetters then
+	      begin  SegShift := SegShift + [SegIndex];
+		LowerCh := Chr( Ord(Source^) - ShiftBias )
+	      end
+	    else LowerCh := Source^;
+	    SegImage[SegIndex] := LowerCh;
+	    if HashSum > IdentTable.MaxHashSum then
+	      HashSum := HashSum mod HashSize;
+	    HashSum := HashSum * HashFactor + Ord(LowerCh);
+	    NextChar
+	  until not (Source^ in IDContinuators) or (SegIndex = AlphaLength);
+	  Len := Len + SegIndex
+	end { GatherSegment } ;
+
+      begin { GetSourceId }
+	SourceId.LastSeg := nil;  HashSum := 0;  Len := 0;
+ource^ in IDContinuators) or (SegIndex = AlphaLength);
+	  Len := Len + SegIndex
+	end { GatherSegment } ;
+
+      begin { GetSourceId }
+	SourceId.LastSeg := nil;  HashSum := 0;  Len := 0;
+rSegment;  NewSegment;
+	    with Seg^ do
+	      begin Image := SegImage;	CaseShift := SegShift;
+		NextSegment := nil
+	      end;
+	    if SourceId.LastSeg = nil then
+	      SourceId.Id.FirstSegment.NextSegment := Seg
+	    else SourceId.LastSeg^.NextSegment := Seg;
+	    SourceId.LastSeg := Seg
+	  end;
+	SourceId.Id.Length := Len;
+	if MaxInt-Len < HashSum then
+	  HashSum := HashSum mod HashSize;
+	SourceId.HashCode := (HashSum + Len) mod HashSize
+      end { GetSourceId } ;
+
+      procedure RecordUseOfSourceId;
+	var
+	  Entered: Boolean;
+	  Skip: HashIndex;
+	  Index: Natural;
+	  Use: UsageRecord;  UsePtr: UsagePointer;
+	  SameSpelling, SameCase: Boolean; { set by CompareIdents. }
+
+	procedure CompareIdents(var A, B: IdentRecord);
+	  { Sets SameSpelling = ("A and B have same spelling"). }
+	  { If SameSpelling, then SameCase indicates A and B have }
+	  { identical capitalization. }
+	  var
+	    SegA, SegB:  SegmentPointer;
+	    StillChecking:  Boolean;
+	begin { CompareIdents }
+	  if (A.Length = B.Length) and
+	     (A.FirstSegment.Image = B.FirstSegment.Image)  then
+	    begin
+	      SegA := A.FirstSegment.Next  StillChecking:  Boolean;
+	begin { CompareIdents }
+	  if (A.Length = B.Length) and
+	     (A.g := SegB <> nil;
+	      SameCase := A.FirstSegment.CaseShift = B.FirstSegment.CaseShift;
+	      while StillChecking do
+		if SegA^.Image = SegB^.Image then
+		  begin
+		    if SegA^.CaseShift <> SegB^.CaseShift then
+		      SameCase := False;
+		    SegA := SegA^.NextSegment;
+		    SegB := SegB^.NextSegment;
+		    StillChecking := SegB <> nil
+		  end
+		else
+		  begin  StillChecking := False;  SameSpelling := False end
+	    end
+	  else SameSpelling := False
+	end { CompareIdents } ;
+
+	procedure ReclaimSegments;
+	begin { ReclaimSegments }
+	  with SourceId do
+	    if LastSeg <> nil then
+	      begin
+		SpareSegments.Last^.NextSegment :=
+		  Id.FirstSegment.NextSegment;
+		SpareSegments.Last := LastSeg
+	      end
+	end { ReclaimSegments } ;
+
+      begin { RecordUseOfSourceId }
+	with IdentTable do
+	  begin
+	    Entered := False;  Skip := 1;  Index := SourceId.HashCode;
+	    repeat
+	      if Entries[Index] = nil then { Empty Entry }
+		begin
+		  New(Entries[Index]);
+		  with Entries[Index]^ do
+		    begin Ident := Soip := 1;  Index := SourceId.HashCode;
+	    repeat
+	      if Entries[Index] = nil then { Empty Entry }
+		begin
+		  New(Entries[Index]);
+		  with Entries[Index]^ do
+		    begin Ident := SoIndex;  UsageList := NilUsage;
+		      PutUsage(UsePtr, Use)
+		    end;
+		  EntryCount := EntryCount + 1;  Entered := True
+		end
+	      else
+		with Entries[Index]^ do
+		  begin   CompareIdents(Ident,SourceId.Id);
+		    if SameSpelling then
+		      begin  Entered := True;  { Entry already exists }
+			if not Reserved then { not reserved }
+			  begin
+			    NewUsage(UsePtr);  UsageCount := UsageCount + 1;
+			    Use.LineNum := SourceInfo.LineCount;
+			    Use.IdIndex := Index;
+			    PutUsage(UsePtr, Use);
+			    if not SameCase then ConsistentCase := False
+			  end;
+			ReclaimSegments
+		      end
+		    else
+		      begin { collision }
+			Index := Index + Skip;	Skip := Skip + 2;
+			if Index >= HashSize then Index := Index - HashSize;
+			if Skip = HashSize then
+			  begin WriteLn(Output, ' Name table full!'); Halt end
+		      end
+		  end
+	    until Entered
+	  end
+      end { RecordUseOfSourceId } ;
+
+    begin { DoIdentifier }
+      GetSourceId;
+      RecordUseOfSourceId
+    end { DoIdentifier } ;
+
+    procedure SkipString;
+      var  Quote: Char;
+    begin { SkipString }
+      Quote := Source^;
+   ifier }
+      GetSourceId;
+      RecordUseOfSourceId
+    end { DoIdentifier } ;
+
+    procediteLn(Output, ' Unclosed string at line number ',
+			SourceInfo.LineCount : 1);
+      NextChar
+    end { SkipString } ;
+
+    procedure SkipComment;
+    begin { SkipComment }
+      NextChar;
+      with SourceInfo do
+	begin  InComment := True;
+	  repeat { InComment and not Eof(Source) }
+	    if Source^ = '}' then InComment := False
+	    else
+	      if Source^ = '*' then
+		begin  NextChar;
+		  if Source^ = ')' then InComment := False
+		end
+	      else NextChar
+	  until Eof(Source) or not InComment;
+	  if not InComment then NextChar
+	end
+    end { SkipComment } ;
+
+    procedure InitScan;
+      var
+	Seg: SegmentPointer;
+	SegIndex: AlphaRange;
+    begin { InitScan }
+      with SourceInfo do
+	begin
+	  LineCount := 0;  CharCount := 0;  InComment := False
+	end;
+      StartSourceLine;
+      New(Seg);
+      with SpareSegments do
+	begin  First := Seg;  Last := Seg;  end;
+      for SegIndex := 1 to AlphaLength do NullImage[SegIndex] := ' ';
+      Digits := ['0','1','2','3','4','5','6','7','8','9'];
+      DigitsE := 
+	begin  First := Seg;  Last := Seg;  end;
+      for SegIndex := 1 to AlphaLength do NullImage[SegIndex] := ' ';
+      Digits := ['0','1','2','3','4','5','6','7','8','9'];
+      DigitsE := its + UpperCaseLetters +
+		['a','b','c','d','e','f','g','h','i','j','k','l','m',
+		 'n','o','p','q','r','s','t','u','v','w','x','y','z'];
+      IDContinuators := LettersAndDigits + ['_'];
+      ImportantChars := LettersAndDigits + ['''','{','('];
+    end { InitScan } ;
+
+  begin { ScanSource }
+    InitScan;
+    while not Eof(Source) do
+      begin
+	if Source^ in ImportantChars then
+	  case Source^ of
+	    'A','B','C','D','E','F','G','H','I','J','K','L','M',
+	    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+	    'a','b','c','d','e','f','g','h','i','j','k','l','m',
+	    'n','o','p','q','r','s','t','u','v','w','x','y','z':
+	      DoIdentifier;
+	    '0','1','2','3','4','5','6','7','8','9':
+	      repeat NextChar until not (Source^ in DigitsE);
+	    '''': SkipString;
+	    '{':  SkipComment;
+	    '(':  begin  NextChar;
+		    if Source^ = '*' then SkipComment
+		  end
+	  end { case }
+	else NextChar
+      end { while not Eof(Source) } ;
+    StartLineOfListing;  WriteLn(Listing);
+    StartLineOfListing;
+    WriteLSource^ = '*' then SkipComment
+		  end
+	  end { case }
+	else NextChar
+      end { while not Eof(Source) } ;
+    StartLineOfListing;  WriteLn(Listing);
+    StartLineOfListing;
+    WriteL at end of source!')
+  end { ScanSource } ;
+
+  procedure PrintMap;
+
+    procedure LinkUsages;
+      var
+	Use: UsageRecord;
+	UsePtr: UsagePointer;
+    begin
+      UsePtr := HighUsage;
+      while NonNil(UsePtr) do
+	begin  GetUsage(UsePtr, Use);
+	  with Use, IdentTable.Entries[IdIndex]^ do
+	    begin  NextUsage := UsageList;  UsageList := UsePtr end;
+	  PutUsage(UsePtr, Use);
+	  { move toward beginning of table }
+	  with UsePtr do
+	    if BlockInx = 1 then
+	      begin  BlockInx := UsagesPerBlock;  BlockNum := BlockNum - 1 end
+	    else BlockInx := BlockInx - 1
+	end
+    end { LinkUsages } ;
+
+    procedure CompressEntries;
+      { In IdentTable, entries which are nil are considered empty.
+	CompressEntries moves non-empty entries with indices
+	EntryCount .. HashSize-1 down into the empty entries
+	with indices 0 .. EntryCount-1.
+	Assumes EntryCount > 0. }
+
+      var
+	Low, High: HashIndex;
+
+    begin { CompressEntries }
+      with IdentTable do
+	begin
+	  Low := 0;  High := HashSize-1;
+	  while Entries[High] =
+	Assumes EntryCount > 0. }
+
+      var
+	Low, High: HashIndex;
+
+    begin { CompressEntries }
+      with IdentTable do
+	begin
+	  Low := 0;  High := HashSize-1;
+	  while Entries[High] =t High := High - 1
+	      until Entries[High] <> nil
+	    end
+	end
+    end { CompressEntries } ;
+
+    procedure SortEntries(Min, Max: HashIndex);
+      { QuickSort with bounded recursion of elements Min..Max of
+	IdentTable.Entries.  Assumes Min <= Max. }
+      var
+	Low, High: -1..HashSize;
+	MidKey: IdentRecord;
+	TempEntry: EntryPointer;
+
+      function Ascending(var A, B: IdentRecord) : Boolean;
+	{ Check string A < string B }
+	var
+	  ASeg, BSeg:  SegmentPointer;
+	  Done: Boolean;
+      begin { Ascending }
+	if A.FirstSegment.Image < B.FirstSegment.Image then
+	  Ascending := True
+	else
+	  if A.FirstSegment.Image > B.FirstSegment.Image then
+	    Ascending := False
+	  else
+	    begin  { check subsequent segments }
+	      ASeg := A.FirstSegment.NextSegment;
+	      BSeg := B.FirstSegment.NextSegment;
+	      repeat
+		if BSeg = nil then
+		  begin Ascending := False;  Done := True end
+		else
+		  if ASeg = nil then
+		    begin Ascending := True;  Done := True end
+		  else
+		    begin
+		      Done := ASeg^.Image <>l then
+		  begin Ascending := False;  Done := True end
+		else
+		  if ASeg = nil then
+		    begin Ascending := True;  Done := True end
+		  else
+		    begin
+		      Done := ASeg^.Image <>   until Done
+	    end
+      end { Ascending } ;
+
+    begin { SortEntries }
+      repeat { pick split point }
+	with IdentTable do
+	  begin
+	    MidKey := Entries[(Min + Max) div 2]^.Ident;
+	    Low := Min;  High := Max;
+	    repeat { partition }
+	      while Ascending(Entries[Low]^.Ident,MidKey) do Low := Low + 1;
+	      while Ascending(MidKey,Entries[High]^.Ident) do High := High - 1;
+	      if Low <= High then
+		begin
+		  TempEntry := Entries[Low];
+		  Entries[Low] := Entries[High];
+		  Entries[High] := TempEntry;
+		  Low := Low + 1;
+		  High := High - 1
+		end;
+	    until Low > High
+	  end;
+
+	{ recursively sort shorter sub-sequence }
+	if High - Min < Max - Low then
+	  begin
+	    if Min < High then SortEntries(Min,High);
+	    Min := Low
+	  end
+	else
+	  begin
+	    if Low < Max then SortEntries(Low,Max);
+	    Max := High
+	  end
+      until Max <= Min
+    end { SortEntries };
+
+    procedure PrintEntries;
+      var
+	Index, PrevIndex:  HashIndex;
+	Use: UsageRecord;  UsePtr: UsagePointer;
+	NumberCount:  
+	  end
+      until Max <= Min
+    end { SortEntries };
+
+    procedure PrintEntries;
+      var
+	Index, PrevIndex:  HashIndex;
+	Use: UsageRecord;  UsePtr: UsagePointer;
+	NumberCount:   similarity over their first MaxSimilar chars. }
+	{ Similar gets the results of the test. }
+	var
+	  SegmentA, SegmentB: SegmentRecord;
+	  Len: 0..MaxSimilar;
+	  SegIndex: 0..AlphaLength;
+      begin { CheckSimilarity }
+	if A.Length > B.Length then CheckSimilarity(B, A)
+	else { A.Length <= B.Length }
+	  if A.Length >= MaxSimilar then
+	    begin
+	      Len := MaxSimilar;  Similar := True;  SegIndex := 0;
+	      SegmentA := A.FirstSegment;  SegmentB := B.FirstSegment;
+	      while (Len > 0) and Similar do
+		begin  Len := Len - 1;
+		  if SegIndex = AlphaLength then
+		    begin  SegIndex := 0;
+		      SegmentA := SegmentA.NextSegment^;
+		      SegmentB := SegmentB.NextSegment^
+		    end;
+		  SegIndex := SegIndex + 1;
+		  if SegmentA.Image[SegIndex] <> SegmentB.Image[SegIndex] then
+		    Similar := False
+		end
+	    end
+	  else Similar := False
+      end { CheckSimilarity } ;
+
+      procedure WriteSegment(Length: AlphaRange);
+	var
+	  SegIndex: AlphaRange;
+      begin { WriteSegment }
+	with ThisSegment do
+	  for Segr := False
+      end { CheckSimilarity } ;
+
+      procedure WriteSegment(Length: AlphaRange);
+	var
+	  SegIndex: AlphaRange;
+      begin { WriteSegment }
+	with ThisSegment do
+	  for Seg } ;
+
+    begin { PrintEntries }
+      FoundInconsistency := False;  FoundSimilarity := False;
+      PrevIndex := HashSize;
+      with IdentTable do
+	for Index := 0 to EntryCount-1 do
+	  with Entries[Index]^ do
+	    if not Reserved then
+	      begin  StartLineOfListing;
+		if PrevIndex < HashSize then
+		  begin  CheckSimilarity(Entries[PrevIndex]^.Ident,Ident);
+		    if Similar then
+		      begin Write(Listing, '?'); FoundSimilarity := True end
+		  end
+		else Similar := False;
+		if not ConsistentCase then
+		  begin Write(Listing, '*'); FoundInconsistency := True end;
+		if Similar or not ConsistentCase then Write(Listing, ' ');
+		with Ident do
+		  begin  Len := Length;  ThisSegment := FirstSegment;
+		    while Len > AlphaLength do
+		      begin  Len := Len - AlphaLength;
+			WriteSegment(AlphaLength);
+			ThisSegment := ThisSegment.NextSegment^
+		      end;
+		    WriteSegment(Len);
+		    Len := Length
+		  end;
+		if Similar or not ConsistentCase then
+		  Len := Len + Ord(Similar) + Ord(not ConsistentCase) + 1;
+		PrNextSegment^
+		      end;
+		    WriteSegment(Len);
+		    Len := Length
+		  end;
+		if Similar or not ConsistentCase then
+		  Len := Len + Ord(Similar) + Ord(not ConsistentCase) + 1;
+		Prif NumberCount < NameUndent then
+		  begin
+		    Write(Listing, ' ' : NumWidth * (NameUndent - NumberCount));
+		    NumberCount := NameUndent
+		  end;
+		UsePtr := UsageList;
+		while NonNil(UsePtr) do
+		  begin
+		    if NumberCount >= NumsOnLine then
+		      begin WriteLn(Listing); StartLineOfListing;
+			Write(Listing, ' ': NameUndent * NumWidth);
+			NumberCount := NameUndent
+		      end;
+		    NumberCount := NumberCount + 1;
+		    GetUsage(UsePtr, Use);
+		    Write(Listing, Use.LineNum : NumWidth);
+		    UsePtr := Use.NextUsage
+		  end;
+		WriteLn(Listing)
+	      end;
+      if FoundInconsistency or FoundSimilarity then
+	begin StartLineOfListing;  WriteLn(Listing);
+	  if FoundSimilarity then
+	    begin  StartLineOfListing;
+	      WriteLn(Listing, 'Identifiers marked with a "?" are similar ',
+			       'to the previous identifiers');
+	      StartLineOfListing;
+	      WriteLn(Listing, ' in their first ',  MaxSimilar:1,
+			       ' characters.');
+	    end;
+	  if FoundInconsistency then
+	    begin  StartLineOfListin');
+	      StartLineOfListing;
+	      WriteLn(Listing, ' in their first ',  MaxSimilar:1,
+			       ' characters.');
+	    end;
+	  if FoundInconsistency then
+	    begin  StartLineOfListinable.EntryCount > 0 then
+      begin
+	LinkUsages;
+	CompressEntries;
+	SortEntries(0,IdentTable.EntryCount-1);
+	ListingInfo.LinesRemainingOnPage := 0;	{ Force a page eject }
+	PrintEntries
+      end
+  end { PrintMap } ;
+
+  procedure Initialize;
+    var
+      Index: HashIndex;
+      HighChar: Char;
+
+    procedure Reserve(SegImage: Alpha);
+      { Assume all letters in SegImage are lower case. }
+      var
+	SegIndex:  AlphaRange;
+	Sum: Natural;
+    begin { Reserve }
+      Sum := 0;  SegIndex := 1;
+      repeat
+	if Sum > IdentTable.MaxHashSum then
+	  Sum := Sum mod HashSize;
+	Sum := Sum * HashFactor + Ord(SegImage[SegIndex]);
+	SegIndex := SegIndex + 1
+      until SegImage[SegIndex] = ' ';
+      SegIndex := SegIndex - 1;
+      if MaxInt-SegIndex < Sum then Sum := Sum mod HashSize;
+      Sum := (Sum+SegIndex) mod HashSize;
+      with IdentTable do
+	if Entries[Sum] <> nil then
+	  begin WriteLn(Output, ' Reserved word collision!'); Halt end
+	else
+	  begin
+	    New(Entries[Sum]);
+	    with Entries[Sum]^, Ident, Firsith IdentTable do
+	if Entries[Sum] <> nil then
+	  begin WriteLn(Output, ' Reserved word collision!'); Halt end
+	else
+	  begin
+	    New(Entries[Sum]);
+	    with Entries[Sum]^, Ident, FirsserveCount := ReserveCount + 1
+	      end
+	  end
+    end { Reserve } ;
+
+  begin { Initialize }
+    Reset(Source);
+    if Eof(Source) then WriteLn(Output, ' Empty source file!')
+    else
+      begin
+	Rewrite(Listing);
+	with ListingInfo do
+	  begin LinesRemainingOnPage := 0;  PageCount := 0 end;
+	with IdentTable do
+	  begin  EntryCount := 0;  ReserveCount := 0;
+	    for Index := 0 to HashSize-1 do Entries[Index] := nil;
+	    HighChar := '9';
+	    if HighChar < 'Z' then HighChar := 'Z';
+	    if HighChar < 'z' then HighChar := 'z';
+	    MaxHashSum := (MaxInt - Ord(HighChar)) div HashFactor;
+	    if (HashSize-1 > MaxHashSum) or
+	       (HashSize-1 > MaxInt-MaxSourceWidth) then
+	      begin WriteLn(Output, ' Hash function overflow!'); Halt end
+	  end;
+	{ Reserve all word-symbols except "label" and "goto". }
+	Reserve('and	   ');	  Reserve('array     ');
+	Reserve('begin	   ');	  Reserve('case      ');
+	Reserve('const	   ');	  Reserve('div	     ');
+	Reserve('do	   ');	  Reserve('downto    ');
+	Reserve('else	   ');	  Reseerve('array     ');
+	Reserve('begin	   ');	  Reserve('case      ');
+	Reserve('const	   ');	  Reserve('div	     ');
+	Reserve('do	   ');	  Reserve('downto    ');
+	Reserve('else	   ');	  Reseot	     ');
+	Reserve('of	   ');	  Reserve('or	     ');
+	Reserve('packed    ');	  Reserve('procedure ');
+	Reserve('program   ');	  Reserve('record    ');
+	Reserve('repeat    ');	  Reserve('set	     ');
+	Reserve('then	   ');	  Reserve('to	     ');
+	Reserve('type	   ');	  Reserve('until     ');
+	Reserve('var	   ');	  Reserve('while     ');
+	Reserve('with	   ');
+	{ Usage Table and related variables: }
+	Rewrite(UsageTable);
+	NilUsage.BlockNum := 0;  NilUsage.BlockInx := UsagesPerBlock;
+	HighUsage := NilUsage;
+	CurrentBlock := 0;  UpdateBlock := False;
+	UsageCount := 0
+      end
+  end { Initialize } ;
+
+begin { IdMap }
+  Initialize;
+  if not Eof(Source) then
+    begin ScanSource;  PrintMap;  Rewrite(UsageTable)  end
+end { IdMap } .

@@ -1,0 +1,583 @@
+{$X+ accept non-standard stuff}
+Program linkmp(input:'.mp', output:'IO:.ls');
+{$T-,L-}
+{  Annotates link map for greater readability }
+{  JTE	SSRFC	1979/06/12 }
+{
+    To run, do:
+
+	.R PARTS
+	>LINKMP,SOURCE,RESULT
+
+ }
+{  overlays described a little better	79/07/21 }
+{  overlay fwa, lwa scanned		79/07/30 }
+{  variables level, overlay made locals 80/01/28 }
+
+{ The various map parts expected are laid out as follows.
+
+
+123456789.123456789.123456789.123456789.123456789.123456789.123456789.12
+.........1.........2.........3.........4.........5.........6.........7..
+
+ OS/8	LINKER V 2AG  LOAD MAP	    13-JUN-79
+
+UNDEFINED SYMBOLS:
+ELNRT	 00000	  EOFRT    00000    GTCRT    00000
+
+GLOBAL-ABSOLUTE SYMBOLS:
+ADRERR	  4427	  A0	    0071    A1	      0072
+
+SECTION  ADDR	 SIZE  ENTRY	ADDR	ENTRY	 ADDR
+TTIV1	 00600	 0177  CCABT	00701	IOTD4	 00T    00000    GTCRT    00000
+
+GLOBAL-ABSOLUTE SYMBOLS:
+ADRERR	  4427	  A0	    0071    A1	      0072
+
+SECTION  ADDR	 SIZE  ENTRY	ADDR	ENTRY	 ADDR
+TTIV1	 00600	 0177  CCABT	00701	IOTD4	 00..3.........4.........5.........6.........7..
+
+ }
+
+
+
+
+const
+  blank =	' ';
+  blocklen =	0400b	{ OS/8 physical block length };
+  divlen =	54	{ divider lines length };
+  fielddiv =	'=====================';
+  fieldlen =	10000b	{ length of one memory field };
+{levdiv = '======================================================';}
+  linelength =	80	{ maximum input line length };
+  maxaddr =	3777777b { highest valid address };
+  maxlevel =	7	{ number of levels in overlay design };
+  maxoverlays = 17b	{ number of overlays in each level above zero };
+  niladdr =	4000000b { value of non-existant address };
+{ovldiv = '------------------------------------------------------';}
+  pagediv =	'	  ------------';
+  pagelen =	0200b	{ length of one memory page };
+  sectionheader = 'section..addr....size..entry....addr....entry....addr.';
+  unused =	'(unused= ';
+
+
+type
+  address =	0..niladdr;
+  alllevels =	0..maxlevel;
+  alloverlays = 0..maxoverlays;
+  charinteger = 0..177b { range of character values };
+  charset =	set of char;
+  fnused= ';
+
+
+type
+  address =	0..niladdr;
+  alllevels =	0..maxlevel;
+  alloverlays = 0..maxnelength] of char;
+  ovlcounter =	array[alllevels] of array[alloverlays] of integer;
+
+
+var
+  addr :	address { current section address };
+  continuation : boolean { section entry/global continuation lines };
+  endofile :	boolean { eof(input)  };
+  field :	char	{ current root section field };
+  fwa : 	address { first actual address of section };
+  holdlc :	integer { hold line count while scanning overlays };
+  i :		integer { main prog index var };
+  lastaddr :	address { previous section address };
+  lastfield :	char	{ previous root section field };
+  lastlength :	fieldsize { previous section length };
+  lastlevel :	alllevels { previous level number };
+  lastsize :	fieldsize { previous section length ?? };
+  length :	fieldsize { current section length };
+  levdiv :	packed array[1..divlen] of char;
+  levellength : levelcounter { length of each level };
+  leveloccupied : array[alllevels] of boolean;
+  levfirstactual : levelcounter { level's lowest overlay fwa };
+  levhigh :	address { working copy of levhighbound };
+  levhighbound : levelcounter { highest address, rounded up to page ? };
+  levlastactual : levelcounte { level's lowest overlay fwa };
+  levhigh :	address { working copy of levhighbound };
+  levhighbound : levelcounter { highest address, rounded up to page ? };
+  levlastactual : levelcounte { source lines read into line buffer };
+  linecount :	integer { count of source lines read };
+  lwa : 	address { lwa of current level or overlay };
+  newlev :	boolean { change in overlay level spotted };
+  newovl :	boolean { change in overlay number spotted };
+  nextaddr :	address { current sect addr plus current sect length };
+  nextpage :	address { nestaddr rounded up to page bound };
+  octaldigits : charset { for converting character string to octal number };
+  ordzero :	charinteger { for converting to a number };
+  ovldiv :	packed array[1..divlen] of char;
+  ovlfirstactual : ovlcounter { raw first word addresses };
+  ovllastactual : ovlcounter { raw last word addresses };
+  ovunused :	integer { amount unused at end of overlay};
+  size :	fieldsize { current section size ? };
+  title :	linebuff { keep copy of title, but don't use it yet };
+
+
+
+
+procedure initialize  { init program variables };
+
+var
+  i : integer;
+
+begin
+  linecount := 0;
+  lastlevel := 0;
+  ordzero := ord('0');
+  octaldigits := ['0', '1', '2', t };
+
+
+
+
+procedure initialize  { init program variables };
+
+var
+  i : integer;
+
+begin    ovldiv[i] := '-';
+      levdiv[i] := '='
+    end
+end   { initialize };
+
+
+
+
+procedure readline { read next line from source map file };
+{ skips blank lines altogether }
+
+var
+  i, j : integer;
+
+begin
+  repeat { read until a non-blank line }
+    if not eof(input) then
+      begin
+	i := 0;
+	while not eoln(input) do
+	  begin
+	    if i < linelength then
+	      begin
+		i := i + 1;
+		line[i] := input^
+	      end;
+	    get(input)
+	  end;
+     { for j := i+1 to lastlength do line[j] := blank;
+	lastlength := i; }
+	if i > 0 then
+	  begin
+	    while (i > 1) and (line[i] = blank) do i := i - 1;
+	    if (i = 1) and (line[i] = blank) then i := i - 1
+	  end;
+	length := i;
+	readln(input);
+	linecount := linecount + 1
+      end
+  until eof(input) or (length > 0)
+end  { readline };
+
+
+
+
+procedure writeline { writes out current line buffer,
+		       image of a line read };
+
+var
+  i : integer;
+
+begin
+  for i := 1 to length do write(output, line[i]);
+  writeln(output)
+end  { writeline};
+
+
+
+
+procedure copysymbollines { undefined or absolute-global };
+
+begin
+  repeat
+    readline;
+    if line[1o length do write(output, line[i]);
+  writeln(output)
+end  { writeline};
+
+
+
+
+procedure copysymbollines { undefined or absolute-global };
+
+begin
+  repeat
+    readline;
+    if line[1ts to integer };
+
+var
+  n, i : integer;
+
+begin
+  n := 0;
+  for i := start to start+3 do
+    n := (n * 8) + (ord(line[i]) - ordzero);
+  octal4 := n
+end  { octal4 };
+
+
+
+
+function octal5(start : integer) : integer
+    { decode 5 octal digits to integer };
+
+var
+  n, i : integer;
+
+begin
+  n := 0;
+  for i := start to start+4 do
+    n := (n * 8) + (ord(line[i]) - ordzero);
+  octal5 := n
+end  { octal5 };
+
+
+
+
+procedure rootmap { produces annotated map of root sections };
+
+begin
+  readline;
+  lastfield := line[10];
+  lastaddr  := 0;
+  lastsize  := 0;
+  while (line[1] = blank) or (line[12] in octaldigits) do
+    begin { process all sections in root or overlay }
+      if line[1] = blank then writeline { continuation }
+      else
+	begin { process new section line }
+	  addr := octal4(11);
+	  size := octal4(18);
+	  field := line[10] { a character };
+	  nextaddr := lastaddr + lastsize;
+	  if field <> lastfield
+	    then
+	      begin
+		if (nextaddr > 0) and (nextaddr < fieldlen) then
+		  begin
+		    if nex= line[10] { a character };
+	  nextaddr := lastaddr + lastsize;
+	  if field <> lastfield
+	   tfield,
+		      nextaddr : 4 oct, '   ', (fieldlen-nextaddr) : 4 oct,
+		      ')')
+		  end;
+		writeln(output, fielddiv);
+		if addr > 0 then
+		  begin
+		    writeln(output, unused, field, '0000   ',
+		      addr : 4 oct, ')');
+		    if addr mod pagelen = 0 then
+		      writeln(output, pagediv)
+		  end;
+		writeline
+	      end
+	    else { within field }
+	      begin
+		if nextaddr = 0 then nextpage := 0 else
+		nextpage := (nextaddr  div pagelen) * pagelen;
+		if (nextaddr = nextpage) and (nextaddr > 0) then
+		  writeln(output, pagediv);
+		if nextaddr <> addr then
+		  begin
+		    writeln(output, unused, field, nextaddr : 4 oct, '	 ',
+		      (addr - nextaddr) : 4 oct, ')');
+		    if addr mod pagelen = 0 then
+		      writeln(output, pagediv)
+		  end;
+		writeline
+	      end;
+	  lastaddr := addr;
+	  lastsize := size;
+	  lastfield := field
+	end   { process new section line };
+      readline
+    end   { process all sections in root or overlay };
+  { finish up map }
+  nextaddr := lastaddr + lastsize;
+  if nextaddr < fieldlen then { note balance of field }
+    begin
+      writeln(output, unused, lastfield,
+	 in root or overlay };
+  { finish up map }
+  nextaddr := lastaddr + lastsize;
+  if nextaddr < fieldlen then { note balance of field }
+    begin
+      writeln(output, unused, lastfield,
+	a	: boolean;
+  min, max	: address;
+  level :	alllevels { the current level number };
+  overlay :	alloverlays { the current overlay number };
+
+begin
+  for level := 0 to maxlevel do { zero counters }
+    begin
+      for overlay := 0 to maxoverlays do
+	begin
+	  ovlfirstactual[level, overlay] := 0;
+	  ovllastactual[level, overlay] := 0
+	end
+    end;
+
+  repeat { for each level/overlay }
+    level := octal4(15);
+    overlay := octal4(29);
+    readline { set first section line in overlay };
+    gotfwa := false;
+    repeat  { for each section in an overlay }
+      addr := octal5(10);
+      if not gotfwa then
+	begin
+	  ovlfirstactual[level, overlay] := addr;
+	  gotfwa := true
+	end;
+      ovllastactual[level, overlay] := addr + octal4(18) - 1;
+      repeat { bypass continuations }
+	readline
+      until line[1] <> blank
+    until not (line[12] in octaldigits) { new overlay }
+  until line[1] <> 'O' { escape on a misc. line };
+
+  for level := 1 to maxlevel do { deduce min, max level addresses }
+    begin
+      leveloct (line[12] in octaldigits) { new overlay }
+  until line[1] <> 'O' { escape on a misc. line };erlays do
+	if ovlfirstactual[level, overlay] <> 0 then
+	  begin
+	    leveloccupied[level] := true;
+	    fwa := ovlfirstactual[level, overlay];
+	    if fwa < min then
+	      begin
+		min := fwa;
+		levfirstactual[level] := fwa;
+		levlowbound[level] := fwa div blocklen * blocklen
+	      end;
+	    lwa := ovllastactual[level, overlay];
+	    if lwa >= max then
+	      begin
+		max := lwa;
+		levlastactual[level] := lwa;
+		levhighbound[level] := lwa div pagelen * pagelen
+					+ pagelen - 1
+	      end
+	  end;
+      levellength[level] := levhighbound[level] - levlowbound[level] + 1
+    end;
+
+  writeln(output);
+  writeln(output);
+  writeln(output,'Program overlay information.');
+  writeln(output);
+  for level := 1 to maxlevel do
+    if leveloccupied[level] then
+      begin
+	writeln(output, 'Level	', level : 1,
+	  '  low ', levlowbound[level] : 5 oct,
+	  '  fwa ', levfirstactual[level] : 5 oct,
+	  '  lwa ', levlastactual[level] : 5 oct,
+	  '  high ', levhighbound[level] : 5 oct,
+	  '  len ', levellength[level] : 4 oct);
+	for overlay := 0 to maxoverlays do
+	  if ovlfirstactual[level, overlay] <> 0 then
+	    write: 5 oct,
+	  '  high ', levhighbound[level] : 5 oct,
+	  '  len ', levellength[level] : 4 oct);
+	for overlay := 0 to maxoverlays do
+	  if ovlfirstactual[level, overlay] <> 0 then
+	    write     writeln(output)
+end  { scanoverlays };
+
+
+
+
+procedure ovlmap { produce annotated map of overlays };
+
+var
+  level :	alllevels { the current level number };
+  overlay :	alloverlays { the current overlay number };
+
+begin
+  lastlevel := 0;
+  repeat { for each level/overlay }
+    level := octal4(15);
+    overlay := octal4(29);
+    if level <> lastlevel then
+      begin
+	newlev := true;
+	levlow := levlowbound[level];
+	levhigh := levhighbound[level];
+	writeln(output);
+	writeln(output, levdiv);
+	writeln(output,  'Level    ', level : 1 oct,
+	  '  low ', levlow : 5 oct,
+	      '  hi ', levhigh : 5 oct,
+	  '  len ', levellength[level] : 4 oct,
+	  '  unused ', (levhigh - levlastactual[level]) : 4 oct);
+	writeln(output);
+	lastlevel := level
+      end;
+    readline { set first sect of overlay };
+    newovl := true;
+    addr := levfirstactual[level];
+    size := 0;
+    fwa := ovlfirstactual[level, overlay];
+    lwa := ovllastactual[level, overlay];
+    if not newlev then
+      begin
+	writeln(output);
+	writeln(oevfirstactual[level];
+    size := 0;
+    fwa := ovlfirstactual[level, overlay];
+    lwa := ovlay : 2 oct,
+      '  fwa ', fwa : 5 oct,
+      ' lwa ', lwa : 5 oct,
+      '  len ', (lwa - levlow + 1) : 4 oct,
+      '  unused ', ovunused : 4 oct);
+    writeln(output);
+    if newlev then
+      begin
+	writeln(output, sectionheader);
+	writeln(output);
+	newlev := false
+      end;
+    repeat { for each section in an overlay }
+      nextaddr := addr + size;
+      addr := octal4(11);
+      size := octal4(18);
+      field := line[10]  { a character };
+      if newovl
+	then
+	  begin
+	    newovl := false;
+	    nextaddr := (addr div pagelen) * pagelen
+	  end
+	else
+	  begin
+	    if nextaddr = 0
+	      then nextpage := 0
+	      else nextpage := (nextaddr div pagelen) * pagelen;
+	    if (nextaddr = nextpage) and (nextaddr > 0) and
+	       (nextaddr <> addr) then writeln(output, pagediv)
+	  end;
+      if nextaddr <> addr then
+	begin
+	  writeln(output, unused, field, nextaddr : 4 oct, '   ',
+		  (addr - nextaddr) : 4 oct,')');
+	  if addr mod pagelen = 0 then
+	    writeln(output, pagediv)
+	end
+      else if addr mod pagelen = 0 then
+	     writeln(output, pagediv);
+      writeline;
+      repeat { swim thro)');
+	  if addr mod pagelen = 0 then
+	    writeln(output, pagediv)
+	end
+      else if addr mod pagelen = 0 then
+	     writeln(output, pagediv);
+      writeline;
+      repeat { swim thro  if ovunused <> 0 then
+      begin
+	nextaddr := addr + size;
+	if nextaddr mod pagelen = 0 then
+	  writeln(output, pagediv);
+	writeln(output, unused, field, nextaddr : 4 oct,
+		'   ', ovunused : 4 oct, ')')
+      end
+  until line[1] <> 'O' { escape on a non-level/overlay line };
+  writeln(output, ovldiv)
+end   { ovlmap };
+
+
+begin { linkmp }
+  { reset(input); -- automatic }
+  endofile := eof(input);
+  if endofile then halt('no data on input');
+  page(output);
+  initialize;
+  readline;
+  while not endofile do
+    begin
+      endofile := eof(input);
+      if line[12] in octaldigits then
+	begin
+	  writeln(output, '****** error ******');
+	  writeline;
+	  readline
+	end
+      else if line[4] = '/' then
+	begin { title line }
+	  for i := 1 to length do
+	    begin
+	      title[i] := line[i];
+	      write(output, line[i])
+	    end;
+	  writeln(output);
+	  readline
+	end
+      else if line[1] = 'U' then
+	begin { undefined }
+	  writeln(output);
+	  writeline;
+	  copysymbollines
+	end
+      else if line[1] = 'G' tnd;
+	  writeln(output);
+	  readline
+	end
+      else if line[1] = 'U' then
+	begin { undefinee if line[1] = 'P' then
+	begin { program entry }
+	  writeln(output);
+	  writeline;
+	  readline
+	end
+      else if line[1] = 'J' then
+	begin { job status word }
+	  writeln(output);
+	  writeline;
+	  readline
+	end
+      else if line[1] = 'S' then
+	begin { root sections }
+	  writeln(output);
+	  writeln(output);
+	  writeline;
+	  writeln(output);
+	  rootmap
+	end
+      else if line[1] = 'O' then
+	begin { overlay }
+	  holdlc := linecount;
+	  scanoverlays { find fwa, lwa, lengths };
+	  reset(input); { oh boy }
+	  linecount := 0;
+	  while linecount < holdlc-1 do { skip-1 down to original position }
+	    begin
+	      readln(input);
+	      linecount := linecount + 1
+	    end;
+	  readline { reinstate line buffer };
+	  ovlmap;
+	end
+      else { unknown map part }
+	begin
+	  writeln(output);
+	  write(output,'(??) ');
+	  writeline;
+	  readline
+	end
+    end  { while not endofile };
+  writeln(output)
+end { linkmp }.

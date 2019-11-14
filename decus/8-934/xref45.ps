@@ -1,0 +1,223 @@
+program Crossref45(source,listing) {1981-03-29};
+
+{ Simple cross reference generator for Pascal programs, using
+  a binary tree. John Easton, SSRFC, U of M, 1981.
+
+  Limitations:
+
+    -- amount of memory available limits the size of source text processable.
+    -- Pascal reserved words are not suppressed.
+    -- upper-lower case are completely distinct; mixed case names that
+       are spelled the same won't match.
+
+  This program exists as a reference for the algorithm EnterID.
+  It can process correct Pascal programs, but there exist more complete cross
+  reference generators.
+
+  Adapted from Niklaus Wirth's program 4.5 in 'Algorithms + Data Structures =
+  Programs', Prentice Hall 1976, section 4.4, pp 206-208.
+
+  Please retain the above names in all uses of this program.
+}
+
+  const
+    idstrlength =     10  {length of identifiers};
+    tablewidth =      70  {cross-reference table};
+    {width of listing is not limited}
+    digitspernumber =  5;
+
+  type
+    idstring = packed array [1..idstrlength] of char;
+    natural =  0..maxint;
+    entryptr =	^ entry;
+    refptr =  ^ reference;
+
+    entry =
+      record
+	key: idstring;
+	left, right: entryptr;
+	last: refptr {last reference points to first}
+      end	     {reference in a circular list};
+
+    reference =
+      packed record
+	lno: natural;
+	next: refptr
+      end;
+
+  var
+    source, listing: text;
+    root:   entryptr;
+    refsperline: natural;
+
+  procedure Scan(var f: text);
+    var
+      lastidlength: 0..idstrlength;
+      id:	    idstring;
+      linenumber:   natural  {current source line number};
+
+    procedure EnterID(id: idstring; var w1: entryptr);
+
+      procedure Enter(var w1: entryptr);
+	var
+	  w: entryptr;
+	  x: refptr;
+      begin {Enter}
+	w := w1;
+	if w = nil then
+	  begin
+	    new(w);   new(x);
+	    with w^ do
+	      begin
+		key := id;
+		left := nil;   right := nil;
+		last := x
+	      end;
+	    x^.lno := linenumber;
+	    x^.next := x {circular list};
+	    w1 :=w
+	  end
+	else if id < w^.key then Enter(w^.left)
+	else if id > w^.key then Enter(w^.right)
+	else
+	  begin
+	    new(x);
+	    x^.lno := linenumber;   x^.next := w^.last^.next;
+	    w^.last^.next := x;     w^.last := x
+	  end
+      end {Enter};
+
+    begin {EnterID}
+      Enter(w1)
+    end {Enter ID};
+
+    procedure OpenLine;
+    begin {OpenLine}
+      linenumber := linenumber + 1;
+      write(listing,linenumber:digitspernumber,' ')
+    end {OpenLine};
+
+    procedure NextCH;
+    begin {NextCH}
+      if eoln(f) then
+	begin writeln(listing); OpenLine end
+      else write(listing,f^);
+      get(f)
+    end {NextCH};
+
+    procedure ScanIdent;
+      var idlen: 0..idstrlength;
+    begin {ScanIdent}
+      idlen := 0;
+      repeat
+	if idlen < idstrlength then
+	  begin
+	    idlen := idlen + 1;
+	    id[idlen] := f^
+	  end;
+	write(listing,f^);
+	get(f)
+      until not (f^ in ['A','B','C','D','E','F','G','H','I','J','K','L','M',
+			'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+			'a','b','c','d','e','f','g','h','i','j','k','l','m',
+			'n','o','p','q','r','s','t','u','v','w','x','y','z',
+			'0'..'9']);
+      if idlen >= lastidlength then lastidlength := idlen
+      else
+	repeat
+	  id[lastidlength] := ' ';
+	  lastidlength := lastidlength - 1
+	until lastidlength = idlen;
+      EnterID(id,root)
+    end {ScanIdent};
+
+    procedure ScanQuote;
+    begin {ScanQuote}
+      repeat
+	write(listing,f^);
+	get(f)
+      until f^ = '''';
+      NextCH
+    end {ScanQuote};
+
+    procedure ScanComment;
+    begin {ScanComment}
+      NextCH;
+      repeat
+	while not (f^ in ['*','}']) do NextCH;
+	if f^ = '*' then NextCH
+      until f^ in [')','}'];
+      NextCH
+    end {ScanComment};
+
+  begin {Scan}
+    linenumber := 0;  lastidlength := idstrlength;
+    while not eof(f) do
+      begin
+	OpenLine;
+	while not eoln(f) do
+	  begin
+	    if f^ = ' ' then {very frequent}
+	      begin write(listing,f^); get(f) end
+	    else if f^ in ['A','B','C','D','E','F','G','H','I','J','K','L','M',
+			   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+			   'a','b','c','d','e','f','g','h','i','j','k','l','m',
+			   'n','o','p','q','r','s','t','u','v','w','x','y','z'
+			  ] then ScanIdent
+	    else if f^ = '{' then ScanComment
+	    else if f^ = '(' then
+	      begin NextCH; if f^ = '*' then ScanComment end
+	    else if f^ = '''' then ScanQuote
+	    else {all other chars}
+	      begin write(listing,f^); get(f) end
+	  end {while not eoln(f)};
+	writeln(listing); get(f) {readln(f)}
+      end {while not eof(f)}
+  end {Scan};
+
+  procedure Printtree(w: entryptr);
+
+    procedure PrintWord(w:entry);
+      var
+	c: natural;
+	x: refptr;
+    begin {PrintWord}
+      write(listing,' ',w.key);
+      x := w.last^.next;
+      w.last^.next := nil {break the ring};
+      c := 0;
+      repeat
+	if c = refsperline then
+	  begin
+	    writeln(listing);
+	    c := 0;
+	    write(listing,' ':idstrlength+1)
+	  end;
+	c := c + 1;
+	write(listing,' ',x^.lno:digitspernumber);
+	x := x^.next
+      until x = nil;
+      writeln(listing)
+    end {PrintWord};
+
+  begin {Printtree}
+    if w <> nil then
+      begin
+	Printtree(w^.left);
+	PrintWord(w^);
+	Printtree(w^.right)
+      end
+  end {Printtree};
+
+begin {crossref 4.5}
+  root := nil;
+  rewrite(listing);
+  page(listing);
+  reset(source);
+  Scan(source);
+  page(listing);
+  refsperline := (tablewidth - idstrlength - 1) div
+		 (digitspernumber + 1);
+  Printtree(root)
+end {crossref 4.5}.
+

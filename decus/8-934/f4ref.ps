@@ -1,0 +1,341 @@
+{Edit 0.4 } program F4REFb(		{$X+}
+{NS}		    source: 'dsk:source.ft',
+{NS}		    listing:'IO: listing.ls',
+{NS}		    output);
+{$L-}
+
+{ Simple cross reference generator for FORTRAN IV programs, using
+  a binary tree algorithm.
+
+  Copyright (C) 1981   John T. Easton and
+		       Social Science Research Facilities Center and
+		       University of Minnesota.
+  Notes:
+
+    -- Amount of memory available limits the size of the program processable.
+    -- References are listed for all identifiers used and then some: data
+       statements such as 6HARRGHH and 'AIEEEE' will show up as though they
+       are identifiers	HARRGHH and AIEEEE; on the other hande listed for all identifiers used and then some: data
+       statements such as 6HARRGHH and 'Ather for this
+       program to be able to distinguish them.
+    -- We try ignore FORTRAN keywords, especially 'GOTO', 'GO' and 'TO'.
+       See the full list in InitScan, below.
+    -- Lower case input is mapped to upper case characters.
+    -- Column one of the output is always blank.
+    -- Width of the source echoed is not limited, but only sourcewidth (72)
+       characters are significant.
+    -- Width of cross-reference report is limited by tablewidth (72).
+
+
+  Adapted from Niklaus Wirth's program 4.5 in 'Algorithms + Data Structures =
+  Programs', Prentice Hall 1976, section 4.4, pp 206-208.
+
+  Please retain the above names in all uses of this program.
+}
+
+  const
+    digitspernumber = 5;
+    idstrlength =     6 {length of identifiers};
+    sourcewidth =    72 {higher columns not cross-referenced};
+    tablewidth =     72 {cross-reference table};
+
+
+  type
+    idstring =	packed array [1..idstrlength] of char;
+    natural =	0..maxint;
+    entryptr =	^ entry;
+    refptr =	^ reference;
+
+    entry =
+      record
+	name:	     idstring;
+	left, right: entryptr;
+	last:	     refptr {last reference points atural =	0..maxint;
+    entryptr =	^ entry;
+    refptr =	^ reference;
+
+    entry =
+      red
+	lno:  natural;
+	next: refptr
+      end;
+
+  var
+    source, listing {,output} : text;
+    root:	     entryptr;
+    refsperline:     natural;
+    programname:     packed array[1..14] of char;
+    today:	     packed array[1..10] of char;
+
+
+  procedure Title;
+  begin {Title}
+    page(listing);
+    writeln(listing);
+    writeln(listing,' FORTRAN Cross Reference Listing of ',programname,
+		    ' ':6,today);
+    writeln(listing)
+  end {Title};
+
+
+  procedure ScanProgram;
+    const
+      maxkeywords =  47 {number of FORTRAN keywords};
+    var
+      lastidlength:  0..idstrlength;
+      id:	     idstring;
+      linenumber:    natural  {current source line number};
+      columncount:   natural;
+      doingformat:   boolean;
+      keywords:      array[1..maxkeywords] of idstring {FORTRAN keywords};
+      keywordcount:  0..maxkeywords;
+
+
+    procedure InitScan;
+
+
+      procedure A{dd keyword} (id: idstring);
+      begin {A}
+	if keywordcount = maxkeywords then
+	  begin
+	    writeln(output,'** key word table overflow');
+{NS}	    halt
+	  end
+	else
+	  begin
+	    keywordcount := keywordcount + 1;
+	    in {A}
+	if keywordcount = maxkeywords then
+	  begin
+	    writeln(output,'** key word table ov nil;
+      Title;
+      keywordcount := 0;
+      A('AND   '); A('ASSIGN'); A('BACKSP'); A('BLOCK '); A('CALL  ');
+      A('COMMON'); A('COMPLE'); A('CONTIN'); A('DATA  '); A('DEFINE');
+      A('DIMENS'); A('DO    '); A('DOUBLE'); A('END   '); A('EQ    ');
+      A('EQUIVA'); A('EQV   '); A('EXPLIC'); A('EXTERN'); A('FALSE ');
+      A('FILE  '); A('FORMAT'); A('FUNCTI'); A('GE    '); A('GO    ');
+      A('GOTO  '); A('GT    '); A('IF	 '); A('INTEGE'); A('LE    ');
+      A('LOGICA'); A('LT    '); A('NE	 '); A('NOT   '); A('OR    ');
+      A('PAUSE '); A('PRECIS'); A('READ  '); A('REAL  '); A('RETURN');
+      A('REWIND'); A('STOP  '); A('SUBROU'); A('TO    '); A('TRUE  ');
+      A('WRITE '); A('XOR   ');
+      if keywordcount < maxkeywords then
+	begin
+	  writeln(listing,'** keyword array under-used');
+{NS}	 {halt}
+	end;
+      linenumber := 0;
+      lastidlength := idstrlength;
+      doingformat := false;
+    end {InitScan};
+
+
+    function NotKey(id: idstring) : boolean;
+      var
+	i, j, k: natural;
+    begin {NotKey}
+      i := 1;
+      j := keywordcount;
+      repeat k := (i + j) div 2;
+	if keywords[k] <= 
+    function NotKey(id: idstring) : boolean;
+      var
+	i, j, k: natural;
+    begin {NotKey}ue
+      else NotKey := keywords[j] <> id
+    end {NotKey};
+
+
+    procedure EnterID(id: idstring;var w1: entryptr);
+
+
+      procedure Enter(var w1: entryptr);
+	var
+	  w: entryptr;
+	  x: refptr;
+      begin {Enter}
+	w := w1;
+	if w = nil then
+	  begin
+	    new(w);   new(x);
+	    with w^ do
+	      begin
+		name := id;
+		left := nil;   right := nil;
+		last := x
+	      end;
+	    x^.lno := linenumber;
+	    x^.next := x {circular list};
+	    w1 :=w
+	  end
+	else if id < w^.name then Enter(w^.left)
+	else if id > w^.name then Enter(w^.right)
+	else
+	  begin
+	    new(x);
+	    x^.lno := linenumber;   x^.next := w^.last^.next;
+	    w^.last^.next := x;     w^.last := x
+	  end
+      end {Enter};
+
+
+    begin {EnterID}
+      Enter(w1)
+    end {EnterID};
+
+
+    procedure OpenLine;
+    begin {OpenLine}
+      linenumber := linenumber + 1;
+      write(listing,linenumber:digitspernumber,' ');
+      columncount := 0
+    end {OpenLine};
+
+
+    procedure CloseLine;
+    begin {CloseLine}
+      writeln(listing);
+     ber + 1;
+      write(listing,linenumber:digitspernumber,' ');
+      columncount := 0
+    end {OpenLine};
+
+
+    procedure CloseLine;
+    begin {CloseLine}
+      writeln(listing);
+     ncount = sourcewidth then
+	while not eoln(source) do
+	  begin write(listing,source^); get(source) end
+    end {Advance};
+
+
+    procedure ScanIdent;
+      var idlen: 0..idstrlength;
+    begin {ScanIdent}
+      idlen := 0;
+      repeat
+	if idlen < idstrlength then
+	  begin
+	    idlen := idlen + 1;
+	    if source^ in
+		     ['a','b','c','d','e','f','g','h','i','j','k','l','m',
+		      'n','o','p','q','r','s','t','u','v','w','x','y','z']
+	      then id[idlen] := chr(ord(source^)-ord('a')+ord('A'))
+	      else id[idlen] := source^
+	  end;
+	Advance
+      until not (source^ in
+		   ['A','B','C','D','E','F','G','H','I','J','K','L','M',
+		    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+		    'a','b','c','d','e','f','g','h','i','j','k','l','m',
+		    'n','o','p','q','r','s','t','u','v','w','x','y','z',
+		    '0'..'9']);
+      if idlen >= lastidlength then lastidlength := idlen
+      else
+	repeat
+	  id[lastidlength] := ' ';
+	  lastidlength := lastidlength - 1
+	until lastidlength = idlen;
+      if NotKey(id) then EnterID(id,root)
+      else if id = 'FORMAT' then
+	begin
+	  doingformat := true;
+	  while ' ';
+	  lastidlength := lastidlength - 1
+	until lastidlength = idlen;
+      if NotKey(id) thn {ScanALine}
+      while not eoln(source) do
+	begin
+	  if source^ = ' ' then Advance
+	  else if source^ in
+		 ['A','B','C','D','E','F','G','H','I','J','K','L','M',
+		  'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+		  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+		  'n','o','p','q','r','s','t','u','v','w','x','y','z'
+		 ] then ScanIdent
+	  else if source^ in ['0'..'9','.','+','-'] then
+	    repeat Advance {skipping through a number}
+	    until not (source^ in ['0'..'9','.'])
+	  else Advance {miscellaneous}
+	end
+    end {ScanALine};
+
+
+  begin {ScanProgram}
+    InitScan;
+    while not eof(source) do
+      begin
+	OpenLine;
+	if source^ in ['C','c','*','$'] then
+	  begin {FORTRAN comment}
+	    while not eoln(source) do Advance
+	  end {comment}
+	else
+	  begin {statement}
+	    while (source^ = ' ') and not(eoln(source)) do Advance;
+	    if (columncount = 6) and doingformat then
+	       while not eoln(source) do Advance
+	    else doingformat := false {switch off};
+	    ScanALine
+	  end {statement};rce)) do Advance;
+	    if (columncount = 6) and doingformat then
+	       while not eoln(source) do Advance
+	    else doingformat := false {switch off};
+	    ScanALine
+	  end {statement};ar
+	  c: natural;
+	  x: refptr;
+      begin {PrintEntry}
+	write(listing,' ',w.name);
+	x := w.last^.next;
+	w.last^.next := nil {break the ring};
+	c := 0;
+	repeat
+	  if c = refsperline then
+	    begin
+	      writeln(listing);
+	      c := 0;
+	      write(listing,' ':idstrlength+1)
+	    end;
+	  c := c + 1;
+	  write(listing,' ',x^.lno:digitspernumber);
+	  x := x^.next
+	until x = nil;
+	writeln(listing)
+      end {PrintEntry};
+
+
+    begin {PrintTree}{in-order recursive traversal of binary tree}
+      if w <> nil then
+	begin
+	  PrintTree(w^.left);
+	  PrintEntry(w^);
+	  PrintTree(w^.right)
+	end
+    end {PrintTree};
+
+
+  begin {ReportReferences}
+    refsperline := (tablewidth - idstrlength - 1) div
+		   (digitspernumber + 1);
+    Title;
+    PrintTree(root);
+    writeln(listing)
+  end {ReportReferences};
+
+
+begin {F4REFb}
+  reset(source);
+{NS} GetFN(source,programname);   {non-standard}
+  if eof(source) then
+    writeln(output,'file ''',programname,''' is missing or empty.')
+  else {non-empty source}
+    begin
+{NS}  Date(today);   {non-standard}
+      rewrite(listing);
+      ScanProgram;
+      Reriteln(output,'file ''',programname,''' is missing or empty.')
+  else {non-empty source}
+    b                                                                                                

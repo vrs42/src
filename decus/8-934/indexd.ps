@@ -1,0 +1,79 @@
+{$X+} Program Indexd(indexed:' ',input,output);
+{test PDP8 Pascal indexed I/O facility	 JTE  1081-08-26}
+const maxword = 00377b {determines LRL}; {$L-}
+  prompt = '[Rn,Wn,L,Q]: ';
+var
+  indexed: file[1..4095] of array[0..maxword] of 0..7777b;
+  index, lastindex, maxindex: integer; ch: char;
+  quit: boolean; fn: packed array[1..14] of char;
+
+  procedure reportfile;
+  begin
+    writeln(output,' file ',fn,'  length=',length(indexed):1,
+      '   maxlength=',maxlength(indexed):1)
+  end {reportfile};
+
+  procedure reportcomponent;
+  begin
+    writeln(output,'[0000]=',indexed^[0000]:4 oct,
+		 '  [0001]=',indexed^[0001]:4 oct,
+      '  [',maxword:6 oct,(indexed):1)
+  end {reportfile};
+
+  procedure reportcomponent;
+  begin
+    writeln(output,'[0000]=',indexed^[0000]:4 oct,
+		 '  [0001]=',indexed^[0001]:4 oct,
+      '  [',maxword:6 oct,by name given}
+  reset(indexed); reportfile;
+  {if file not found, length is zero; enter a new one}
+  if length(indexed) = 0
+    then begin rewrite(indexed); reportfile end
+    else maxindex := maxlength(indexed);
+  write(output,prompt);
+  index := 0 {startup lastindex value};
+  while (not quit) and (not eof(input)) do
+    begin
+      lastindex := index;
+      if not eoln(input) then
+	begin
+	  read(input, ch);
+	  if ch in ['R','r'] then
+	    begin
+	      read(input, index);
+	      write(output,'old: ');
+	      get(indexed,index);
+	      reportcomponent
+	    end
+	  else if ch in ['W','w'] then
+	    begin
+	      read(input, index);
+	      if index > maxindex then
+		begin {new component}
+		  write(output,'new: ');
+		  maxindex := index;
+		  indexed^[0] := index mod 10000b;
+		  indexed^[1] := 1;
+		  indexed^[maxword] := maxword mod 10000b;
+		  reportcomponent;
+		  put(indexed,index)
+		end
+	      else {previously defined}
+		begin
+		  write(output,'alt: ');
+		  get(indexed,index);
+		  reportcomponent;
+		  pud mod 10000b;
+		  reportcomponent;
+		  put(indexed,index)
+		end
+	      else {previously defin ['L','l'] then reportfile
+	  else writeln(output,'''',ch,'''<--??')
+	end;
+      if not quit then
+	begin
+	  write(output,prompt);
+	  readln(input)
+	end
+    end
+end.

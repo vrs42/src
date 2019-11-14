@@ -1,0 +1,906 @@
+{$X+ Edit 18} Program SVUTIL(SaveFile : 'SYS:X.SV',
+			     TTin :	'TT0: .OD',
+			     TTout :	'     .LS');
+
+{Copyright (C) 1981, 1982, 1983 John T. Easton	  SSRFC    U of Minn}
+
+{$T+,N+,P+ tests on, line numbers on, PMD on}
+
+{Edit 13  1981-07-28  JTE
+	  1. updated device constants.
+ Edit 14  1981-09-28  JTE
+	  1. fix "z" cmd bugs
+	  2. implement "^", "<", "=", "\", "nnnn+", "nnnn-" commands
+	  3. update unit numbers (lpdev, crdev)
+	  4. remove "W" cmd, reserve for word search.
+	  5. also implemented '(', ')' for field jumps.
+	  6. broke Interact into lots of little procedures.
+ Edit 15  1981-11-19  JTE
+	  1. convert to use INPUT and OUTPUT instead of DEVGET, DEVPUT.
+	  2. renamed from OVLODT to SVUTIL.
+	  3. change default sv file name to 'SYS:X.SV'.
+ Edit 16 1982-05-15 JTE
+	 1. testing file input in lieu of terminal input.
+	 2. implemented ^Z to mimic Q (quit).
+	 3. full non-interactive mode (1. finished)
+	 4. 'C' command -- comment (ala FUTIL)
+	 5. 'T' command -- set terminal/file input
+	 6. ignore ^L,null; tab equiv. space.
+	 7. fixed ^w protection.
+	 8. Fatal aborts on non-interactive errors.
+	 9. implement '!' as 17-bit indirect on current low-high.
+	10. change '=' to '*' for de-queue;  implement '=' as
+	    ensure match of num with current contents.
+	11. implement "c  and 'cc.
+	12. '<' changed to '_' for ODT compatibility.
+	13. fixed PrintCH from var char to var ascii.
+ Edit 17  1982-06-06 JTE
+	 1. fixed TTinFN processing to allow dsk: (blanks).
+ Edit 18  1983-09-23 JTE
+	 1. update version message for V1-0-F.
+	 2. used ID2ID to improve capitalizations.
+	 3. rearrange procedure order for possible segmentation
+	 4. deleted documentation comments; see Pascal-OS/8 doc. T.6
+}
+
+{SVUTIL: simple 'ODT' -- octal debugger -- for overlaid save files.
+ See OS/8 ODT for description of basic ODT usage.
+ This ODT merely adds accurate overlay editing, as
+ attempted in FUTIL V7.  See Pascal-OS/8 documentation Appendix T.6.
+
+  To use:
+
+	.R P,SVUTIL,savefile
+
+}
+
+
+  const
+    Version = 'V1-0-F/18';
+    cr =	  15bc	  {suffix b:octal, c:character};
+    lf =	  12bc;
+    bell =	  07bc	  {ring-ring};
+    MaxLev =	   7B	  {max overlay level};
+    MaxOvl =	  17B	  {max overlay number};
+    MaxDigits =    6	  {need 6 to express addresses};
+    NilAddr =	  400000B;
+    FnLen =	   14;	  {length of FileName}
+    QueueDepth =   16	  {depth of addr queue};
+
+  type
+    {ascii =	  0c..127c -- predeclared in pdp8 pascal}
+    ShortInt =	  0..4095;
+    ShowLoc  =	  (mute,show);
+    IndexedFile = file[1..4095] of packed array[0..255] of ShortInt;
+    FileName =	  packed array[1..FnLen] of char;
+
+  var
+  {$B1}
+    SaveFile :	  IndexedFile;
+    TTin:	  file of ascii;
+    TTout:	  text;
+    csdw :	  array[1..31] of record
+			  org : integer;
+			  len : integer {pages} {shortint};
+			  blk : integer   {shortint}
+			end;
+    CCBovl :	  array[0..MaxLev] of record
+			  org : integer;
+			  len : integer {pages} {shortint};
+			  blk : integer   {shortint};
+			  Novls : integer   {shortint}
+			end;
+    PrevAddr : array[0..QueueDepth] of integer;
+    PrevPtr : integer;
+    modified :	  boolean;
+    InCCB :	  boolean;
+    EnableWrite : boolean {put to indexed file enabled};
+    GotNum :	  boolean;
+    InNum :	  boolean;
+    num :	  integer;
+    Ndigits :	  integer {shortint};
+    debug :	  boolean;
+    open :	  boolean;
+    index :	  0..4095;
+    RelBlk :	  integer {shortint};
+    FileLength :  integer;
+    HasOvls :	  boolean;
+    level :	  0..MaxLev;
+    overlay :	  0..MaxOvl;
+    addr :	  integer;
+    Ncsdw :	  integer {shortint};
+    sf :	  integer {shortint};
+    sa :	  integer {shortint};
+    js :	  integer {shortint};
+    temp :	  integer;
+    CurBlk:	  integer {shortint};
+    OffSet :	  integer {shortint};
+    LastAddr :	  integer {address};
+    LastOverlay : integer {shortint};
+    SVfilename :  FileName;
+    AddrOffset :  integer;
+    ReWritten : boolean;
+    I : 	  integer;
+    interactive : boolean;
+    TTinFN, TToutFN : FileName;
+
+
+  procedure InitVars;
+    var I : integer;
+  begin {InitVars}
+    for I := 1 to QueueDepth do PrevAddr[I] := NilAddr;
+    PrevAddr[0] := 0 {initial address};
+    PrevPtr := 0;
+    debug:=false;
+    InCCB:=false;
+    EnableWrite:=true;
+    modified:=false;
+    open:=false;
+    InNum:=false;
+    GotNum:=false;
+    num:=0;
+    Ndigits:=0;
+    OffSet := 0; RelBlk := 0;
+    RelBlk:=0;
+    level:=0;
+    overlay:=0;
+    addr:=0;
+    LastOverlay := 20B {outofrange};
+    LastAddr := NilAddr {outofrange};
+    HasOvls:=false;
+    ReWritten := false;
+    GetFN(TTin, TTinFN);
+    GetFN(TTout, TToutFN);
+    interactive := TTinFN[6] = ' ';
+    if TToutFN[6] = ' ' {empty file name} then
+      if interactive
+	then TToutFN := TTinFN
+	else TToutFN := 'IO:	       ';
+    Reset(TTin);
+    Rewrite(TTout,TToutFN);
+  end	{InitVars};
+
+
+  procedure SetUpSaveFile {setup reference arrays from ccb};
+    var I,N,w1,w2,w3,w4,Npages,block : integer;
+  begin
+    get(SaveFile,1); index := 1;
+    Ncsdw:=10000B-SaveFile^[0] {negates value};
+    sf	 := SaveFile^[1];
+    sa	 := SaveFile^[2];
+    js	 := SaveFile^[3];
+    N:=Ncsdw; w1:=4; w2:=5; I:=1; block:=1;
+    if (N<=0) or (N>31) then Halt('not a .sv file');
+    while (N>0) do
+      begin
+	Npages:=SaveFile^[w2] div 100B;
+	csdw[I].len:=Npages;
+	if odd(Npages) then Npages:=Npages+1;
+	csdw[I].blk:=block;
+	block:=block+(Npages div 2);
+	csdw[I].org:=((SaveFile^[w2] div 10B) mod 10B)
+		     *10000B+SaveFile^[w1];
+	w1:=w1+2; w2:=w2+2; I:=I+1; N:=N-1
+      end;
+
+    HasOvls:=odd(js div 200B);
+    if HasOvls then
+      begin
+	w1:=96; w2:=97; w3:=98; w4:=99; I:=0;
+	while (I<8) do
+	  begin
+	    CCBovl[I].Novls:=SaveFile^[w1];
+	    CCBovl[I].blk:=SaveFile^[w3];
+	    CCBovl[I].len:=SaveFile^[w4];
+	    CCBovl[I].org:=(SaveFile^[w2]{div 10b}mod 10B) {error in macrel doc.}
+			   *10000B+
+			   (SaveFile^[w2] div 200B)*200B;
+	    w1:=w1+4; w2:=w2+4; w3:=w3+4; w4:=w4+4; I:=I+1
+	  end
+      end
+  end	{setup};
+
+
+ {procedure PrintOct(n,fw : integer); -- commented out; using write octal.
+    var nd,i,j : integer;
+	a : array[1..8] of integer;
+  begin
+    if n < 0 then begin Write(TTout,'-'); n := -n; fw:=8 end;
+    if fw<=8 then nd:=fw else nd:=8;
+    if fw>8 then for i:=1 to (fw-8) do Write(TTout,' ');
+    for i:=1 to nd do
+      begin a[i]:=n mod 10b;
+	n:=n div 10b;
+      end;
+    j:=nd;
+    for i:=1 to nd do
+      begin
+	Write(TTout,chr(a[j]+ord('0')));
+	j:=j-1
+      end
+  end	{PrintOct;}
+
+
+  procedure PutMappedBlock;
+  begin
+    if EnableWrite then
+      begin
+	if modified then
+	  begin
+	    if debug then write(TTout,' !put=',index-1:4 oct,'! ');
+	    put(SaveFile,index); ReWritten := true;
+	    modified:=false {current block has been written}
+	  end
+	else if debug then write(TTout,' !no put! ')
+      end
+    else write(TTout,' !write to save file is disabled!')
+  end	{PutMappedBlock};
+
+
+  procedure SVODT;
+    label 1 {for bad Pokes};
+    var ch, uch : ascii;
+
+
+    procedure PrintCCB;
+      var N,I : integer;
+    begin
+      N:=Ncsdw;
+      writeln(TTout,'root segments=',N:2 oct,
+	' sf=',sf:4 oct,' sa=',sa:4 oct,' js=',js:4	oct);
+      I:=0;
+      while N>0 do
+	begin
+	  I:=I+1;
+	  writeln(TTout,'  ',I:2 oct,
+	    '  org=',csdw[I].org:6 oct,
+	    '  len=',csdw[I].len *200B:4 oct,
+	    '  blk=',csdw[I].blk:4 oct);
+	  N:=N-1
+	end;
+      if HasOvls then
+	begin
+	  writeln(TTout,'overlays:');
+	  for I:=1 to MaxLev do
+	    begin
+	      N:=CCBovl[I].Novls;
+	      if N>0 then
+		begin
+		  writeln(TTout,'  lev=',I:2 oct,
+		    '  org=',CCBovl[I].org:6 oct,
+		    '  len=',CCBovl[I].len*200B:4 oct,
+		    '  blk=',CCBovl[I].blk:4 oct,
+		    '  novls=',N:2 oct);
+		end
+	    end
+	end
+    end   {PrintCCB};
+
+    function ValidAddr : boolean;
+    { ValidAddr has the side effects of setting the values of
+      the variables  offset, relblk, level, overlay, lastaddr,
+      and lastoverlay. }
+      var found,OVLerr : boolean;
+	origin,N,Npages,Nblks : integer;
+    begin {ValidAddr}
+      found:=false;
+      if addr >= 0 then
+      if InCCB then
+	begin
+	  if addr<400B then
+	    begin
+	      OffSet:=addr;
+	      RelBlk:=0;
+	      overlay:=0; level:=0;
+	      found:=true
+	    end
+	  else write(TTout ,' ?out of range for a ccb?')
+	end
+      else
+	if ((LastAddr div 200B)=(addr div 200B)) {same page}
+  {	if ((lastaddr div 400b)=(addr div 400b))  same block}
+	  and (LastOverlay=overlay) then
+	  begin found:=true; OffSet:=addr mod 400B end
+	else
+	  begin N:=1; level:=0;
+	    while (N<=Ncsdw) and (not found) do
+	      begin
+		origin:=csdw[N].org;
+		Npages:=csdw[N].len;
+	  {	if odd(npages) then npages:=npages + 1;}
+		if (addr>=origin) and
+		   (addr<origin+Npages*200B) then
+		  begin
+		    found:=true; level:=0; overlay:=0;
+		    RelBlk:=csdw[N].blk+(addr-origin) div 400B;
+		    OffSet:=addr mod 400B
+		  end;
+		N:=N+1
+	      end;
+	    if (not found) and HasOvls then
+	      begin OVLerr:=false;
+		repeat level:=level+1;
+		  origin:=CCBovl[level].org;
+		  Npages:=CCBovl[level].len;
+	  {	  if odd(npages) then npages:=npages+1;}
+		  if odd(Npages) then Nblks := (Npages + 1) div 2
+				 else Nblks := Npages div 2;
+		  if (addr>=origin) and
+		     (addr<origin+Npages*200B) then
+		    begin
+		      if overlay>=CCBovl[level].Novls then
+			begin write(TTout,' ?ovl?'); OVLerr:=true end
+		      else
+			begin
+			  found:=true;
+			  N:=Nblks*overlay;
+			  if debug then
+			    begin write(TTout,' @n=',N:4 oct) end;
+			  N:=N+((addr-origin) div 400B);
+			  if debug then
+			    begin write(TTout,' @n=',N:4 oct) end;
+			  RelBlk:=CCBovl[level].blk+N;
+			  if debug then write(TTout,' @n=',RelBlk:4 oct);
+			  OffSet:=addr mod 400B
+			end
+		    end
+		until found or (level=MaxLev) or OVLerr
+	      end
+	  end;
+      ValidAddr:=found;
+      if found then
+	begin
+	  LastAddr:=addr;
+	  LastOverlay:=overlay
+	end
+    end   {ValidAddr};
+
+
+    procedure NewNum;
+    begin GotNum:=false; InNum:=false; num:=0; Ndigits:=0 end;
+
+
+    procedure CloseLocation;
+    begin open:=false; NewNum end;
+
+
+    procedure Fatal { non-interactive errors Halt};
+    begin
+      if not interactive then Halt('*** fatal error')
+    end { Fatal };
+
+
+    procedure Void;
+    begin
+     {if gotnum then begin}writeln(TTout,' *Void*'); Fatal{end};
+      CloseLocation;
+    end   { Void };
+
+
+    procedure EOLVoid;
+    begin if not GotNum then writeln(TTout); Void end;
+
+
+    procedure Poke;
+    begin
+      if num > 4095 then
+	begin write(TTout,' ** number too big '); Void; goto 1 end;
+      if EnableWrite then
+	begin SaveFile^[OffSet]:=num; modified:=true end
+      else writeln(TTout,' !write not enabled! ');
+      CloseLocation
+    end   {Poke};
+
+
+    function OpenLocation(contents : ShowLoc) : boolean;
+      var valid : boolean;
+
+
+      procedure GetMappedBlock;
+      begin
+	if (RelBlk+1) <> index then
+	  begin
+	    if modified then PutMappedBlock;
+	    index:=RelBlk+1;
+	    get(SaveFile,index)
+	  end
+      end   {GetMappedBlock};
+
+
+    begin
+      valid := ValidAddr;
+      if valid then
+	begin
+	  if debug then
+	    begin
+	      if level>0 then
+		begin
+		  write(TTout,' !lev=',level:1 oct,
+		    ' ovl=',overlay:2 oct,' ')
+		end
+	      else write(TTout,' !');
+	      write(TTout,'relblk=',RelBlk:4 oct);
+	      write(TTout,' offset=',OffSet:4 oct,'!   ')
+	    end;
+	  open:=true;
+	  GetMappedBlock;
+	  if contents=show then write(TTout,SaveFile^[OffSet]:4 oct,' ')
+	end
+      else begin write(TTout,' ?bad address: ',
+	overlay:2 oct,'.',addr:6 oct); EOLVoid; Fatal end;
+      OpenLocation := valid
+    end   {OpenLocation};
+
+
+    procedure Queue(A : integer);
+    begin
+      PrevPtr := PrevPtr + 1;
+      if PrevPtr > QueueDepth then PrevPtr := 0;
+      PrevAddr[PrevPtr] := A
+    end {Queue};
+
+
+    procedure ShowLocation;
+    begin
+      if OpenLocation(mute) then
+	begin
+	  if level > 0 then write(TTout,overlay:2 oct,'.');
+	  write(TTout,addr:6 oct,'/ ',SaveFile^[OffSet]:4 oct,' ')
+	end
+    end {ShowLocation};
+
+
+    procedure MRI {PDP8 Memory Reference effective address};
+      var inst, RelAddr : integer;
+    begin {MRI}
+      write(TTout,ch);
+      if GotNum then Void
+      else
+	begin
+	  inst := SaveFile^[OffSet];
+	  CloseLocation; writeln(TTout);
+	  RelAddr := inst mod 128;
+	  Queue(addr);
+	  if odd(inst div 128) then {current page}
+	    addr := (addr div 128) * 128 + RelAddr
+	   {addr := addr-(addr mod 128) + reladdr}
+	  else {page zero}
+	    addr := (addr div 4096) * 4096 + RelAddr;
+	  if odd(inst div 256) then
+	    begin {indirect}
+	      Queue(addr);
+	      if OpenLocation(mute) then
+		addr := (addr div 4096) * 4096 + SaveFile^[OffSet]
+	    end;
+	  ShowLocation
+	end
+    end {MRI};
+
+
+    procedure CmdQ;
+    begin write(TTout,ch);
+      if GotNum then begin Void; uch:='?' end
+      else writeln(TTout)
+    end {cmdQ};
+
+
+    procedure CmdH;
+    begin write(TTout,ch);
+      if GotNum then Void
+      else begin writeln(TTout); PrintCCB end
+    end {cmdH};
+
+
+    procedure CmdDot;
+    begin
+      if open then
+	begin open:=false;
+	  if GotNum then begin write(TTout,ch); Void end
+	  else begin writeln(TTout); write(TTout,overlay:2 oct,ch) end
+	end
+      else
+	if GotNum then
+	  begin write(TTout,ch);
+	    if num<=MaxOvl then begin overlay:=num; NewNum end
+	    else begin write(TTout,' ?impossible overlay number??'); Void end;
+	  end
+	else write(TTout,overlay:2 oct,ch)
+    end {cmddot};
+
+
+    procedure CmdSlash;
+    begin
+      if GotNum
+	then begin addr:=num; Queue(addr) end
+	else write(TTout,addr:6 oct);
+      write(TTout,ch,' ');
+      NewNum;
+      if OpenLocation(show) then {null stmt}
+    end {cmdslash};
+
+
+    procedure CmdCR;
+    begin
+      if GotNum and open then Poke;
+      CloseLocation;
+      writeln(TTout)
+    end {cmdcr};
+
+
+    procedure CmdLF;
+    begin
+      if interactive then
+	begin
+	  Queue(addr);
+	  if GotNum and open then Poke;
+	  CloseLocation; writeln(TTout); addr:=addr+1;
+	  ShowLocation
+	end
+    end {cmdlf};
+
+
+    procedure CmdBackslash;
+    begin
+      Queue(addr);
+      if GotNum and open then Poke;
+      CloseLocation; writeln(TTout); addr := addr-1;
+      ShowLocation
+    end {cmdbackslash};
+
+
+    procedure CmdSemi;
+    begin write(TTout,ch);
+      Queue(addr);
+      if GotNum and open then Poke;
+      CloseLocation;
+      addr:=addr+1; write(TTout,' ');
+      if OpenLocation(mute) then {null stmt}
+    end {cmdsemi};
+
+
+    procedure CmdPlusMinus;
+    begin { + - }
+      Queue(addr);
+      write(TTout,ch);
+      if GotNum then begin AddrOffset := num; NewNum end
+      else AddrOffset := 1;
+      CloseLocation; writeln(TTout);
+      if uch = '+' then addr := addr + AddrOffset
+      else addr := addr - AddrOffset;
+      ShowLocation
+    end { + - };
+
+
+    procedure CmdLeftArrow;
+    begin { 12-bit indirect}
+      write(TTout,ch);
+      if GotNum then Void
+      else
+	begin
+	  Queue(addr);
+	  CloseLocation; writeln(TTout);
+	  addr := (addr div 4096) * 4096 + SaveFile^[OffSet];
+	  ShowLocation
+	end
+    end { _ };
+
+
+    procedure CmdExclaimation;
+      var low : ShortInt;
+    begin {17-bit indirect}
+      write(TTout,ch);
+      if GotNum then Void
+      else
+	begin
+	  Queue(addr);
+	  CloseLocation;
+	  writeln(TTout);
+	  low := SaveFile^[OffSet];
+	  addr := addr + 1;
+	  if OpenLocation(mute) then
+	    begin
+	      addr := (SaveFile^[OffSet] mod 32) * 4096 + low;
+	      ShowLocation
+	    end
+	end
+    end { cmdexclaimation };
+
+
+    procedure CmdParens;
+      var temp: integer;
+    begin
+      write(TTout,ch);
+      if not GotNum then num := 1; temp := num;
+      Queue(addr);
+      CloseLocation; writeln(TTout);
+      Queue(addr);
+      if ch = '('
+	then temp := -temp*4096
+	else temp := temp*4096;
+      addr := addr + temp;
+      ShowLocation
+    end { ( ) };
+
+
+    function DeQueue : integer;
+    begin
+      DeQueue := PrevAddr[PrevPtr];
+      PrevAddr[PrevPtr] := NilAddr {optional};
+      PrevPtr := PrevPtr - 1;
+      if PrevPtr < 0 then PrevPtr := QueueDepth
+    end {DeQueue};
+
+
+    procedure CmdAsterisk;
+    begin
+      write(TTout,ch);
+      if GotNum then Void
+      else
+	begin
+	  addr := DeQueue; writeln(TTout);
+	  ShowLocation
+	end
+    end { '*' };
+
+
+    procedure CmdEQ;
+    begin
+      write(TTout,ch);
+      if GotNum then
+	if num <> SaveFile^[OffSet] then Void;
+      NewNum
+    end { '=' };
+
+
+    procedure CmdOctDigits;
+    begin write(TTout,ch);
+      if GotNum and (not InNum) then {gap}
+	begin write(TTout,' ?gap in number'); Void end
+      else
+	begin InNum:=true; GotNum:=true;
+	  if (ch='0') and (Ndigits=0) then {ignore}
+	  else
+	    if Ndigits>=MaxDigits then
+	      begin write(TTout,' ?too many digits'); Void end
+	    else
+	      begin num:=num*8+ord(ch)-ord('0');
+		Ndigits:=Ndigits+1
+	      end
+	end
+    end {cmdoctdigits};
+
+
+    procedure CmdT;
+      var I : integer;
+    begin
+      write(TTout,ch);	 I := 0;
+      read(TTin,ch);
+      TTinFN := '	       ';
+      while ch <> cr do
+	begin
+	  write(TTout,ch);
+	  if ch <> ' ' then
+	    if I <= 14 then
+	      begin I := I + 1;   TTinFN[I] := ch end;
+	  read(TTin,ch)
+	end;
+      writeln(TTout);
+      if ValidFN(TTinFN) then
+	begin
+	  Reset(TTin, TTinFN);
+	  GetFN(TTin, TTinFN);
+	  interactive := TTinFN[6] = ' ';
+	  if interactive
+	    then TToutFN := TTinFN
+	    else TToutFN := 'IO:	   ';
+	  Rewrite(TTout,TToutFN)
+	end
+      else
+	begin writeln(TTout,' ?bad file name?'); Fatal end
+    end {cmdT};
+
+
+    procedure CmdDebug;
+    begin {write(TTout,ch);}
+      if GotNum then begin write(TTout,ch); Void end
+      else
+	begin
+	  debug:=not debug; write(TTout,'debug=');
+	  if debug then write(TTout,'on') else write(TTout,'off');
+	  writeln(TTout)
+	end
+    end {cmddebug};
+
+
+    procedure PrintCH(ch : ascii);
+    begin
+      if ch < ' ' then
+	begin write(TTout,'^',chr(ord(ch)+100B)) end
+      else write(TTout,ch);
+    end { PrintCH};
+
+
+    procedure CmdDoubleQuote;
+    begin
+      write(TTout,ch);
+      if GotNum then Void else
+	begin
+	  read(TTin,ch);
+	  if ch >= ' ' then
+	    begin
+	      write(TTout,ch);
+	      num := ord(ch);
+	      InNum := true;
+	      GotNum := true
+	    end
+	  else begin PrintCH(ch); Void end
+	end
+    end {cmddoublequote};
+
+
+    procedure CmdSingleQuote;
+      var tmp, left : ShortInt;
+    begin
+      write(TTout,ch);
+      if GotNum then Void else
+	begin
+	  read(TTin,ch);
+	  if ch >= ' ' then
+	    begin
+	      write(TTout,ch);
+	      tmp := ord(ch);
+	      if tmp >= ord('`') then tmp := tmp - 40B;
+	      left := (tmp mod 100B) * 100B;
+	      read(TTin,ch);
+	      if ch >= ' ' then
+		begin
+		  write(TTout,ch);
+		  tmp := ord(ch);
+		  if tmp >= ord('`') then tmp := tmp - 40B;
+		  num := left + (tmp mod 100B);
+		  InNum := true; GotNum := true
+		end
+	      else begin PrintCH(ch); Void end
+	    end
+	  else begin PrintCH(ch); Void end
+	end
+    end {cmdsinglequote};
+
+
+    procedure CmdZ;
+    begin write(TTout,ch);
+      if GotNum then Void
+      else
+	begin
+	  PutMappedBlock; index := 0;
+	  InCCB:=not InCCB;
+	  LastAddr := NilAddr {outofrange};
+	  level:=0; overlay:=0; addr:=0;
+	  if InCCB then write(TTout,' in ccb')
+	  else write(TTout,' in .sv');
+	  writeln(TTout)
+	end
+    end {cmdZ};
+
+
+    procedure CmdCtrlW;
+    begin write(TTout,'^w');
+      if GotNum then Void
+      else
+	if modified or ReWritten then writeln(TTout,' !already modified!')
+	else
+	  begin
+	    EnableWrite:=not EnableWrite;
+	    write(TTout,' write');
+	    if EnableWrite then write(TTout,'=on')
+	    else write(TTout,'=off');
+	    writeln(TTout)
+	  end
+    end {cmdctrlw};
+
+
+    procedure comment;
+    begin
+      while ch <> cr do
+	begin write(TTout,ch); read(TTin,ch) end;
+      writeln(TTout)
+    end { comment };
+
+
+    procedure PrintLen;
+    begin
+      writeln(TTout,'length=',FileLength:4 oct,' (decimal=',
+	FileLength:1,') blocks');
+    end {PrintLen};
+
+
+  begin {SVODT}
+    PrintLen;
+    Queue(addr) { 0 };
+    if OpenLocation(mute) then CloseLocation;
+ 1: repeat {label entry for bad Pokes}
+      if eof(TTin) then ch := 032bc else read(TTin, ch);
+      if(ch>='a')and(ch<='z')then uch:=chr(ord(ch)-40B)
+      else uch:=ch;
+      case uch of
+	'Q' : {slip out of repeat loop} CmdQ;
+	'H' : CmdH;
+	'.' : {overlay setting} CmdDot;
+	'/' : CmdSlash;
+	cr : CmdCR;
+	lf : CmdLF;
+	'\': {reverse lf with Poke} CmdBackslash;
+	';' : CmdSemi;
+	'+','-': {address offset by num} CmdPlusMinus;
+	'_' : { 12-bit indirect } CmdLeftArrow;
+	'!' : { 17-bit indirect } CmdExclaimation;
+	'(',')' : {address offset by 4096} CmdParens;
+	'*' : {go back to previous address opened} CmdAsterisk;
+	'=' : {ensure match of contents with number} CmdEQ;
+	'^' : { PDP8 MRI effective address} MRI;
+	'0','1','2','3','4','5','6','7' : CmdOctDigits;
+	'T' : {terminal} CmdT;
+	'''': CmdSingleQuote { takes two 6-bit chars};
+	'"' : CmdDoubleQuote { takes one 8-bit ascii char};
+	'Z' : CmdZ;
+       027bc : {control-w} CmdCtrlW;
+       032bc : {control-z} begin uch := 'Q'; writeln(TTout,'^Z') end;
+       014bc   {form-feed, control-l ignored},
+       000bc : {null ignored} ;
+
+	'8','9' :
+	  begin write(TTout,ch,' ?octal digits only'); EOLVoid end;
+
+	'?' :
+	 begin write(TTout,ch); Void;
+	   writeln(TTout,' see SVUTIL.PS and App. T.6')
+	 end;
+
+	'L' :
+	  begin
+	    if GotNum then begin write(TTout,ch); Void end
+	    else PrintLen
+	  end;
+
+	'D' : CmdDebug;
+
+      003bc : { control-c (seen if not console device)}
+	      Halt('ctrl-c');
+
+	'C' : {comment line} comment;
+
+	011bc {tab == space},
+	' ' : begin write(TTout,' '); InNum:=false end;
+
+	otherwise
+	  begin {unknown character}
+	    PrintCH(ch);
+	    write(TTout,bell,'?');
+	    EOLVoid
+	  end
+
+	end {case ch}
+    until uch='Q';
+  end	{SVODT};
+
+
+begin {SVUTIL}
+  InitVars;
+  writeln(TTout,'SVUTIL ',Version);
+  write(TTout,'svfile=');
+  GetFN(SaveFile,SVfilename);
+  for I := 1 to FnLen do
+    if SVfilename[I] <> ' ' then
+      write(TTout,SVfilename[I]);
+  write(TTout,'   ');
+  Reset(SaveFile);
+  FileLength:=MaxLength(SaveFile);
+  if FileLength>0 then
+    begin
+      SetUpSaveFile;
+      SVODT;
+      if modified then PutMappedBlock;
+    end
+  else writeln(TTout,'?no file?')
+end {SVUTIL}.
+

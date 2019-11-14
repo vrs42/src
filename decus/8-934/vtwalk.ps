@@ -1,0 +1,126 @@
+{$X+ extensions}  program VTwalk(output:'tt:');
+
+(* random walk.  this is intended to display on a VT100 scope.
+   maybe a teleray or 713 could be adapted....
+
+   relax
+
+*)
+(* converted to P8, jte 81/8/24, 81-12-06*)
+(* random numbers fixed & got rid of reals;  jfm  80/08/29 *)
+  const
+    maxvert=24; maxhoriz=80;
+  type
+    char=ascii;
+    direction = (up, down, left, right);
+    directset = set of direction;
+  var
+    (* position variables *)
+    vert, horiz: integer;
+    (* move related variables *)
+    moves, validmoves: directset;
+    (* screen control characters *)
+    escape, downmove,rightmove: char;
+    upmove,leftmove: char;
+    (* random number related variables *)
+    r: real;  seed: integer;
+    (* miscelaneous variables *)
+    i: integer;
+    cs: array [' '..'~'] of char;
+    c: char;
+
+  function random(var seed: integer) : integer;
+
+    const
+      pshift = 262144;	(* 2 ^ (23-5) *)
+      qshift = 32;	(* 2 ^ 5 *)
+    var
+      a, b:
+	record case boolean of
+	  true:  (i: integer);
+	  false: (s: packed set of 0..23);
+	end;
+  begin
+    a.i := abs(seed);  b.i := a.i div qshift; (*right shift 5*)
+    a.s := (a.s - b.s) + (b.s - a.s);	(* xor *)
+    b.i := (a.i mod qshift) * pshift; (*left shift 18*)
+    a.s := [0..11, 13..23] * ( (a.s - b.s) + (b.s - a.s) ) ;
+    seed := a.i;  random := a.i
+  end (*random*) ;
+
+  procedure initialize;
+    var k : integer; ch: char;
+  begin
+(*  write(' seed??? :'); read(seed); *)
+(*  seed hardwired for conversion *)
+    seed := 2179;
+    escape := chr(27);
+    upmove := 'A'; (* escape 'A' *)
+    downmove := 'B';  (* escape 'B' *)
+    leftmove := 'D';  (* escape 'D' *)
+    rightmove := 'C';  (* escape 'C' *)
+    write(output,escape,'H',escape,'J'); (* clear VT100 scope*)
+
+    vert := maxvert div 2 + 1;	horiz := maxhoriz div 2;
+    for k := 1 to vert do write(output, escape, downmove);
+    for k := 1 to horiz do write(output, escape, rightmove);
+    validmoves := [up, down, left, right];
+    for ch := ' ' to '~' do cs[ch] := ch;
+    c := ' ';
+  end (*initialize*) ;
+  procedure selectmove;
+    var
+      r: 0..7;
+  begin
+    repeat
+      r := random(seed) mod 8;
+      case r of
+	0:  moves := [up];
+	1:  moves := [down];
+	2:  moves := [right];
+	3:  moves := [left];
+	4:  moves := [up,right];
+	5:  moves := [up,left];
+	6:  moves := [down,right];
+	7:  moves := [down,left]
+      end;
+      moves := moves * validmoves;
+    until moves <> [];
+  end (*selectmove*) ;
+
+  procedure makemove;
+    var
+      d: direction;
+  begin
+    if right in moves then
+      begin horiz := horiz + 1; moves := moves - [right] end
+    else  write(output, escape, leftmove);
+    d := up;
+    while moves <> [ ] do
+      begin
+	if d in moves then
+	  begin
+	    case d of
+	      up:    begin write(output,escape,upmove); vert := vert -1 end;
+	      down:  begin write(output,escape,downmove); vert := vert + 1 end;
+	      left:  begin write(output,escape,leftmove); horiz := horiz - 1 end;
+	    end (*case*) ;
+	    moves := moves - [d]
+	  end (*d in moves*) ;
+	d := succ(d)
+      end (*while*) ;
+    c := succ(c);
+    write(output,cs[c]);
+    if c = '~' then c := ' ';
+    validmoves := [ ];
+    if vert < maxvert then validmoves := validmoves + [down];
+    if vert > 1 then validmoves := validmoves + [up];
+    if horiz < maxhoriz then validmoves := validmoves + [right];
+    if horiz > 1 then validmoves := validmoves + [left];
+  end (*makemove*) ;
+
+begin
+  initialize;
+  repeat  selectmove;  makemove  until false
+end.
+
