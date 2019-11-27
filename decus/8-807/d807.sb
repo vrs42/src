@@ -1,0 +1,121 @@
+
+/
+/      UTILITY SUBROUTINE PACKAGE
+/      VERSION UTILTY,V07 (JANUARY 7,1969)
+/      COPYRIGHT 1968,DIGITAL EQUIPMENT CORPORATION
+/
+/      MODIFIED VERSION FOR LOW SPEED PAPER
+/      TAPE READ/PUNCH
+/      MAY, 1975 BY IR.L.BOULLART
+/                   UNIVERSITY OF GHENT,BELGIUM.
+/
+        ENTRY OPEN      /INITIALIZING & FLAG SETTING
+        ENTRY CKIO      /ROUTINE TO DELAY UNTIL I/O
+        ENTRY TTYIN     /TELETYPE INPUT (KEYBOARD)
+        ENTRY   TTYOUT  /TELETYPE OUTPUT (PRINTER)
+        ENTRY   HSIN    /LOW SPEED PAPER TAPE INPUT
+        ENTRY   HSOUT   /LOW SPEED PAPER TAPE OUTPUT
+                        /EQUAL TO TTYOUT !!!
+        ENTRY   EXIT    /EXIT TO DISK MONITOR(IF ONE)
+        OPDEF   KCC     6032
+        OPDEF   KCF     6030
+        OPDEF   KRS     6034
+/
+/       TELETYPE KEYBOARD INPUT
+/
+TTYIN,  BLOCK   2
+        CLA
+KW,     KSF             /WAIT FOR KEYBOARD FLAG
+        JMP     KW
+        KRS     /READ BUFFER (STATIC)
+        KCF             /CLEAR FLAG
+        DCA     HSIN
+        TAD     HSIN
+        TAD     (-212
+        SNA CLA         /LINE FEED ?
+        JMP     TTY1
+        TAD     HSIN
+        JMS     TYPE    /NO,ECHO THE CHAR
+        TAD     HSIN
+        TAD     (-215
+        SNA CLA         /CARR.RETURN ?
+        JMP     TTY2    /YES
+TTY1,   TAD     HSIN
+        RETRN   TTYIN   /RETURN THE CHAR
+TTY2,   TAD     (212    /HAD A CAR.RETURN
+        JMS     TYPE    /ECHO A LINE FEED
+        JMP     TTY1
+/
+/       TELETYPE OUTPUT & LOW SPEED TAPE OUTPUT
+/
+HSOUT,
+TTYOUT, BLOCK   2       /ENTRY TO TELETYPE OUTPUT
+        SNA             /TEST FOR CARR.RETURN
+        JMP     CR      /IT WAS ONE
+        JMS     TRIMUP  /FORM RIGHT ASCII-CODE
+        JMS     TYPE    /PUT OUT THE CARR.
+        RETRN   TTYOUT
+CR,     TAD     (215    /PUT OUT A CR&LF
+        JMS     TYPE
+        TAD     (212
+        JMS     TYPE
+        RETRN   TTYOUT
+/
+/       LOW SPEED READER INPUT
+/
+HSIN,   BLOCK   2
+        KCC             /ACTIVATE READER
+HI,     KSF             /WAIT ON FLAG
+        JMP     HI
+        CLA
+        KRS             /READ BUFFER (STATIC)
+        KCF             /CLEAR FLAG
+        SNA             /ZERO CHAR ?
+        JMP     HSTP
+        AND     (177    /MAKE SURE PARITY BIT
+        TAD     (200    /IS SET FOR NON BLANKOS
+HSTP,   RETRN   HSIN
+/
+/       SOME SUBROUTINES
+/
+TYPE,   0               /TYPE CHAR
+TW,     TSF             /WAIT ON COMPLETION OF
+        JMP     TW      /OF PREVIOUS CHAR.
+        TLS     /SEND THIS CHAR.
+        CLA
+        JMP I   TYPE
+TRIMUP, 0               /ADD ASCII BITS
+        AND     (77     /MASK TO MAKE SURE
+        TAD     (-40
+        SPA             /TEST WHICH GROUP
+        TAD     (100    /300-377 GROUP,ADD 100
+        TAD     (240
+        JMP I   TRIMUP
+/
+/       DUMMY DELAY UNTIL BUFFERS EMPTY
+/       (IN  CASE YOU WANT TO INTERRUPT I/O)
+/
+CKIO,   BLOCK   2
+        RETRN   CKIO
+/
+/       INITIALISING ROUTINE CALLED BY FORTRAN
+/       CLEARS FLOATING AC AND SETS FLAGS
+/
+OPEN,   BLOCK   2
+        KCF
+        TLS
+        CLA
+        CALL 0,TTYOUT   /TYPE A CR-LF
+        CALL 0,CLEAR
+        RETRN   OPEN
+/
+/       EXIT TO DISK MONITOR
+/
+EXIT,   BLOCK   2
+        CALL 0,CKIO
+        TAD I   MONIT   /DUMMY ADD TO PREVENT
+        CLA             /6201 ON JMP I MONIT
+        6203
+        JMP I   MONIT   /CDF 0,CIF 0
+MONIT,  7600
+        END
