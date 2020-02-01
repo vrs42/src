@@ -1,0 +1,4400 @@
+   1            /SPCWAR  BY  D.E. WREGE
+   2            VC8E=1
+   3            DK8EA=1
+   4            M1703=1
+   5            EAE=0
+   6            /
+   7            /               VERSION 3
+   8            /
+   9            /
+  10            /
+  11            /
+  12            /
+  13            /
+  14            /
+  15            /COPYRIGHT  (C)  1974 BY D.E. WREGE & ASSOC.
+  16            /
+  17            /
+  18            /
+  19            /
+  20            /
+  21            /
+  22            /
+  23            /
+  24            /
+  25            /
+  26            /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  27            /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY D.E. WREGE & ASSOCIATES.
+  28            /D.E. WREGE & ASSOCIATES ASSUME NO RESPONSIBILITY
+  29            /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  30            /
+  31            /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO GEORGIA TECH.
+  32            /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  33            /(WITH INCLUSION OF THIS COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  34            /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY D.E. WREGE
+  35            /AND ASSOC.
+  36            /
+  37            /D.E. WREGE AND ASSOC. ASSUME NO RESPONSIBILITY FOR THE USE
+  38            /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  39            /DIGITAL.
+  40            /
+  41            /
+  42            /
+  43            /
+  44            /
+  45            /
+  46            /
+  47            /
+  48            /
+  49            /
+  50            /SPACE WAR. V3
+  51            
+  52            /D.E. WREGE
+  53            / ADDED VC8I SUPPORT - CHD
+  54            
+  55            
+  56            /CONDITIONAL ASSEMBLY PARAMETERS
+  57                    IFNDEF EAE <EAE=0>
+  58            
+  59            /FOR AX08 TYPE DISPLAY DEFINE AX08=1
+  60                    IFNDEF AX08 <AX08=0>
+  61            /FOR TYPE 30G DISPLAY DEFINE T30G=1
+  62                    IFNDEF T30G <T30G=0>
+  63            /FOR PDP-8/I OR POSIBUS VC8I DISPLAY VC8I=1
+  64                    IFNDEF VC8I <VC8I=0>
+  65            /FOR PDP-8/E VC8E DISPLAY VC8E=1
+  66                    IFNDEF VC8E <VC8E=0>
+  67            /PDP-12 - VR12 IS DEFAULT
+  68                    IFZERO VC8E+VC8I+T30G+AX08 <PDP12=1>
+  69                    IFNDEF PDP12 <PDP12=0>
+  70            
+  71            /CONDITIONAL ASSEMBLIES FOR CLOCK
+  72            /FOR DK8-EA (60 CYCLE) DK8EA=1
+  73                    IFNDEF DK8EA <DK8EA=0>
+  74            /FOR DK8-EP PROGRAMABLE DK8EP=1
+  75                    IFNDEF DK8EP <DK8EP=0>
+  76            /FOR FRED DYER'S FUNNY CLOCK FCLOCK=1
+  77                    IFNDEF FCLOCK <FCLOCK=0>
+  78            /DEFAULT IS PDP-12 KW12-A
+  79                    IFNZRO PDP12 <
+  80                    IFZERO DK8EA+AX08+DK8EP+FCLOCK <
+  81                    IFNDEF KW12 <KW12=1>>>
+  82                    IFNDEF KW12 <KW12=0>
+  83            
+  84            
+  85            /DEFS
+  86            
+  87                    IFNZRO PDP12 <
+  88            DIS=    140     /DISPLAY A POINT LINC MODE
+  89            LINC=   6141    /GO TO LINC MODE
+  90            PDP=    0002    /GO TO 8-MODE>
+  91            
+  92            IFNZRO EAE <
+  93            MUY=    7405    /EAE MULTIPLY
+  94            DVI=    7407    /EAE DIVIDE
+  95            NMI=    7411    /EAE NORMALIZE
+  96            SHL=    7413    /EAE SHIFT LEFT
+  97            ASR=    7415    /ARITHMETIC SHIFT RIGHT
+  98            LSR=    7417    /LOGICAL SHIFT RIGHT
+  99            MQL=    7421    /LOAD MQ;CLEAR AC
+ 100            SCL=    7403    /STEP COUNTER LOAD FROM MEMORY
+ 101            SCA=    7441    /STEP COUNTER TO ACCUMULATOR
+ 102            MQA=    7501    /READ MQ
+ 103            CAM=    CLA MQL
+ 104            >
+ 105            
+ 106            
+ 107            D=      10      /DISPLAY BUFFER FIELD
+ 108            DISBUF=4000     /ADDRESS OF DISPLAY BUFFER
+ 109            
+ 110            
+ 111            /PAGE ZERO CONSTANTS AND VARIABLES
+ 112            
+ 113            *1
+ 114 00001 5402         JMP I .+1
+ 115 00002 5402         INTRPT
+ 116            
+ 117            *6
+ 118 00006 0000 QBETA,  0               /FOR PDP-12
+ 119 00007 0000 QALPHA, 0               /ALPHA REG USED FOR DISPLAY
+ 120            
+ 121 00010 0000 QXR1,   0               /RESERVED XR'S
+ 122 00011 0000 QXR2,   0
+ 123 00012 0000 QDISXR, 0               /FOR DISPLAY ROUTINE ONLY
+ 124 00013 0000 QXR3,   0               /MUST BE USED WITH IOF
+ 125            
+ 126            *20
+ 127            /VARIABLES RESERVED
+ 128            
+ 129 00020 0000 QR,     0               /SHIP POSITION RADIAL
+ 130 00021 0000 ALIVE,  0               /=0 WHEN SHIP BLOWN UP
+ 131                                    /NON-ZERO OTHERWISE
+ 132 00022 0000 QXPOS,  0               /X COORD.
+ 133 00023 0000 QYPOS,  0               /Y COORD.
+ 134 00024 0000 QVX,    0               /X COMPONENT VELOCITY
+ 135 00025 0000 QVY,    0               /Y COMPONENT VELOCITY
+ 136 00026 0000 QPH,    0               /SHIP ANGLE (NOT POSITION DEPENDENT)
+ 137 00027 0000 QPHDOT, 0               /SHIP ANGULAR VELOCITY
+ 138 00030 0000 QPHR,   0               /PRECISION QPH
+ 139            
+ 140 00031 0000 SHIELD, 0               /NON-ZERO WHEN SHIELDS ARE UP.
+ 141                                    /WHEN SHIELDS ARE UP NO MISSELS
+ 142                                    /AND NO ACCELLERATION ALLOWED.
+ 143 00032 0000 HYPERS, 0               /NON-ZERO WHEN IN HYPERSPACE
+ 144 00033 0001 MISCNT, 1               /-# MISSLES LEFT
+ 145 00034 0000 ARMED,  0               /INCREMENTS TO 0 BEFORE SHIP
+ 146                                    /CAN FIRE
+ 147 00035 0000 QSHIP,  0               /POINT TO SHIP PICTURE
+ 148 00036 0000 QSHIPN, 0               /# POINTS TO BE DISPLAYED IN SHIP
+ 149 00037 0000 QSINPH, 0               /SIN(QPH)
+ 150 00040 0000 QCOSPH, 0               /COS(QPH)
+ 151                    SHIPSZ=.-QR     /#ENTRIES/SHIP
+ 152            
+ 153            
+ 154 00041 3777 QTIME,  3777            /TIME SCALING FACTOR
+ 155            /TEMPS AND VARIABLES
+ 156            
+ 157 00042 0000 QSINTH, 0               /SIN(QTH)
+ 158 00043 0000 QCOSTH, 0               /COS(QTH)
+ 159 00044 0000 BREAKU, 0               /NON-ZERO WHEN SHIP BREAKING UP.
+ 160 00045 0000 DBUFP,  0               /POINTS TO NEXT POS IN DISP BUFF.
+ 161 00046 0000 QTHR,   0               /NON-ZERO WHEN MAIN ROCKETS ON
+ 162 00047 0000 QTHA,   0               /NON-ZERO WHEN ANGULAR THRUST ON
+ 163 00050 0000 CONSER, 0               /NON-ZERO IF CONSERVING ANGULAR
+ 164                                     /MOMENTUM
+ 165 00051 0000 NUMMIS, 0               /# MISSELS IN MISTBL
+ 166 00052 0000 NNUMMI, 0               /TEMPORORY FOR UPDATING MISSLES
+ 167            
+ 168 00053 0001 MAXMIS, -7777           /NUMBER OF ALLOWABLE MISSELS
+ 169 00054 0000 QTM1,   0               /GENERAL TEMPORARYS
+ 170 00055 0000 QTM2,   0
+ 171 00056 0000 QCNT1,  0
+ 172 00057 0000 QCNT2,  0
+ 173 00060 0000 QCNT3,  0               /MUST BE USED WITH IOF
+ 174            
+ 175            /CONSTANTS
+ 176            
+ 177 00061 0010 QTHRUS, 10              /THRUST
+ 178 00062 1000 QGRAV,  1000            /GRAVITY
+ 179 00063 0004 QRET,   4               /THRUST ANGULAR RETRO'S
+ 180 00064 1000 QTHROC, 1000            /MUSSEL VELOCITY OF ROCKETS
+ 181            
+ 182            
+ 183            /THE FOLLOWING ARE POINTERS & FLAGS
+ 184            
+ 185 00065 2000 PSAUCP, SAUC            /POINTER TO SAUCER SHIP GENERATOR
+ 186 00066 3400 MISPNT, MISTBL          /POINTS TO WHERE NEXT MISSEL SHOULD
+ 187                                    /GO IN MISSEL TABLE
+ 188 00067 1003 BOUNCX, NULL
+ 189 00070 1003 BOUNCY, NULL
+ 190            
+ 191            /NEW INSTRUCTIONS
+ 192            
+ 193                    MULT=JMS I .
+ 194 00071 0202         XMULT
+ 195                    DIVIDE=JMS I .
+ 196 00072 0234         XDIVID
+ 197                    DISPLAY=JMS I .
+ 198 00073 0261         XDISPL
+ 199                    COS=JMS I .     /COSINE LOOKUP
+ 200 00074 0332         XCOSIN
+ 201                    SIN=JMS I .     /SINE LOOKUP
+ 202 00075 0313         XSINE
+ 203                    GGRAV=JMS I .
+ 204 00076 2650         XGGRAV
+ 205                    RANDOM=JMS I .
+ 206 00077 0336         XRANDOM
+ 207                    ONDECK=JMS I .
+ 208 00100 1413         XONDECK
+ 209                    OFDECK=JMS I .
+ 210 00101 1431         XOFDECK
+ 211                    DRAW=JMS I .
+ 212 00102 1600         CALPNT
+ 213                    NXTPOS=JMS I .
+ 214 00103 2400         NEWPOS
+ 215                    NXTANG=JMS I .
+ 216 00104 2462         ANGLES
+ 217                    FLAME=JMS I .
+ 218 00105 3142         DFLAME
+ 219                    DSTARS=JMS I .
+ 220 00106 3200         SUN
+ 221                    DSUN=JMS I .
+ 222 00107 3254         POLARS
+ 223                    FIRE=JMS I .
+ 224 00110 3266         FIRONE
+ 225            
+ 226            /THESE DEFS ARE ONLY FOR INTERMEDIATE
+ 227            /STAGES OF DEVELOPMENT.
+ 228            
+ 229                    IFDEF XXXXXX <  /OR IFPASS2
+ 230                    IFNDEF XONDECK <XONDECK=NULL1>
+ 231                    IFNDEF XOFDECK <XOFDECK=NULL1>
+ 232                    IFNDEF CALPNT <CALPNT=NULL1>
+ 233                    IFNDEF NEWPOS <NEWPOS=NULL1>
+ 234                    IFNDEF ANGLES <ANGLES=NULL1>
+ 235                    IFNDEF DFLAME <DFLAME=NULL1>
+ 236                    IFNDEF SUN <SUN=NULL1>
+ 237                    IFNDEF FIRONE <FIRONE=NULL1>
+ 238                    IFNDEF SAUC <SAUC=NULL1>
+ 239                    IFNDEF XGGRAV <XGGRAV=NULL1>
+ 240                    IFNDEF BOUNX <BOUNX=NULL1>
+ 241                    IFNDEF BOUNY <BOUNY=NULL1>
+ 242                    IFNDEF MISTBL <MISTBL=.>
+ 243                    IFNDEF SPCWAR <SPCWAR=.>>
+ 244                    XXXXXX=.
+ 245 00111 7402         HLT
+ 246            
+ 247                    PAGE
+ 248            /SO WE HAVE START AT 200
+ 249            
+ 250 00200 5601         JMP I .+1
+ 251 00201 4600         SPCWAR
+ 252            
+ 253            /SIGNED MULTIPLY ROUTINE.
+ 254            /THIS ROUTINE DOES A INTEGER MULTIPLY OF
+ 255            /TWO SIGNED NUMBERS (11 BITS OF SIGNIF).
+ 256            /RESULT IS A SINGLE 12-BIT SIGNED NUMBER.
+ 257            /CALL:  TAD (MLTCAND
+ 258            /       JMS MULT
+ 259            /        MLTPLR
+ 260            
+ 261 00202 0000 XMULT,  0
+ 262 00203 7100         CLL             /WILL SAVE IN LINK
+ 263 00204 7510         SPA             /MULTIPLICAND POSITIVE?
+ 264 00205 7061         CMA CML IAC     /NO: MAKE POS. REMEMBER SIGN IN LINK
+ 265 00206 4560         MQL             /LOAD MULTIPLICAND INTO MQ
+ 266 00207 1602         TAD I XMULT     /PICK UP MULTIPLIER
+ 267 00210 2202         ISZ XMULT       /POINT TO RETURN
+ 268 00211 7510         SPA             /POSITIVE??
+ 269 00212 7061         CMA CML IAC     /NO: MAKE POS AND REMEMBER SIGN
+ 270 00213 3217         DCA XMULT1      /FOR THE MULTIPLY
+ 271 00214 7044         CMA RAL         /AC=-1 IF NEG;-2 IF POS.
+ 272 00215 3233         DCA XMULTS      /SAVE IT FOR LATER
+ 273 00216 4562         MUY             /EAE MULTIPLY
+ 274 00217 0000 XMULT1,  0              /MULTIPLYER GOES HERE
+ 275 00220 4564         SHL             /WANT CORRECT NORMALIZATION
+ 276 00221 0000          0              /ONE SHIFT ONLY
+ 277 00222 3217         DCA XMULT1      /REMEMBER HIGH ORDER
+ 278 00223 4570         MQA             /READ LOW ORDER
+ 279 00224 7710         SPA CLA         /SKIP IF NO ROUND UP
+ 280 00225 7001         IAC             /ROUND UP ONE
+ 281 00226 1217         TAD XMULT1      /MAKE ROUNDED RESULT
+ 282 00227 2233         ISZ XMULTS      /WILL SKIP IF NEG SIGN
+ 283 00230 5602         JMP I XMULT     /DONE: AC=RESULT
+ 284 00231 7041         CIA             /NEGATE
+ 285 00232 5602         JMP I XMULT     /AND RETURN
+ 286            
+ 287 00233 0000 XMULTS, 0               /SAVES SIGN OF RESULT
+ 288            
+ 289            
+ 290            /DIVISION OF SIGNED DIVIDEND BY UNSIGNED DIVISOR.
+ 291            /EXIT WITH 12-BIT SIGNED RESULT.
+ 292            /DIVIDE OVERFLOW ONLY OCCURS WHEN DIVISOR=0
+ 293            /CALL:  TAD (DIVIDEND
+ 294            /       DIVIDE
+ 295            /        DIVISOR
+ 296            /       ERROR           /DIVISION BY 0
+ 297            /       NORMAL RET.     /AC=SIGNED RESULT
+ 298            
+ 299 00234 0000 XDIVID, 0
+ 300 00235 7100         CLL             /FOR SIGN
+ 301 00236 7510         SPA             /IS IT POSITIVE?
+ 302 00237 7061         CIA CML         /NO:MAKE POS.
+ 303 00240 4560         MQL             /PUT IN LOW ORDER
+ 304 00241 7044         CMA RAL         /AC=-1 IF NEG.
+ 305 00242 3233         DCA XMULTS      /SAVE SIGN
+ 306 00243 1634         TAD I XDIVID    /GET DIVISOR
+ 307 00244 2234         ISZ XDIVID      /POINT TO ERROR EXIT
+ 308 00245 7450         SNA             /SKIP IF NOT ZERO
+ 309 00246 5634         JMP I XDIVID    /TAKE DIV BY 0 RETURN
+ 310 00247 2234         ISZ XDIVID      /POINT TO NORMAL RETURN
+ 311 00250 3252         DCA .+2         /STORE DIVISOR
+ 312 00251 4561         DVI             /DO THE DIVISION
+ 313 00252 0000          0              /HOLDS THE DIVISOR
+ 314 00253 7200         CLA;MQA         /GET RESULT
+     00254 4570 
+ 315 00255 2233         ISZ XMULTS      /SKIP IF NEG
+ 316 00256 5634         JMP I XDIVID    /POS=RETURN
+ 317 00257 7041         CIA             /NEG=NEGATE
+ 318 00260 5634         JMP I XDIVID    /AND RETURN
+ 319            
+ 320            
+ 321            /DISPLAY ROUTINE. REFRESHES OUT OF BUFFER IN FIELD D.
+ 322            /THIS IS FOR PDP-12 DISPLAY. USES QALPHA FOR REGISTER.
+ 323            /CALL:  TAD (ADDR-1     /ADDR=ADDRESS OF BUFFER IN FIELD D
+ 324            /       DISPLA          /OF X,Y PAIRS.
+ 325            /        -# POINTS
+ 326            
+ 327 00261 0000 XDISPL, 0
+ 328 00262 3012         DCA QDISXR      /ADDRESS INTO XR
+ 329 00263 1661         TAD I XDISPL    /PICK UP # X,Y PAIRS
+ 330 00264 2261         ISZ XDISPL      /POINT TO RETURN
+ 331 00265 7450         SNA             /IF ZERO POINTS THEN EXIT
+ 332 00266 5661         JMP I XDISPL
+ 333 00267 7130         STL RAR         //2 FOR POINT PAIRS
+ 334 00270 3056         DCA QCNT1       /STASH FOR COUNT
+ 335 00271 6211         CDF D           /TO DISPLAY BUFFER FIELD
+ 336 00272 6002         IOF             /FOR LINK MODE
+ 337                    IFNZRO PDP12 <
+ 338            XDISL,  TAD I QDISXR    /GET THE X
+ 339                    TAD (400        /0 IS CENTER OF SCREEN
+ 340                    DCA QALPHA      /STICK IN ALPHA REGISTER
+ 341                    TAD I QDISXR    /GET Y-POSITION
+ 342                    LINC
+ 343                    DIS QALPHA      /DISPLAY THE POINT
+ 344                    PDP             /BACK TO 8-MODE
+ 345                    CLA CLL         /GET RID OF THE Y
+ 346                    >
+ 347                    IFNZRO T30G <
+ 348                    TAD (3          /MAX INTENSITY
+ 349                    6074            /SET MAX INTENSITY
+ 350                    CLA CLL
+ 351            XDISL,  TAD I QDISXR    /GET X
+ 352                    CLL RAL         /512 RESOLUTION
+ 353                    TAD (1000       /TO CENTER OF SCREEN
+ 354                    6053            /CLEAR AND LOAD  X
+ 355                    CLA CLL
+ 356                    TAD I QDISXR    /GET Y
+ 357                    CLL RAL         /512 RESOLUTION
+ 358                    TAD (1000       /TO CENTER OF SCREEN
+ 359                    6067            /CLEAR AND LOAD Y;DISPLAY
+ 360                    CLA CLL
+ 361                    6161            /WAIT TILL DONE
+ 362                    JMP .-1>
+ 363            
+ 364                    IFNZRO VC8E <
+ 365 00273 6050         6050            /CLEAR ALL FLAGS
+ 366 00274 1412 XDISL,  TAD I QDISXR    /GET X
+ 367 00275 7104         CLL RAL         /512 RESOLUTION
+ 368 00276 6053         6053            /CLEAR AND LOAD  X
+ 369 00277 7300         CLA CLL
+ 370 00300 1412         TAD I QDISXR    /GET Y
+ 371 00301 7104         CLL RAL         /512 RESOLUTION
+ 372 00302 6054         6054            /CLEAR AND LOAD Y
+ 373 00303 7300         CLA CLL
+ 374 00304 6052         6052            /WAIT TILL DONE
+ 375 00305 5304         JMP .-1
+ 376 00306 6055         6055            /INTENSIFY
+ 377                    >
+ 378                    IFNZRO VC8I <
+ 379                    6077            /MAX INTENSITY
+ 380                    CLA CLL
+ 381            XDISL,  TAD I QDISXR    /GET X
+ 382                    CLL RAL         /512 RESOLUTION
+ 383                    TAD (1000       /TO CENTER OF SCREEN
+ 384                    6052            /LOAD X
+ 385                    CLA CLL
+ 386                    TAD I QDISXR    /GET Y
+ 387                    CLL RAL         /512 RESOLUTION
+ 388                    TAD (1000       /TO CENTER OF SCREEN
+ 389                    6066            /LOAD Y; DISPLAY
+ 390                    CLA CLL>
+ 391                    IFNZRO AX08 <
+ 392            XDISL,  TAD I QDISXR
+ 393                    TAD (400
+ 394                    6303            /LOAD X
+ 395                    CLA CLL
+ 396                    TAD I QDISXR    /GET Y
+ 397                    6317            /LOAD Y AND INTENS.
+ 398                    CLA CLL
+ 399                    >
+ 400            
+ 401 00307 2056         ISZ QCNT1       /SKIP WHEN DONE
+ 402 00310 5274         JMP XDISL       /LOOP
+ 403 00311 6201         CDF 0           /BACK TO THIS FIELD
+ 404 00312 5661         JMP I XDISPL    /AND RETURN
+ 405            
+ 406            
+ 407            /SINE LOOKUP ROUTINE.  ANGLES ARE IN
+ 408            /FRACTIONS OF A CIRCLE. I.E. IN 256THS OF A CIRCL.
+ 409            /THUS PI RADIANS=200(8)
+ 410            /THE RESULT IS A SIGNED NUMBER -2048<SIN<2048.
+ 411            /NOTE THE NORMALIZATION.
+ 412            /CALL:  TAD (ANGLE
+ 413            /       SINE
+ 414            
+ 415 00313 0000 XSINE,  0
+ 416 00314 3054         DCA QTM1        /REMEMBER ANGLE
+ 417 00315 1054         TAD QTM1        /GET BACK
+ 418 00316 0377         AND (177        /INDEX INTO TABLE
+ 419 00317 1376         TAD (SINTAB     /BY ADDING OFSET
+ 420 00320 3055         DCA QTM2        /FOR INDIRECT
+ 421 00321 1054         TAD QTM1        /NOW TO FIGURE OUT SIGN
+ 422 00322 0375         AND (200        /BIT 4 INDICATES HEMISPHERE
+ 423 00323 7100         CLL             /FOR HEMISPHERE INDICATOR
+ 424 00324 7640         SZA CLA         /SKIP IF POS RESULT
+ 425 00325 7120         STL             /NEG RESULT: INDICATE IN LINK
+ 426 00326 1455         TAD I QTM2      /PICK UP VALUE
+ 427 00327 7430         SZL             /SKIP IF POS.
+ 428 00330 7041         CIA             /NEGATIVE SIGN
+ 429 00331 5713         JMP I XSINE
+ 430            
+ 431            /DO THE SAME FOR COSINES
+ 432            
+ 433 00332 0000 XCOSIN, 0
+ 434 00333 1374         TAD (100        /OFFSET SO WE CAN USE SINE ROUTINE
+ 435 00334 4313         JMS XSINE
+ 436 00335 5732         JMP I XCOSIN    /AND RETURN
+ 437            
+ 438            /RANDOM NUMBER GENERATOR.
+ 439            /USES R(N+1)=(2^11+3)R(N-1) MODULO 24.
+ 440            /COULD BE LESS INTELEGENT FOR SPEED.
+ 441            /RESULT IS 12 BIT RANDOM NUMBER IN AC.
+ 442 00336 0000 XRANDO, 0
+ 443 00337 1362         TAD RANUML      /GET LOW ORDER
+ 444 00340 4560         MQL             /MULTIPLICAND
+ 445 00341 4562         MUY             /*2^11+3
+ 446 00342 4003          4003
+ 447 00343 3360         DCA RANUMT      /HIGH ORDER CARRY
+ 448 00344 4570         MQA             /GET LOW ORDER
+ 449 00345 3362         DCA RANUML      /STASH AS IS
+ 450 00346 1361         TAD RANUMH      /GET HIGH ORDER
+ 451 00347 4560         MQL
+ 452 00350 4562         MUY             /*(2^11+3)
+ 453 00351 4003          4003
+ 454 00352 7200         CLA             /THROW AWAY HIGH ORDER
+ 455 00353 4570         MQA             /READ MIDDLE ORDER
+ 456 00354 1360         TAD RANUMT      /ADD OTHER PART
+ 457 00355 3361         DCA RANUMH      /NEW HIGH ORDER
+ 458 00356 1361         TAD RANUMH      /HIGH ORDER IS GOOD ONE
+ 459 00357 5736         JMP I XRANDOM
+ 460            
+ 461 00360 0000 RANUMT, 0
+ 462 00361 0000 RANUMH, 0
+ 463 00362 0001 RANUML, 1
+ 464            
+ 465 00374 0100         PAGE
+     00375 0200 
+     00376 0400 
+     00377 0177 
+ 466                    DECIMAL
+ 467 00400 0000 SINTAB, 0;50;101;151;201;251;301;350;400;449
+     00401 0062 
+     00402 0145 
+     00403 0227 
+     00404 0311 
+     00405 0373 
+     00406 0455 
+     00407 0536 
+     00410 0620 
+     00411 0701 
+ 468 00412 0762 498;546;595;643;690;737;784;830;876;921
+     00413 1042 
+     00414 1123 
+     00415 1203 
+     00416 1262 
+     00417 1341 
+     00420 1420 
+     00421 1476 
+     00422 1554 
+     00423 1631 
+ 469 00424 1706 0966;1010;1053;1096;1138;1179;1220;1260;1299;1338
+     00425 1762 
+     00426 2035 
+     00427 2110 
+     00430 2162 
+     00431 2233 
+     00432 2304 
+     00433 2354 
+     00434 2423 
+     00435 2472 
+ 470 00436 2537 1375;1412;1448;1483;1518;1551;1583;1615;1645;1675
+     00437 2604 
+     00440 2650 
+     00441 2713 
+     00442 2756 
+     00443 3017 
+     00444 3057 
+     00445 3117 
+     00446 3155 
+     00447 3213 
+ 471 00450 3247 1703;1730;1757;1782;1806;1829;1851;1872;1892;1911
+     00451 3302 
+     00452 3335 
+     00453 3366 
+     00454 3416 
+     00455 3445 
+     00456 3473 
+     00457 3520 
+     00460 3544 
+     00461 3567 
+ 472 00462 3610 1928;1945;1960;1974;1987;1998;2009;2018;2026;2033
+     00463 3631 
+     00464 3650 
+     00465 3666 
+     00466 3703 
+     00467 3716 
+     00470 3731 
+     00471 3742 
+     00472 3752 
+     00473 3761 
+ 473 00474 3766 2038;2043;2046;2047;2047;2047;2046;2043;2038;2033
+     00475 3773 
+     00476 3776 
+     00477 3777 
+     00500 3777 
+     00501 3777 
+     00502 3776 
+     00503 3773 
+     00504 3766 
+     00505 3761 
+ 474 00506 3752 2026;2018;2009;1998;1987;1974;1960;1945;1928;1911
+     00507 3742 
+     00510 3731 
+     00511 3716 
+     00512 3703 
+     00513 3666 
+     00514 3650 
+     00515 3631 
+     00516 3610 
+     00517 3567 
+ 475 00520 3544 1892;1872;1851;1829;1806;1782;1757;1730;1703;1675
+     00521 3520 
+     00522 3473 
+     00523 3445 
+     00524 3416 
+     00525 3366 
+     00526 3335 
+     00527 3302 
+     00530 3247 
+     00531 3213 
+ 476 00532 3155 1645;1615;1583;1551;1518;1483;1448;1412;1375;1338
+     00533 3117 
+     00534 3057 
+     00535 3017 
+     00536 2756 
+     00537 2713 
+     00540 2650 
+     00541 2604 
+     00542 2537 
+     00543 2472 
+ 477 00544 2423 1299;1260;1220;1179;1138;1096;1053;1010;0966;0921
+     00545 2354 
+     00546 2304 
+     00547 2233 
+     00550 2162 
+     00551 2110 
+     00552 2035 
+     00553 1762 
+     00554 1706 
+     00555 1631 
+ 478 00556 1554 0876;0830;0784;0737;0690;0643;0595;0546;0498;0449
+     00557 1476 
+     00560 1420 
+     00561 1341 
+     00562 1262 
+     00563 1203 
+     00564 1123 
+     00565 1042 
+     00566 0762 
+     00567 0701 
+ 479 00570 0620 0400;0350;0301;0251;0201;0151;0101;0050
+     00571 0536 
+     00572 0455 
+     00573 0373 
+     00574 0311 
+     00575 0227 
+     00576 0145 
+     00577 0062 
+ 480            
+ 481                    OCTAL
+ 482 00600 0000 GRVTBL, 0
+ 483            *.+177                  /RESERVED FOR GRAVITY TABLE
+ 484            
+ 485            /A LITTLE DO NOTHING SUBROUTINE
+ 486            
+ 487 01000 0000 NULL1,  0
+ 488 01001 7300         CLA CLL
+ 489 01002 5603         JMP I NULL
+ 490            
+ 491            /WE NEED TWO OF THEM?????
+ 492            
+ 493 01003 0000 NULL,   0
+ 494 01004 5603         JMP I NULL
+ 495            /ROCKET FLAME TABLE
+ 496                    DECIMAL
+ 497            FLAMEX, 
+ 498 01005 7766 -10;0; -12;0; -14;0; -16;0; -20;0; -18;0; -20;0; -22;0
+     01006 0000 
+     01007 7764 
+     01010 0000 
+     01011 7762 
+     01012 0000 
+     01013 7760 
+     01014 0000 
+     01015 7754 
+     01016 0000 
+     01017 7756 
+     01020 0000 
+     01021 7754 
+     01022 0000 
+     01023 7752 
+     01024 0000 
+ 499            
+ 500            /SHIP OUTLINES
+ 501            /SHIP 1   KLINGON BATTLE CRUISER (STAR TREK)
+ 502            SHIP1C,
+ 503 01025 0001 1;0; 3;0; 5;0; 7;0; 9;0; 10;1; 12;1; 13;1; 14;0
+     01026 0000 
+     01027 0003 
+     01030 0000 
+     01031 0005 
+     01032 0000 
+     01033 0007 
+     01034 0000 
+     01035 0011 
+     01036 0000 
+     01037 0012 
+     01040 0001 
+     01041 0014 
+     01042 0001 
+     01043 0015 
+     01044 0001 
+     01045 0016 
+     01046 0000 
+ 504 01047 0000 0;0; 0;1; -2;1; -3;2; -4;3; -5;4; -6;5; -7;6
+     01050 0000 
+     01051 0000 
+     01052 0001 
+     01053 7776 
+     01054 0001 
+     01055 7775 
+     01056 0002 
+     01057 7774 
+     01060 0003 
+     01061 7773 
+     01062 0004 
+     01063 7772 
+     01064 0005 
+     01065 7771 
+     01066 0006 
+ 505 01067 7767 -9;6; -11;6; -12;6; -11;5; -9;3; -7;1; -8;1
+     01070 0006 
+     01071 7765 
+     01072 0006 
+     01073 7764 
+     01074 0006 
+     01075 7765 
+     01076 0005 
+     01077 7767 
+     01100 0003 
+     01101 7771 
+     01102 0001 
+     01103 7770 
+     01104 0001 
+ 506                    SHIP1E=.
+ 507 01105 0015  13;-1
+     01106 7777 
+ 508 01107 0014 12;-1; 10;-1; -8;-1; -7;-1; -9;-3; -11;-5; -12;-6; -11;-6
+     01110 7777 
+     01111 0012 
+     01112 7777 
+     01113 7770 
+     01114 7777 
+     01115 7771 
+     01116 7777 
+     01117 7767 
+     01120 7775 
+     01121 7765 
+     01122 7773 
+     01123 7764 
+     01124 7772 
+     01125 7765 
+     01126 7772 
+ 509 01127 7767 -9;-6; -7;-6; -6;-5; -5;-4; -4;-3; -3;-2; -2;-1; 0;-1
+     01130 7772 
+     01131 7771 
+     01132 7772 
+     01133 7772 
+     01134 7773 
+     01135 7773 
+     01136 7774 
+     01137 7774 
+     01140 7775 
+     01141 7775 
+     01142 7776 
+     01143 7776 
+     01144 7777 
+     01145 0000 
+     01146 7777 
+ 510 01147 0001 1;0; 3;0; 5;0; 7;0; 9;0; 0;0
+     01150 0000 
+     01151 0003 
+     01152 0000 
+     01153 0005 
+     01154 0000 
+     01155 0007 
+     01156 0000 
+     01157 0011 
+     01160 0000 
+     01161 0000 
+     01162 0000 
+ 511            /SHIP1E=.
+ 512            
+ 513 01163 0011 SAUC1,  9;0; 10;0; 11;0; 3;0; -3;0; 0;3; 0;-3
+     01164 0000 
+     01165 0012 
+     01166 0000 
+     01167 0013 
+     01170 0000 
+     01171 0003 
+     01172 0000 
+     01173 7775 
+     01174 0000 
+     01175 0000 
+     01176 0003 
+     01177 0000 
+     01200 7775 
+ 514                    SAUC1E=.
+ 515            
+ 516            /SHIP 2  FLASH GORDON
+ 517            SHIP2C,
+ 518 01201 0016 14;0; 12;1; 10;2; 8;2; 6;2; 4;2; 2;2; 0;2; -2;2; -4;2; -6;2; -8;2; -8;0
+     01202 0000 
+     01203 0014 
+     01204 0001 
+     01205 0012 
+     01206 0002 
+     01207 0010 
+     01210 0002 
+     01211 0006 
+     01212 0002 
+     01213 0004 
+     01214 0002 
+     01215 0002 
+     01216 0002 
+     01217 0000 
+     01220 0002 
+     01221 7776 
+     01222 0002 
+     01223 7774 
+     01224 0002 
+     01225 7772 
+     01226 0002 
+     01227 7770 
+     01230 0002 
+     01231 7770 
+     01232 0000 
+ 519 01233 0004 4;4; 2;6; 0;8; -3;8; -2;7; 0;5; 0;3
+     01234 0004 
+     01235 0002 
+     01236 0006 
+     01237 0000 
+     01240 0010 
+     01241 7775 
+     01242 0010 
+     01243 7776 
+     01244 0007 
+     01245 0000 
+     01246 0005 
+     01247 0000 
+     01250 0003 
+ 520                    SHIP2E=.
+ 521 01251 0014 12;-1; 10;-2; 8;-2; 6;-2; 4;-2; 2;-2; 0;-2; -2;-2; -4;-2; -6;-2; -8;-2;
+     01252 7777 
+     01253 0012 
+     01254 7776 
+     01255 0010 
+     01256 7776 
+     01257 0006 
+     01260 7776 
+     01261 0004 
+     01262 7776 
+     01263 0002 
+     01264 7776 
+     01265 0000 
+     01266 7776 
+     01267 7776 
+     01270 7776 
+     01271 7774 
+     01272 7776 
+     01273 7772 
+     01274 7776 
+     01275 7770 
+     01276 7776 
+ 522 01277 0004 4;-4; 2;-6; 0;-8; -3;-8; -2;-7; 0;-5; 0;-3
+     01300 7774 
+     01301 0002 
+     01302 7772 
+     01303 0000 
+     01304 7770 
+     01305 7775 
+     01306 7770 
+     01307 7776 
+     01310 7771 
+     01311 0000 
+     01312 7773 
+     01313 0000 
+     01314 7775 
+ 523            /SHIP2E=.
+ 524            
+ 525            /SAUCER CANNON
+ 526 01315 0011 SAUC2, 9;0; 10;0; 11;0
+     01316 0000 
+     01317 0012 
+     01320 0000 
+     01321 0013 
+     01322 0000 
+ 527                    SAUC2E=.
+ 528            
+ 529            /SAUCERS COMMON OUTLINE
+ 530            BSHIP,  
+ 531 01323 0000 0;112; 1;110; 2;106; 3;100; 4;91; 5;79
+     01324 0160 
+     01325 0001 
+     01326 0156 
+     01327 0002 
+     01330 0152 
+     01331 0003 
+     01332 0144 
+     01333 0004 
+     01334 0133 
+     01335 0005 
+     01336 0117 
+ 532 01337 0006 6;66; 6;51; 7;35; 7;18; 7;0
+     01340 0102 
+     01341 0006 
+     01342 0063 
+     01343 0007 
+     01344 0043 
+     01345 0007 
+     01346 0022 
+     01347 0007 
+     01350 0000 
+ 533                    BSHIPE=.
+ 534            
+ 535                    OCTAL
+ 536            
+ 537            
+ 538            /SHIP DEPENDENT STUFF FOR PAGE ZERO LOAD
+ 539            
+ 540 01351 0000 SHIP1,  ZBLOCK QSHIP-QR
+     01352 0000 
+     01353 0000 
+     01354 0000 
+     01355 0000 
+     01356 0000 
+     01357 0000 
+     01360 0000 
+     01361 0000 
+     01362 0000 
+     01363 0000 
+     01364 0000 
+     01365 0000 
+ 541 01366 1315         SAUC2
+ 542 01367 0006         SAUC2E-SAUC2
+ 543                    XXX=.-SHIP1
+ 544 01370 0000         ZBLOCK SHIPSZ-XXX
+     01371 0000 
+ 545            
+ 546                    SHIP1X=SHIP1+QXPOS-QR
+ 547                    SHIP1Y=SHIP1+QYPOS-QR
+ 548            
+ 549 01372 0000 SHIP2,  ZBLOCK QSHIP-QR
+     01373 0000 
+     01374 0000 
+     01375 0000 
+     01376 0000 
+     01377 0000 
+     01400 0000 
+     01401 0000 
+     01402 0000 
+     01403 0000 
+     01404 0000 
+     01405 0000 
+     01406 0000 
+ 550 01407 1315         SAUC2
+ 551 01410 0006         SAUC2E-SAUC2
+ 552                    XXX=.-SHIP2
+ 553 01411 0000         ZBLOCK SHIPSZ-XXX
+     01412 0000 
+ 554            
+ 555                    SHIP2X=SHIP2+QXPOS-QR
+ 556                    SHIP2Y=SHIP2+QYPOS-QR
+ 557            
+ 558                    /PAGE
+ 559            /ONDECK ROUTINE.
+ 560            /THIS ROUTINE PUTS SHIP DEPENDENT STUFF
+ 561            /IN PAGE ZERO FOR COMMON CALCULATIONAL
+ 562            /ROUTINES.  ENTER WITH TABLE ADD-1 IN AC.
+ 563            /COPIES "SHIPSZ" LOCATIONS.
+ 564            
+ 565            /CALL:  TAD (SHIPST-1
+ 566            /       ONDECK
+ 567            /       RETURN
+ 568            
+ 569 01413 0000 XONDEC, 0
+ 570 01414 3011         DCA QXR2        /ADDRESS OF SHIP STUFF
+ 571 01415 1377         TAD (QR-1       /START OF PAGE ZERO LOCS.
+ 572 01416 3010         DCA QXR1        /STICK IN OTHER XR
+ 573 01417 4221         JMS SWITCH      /PUT IT THERE
+ 574 01420 5613         JMP I XONDECK
+ 575            
+ 576            /TAKE STUFF FROM XR2 AND PUT IN XR1
+ 577            
+ 578 01421 0000 SWITCH, 0
+ 579 01422 1376         TAD (-SHIPSZ    /NUMBER OF ENTRIES
+ 580 01423 3056         DCA QCNT1
+ 581 01424 1411         TAD I QXR2      /SOURCE
+ 582 01425 3410         DCA I QXR1      /DESTINATION
+ 583 01426 2056         ISZ QCNT1       /DONE?
+ 584 01427 5224         JMP .-3         /NOT YET
+ 585 01430 5621         JMP I SWITCH
+ 586            
+ 587            /OFDECK ROUTINE.
+ 588            /COPY STUFF OUT. (INVERSE OF ONDECK)
+ 589            /CALL:  TAD (SHIPST-1
+ 590            /       OFDECK
+ 591            /        RETURN
+ 592            
+ 593 01431 0000 XOFDEC, 0
+ 594 01432 3010         DCA QXR1        /DESTINATION XR
+ 595 01433 1377         TAD (QR-1       /START OF PAGE ZERO STUFF
+ 596 01434 3011         DCA QXR2        /SOURCE XR
+ 597 01435 4221         JMS SWITCH      /COPY IT OUT
+ 598 01436 5631         JMP I XOFDECK   /AND RETURN
+ 599            
+ 600 01576 7757         PAGE
+     01577 0017 
+ 601            /ROUTINE TO CALCULATE THE SHIP OUTLINE FROM CENTRAL
+ 602            /COORDINATES AND OUTLINE.  REQIRES THE FOLLOWING PAGE 0'S
+ 603            /BE PREVIOUSLY SET UP:
+ 604            /       QXPOS   X-CORD CENTER OF SHIP
+ 605            /       QYPOS   Y-CORD CENTER OF SHIP
+ 606            /       QSINPH  SINE OF SHIP ANGLE FROM X AXIS
+ 607            /       QCOSPH  COS  OF SHIP ANGLE FROM X AXIS
+ 608            /       QSHIP   POINTS TO START OF SHIP OUTLINE TABLE
+ 609            /       QSHIPN  NUMBER OF POINTS IN SHIP OUTLINE
+ 610            /       QTIME   OUTLINE SCALE FACTOR
+ 611            
+ 612            /IF SHIP IS NOT ALIVE OR IN HYPERSPACE THEN FAST EXIT.
+ 613            /COSINES AND SIGNS MUST ALLREADY BE AVAILABLE.
+ 614            /ALGORITHM:
+ 615            /       X=QXPOS + XS*COS(PH) - YS*SIN(PH)
+ 616            /       Y=QYPOS + XS*SIN(PH) + YS*COS(PH)
+ 617            /WHERE XS AND YS ARE POINTS ON SHIP OUTLINE FROM QSHIP TABLE.
+ 618            /THIS ROUTINE MAKES USE OF SYMMETRY
+ 619            
+ 620 01600 0000 CALPNT, 0
+ 621 01601 1032         TAD HYPERS      /GET HYPERSPACE FLAG
+ 622 01602 7640         SZA CLA         /SKIP IF VISIBLE
+ 623 01603 5600         JMP I CALPNT    /CAN'T SEE HIM
+ 624 01604 1021         TAD ALIVE       /NOW SEE IF ALIVE
+ 625 01605 7650         SNA CLA         /SKIP IF ALIVE AND WELL
+ 626 01606 5600         JMP I CALPNT    /HAS BIT THE DUST
+ 627 01607 1036         TAD QSHIPN      /NUMBER OF POINTS IN SHIP
+ 628 01610 7161         CIA STL         /NEGATE
+ 629 01611 7010         RAR             /POINT PAIRS
+ 630 01612 3056         DCA QCNT1       /-# POINT PAIRS.
+ 631 01613 7240         STA             /SINCE USING XR
+ 632 01614 1035         TAD QSHIP       /WANT START-1
+ 633 01615 3010         DCA QXR1        /STASH IN XR
+ 634 01616 1041         TAD QTIME       /GET THE TIME SCALER
+ 635 01617 3222         DCA T1          /SET IT UP FOR A MULT
+ 636 01620 1040         TAD QCOSPH      /GET COS
+ 637 01621 4471         MULT            /SCALE IT
+ 638 01622 0000 T1,     0
+ 639 01623 3271         DCA CALPX1      /SET IT UP FOR OUTLINE CALC
+ 640 01624 1041         TAD QTIME       /DO THE SAME FOR -SIN
+ 641 01625 3231         DCA T2
+ 642 01626 1037         TAD QSINPH
+ 643 01627 7041         CIA
+ 644 01630 4471         MULT
+ 645 01631 0000 T2,     0
+ 646 01632 3275         DCA CALPY1
+ 647 01633 1037         TAD QSINPH
+ 648 01634 7510         SPA
+ 649 01635 7041         CIA
+ 650 01636 3322         DCA CALPY3
+ 651 01637 1022         TAD QXPOS       /MUST SCALE X RIGHT
+ 652 01640 4565         ASR             /TWO TO THE RIGHT
+ 653 01641 0002          2
+ 654 01642 3356         DCA CALPTX      /STORE FOR LATER
+ 655 01643 1023         TAD QYPOS       /AND THE SAME FOR Y
+ 656 01644 4565         ASR
+ 657 01645 0002          2
+ 658 01646 3357         DCA CALPTY
+ 659 01647 1041         TAD QTIME       /SCALE SINE AND COS FOR THE
+ 660 01650 3253         DCA T3          /Y COMPONENT OF SHIP OUTLINE
+ 661 01651 1037         TAD QSINPH
+ 662 01652 4471         MULT
+ 663 01653 0000 T3,     0
+ 664 01654 3310         DCA CALPX2
+ 665 01655 1041         TAD QTIME
+ 666 01656 3261         DCA T4
+ 667 01657 1040         TAD QCOSPH
+ 668 01660 4471         MULT
+ 669 01661 0000 T4,     0
+ 670 01662 3314         DCA CALPY2
+ 671 01663 1410 CALPL,  TAD I QXR1      /GET X POINT
+ 672 01664 3353         DCA CALPX       /AND STASH
+ 673 01665 1410         TAD I QXR1      /GET Y POINT
+ 674 01666 3354         DCA CALPY       /AND STASH
+ 675 01667 1353         TAD CALPX       /GET X
+ 676 01670 4471         MULT            /MULTIPLY
+ 677 01671 0000 CALPX1,   0
+ 678 01672 3355         DCA CALPT       /STORE TILL LATER
+ 679 01673 1354         TAD CALPY       /GET Y
+ 680 01674 4471         MULT
+ 681 01675 0000 CALPY1,  0              /-XY*SIN(PH)
+ 682 01676 3361         DCA CALPY4      /SAVE IT FOR SYM CALC
+ 683 01677 1361         TAD CALPY4      /AND GET IT BACK
+ 684 01700 1355         TAD CALPT       /XS*COS(PH)-YS*SIN(PH)
+ 685 01701 1356         TAD CALPTX      /AND IN CENTER OF SHIP
+ 686 01702 6211         CDF D           /TO DISPLAY FIELD
+ 687 01703 3445         DCA I DBUFP     /INTO DISPLAY BUFFER
+ 688 01704 2045         ISZ DBUFP
+ 689 01705 6201         CDF 0
+ 690 01706 1353         TAD CALPX
+ 691 01707 4471         MULT
+ 692 01710 0000 CALPX2,  0              /XS*SIN(PH)
+ 693 01711 3360         DCA CALPT2      /STASH
+ 694 01712 1354         TAD CALPY       /GET Y VALUE
+ 695 01713 4471         MULT
+ 696 01714 0000 CALPY2,  0              /YS*COS(PH)
+ 697 01715 3362         DCA CALPY5      /SAVE IT FOR SYM CALC
+ 698 01716 1362         TAD CALPY5      /AND GET IT BACK
+ 699 01717 1360         TAD CALPT2      /XS*SIN(PH)+YS*COS(PH)
+ 700 01720 7000 PSAUC2, NOP             /OR JMP .+3 FOR SHIPS
+ 701 01721 4471         MULT
+ 702 01722 0000 CALPY3,  0
+ 703 01723 1357         TAD CALPTY      /YPOS+XS*SIN(PH)+YS*COS(PH)
+ 704 01724 6211         CDF D           /TO DISPLAY FIELD
+ 705 01725 3445         DCA I DBUFP     /STICK IN BUFFER
+ 706 01726 2045         ISZ DBUFP       /NEXT POSITION
+ 707 01727 6201         CDF 0           /BACK TO THIS FIELD
+ 708 01730 1361         TAD CALPY4      /GET -Y*SIN(PH)
+ 709 01731 7041         CIA             /NEGATE IT
+ 710 01732 1355         TAD CALPT       /ADD XS*COS(PH)
+ 711 01733 1356         TAD CALPTX      /ADD CENTER OF SHIP
+ 712 01734 6211         CDF D           /CHANGE TO DISPLAY FIELD
+ 713 01735 3445         DCA I DBUFP     /AND DEPOSIT IT
+ 714 01736 2045         ISZ DBUFP
+ 715 01737 6201         CDF 0           /RESTORE DATA FIELD
+ 716 01740 1362         TAD CALPY5      /GET YS*COS(PH)
+ 717 01741 7041         CIA             /AND NEGATE IT
+ 718 01742 1360         TAD CALPT2      /ADD TO IT XS*SIN(PH)
+ 719 01743 1357         TAD CALPTY      /ADD ON SHIP CENTER
+ 720 01744 6211         CDF D           /CHANGEO DISPLAY FIELD
+ 721 01745 3445         DCA I DBUFP     /AND DEPOSIT T
+ 722 01746 2045         ISZ DBUFP
+ 723 01747 6201         CDF 0
+ 724 01750 2056         ISZ QCNT1       /CHECK FR COMPLETION
+ 725 01751 5263         JMP CALPL       /LOOP
+ 726 01752 5600         JMP I CALPNT
+ 727            
+ 728 01753 0000 CALPX,  0
+ 729 01754 0000 CALPY,  0
+ 730 01755 0000 CALPT,  0
+ 731 01756 0000 CALPTX, 0
+ 732 01757 0000 CALPTY, 0
+ 733 01760 0000 CALPT2, 0
+ 734 01761 0000 CALPY4, 0
+ 735 01762 0000 CALPY5, 0
+ 736            
+ 737                    PAGE
+ 738            /THIS IS FOR SHIPS BEING SAUCERS
+ 739            /REPLACES CALPNT WHEN USING SAUCERS.
+ 740            
+ 741 02000 0000 SAUC,   0
+ 742 02001 1032         TAD HYPERS      /DON'T DO IT IF
+ 743 02002 7640         SZA CLA         /IN HYPERSPACE
+ 744 02003 5600         JMP I SAUC
+ 745 02004 1377         TAD (BSHIP-1    /INDEX INTO SAUCER TABLE
+ 746 02005 3010         DCA QXR1
+ 747 02006 1041         TAD QTIME       /FOR CURVED SPACE
+ 748 02007 3212         DCA .+3         /WE SCALE DOWN ANGLES
+ 749 02010 1037         TAD QSINPH      /GET ANGLE
+ 750 02011 4471         MULT
+ 751 02012 0000          0              /SCALE IT DOWN
+ 752 02013 3237         DCA SALPN1      /FOR MULTIPLY
+ 753 02014 1376         TAD (BSHIP-BSHIPE /LENGTH
+ 754 02015 7130         STL RAR         / DIVIDE BY 2
+ 755 02016 3056         DCA QCNT1       /NUMBER OF LOOPS
+ 756 02017 1022         TAD QXPOS       /SHIFT OVER NOW
+ 757 02020 4565         ASR;2           /TO FIT ON SCREEN
+     02021 0002 
+ 758 02022 3314         DCA SALPTX
+ 759 02023 1023         TAD QYPOS       /AND THE SAME FOR Y
+ 760 02024 4565         ASR;2
+     02025 0002 
+ 761 02026 3315         DCA SALPTY
+ 762 02027 1041         TAD QTIME
+ 763 02030 3233         DCA SALPN2      /FOR OTHER SCALE DOWN
+ 764 02031 1410 SALPNL, TAD I QXR1      /GET AN X
+ 765 02032 4471         MULT
+ 766 02033 0000 SALPN2,  0              /SCALE DOWN
+ 767 02034 3316         DCA SALPX       /STORE
+ 768 02035 1410         TAD I QXR1      /GET Y
+ 769 02036 4471         MULT
+ 770 02037 0000 SALPN1,  0
+ 771 02040 4565         ASR;3
+     02041 0003 
+ 772 02042 3317         DCA SALPY
+ 773 02043 6211         CDF D
+ 774 02044 1316         TAD SALPX
+ 775 02045 1314         TAD SALPTX
+ 776 02046 3445         DCA I DBUFP
+ 777 02047 2045         ISZ DBUFP
+ 778 02050 1317         TAD SALPY
+ 779 02051 1315         TAD SALPTY
+ 780 02052 3445         DCA I DBUFP
+ 781 02053 2045         ISZ DBUFP
+ 782 02054 1316         TAD SALPX
+ 783 02055 1314         TAD SALPTX
+ 784 02056 3445         DCA I DBUFP
+ 785 02057 2045         ISZ DBUFP
+ 786 02060 1317         TAD SALPY
+ 787 02061 7041         CIA
+ 788 02062 1315         TAD SALPTY
+ 789 02063 3445         DCA I DBUFP
+ 790 02064 2045         ISZ DBUFP
+ 791 02065 1316         TAD SALPX
+ 792 02066 7041         CIA
+ 793 02067 1314         TAD SALPTX
+ 794 02070 3445         DCA I DBUFP
+ 795 02071 2045         ISZ DBUFP
+ 796 02072 1317         TAD SALPY
+ 797 02073 1315         TAD SALPTY
+ 798 02074 3445         DCA I DBUFP
+ 799 02075 2045         ISZ DBUFP
+ 800 02076 1316         TAD SALPX
+ 801 02077 7041         CIA
+ 802 02100 1314         TAD SALPTX
+ 803 02101 3445         DCA I DBUFP
+ 804 02102 2045         ISZ DBUFP
+ 805 02103 1317         TAD SALPY
+ 806 02104 7041         CIA
+ 807 02105 1315         TAD SALPTY
+ 808 02106 3445         DCA I DBUFP
+ 809 02107 2045         ISZ DBUFP
+ 810 02110 6201         CDF 0
+ 811 02111 2056         ISZ QCNT1
+ 812 02112 5231         JMP SALPNL
+ 813 02113 5600         JMP I SAUC
+ 814            
+ 815 02114 0000 SALPTX, 0
+ 816 02115 0000 SALPTY, 0
+ 817 02116 0000 SALPX,  0
+ 818 02117 0000 SALPY,  0
+ 819            /ROUTINE TO ADD TWO NUMBERS(REALLY!!!)
+ 820            /CHECKING FOR SCOPE WRAP AROUND.
+ 821            /TAKES TWO RETURNS DEPENDING ON WHETHER WRAP OCCURS
+ 822            /FROM 3777 TO 4000 AND 4000 TO 3777.
+ 823            /ALGORITHM:
+ 824            /       1. ONLY HAVE TROUBLE IF ADDING NUMBERS OF SAME SIGN
+ 825            /       2. IF SAME SIGN ARE OK IF LINK OVERFLOW MATCHES
+ 826            /          SIGN BIT.
+ 827            
+ 828            /CALL:  TAD NUMB1       /MAIN NUMBER
+ 829            /       JMS I (XADDD
+ 830            /        NUMB2          /INCREMENT
+ 831            /       RET1            /RETURN IF WRAP AROUND
+ 832            /       RET2            /NO WRAP.
+ 833            /BOTH RETURNS ARE WITH AC=NUMB1+NUMB2
+ 834            
+ 835 02120 0000 XADDD,  0
+ 836 02121 3345         DCA XADDD1      /STASH NUMB1
+ 837 02122 1345         TAD XADDD1      /GET BACK
+ 838 02123 7004         RAL             /SIGN BIT IN LINK
+ 839 02124 7200         CLA             /TO GET NUMB2
+ 840 02125 1720         TAD I XADDD     /GET NUMB2
+ 841 02126 7510         SPA             /SKIP IF NUMB2 POS
+ 842 02127 7020         CML             /NUMB2 NEG SO COMPLEMT LINK
+ 843 02130 7430         SZL             /SKIP IF SIGNS NOT THE SAME
+ 844 02131 5341         JMP XADDD2      /ALL OK.
+ 845 02132 1345         TAD XADDD1      /AC=NUMB1+NUMB2
+ 846 02133 7510         SPA             /SKIP IF RESULT POSITIVE
+ 847 02134 7020         CML             /RESULT NEG COMP LINK FOR TEST
+ 848 02135 7420         SNL             /SKIP IF WRAP OCCURRED
+ 849 02136 2320         ISZ XADDD       /TAKE SECOND RETURN
+ 850 02137 2320         ISZ XADDD       /UPDATE RETURN
+ 851 02140 5720         JMP I XADDD
+ 852            
+ 853 02141 1345 XADDD2, TAD XADDD1
+ 854 02142 2320         ISZ XADDD
+ 855 02143 2320         ISZ XADDD
+ 856 02144 5720         JMP I XADDD
+ 857            
+ 858 02145 0000 XADDD1, 0
+ 859            
+ 860            
+ 861            /ROUTINE TO BOUNCE X
+ 862            
+ 863 02146 0000 BOUNX,  0
+ 864 02147 7300         CLA CLL         /GET RID OF THE BAD QXPOS
+ 865 02150 1024         TAD QVX
+ 866 02151 7041         CIA
+ 867 02152 3024         DCA QVX
+ 868 02153 2346         ISZ BOUNX       /PAST DCA QXPOS
+ 869 02154 5746         JMP I BOUNX
+ 870            
+ 871            /AND Y
+ 872            
+ 873 02155 0000 BOUNY,  0
+ 874 02156 7300         CLA CLL         /GET RID OF THE BAD QYPOS
+ 875 02157 1025         TAD QVY
+ 876 02160 7041         CIA
+ 877 02161 3025         DCA QVY
+ 878 02162 2355         ISZ BOUNY       /PAST DCA QYPOS
+ 879 02163 5755         JMP I BOUNY
+ 880            
+ 881 02176 7752         PAGE
+     02177 1322 
+ 882            /TIME SCALE FACTOR LOOKUP ROUTINE
+ 883                   
+ 884 02200 0000 LOOKUP, 0
+ 885 02201 7510         SPA             /IF NEGATIVE,MAKE IT POSITIVE
+ 886 02202 7041         CIA
+ 887 02203 4566         LSR             /TAKE THE SPACE POINT
+ 888 02204 0004         4               /AND SCALE IT TO FIT
+ 889 02205 1377         TAD (TABLE      /INDEX INTO TABLE
+ 890 02206 3211         DCA OFFSET
+ 891 02207 1611         TAD I OFFSET
+ 892 02210 5600         JMP I LOOKUP
+ 893 02211 0000         OFFSET,0
+ 894               
+ 895               
+ 896            /CURVED SPACE TABLE, 64 POINTS (HALF SCREEN)
+ 897              
+ 898                    DECIMAL
+ 899 02212 3777 TABLE,  2047;2047;2047;2047
+     02213 3777 
+     02214 3777 
+     02215 3777 
+ 900 02216 3777         2047;2047;2047;2047
+     02217 3777 
+     02220 3777 
+     02221 3777 
+ 901 02222 3777         2047;2047;2047;2047     /FLAT IN THE
+     02223 3777 
+     02224 3777 
+     02225 3777 
+ 902 02226 3777         2047;2047;2047;2047     /CENTER
+     02227 3777 
+     02230 3777 
+     02231 3777 
+ 903 02232 3774         2044;2040;2025;2010
+     02233 3770 
+     02234 3751 
+     02235 3732 
+ 904 02236 3720         2000;1990;1970;1950;
+     02237 3706 
+     02240 3662 
+     02241 3636 
+ 905 02242 3605         1925;1900;1875;1850;
+     02243 3554 
+     02244 3523 
+     02245 3472 
+ 906 02246 3434         1820;1790;1750;1710
+     02247 3376 
+     02250 3326 
+     02251 3256 
+ 907 02252 3174         1660;1610;1550;1500
+     02253 3112 
+     02254 3016 
+     02255 2734 
+ 908 02256 2553         1387;1325;1212;1100
+     02257 2455 
+     02260 2274 
+     02261 2114 
+ 909 02262 1750         1000;900;800;700
+     02263 1604 
+     02264 1440 
+     02265 1274 
+ 910 02266 1161         625;550;500;450
+     02267 1046 
+     02270 0764 
+     02271 0702 
+ 911 02272 0620         400;350;287;225
+     02273 0536 
+     02274 0437 
+     02275 0341 
+ 912 02276 0271         185;150;125;100
+     02277 0226 
+     02300 0175 
+     02301 0144 
+ 913 02302 0113         75;50;47;46             /IT LEVELS OUT
+     02303 0062 
+     02304 0057 
+     02305 0056 
+ 914 02306 0055         45;45;45;45             /NEAR INFINITY
+     02307 0055 
+     02310 0055 
+     02311 0055 
+ 915 02312 0055         45;45;45;45
+     02313 0055 
+     02314 0055 
+     02315 0055 
+ 916                    OCTAL
+ 917            
+ 918 02377 2212         PAGE
+ 919            /THIS ROUTINE IS TO CALCULATE THE NEW POSITIONS
+ 920            /AND VELOCITIES OF A POINT ON SCREEN UNDER THE
+ 921            /INFLUENCE OF A THRUST AND GRAVITY.
+ 922            /THE ALGORITHM IS WIERD, MAINLY BECAUSE I PROBABLY
+ 923            /HAVE NOT FIGURED OUT THE GOOD WAY TO DO IT BUT, HERE
+ 924            /IS HOW THE CALCULATION PROCEEDS:
+ 925            /  1.   ACCELLERATION DUE TO GRAVITY IS CALCULATED VIA
+ 926            /       THE ROUTINE GGRAV.  THIS ROUTINE SETS UP
+ 927            /       QSINTH_SIN(TH)/R
+ 928            /       QCOSTH_COS(TH)/R
+ 929            /       AC_-QGRAV/R FROM LOOKUP TABLE
+ 930            /       WHERE TH=ANGLE WITH SUN AND R=SQROOT(X^2+Y^2)
+ 931            /  2.   NEW VALUES FOR THE COMPONENTS OF VELOCITY IS COMPUTED
+ 932            /       FROM QVX_QVX+QTHR*COS(PH)-GRAV*SIN(TH)
+ 933            /            QVY_QVY+QTHR*SIN(PH)-GRAV*COS(TH)
+ 934            /  3.   NEW VALUES OF X,Y ARE COMPUTED
+ 935            /       QXPOS_QXPOS+QVX*(SCALE FACTOR)
+ 936            /       QYPOS_QYPOS+QVY*(SCALE FACTOR)
+ 937            /ALSO DOES WRAP-AROUND CHECKS AND BOUNCE IF ON.
+ 938            
+ 939 02400 0000 NEWPOS, 0
+ 940 02401 4476         GGRAV           /GET GRAVITY VALUE
+ 941 02402 3207         DCA NEWPO1
+ 942 02403 1207         TAD NEWPO1
+ 943 02404 3225         DCA NEWPO2
+ 944 02405 1043         TAD QCOSTH
+ 945 02406 4471         MULT            /WE ARE DOING 1/R GRAVITY
+ 946 02407 0000 NEWPO1,  0
+ 947 02410 3207         DCA NEWPO1
+ 948 02411 1046         TAD QTHR        /THRUST ON
+ 949 02412 7450         SNA             /SKIP IF ON
+ 950 02413 5220         JMP NEWPO3+1    /NO: DON'T CALCULATE
+ 951 02414 3217         DCA NEWPO3
+ 952 02415 1040         TAD QCOSPH
+ 953 02416 4471         MULT
+ 954 02417 0000 NEWPO3,  0              /T*COS(PH)
+ 955 02420 1207         TAD NEWPO1      /T*COS(PH)+GRAVX
+ 956 02421 1024         TAD QVX         /+OLD VELOCITY COMP.
+ 957 02422 3024         DCA QVX
+ 958 02423 1042 NEWPO6, TAD QSINTH
+ 959 02424 4471         MULT
+ 960 02425 0000 NEWPO2,  0
+ 961 02426 3225         DCA NEWPO2
+ 962 02427 1046         TAD QTHR        /GET ROCKET THRUST
+ 963 02430 7450         SNA             /SKIP IF ON
+ 964 02431 5236         JMP NEWPO4+1    /NOT ON: SAVE TIME
+ 965 02432 3235         DCA NEWPO4
+ 966 02433 1037         TAD QSINPH
+ 967 02434 4471         MULT            /T*SIN(PH)
+ 968 02435 0000 NEWPO4,  0
+ 969 02436 1225         TAD NEWPO2      /T*SIN(PH)+GRAVY
+ 970 02437 1025         TAD QVY         /+OLD VELOCITY COMPONENT
+ 971 02440 3025         DCA QVY         /SAVE.
+ 972            
+ 973                    /NOW TO CALCULATE NEW X,Y
+ 974            
+ 975                    SC=JMS SCALE    /OPTIONAL FLAT OR CURVED
+ 976                    SC1=JMS I (SCALE1
+ 977                    SC2=JMS I (SCALE2
+ 978 02441 1024 NEWPO7, TAD QVX
+ 979 02442 4315         JMS SCALE       /SCALE IF REQUIRED
+ 980 02443 3246         DCA .+3         /FOR WRAP CHECK
+ 981 02444 1022         TAD QXPOS       /ADD OLD POSITION
+ 982 02445 4775         JMS I (XADDD    /ADD THEM
+ 983 02446 0000          0
+ 984 02447 4467         JMS I BOUNCX    /BOUNCE X IF IMPLEMENTED
+ 985 02450 3022         DCA QXPOS       /UPDATE TO NEW POSITION
+ 986 02451 1025         TAD QVY         /GET Y VELOCITY
+ 987 02452 4315         JMS SCALE       /SCALE IF REQUIRED
+ 988 02453 3256         DCA .+3
+ 989 02454 1023         TAD QYPOS       /ADD OLD POSITION
+ 990 02455 4775         JMS I (XADDD
+ 991 02456 0000          0
+ 992 02457 4470         JMS I BOUNCY    /BOUNCE IF IMPLEMENTED
+ 993 02460 3023         DCA QYPOS       /UPDATE POSITION.
+ 994 02461 5600         JMP I NEWPOS    /RETURN
+ 995            
+ 996                    /AND NEW ANGLE PHI
+ 997            
+ 998 02462 0000 ANGLES, 0
+ 999 02463 1050         TAD CONSER      /CHECK IF CONSERVING ANGULAR MOMENTUM
+1000 02464 7650         SNA CLA         /SKIP IF YES
+1001 02465 5271         JMP NEWPO5      /NO:
+1002 02466 1047         TAD QTHA
+1003 02467 1027         TAD QPHDOT
+1004 02470 5275         JMP NEWPO8
+1005 02471 4571 NEWPO5, CAM              /CLEAR MQ
+1006 02472 1047         TAD QTHA
+1007 02473 4564         SHL
+1008 02474 0003          3
+1009 02475 3027 NEWPO8, DCA QPHDOT
+1010 02476 1027         TAD QPHDOT
+1011 02477 1030         TAD QPHR
+1012 02500 3030         DCA QPHR
+1013 02501 1030         TAD QPHR
+1014 02502 4565         ASR
+1015 02503 0003          3
+1016 02504 0374         AND (377        /ALL THAT MATTERS
+1017 02505 3026         DCA QPH         /TO NEW VALUE
+1018            
+1019 02506 1026         TAD QPH         /MAKE SINE AND COS
+1020 02507 4475         SIN
+1021 02510 3037         DCA QSINPH      /SAVE SINE
+1022 02511 1026         TAD QPH
+1023 02512 4474         COS
+1024 02513 3040         DCA QCOSPH      /AND COS
+1025 02514 5662         JMP I ANGLES    /AND RETURN
+1026            
+1027            
+1028            /ROUTINE TO SCALE VELOCITY
+1029            
+1030 02515 0000 SCALE,  0
+1031 02516 4472         DIVIDE
+1032 02517 0016          16
+1033 02520 7000         NOP
+1034 02521 5715         JMP I SCALE
+1035              
+1036              
+1037 02574 0377         PAGE
+     02575 2120 
+     02576 2635 
+     02577 2600 
+1038            /CURVED VELOCITY SCALER ROUTINES
+1039            /THE TIME SCALE FACTOR IS LOOKED UP AS
+1040            /A FUNCTION OF THE LARGER COMPONENT OF
+1041            /DISTANCE TO THE CENTER OF THE SHIP FROM
+1042            /MID-SCREEN.  X AND Y VELOCITY COMPONENTS
+1043            /ARE THEN SCALED BY HIS FACTOR.
+1044               
+1045 02600 0000 SCALE1, 0               
+1046 02601 7300         CLA CLL
+1047 02602 1022         TAD QXPOS       /GET THE CENTER OFHE SHIP
+1048 02603 7510         SPA             /IF NEGATIVE, MAKE IT POSITIVE
+1049 02604 7041         CIA
+1050 02605 3234         DCA COMPAR      /SAVE IT
+1051 02606 1023         TAD QYPOS       /GET THE Y COMPONENT
+1052 02607 7500         SMA             /MAKE SURE IT'S NEGATIVE
+1053 02610 7041         CIA
+1054 02611 1234         TAD COMPAR      /COMPARE IT WITH THE X COMP
+1055 02612 7620         SNL CLA
+1056 02613 5217         JMP .+4
+1057 02614 7200         CLA             /IF QXPOS IS THE LARGER COMP
+1058 02615 1022         TAD QXPOS       /THEN PUT IT IN HE AC
+1059 02616 5221         JMP .+3         /AND JMP TO LOOKUP
+1060 02617 7200         CLA             /OTHERWISE, PUT QYPOS IN AC
+1061 02620 1023         TAD QYPOS
+1062 02621 4777         JMS I (LOOKUP   /AMD JMP TO LOOKUP
+1063 02622 3041         DCA QTIME       /SAVE THE TIME SCALE FACTOR
+1064 02623 1041         TAD QTIME
+1065 02624 3227         DCA TX          /SET IT UP FOR A MULT
+1066 02625 1024         TAD QVX
+1067 02626 4471         MULT            /MULTIPLY VELOCITY BY QTIME
+1068 02627 0000 TX,     0
+1069 02630 4472         DIVIDE          /SCALE IT DOWN
+1070 02631 0016         16
+1071 02632 7000         NOP
+1072 02633 5600         JMP I SCALE1
+1073 02634 0000         COMPAR,0
+1074               
+1075 02635 0000 SCALE2, 0
+1076 02636 7200         CLA
+1077 02637 1041         TAD QTIME       /GET THE SCALE FACTOR
+1078 02640 3243         DCA TY
+1079 02641 1025         TAD QVY         /GET THE Y VELOCITY
+1080 02642 4471         MULT            /MULTIPLY IT BY QTIME
+1081 02643 0000 TY,     0
+1082 02644 4472         DIVIDE          /SCALE IT DOWN
+1083 02645 0016         16
+1084 02646 7000         NOP
+1085 02647 5635         JMP I SCALE2
+1086            
+1087            /ROUTINE TO GET GRAVITY CONSTANT FOR CURRENT X,Y POSITION.
+1088            /IS TABLE LOOKUP ON X^2+Y^2 IN GRVTBL.
+1089            
+1090 02650 0000 XGGRAV, 0
+1091 02651 4776         JMS I (NEWPOL   /GET SIN(TH)/R ETC.
+1092 02652 1020         TAD QR          /GET R^2
+1093 02653 4566         LSR             /SCALE DOWN A LITTLE
+1094 02654 0002          2
+1095 02655 1375         TAD (GRVTBL     /INDEX INTO TABLE
+1096 02656 3261         DCA XSQUAR      /STORE FOR INDIRECT
+1097 02657 1661         TAD I XSQUAR    /GET VALUE
+1098 02660 5650         JMP I XGGRAV    /AND RETURN
+1099 02661 0000 XSQUAR, 0
+1100            
+1101            /THIS ROUTINE IS TO CALCULATE THE GRAVITY TABLE
+1102            /TO BE USED BY XGGRAV.  THE LOOKUP IS VIA (X^2+Y^2)
+1103            /TO INDEX INTO THE TABLE.  THEREFORE THE TABLE
+1104            /IS STORED BY R^2 VALUE (128 POSITIONS BIG)
+1105            
+1106 02662 0000 SETGRV, 0
+1107 02663 1374         TAD (GRVTBL-1   /SET XR TO GRAVITY TABLE
+1108 02664 3013         DCA QXR3        /FOR STORING
+1109 02665 3306         DCA SETGR1      /IS R-SQUARE
+1110 02666 1373         TAD (-177       /THIS MANY POINTS
+1111 02667 3060         DCA QCNT3
+1112 02670 3413         DCA I QXR3      /AS FIRST IS 0
+1113 02671 2306 SETGRL, ISZ SETGR1      /NEXT R-SQUARE
+1114 02672 1306         TAD SETGR1
+1115 02673 4772         JMS I (ROOT     /TAKE SQUARE ROOT
+1116 02674 3277         DCA SETGRX      /FOR DIVIDE
+1117 02675 1062         TAD QGRAV       /GET GRAVITY CONSTANT
+1118 02676 4472         DIVIDE
+1119 02677 0000 SETGRX,  0
+1120 02700 7000         NOP             /CAN'T GET DIVIDE BY 0
+1121 02701 7041         CIA             /STORE NEGATIVE VALUES
+1122 02702 3413         DCA I QXR3      /STASH IN TABLE
+1123 02703 2060         ISZ QCNT3       /DONE?
+1124 02704 5271         JMP SETGRL      /NO: CONTINUE
+1125 02705 5662         JMP I SETGRV
+1126            
+1127 02706 0000 SETGR1, 0
+1128            
+1129 02772 3107         PAGE
+     02773 7601 
+     02774 0577 
+     02775 0600 
+     02776 3000 
+     02777 2200 
+1130            /THIS ROUTINE LOADS UP QSINTH AND QCOSTH
+1131            /WITH NUMBERS PROPORTIONAL TO SIN(TH)/R
+1132            /AND COS(TH)/R.  COUPLED WITH "GGRAV"
+1133            /WHICH LOOKS UP A VALUE PROPORTIONAL TO
+1134            /QGRAV/R RESULTS IN THE GRAVITY COMPONENTS
+1135            /THE CALCULATION USES EXTENDED PRESISION
+1136            
+1137 03000 0000 NEWPOL, 0
+1138 03001 1022         TAD QXPOS
+1139 03002 7510         SPA
+1140 03003 7041         CIA             /ABS VALUE OF X
+1141 03004 3210         DCA NEWPL1
+1142 03005 1210         TAD NEWPL1      /CALC X^2
+1143 03006 4560         MQL             /LOAD MULTIPLICAND
+1144 03007 4562         MUY             /USE EAE DIRECTLY
+1145 03010 0000 NEWPL1,  0
+1146 03011 3304         DCA NEWPLH      /STASH HIGH ORDER X^2
+1147 03012 4570         MQA             /GET LOW ORDER
+1148 03013 3305         DCA NEWPLL      /SAVE FOR NOW
+1149 03014 1023         TAD QYPOS       /GET Y
+1150 03015 7510         SPA
+1151 03016 7041         CIA             /TAKE ABS. VALUE
+1152 03017 3223         DCA NEWPL6      /TO CALCULATE
+1153 03020 1223         TAD NEWPL6      /Y^2
+1154 03021 4560         MQL             /LOAD MULTIPLICAND
+1155 03022 4562         MUY             /DO IT.
+1156 03023 0000 NEWPL6,  0
+1157 03024 1304         TAD NEWPLH      /HAVE R^2 HIGH ORDER
+1158 03025 3304         DCA NEWPLH
+1159 03026 7100         CLL             /FOR CARRY
+1160 03027 4570         MQA             /GET LOW ORDER
+1161 03030 1305         TAD NEWPLL      /ADD LOW ORDER X^2
+1162 03031 4560         MQL             /LOAD MQ FOR NORMALIZE
+1163 03032 7204         RAL CLA         /CARRY BIT OVER
+1164 03033 1304         TAD NEWPLH      /HIGH ORDER O.K.
+1165 03034 3020         DCA QR          /SAVE FOR GGRAV
+1166 03035 1020         TAD QR
+1167 03036 4563         NMI             /NORMALIZE
+1168 03037 3246         DCA NEWPL2      /STASH DIVISOR
+1169 03040 4567         SCA             /GET STEP COUNTER
+1170 03041 1306         TAD NEWPLS      /PLUS SCALE FACTOR
+1171 03042 3251         DCA NEWPL4      /STASH FOR ASR
+1172 03043 4560         MQL             /CLEAR MQ
+1173 03044 1210         TAD NEWPL1      /NOW CALC SIN/R
+1174 03045 4561         DVI
+1175 03046 0000 NEWPL2,  0
+1176 03047 7200         CLA             /GET RID OF THE REMAINDER
+1177 03050 4564         SHL             /SCALE DOWN
+1178 03051 0000 NEWPL4,  0
+1179 03052 3043         DCA QCOSTH      /STASH SIN(TH)/R
+1180 03053 1022         TAD QXPOS       /HOW ABOUT SIGN
+1181 03054 7700         SMA CLA         /SKIP IF NEED TO NEGATE
+1182 03055 5261         JMP .+4         /NOPE
+1183 03056 1043         TAD QCOSTH      /YES:NEGATE
+1184 03057 7041         CIA
+1185 03060 3043         DCA QCOSTH
+1186 03061 1246         TAD NEWPL2
+1187 03062 3270         DCA NEWPL3      /COPY DIVISOR
+1188 03063 1251         TAD NEWPL4
+1189 03064 3273         DCA NEWPL5      /COPY SCALE FACTOR
+1190 03065 4560         MQL             /CLEAR MQ
+1191 03066 1223         TAD NEWPL6      /AND COS(TH)/R
+1192 03067 4561         DVI
+1193 03070 0000 NEWPL3,  0
+1194 03071 7200         CLA
+1195 03072 4564         SHL             /AND SCALE UP
+1196 03073 0000 NEWPL5,  0
+1197 03074 3042         DCA QSINTH
+1198 03075 1023         TAD QYPOS       /WHAT ABOUT SIGN
+1199 03076 7700         SMA CLA         /SKIP IF NEEDS NEGATING
+1200 03077 5600         JMP I NEWPOL    /DONE
+1201 03100 1042         TAD QSINTH
+1202 03101 7041         CIA
+1203 03102 3042         DCA QSINTH      /NEGATE IT
+1204 03103 5600         JMP I NEWPOL
+1205            
+1206 03104 0000 NEWPLH, 0
+1207 03105 0000 NEWPLL, 0
+1208 03106 0003 NEWPLS, 3
+1209            
+1210            /TAKE SQUARE ROOT OF AC.
+1211            /MUST BE POSITIVE AND LESS THAN 200(8)
+1212            /INTEGER NEWTON'S METHOD
+1213            
+1214 03107 0000 ROOT,   0
+1215 03110 7104         CLL RAL;CLL RAL /SCALE FOR MORE PRECISION
+     03111 7104 
+1216 03112 3337         DCA ROOTN2      /SAVE SQUARE
+1217 03113 1377         TAD (-4         /FOUR PASSES
+1218 03114 3341         DCA ROOTT       /WILL HOME IN
+1219 03115 7001         IAC             /START WITH A 1
+1220 03116 3323         DCA ROOTL1      /FOR INITIAL GUESS
+1221 03117 1323 ROOTL,  TAD ROOTL1      /COPY ITTERATION FOR COMPARE
+1222 03120 3340         DCA ROOTI       /IS LAST TRY
+1223 03121 1337         TAD ROOTN2      /NOW TO CALCULATE
+1224 03122 4472         DIVIDE          /X^2/XI
+1225 03123 0000 ROOTL1,  0
+1226 03124 7000         NOP             /DIV BY ZERO
+1227 03125 1323         TAD ROOTL1      /XI+X^2/XI
+1228 03126 7110         CLL RAR         /1/2(XI+X^2/XI)
+1229 03127 3323         DCA ROOTL1      /IS NEW VALUE
+1230 03130 2341         ISZ ROOTT       /DO IT 4 TIMES
+1231 03131 5317         JMP ROOTL
+1232 03132 1323         TAD ROOTL1      /LATEST GUESS
+1233 03133 7110         CLL RAR         /SCALE BACK DOWN
+1234 03134 7450         SNA
+1235 03135 7001         IAC             /NO ZERO'S
+1236 03136 5707         JMP I ROOT
+1237            
+1238 03137 0000 ROOTN2, 0
+1239 03140 0000 ROOTI,  0
+1240 03141 0000 ROOTT,  0
+1241            
+1242            /ROUTINE TO PUT IN FLAME
+1243            /FOR NOW DISPLAY GENERATOR DOES NOT
+1244            /IF IN HYPERSPACE OR DEAD.
+1245            
+1246 03142 0000 DFLAME, 0
+1247 03143 1046         TAD QTHR        /TO SEE IF ON
+1248 03144 7650         SNA CLA         /SKIP IF ON
+1249 03145 5742         JMP I DFLAME
+1250 03146 1376         TAD (FLAMEX
+1251 03147 3035         DCA QSHIP       /FOR CALPNT
+1252 03150 4477         RANDOM          /RANDOM LENGTH FLAME
+1253 03151 0375         AND (16
+1254 03152 7001         IAC;IAC         /ALWAYS DISP ONE
+     03153 7001 
+1255 03154 3036         DCA QSHIPN      /LENGTH
+1256 03155 4502         DRAW    /PUT IN BUFFER
+1257 03156 5742         JMP I DFLAME
+1258            
+1259 03175 0016         PAGE
+     03176 1005 
+     03177 7774 
+1260            /ROUTINE TO DISPLAY THE SUN
+1261            
+1262 03200 0000 SUN,    0
+1263 03201 2251         ISZ SUNCNT      /COUNTER FOR WHERE WE ARE
+1264 03202 7000         NOP             /IN THE DISPLAY
+1265 03203 4571         CAM             /CLEAR MQ
+1266 03204 1251         TAD SUNCNT
+1267 03205 4564         SHL
+1268 03206 0004          4              /MAX=32
+1269 03207 4565         ASR             /PRESERVE SIGN
+1270 03210 0004          4
+1271 03211 3251         DCA SUNCNT      /PRESERV FOR NEXT TIME
+1272 03212 1251         TAD SUNCNT      /PICK UP
+1273 03213 0377         AND (7770
+1274 03214 3252         DCA SUNTMP
+1275 03215 4477         RANDOM
+1276 03216 0376         AND (7
+1277 03217 1252         TAD SUNTMP
+1278 03220 7500         SMA             /NEED NEGATIVE NUMBER
+1279 03221 7041         CIA             /MAKE NEGATIVE
+1280 03222 7104         RAL CLL         /PAIRS
+1281 03223 3226         DCA .+3         /STORE -#PNTS
+1282 03224 1375         TAD (SUNPT1-1   /ADDRESS OF PAIRS
+1283 03225 4473         DISPLAY
+1284 03226 0000          0              /-#POINTS
+1285 03227 1226         TAD .-1         /NOW FOR ALLONG X AXIS
+1286 03230 1374         TAD (220        /COUNTER LENGTH
+1287 03231 7041         CIA             /MAKE NEGATIVE
+1288 03232 3237         DCA SUNL2       /SET UP OTHER HALF
+1289 03233 7344         STA CLL RAL     /-2
+1290 03234 3253         DCA SUNHLF      /HALVES
+1291            
+1292 03235 1373 SUND2,  TAD (SUNPT2-1   /START FOR OTHER AXIS
+1293 03236 4473         DISPLAY
+1294 03237 0000 SUNL2,   0
+1295 03240 5600         JMP I SUN
+1296            
+1297 03241 7300 SUNL1,  CLA CLL
+1298 03242 1375         TAD (SUNPT1-1   /DISPLAY ALL
+1299 03243 4473         DISPLAY
+1300 03244 7600          -200
+1301 03245 1373         TAD (SUNPT2-1
+1302 03246 4473         DISPLAY
+1303 03247 7600          -200
+1304 03250 5600         JMP I SUN
+1305            
+1306 03251 0000 SUNCNT, 0
+1307 03252 0000 SUNTMP, 0
+1308 03253 7777 SUNHLF, -1
+1309                
+1310 03254 0000 POLARS, 0               /DISPLAY ONLY POLARIS
+1311 03255 7200         CLA
+1312 03256 4477         RANDOM          /GET RANDOM NUMBER
+1313 03257 0372         AND (37         /31 POINTS
+1314 03260 1371         TAD (7740       /MAKE NEG
+1315 03261 3264         DCA .+3
+1316 03262 1370         TAD (BIGSUN-1
+1317 03263 4473         DISPLAY
+1318 03264 7700         BIGSUN-ESUN
+1319 03265 5654         JMP I POLARS
+1320            
+1321                    /PAGE
+1322            /FIRE A MISSEL
+1323            /BY PUTTING ANOTHER ONE IN MISTBL(POINTED TO BY MISPNT.
+1324            /ALSO RESETS ARMED.
+1325            
+1326 03266 0000 FIRONE, 0
+1327 03267 1032         TAD HYPERS
+1328 03270 7640         SZA CLA
+1329 03271 5666         JMP I FIRONE    /NOT IF IN HYPERSPACE
+1330 03272 1021         TAD ALIVE
+1331 03273 7650         SNA CLA
+1332 03274 5666         JMP I FIRONE    /OR IF DEAD
+1333 03275 1356         TAD ARMDLY      /DELAY FOR FIRING
+1334 03276 3034         DCA ARMED       /RESET FOR PROPPER DELAY
+1335 03277 1033         TAD MISCNT      /CHECK MISSLE COUNT THIS SHIP
+1336 03300 7650         SNA CLA         /SKIP IF ANY LEFT
+1337 03301 5666         JMP I FIRONE    /NO MISSELS LEFT
+1338 03302 2033         ISZ MISCNT      /UPDATE NUMBER
+1339 03303 7000         NOP             /MIGHT SKIP
+1340 03304 4560         MQL             /CLEAR MQ
+1341 03305 1356         TAD ARMDLY      /WILL ALLOW MAX OF 8 MISSELS
+1342 03306 4564         SHL             /PER SHIP
+1343 03307 0002          2              /BY *10(8)
+1344 03310 3466         DCA I MISPNT    /ALIVE FOR NEXT MISSLE
+1345 03311 2066         ISZ MISPNT
+1346 03312 1026         TAD QPH
+1347 03313 4475         SIN             /GET SIN(PHI)
+1348 03314 3330         DCA FSINPH
+1349 03315 1026         TAD QPH
+1350 03316 4474         COS             /AND COS(PHI)
+1351 03317 3322         DCA FCOSPH
+1352 03320 1367         TAD (300                /TO START IT
+1353 03321 4471         MULT
+1354 03322 0000 FCOSPH,  0              /AT X POSITION
+1355 03323 1022         TAD QXPOS       /START
+1356 03324 3466         DCA I MISPNT    /STASH
+1357 03325 2066         ISZ MISPNT
+1358 03326 1367         TAD (300
+1359 03327 4471         MULT            /MULTIPLY
+1360 03330 0000 FSINPH,  0              /SIN(PH)=Y COORD
+1361 03331 1023         TAD QYPOS
+1362 03332 3466         DCA I MISPNT    /STASH
+1363 03333 2066         ISZ MISPNT      /POINT TO VELOCITIES
+1364            /AND CALCULATE STARTING VELOCITY
+1365 03334 1064         TAD QTHROC      /GET MUSSEL VELOCITY
+1366 03335 3340         DCA .+3         /FOR MULTIPLY
+1367 03336 1322         TAD FCOSPH
+1368 03337 4471         MULT
+1369 03340 1000          1000
+1370 03341 1024         TAD QVX         /AND CALC STARTING Y VEL
+1371 03342 3466         DCA I MISPNT    /STASH QVX
+1372 03343 2066         ISZ MISPNT
+1373 03344 1064         TAD QTHROC
+1374 03345 3350         DCA .+3
+1375 03346 1330         TAD FSINPH
+1376 03347 4471         MULT
+1377 03350 1000          1000
+1378 03351 1025         TAD QVY
+1379 03352 3466         DCA I MISPNT    /STASH Y VEL
+1380 03353 2066         ISZ MISPNT
+1381 03354 2051         ISZ NUMMIS      /COUNT THE NUMBER OF LIVE MISS.
+1382 03355 5666         JMP I FIRONE
+1383            
+1384 03356 7760 ARMDLY, -20             /TIME DELAY BETWEEN FIREINGS
+1385            
+1386            
+1387            /GO INTO HYPERSPACE
+1388 03357 0000 HYPER,  0
+1389 03360 7240         STA
+1390 03361 3032         DCA HYPERS
+1391 03362 4477         RANDOM          /COME OUT AT RANDOM POSITION
+1392 03363 3022         DCA QXPOS
+1393 03364 4477         RANDOM
+1394 03365 3023         DCA QYPOS
+1395 03366 5757         JMP I HYPER
+1396            
+1397 03367 0300         PAGE
+     03370 0777 
+     03371 7740 
+     03372 0037 
+     03373 1377 
+     03374 0220 
+     03375 1177 
+     03376 0007 
+     03377 7770 
+1398 03400 0000 MISTBL, ZBLOCK 22^5     /TABLE OF MISSELS
+     03401 0000 
+     03402 0000 
+     03403 0000 
+     03404 0000 
+     03405 0000 
+     03406 0000 
+     03407 0000 
+     03410 0000 
+     03411 0000 
+     03412 0000 
+     03413 0000 
+     03414 0000 
+     03415 0000 
+     03416 0000 
+     03417 0000 
+     03420 0000 
+     03421 0000 
+     03422 0000 
+     03423 0000 
+     03424 0000 
+     03425 0000 
+     03426 0000 
+     03427 0000 
+     03430 0000 
+     03431 0000 
+     03432 0000 
+     03433 0000 
+     03434 0000 
+     03435 0000 
+     03436 0000 
+     03437 0000 
+     03440 0000 
+     03441 0000 
+     03442 0000 
+     03443 0000 
+     03444 0000 
+     03445 0000 
+     03446 0000 
+     03447 0000 
+     03450 0000 
+     03451 0000 
+     03452 0000 
+     03453 0000 
+     03454 0000 
+     03455 0000 
+     03456 0000 
+     03457 0000 
+     03460 0000 
+     03461 0000 
+     03462 0000 
+     03463 0000 
+     03464 0000 
+     03465 0000 
+     03466 0000 
+     03467 0000 
+     03470 0000 
+     03471 0000 
+     03472 0000 
+     03473 0000 
+     03474 0000 
+     03475 0000 
+     03476 0000 
+     03477 0000 
+     03500 0000 
+     03501 0000 
+     03502 0000 
+     03503 0000 
+     03504 0000 
+     03505 0000 
+     03506 0000 
+     03507 0000 
+     03510 0000 
+     03511 0000 
+     03512 0000 
+     03513 0000 
+     03514 0000 
+     03515 0000 
+     03516 0000 
+     03517 0000 
+     03520 0000 
+     03521 0000 
+     03522 0000 
+     03523 0000 
+     03524 0000 
+     03525 0000 
+     03526 0000 
+     03527 0000 
+     03530 0000 
+     03531 0000 
+1399                    /ORDER OF DATA IS
+1400            
+1401                    /ALIVE
+1402                    /XPOS
+1403                    /YPOS   5 ENTRIES PER MIS.
+1404                    /VX
+1405                    /VY
+1406            
+1407            /THERE ARE NUMMIS OF THEM
+1408            
+1409                    PAGE
+1410            /SUBROUTINE TO UPDATE MISSELS
+1411            
+1412 03600 0000 MISSLS, 0
+1413 03601 1051         TAD NUMMIS      /GET NUMBER
+1414 03602 7450         SNA             /SKIP IF THERE ARE ANY
+1415 03603 5600         JMP I MISSLS    /NONE
+1416 03604 7041         CIA             /NEGATE FOR COUTING
+1417 03605 3233         DCA MISSCN      /-# TO DO
+1418 03606 1377         TAD (-100
+1419 03607 3776         DCA I (STOVER   /STILL SOME STUFF
+1420 03610 3052         DCA NNUMMIS     /START WITH 0 LEFT (UPDATED BY PUTMIS)
+1421 03611 3046         DCA QTHR        /MEANINGLESS
+1422 03612 3047         DCA QTHA        /MEANINGLESS
+1423 03613 1375         TAD (MISTBL
+1424 03614 3234         DCA MISSIN      /POINTER INTO TABLE
+1425 03615 1234         TAD MISSIN
+1426 03616 3066         DCA MISPNT      /AND POINTER OUT
+1427 03617 4274 MISSL1, JMS GETMIS      /GET A MISSLE
+1428 03620 4503         NXTPOS          /CALC NEW POSITION
+1429            
+1430            /CHECK FOR HIT
+1431 03621 4774         JMS I (COLID1   /COLLISION SHIP1
+1432 03622 4773         JMS I (BANG     /EXPLOSION
+1433 03623 4772         JMS I (COLID2   /COLLISION SHIP2
+1434 03624 4773         JMS I (BANG     /EXPLOSION
+1435            
+1436 03625 4237         JMS MISSUB      /LOAD THE DISPLAY BUFFER
+1437 03626 2233         ISZ MISSCNT     /MORE?
+1438 03627 5217         JMP MISSL1      /YEP
+1439 03630 1052         TAD NNUMMIS
+1440 03631 3051         DCA NUMMIS
+1441 03632 5600         JMP I MISSLS    /NO: DONE
+1442            
+1443 03633 0000 MISSCN, 0
+1444 03634 0000 MISSIN, 0
+1445 03635 0000 MISST1, 0
+1446 03636 0000 MISST2, 0
+1447            
+1448            /SUBROUTINE TO LOAD UP DISPLAY BUFFER
+1449            
+1450 03637 0000 MISSUB, 0
+1451 03640 1022         TAD QXPOS       /LOAD UP DISPLAY BUFFER
+1452 03641 4565         ASR             /SHIFT FOR GOOD POS
+1453 03642 0002          2
+1454 03643 6211         CDF D
+1455 03644 3235         DCA MISST1      /SO CAN MAKE 2 COPYS
+1456 03645 1235         TAD MISST1
+1457 03646 3445         DCA I DBUFP     /LOAD X
+1458 03647 2045         ISZ DBUFP
+1459 03650 1023         TAD QYPOS
+1460 03651 4565         ASR
+1461 03652 0002          2
+1462 03653 3236         DCA MISST2      /SO CAN MAKE 2 COPYS
+1463 03654 1236         TAD MISST2
+1464 03655 3445         DCA I DBUFP     /LOAD Y
+1465 03656 2045         ISZ DBUFP
+1466 03657 1235         TAD MISST1      /ANOTHER COPY
+1467 03660 3445         DCA I DBUFP
+1468 03661 2045         ISZ DBUFP
+1469 03662 1236         TAD MISST2
+1470 03663 3445         DCA I DBUFP
+1471 03664 2045         ISZ DBUFP
+1472 03665 6201         CDF 0           /BACK TO THIS FIELD
+1473 03666 1021         TAD ALIVE
+1474 03667 7650         SNA CLA
+1475 03670 5273         JMP .+3
+1476 03671 2021         ISZ ALIVE       /CHECK IF TIME HAS RUN OUT
+1477 03672 4307         JMS PUTMIS      /NO-STILL ALIVE
+1478 03673 5637         JMP I MISSUB
+1479            
+1480            
+1481            /GET SOME MISSEL DATA
+1482            
+1483 03674 0000 GETMIS, 0
+1484 03675 1371         TAD (ALIVE-1
+1485 03676 3010         DCA QXR1
+1486 03677 1370         TAD (-5
+1487 03700 3056         DCA QCNT1
+1488 03701 1634         TAD I MISSIN
+1489 03702 3410         DCA I QXR1
+1490 03703 2234         ISZ MISSIN
+1491 03704 2056         ISZ QCNT1
+1492 03705 5301         JMP .-4
+1493 03706 5674         JMP I GETMIS
+1494            
+1495            /ROUTINE TO COPY MISSEL DATA BACK.
+1496            
+1497 03707 0000 PUTMIS, 0
+1498 03710 2052         ISZ NNUMMIS     /COUNT THE MISSEL
+1499 03711 1371         TAD (ALIVE-1
+1500 03712 3010         DCA QXR1
+1501 03713 1370         TAD (-5
+1502 03714 3056         DCA QCNT1
+1503 03715 1410         TAD I QXR1
+1504 03716 3466         DCA I MISPNT
+1505 03717 2066         ISZ MISPNT
+1506 03720 2056         ISZ QCNT1
+1507 03721 5315         JMP .-4
+1508 03722 5707         JMP I PUTMIS
+1509            
+1510            /SUBROUTINE TO CALC NEXT POSSITION IN SHIP BREAKUP
+1511            
+1512 03723 0000 SCATTE, 0
+1513 03724 1044         TAD BREAKU      /MAKE SURE SOME LEFT
+1514 03725 7450         SNA             /SKIP IF DONE
+1515 03726 5723         JMP I SCATTE    /NONE LEFT
+1516 03727 3233         DCA MISSCN      /COUNT THEM
+1517 03730 3052         DCA NNUMMIS     /CLEAR # LEFT
+1518 03731 3046         DCA QTHR        /THRUST IS OFF
+1519 03732 3047         DCA QTHA        /NO ANGLES OF COURSE
+1520 03733 1367         TAD (SCATBL     /TABLE OF PIECES
+1521 03734 3234         DCA MISSIN      /STORE IN POINTER
+1522 03735 1066         TAD MISPNT      /SAVE MISSLE POINTER
+1523 03736 3354         DCA SCATTMP
+1524 03737 1367         TAD (SCATBL     /INIT OUT POINTER
+1525 03740 3066         DCA MISPNT      /TO POINT TO PIECES
+1526 03741 4274         JMS GETMIS      /PUT ONE IN PAGE ZERO
+1527 03742 4503         NXTPOS          /UPDATE POSITION
+1528 03743 4237         JMS MISSUB      /DO DISPLAY BUFFER STUFF
+1529 03744 2233         ISZ MISSCNT     /DONE?
+1530 03745 5341         JMP .-4         /NOT YET
+1531 03746 1354         TAD SCATTMP     /YEP. RESTORE MISPNT
+1532 03747 3066         DCA MISPNT
+1533 03750 1052         TAD NNUMMIS     /NUMBER OF PIECES LEFT
+1534 03751 7041         CIA             /STORE NEGATIVE
+1535 03752 3044         DCA BREAKUP     /IN FLAG WORD
+1536 03753 5723         JMP I SCATTER
+1537            
+1538 03754 0000 SCATTM, 0               /SAVE MISPNT
+1539            
+1540 03767 4320         PAGE
+     03770 7773 
+     03771 0020 
+     03772 4054 
+     03773 4105 
+     03774 4023 
+     03775 3400 
+     03776 5111 
+     03777 7700 
+1541            /ROUTINES TO CHECK FOR COLLISIONS.
+1542            /COLIDE - CHECKS FOR COLLSION WITH SUN.
+1543            /COLID1 - CHECKS FOR SHIP1
+1544            /COLID2 - CHECKS FOR SHIP2
+1545            /NOTE THAT COLID1 AND COLID2 ALSO CHECK FOR COLLISION
+1546            /WITH SUN, BUT DO NOT TAKE EXPLODE EXIT.
+1547            /THIS IS SO MISSELS MAY BE ROMOVED WITHOUT EXPLOSION.
+1548            /THE ROUTINES DEADIFY THE APPROPRIATE JOBY.
+1549            /CALL:  JMS COLIDE
+1550            /        HIT SOMETHING
+1551            /        NORMAL EXIT
+1552            
+1553 04000 0000 COLIDE, 0
+1554 04001 1022         TAD QXPOS       /CHECK X
+1555 04002 4214         JMS COLIDS      /FOR <128
+1556 04003 7410         SKP             /A POSSIBILITY
+1557 04004 5210         JMP COLLD4      /O.K.
+1558 04005 1023         TAD QYPOS
+1559 04006 4214         JMS COLIDS
+1560 04007 5212         JMP COLLD1
+1561 04010 2200 COLLD4, ISZ COLIDE
+1562 04011 5600         JMP I COLIDE    /ALL OK
+1563 04012 3021 COLLD1, DCA ALIVE       /KILL IT
+1564 04013 5600         JMP I COLIDE    /AND TAKE FIRST EXIT
+1565            
+1566            
+1567            /SUBROUTINE TO CHECK ABSOLUTE VALUE
+1568            /OF AC<128
+1569            
+1570 04014 0000 COLIDS, 0
+1571 04015 7510         SPA
+1572 04016 7041         CIA
+1573 04017 0377         AND (7600
+1574 04020 7640         SZA CLA
+1575 04021 2214         ISZ COLIDS
+1576 04022 5614         JMP I COLIDS
+1577            
+1578            /CHECK FOR COLLISION WITH SHIP1 AND SUN
+1579            
+1580 04023 0000 COLID1, 0
+1581 04024 4200         JMS COLIDE      /CHECK SUN FIRST
+1582 04025 5623         JMP I COLID1
+1583 04026 1776         TAD I (SHIP1+ALIVE-QR
+1584 04027 7650         SNA CLA         /SKIP IF ALIVE
+1585 04030 5247         JMP COLLD5      /NO
+1586 04031 1775         TAD I (SHIP1+HYPERS-QR
+1587 04032 7640         SZA CLA         /SKIP IF NOT IN HYPERSPACE
+1588 04033 5247         JMP COLLD5      /IS IN HYPER.
+1589 04034 1022         TAD QXPOS
+1590 04035 7041         CIA
+1591 04036 1774         TAD I (SHIP1X
+1592 04037 4214         JMS COLIDS
+1593 04040 7410         SKP
+1594 04041 5247         JMP COLLD5
+1595 04042 1023         TAD QYPOS
+1596 04043 7041         CIA
+1597 04044 1773         TAD I (SHIP1Y
+1598 04045 4214         JMS COLIDS
+1599 04046 5251         JMP COLLD2
+1600 04047 2223 COLLD5, ISZ COLID1      /NO COLLISION
+1601 04050 5623         JMP I COLID1
+1602 04051 3021 COLLD2, DCA ALIVE       /KILL CURRENT MISSEL ETC.
+1603 04052 3776         DCA I (SHIP1+ALIVE-QR /AND SHIP1
+1604 04053 5623         JMP I COLID1
+1605            
+1606            /COLLISION WITH SHIP2
+1607            
+1608 04054 0000 COLID2, 0
+1609 04055 4200         JMS COLIDE      /CHECK SUN
+1610 04056 5654         JMP I COLID2
+1611 04057 1772         TAD I (SHIP2+ALIVE-QR
+1612 04060 7650         SNA CLA         /SKIP IF ALIVE
+1613 04061 5300         JMP COLLD6
+1614 04062 1771         TAD I (SHIP2+HYPERS-QR
+1615 04063 7640         SZA CLA         /SKIP IF NOT IN HYPERSPACE
+1616 04064 5300         JMP COLLD6      /IS SO IGNORE
+1617 04065 1022         TAD QXPOS
+1618 04066 7041         CIA
+1619 04067 1770         TAD I (SHIP2X
+1620 04070 4214         JMS COLIDS
+1621 04071 7410         SKP
+1622 04072 5300         JMP COLLD6
+1623 04073 1023         TAD QYPOS
+1624 04074 7041         CIA
+1625 04075 1767         TAD I (SHIP2Y
+1626 04076 4214         JMS COLIDS
+1627 04077 5302         JMP COLLD3
+1628 04100 2254 COLLD6, ISZ COLID2
+1629 04101 5654         JMP I COLID2
+1630 04102 3021 COLLD3, DCA ALIVE
+1631 04103 3772         DCA I (SHIP2+ALIVE-QR
+1632 04104 5654         JMP I COLID2
+1633            
+1634            /ROUTINE TO SET UP PIECES OF SHIP AFTER
+1635            /A COLLISION.
+1636            
+1637 04105 0000 BANG,   0
+1638 04106 1366         TAD (BRKTBL-1
+1639 04107 3010         DCA QXR1        /POINT TO PIECES TABLE
+1640 04110 1365         TAD (SCATBL-1   /AND DESTINATION TABLE
+1641 04111 3011         DCA QXR2        /FOR INTIAL CONDITIONS
+1642 04112 1364         TAD (-20        /8 PIECES FOR NOW
+1643 04113 3056         DCA QCNT1       /TO PUT IN
+1644 04114 1410 BANGL1, TAD I QXR1      /PICK UP LIFETIME
+1645 04115 3411         DCA I QXR2      /PUT IN TABLE
+1646 04116 1410         TAD I QXR1      /X-POSITION
+1647 04117 1022         TAD QXPOS       /MOVE TO WHERE SHIP IS
+1648 04120 3411         DCA I QXR2      /PUT AWAY
+1649 04121 1410         TAD I QXR1      /AND Y-POSITION
+1650 04122 1023         TAD QYPOS       /MOVE TO WHERE IT SHOULD BE
+1651 04123 3411         DCA I QXR2      /STASH
+1652 04124 1410         TAD I QXR1      /PICK UP A VELOCITY COMP
+1653 04125 1024         TAD QVX         /AND ADD INTIAL VELOCITY
+1654 04126 3411         DCA I QXR2      /STASH
+1655 04127 1410         TAD I QXR1      /AND Y-VELOCITY
+1656 04130 1025         TAD QVY
+1657 04131 3411         DCA I QXR2      /STASH
+1658 04132 2056         ISZ QCNT1       /DONE?
+1659 04133 5314         JMP BANGL1      /NOT YET
+1660 04134 1364         TAD (-20        /INITIALIZE BREAKUP
+1661 04135 3044         DCA BREAKUP     /ALSO IS # ENTRIES
+1662 04136 5705         JMP I BANG      /AND RETURN
+1663            
+1664 04164 7760         PAGE
+     04165 4317 
+     04166 4177 
+     04167 1375 
+     04170 1374 
+     04171 1404 
+     04172 1373 
+     04173 1354 
+     04174 1353 
+     04175 1363 
+     04176 1352 
+     04177 7600 
+1665 04200 7740 BRKTBL, -40;0;0;0;0
+     04201 0000 
+     04202 0000 
+     04203 0000 
+     04204 0000 
+1666 04205 7740         -40;50;0;20;0
+     04206 0050 
+     04207 0000 
+     04210 0020 
+     04211 0000 
+1667 04212 7740         -40;0;50;0;20
+     04213 0000 
+     04214 0050 
+     04215 0000 
+     04216 0020 
+1668 04217 7744         -34;20;20;20;20
+     04220 0020 
+     04221 0020 
+     04222 0020 
+     04223 0020 
+1669 04224 7744         -34;-20;-20;-20;-20
+     04225 7760 
+     04226 7760 
+     04227 7760 
+     04230 7760 
+1670 04231 7750         -30;20;-20;-20;0
+     04232 0020 
+     04233 7760 
+     04234 7760 
+     04235 0000 
+1671 04236 7750         -30;-20;20;0;-20
+     04237 7760 
+     04240 0020 
+     04241 0000 
+     04242 7760 
+1672 04243 7750         -30;0;0;40;40
+     04244 0000 
+     04245 0000 
+     04246 0040 
+     04247 0040 
+1673 04250 7754         -24;0;0;0;20
+     04251 0000 
+     04252 0000 
+     04253 0000 
+     04254 0020 
+1674 04255 7754         -24;0;0;20;0
+     04256 0000 
+     04257 0000 
+     04260 0020 
+     04261 0000 
+1675 04262 7754         -24;0;0;0;-20
+     04263 0000 
+     04264 0000 
+     04265 0000 
+     04266 7760 
+1676 04267 7754         -24;0;0;-20;0
+     04270 0000 
+     04271 0000 
+     04272 7760 
+     04273 0000 
+1677 04274 7760         -20;20;0;10;10
+     04275 0020 
+     04276 0000 
+     04277 0010 
+     04300 0010 
+1678 04301 7760         -20;0;20;10;-10
+     04302 0000 
+     04303 0020 
+     04304 0010 
+     04305 7770 
+1679 04306 7760         -20;-20;0;-10;10
+     04307 7760 
+     04310 0000 
+     04311 7770 
+     04312 0010 
+1680 04313 7760         -20;0;-20;-10;-10
+     04314 0000 
+     04315 7760 
+     04316 7770 
+     04317 7770 
+1681            
+1682 04320 0000 SCATBL, ZBLOCK 21^5
+     04321 0000 
+     04322 0000 
+     04323 0000 
+     04324 0000 
+     04325 0000 
+     04326 0000 
+     04327 0000 
+     04330 0000 
+     04331 0000 
+     04332 0000 
+     04333 0000 
+     04334 0000 
+     04335 0000 
+     04336 0000 
+     04337 0000 
+     04340 0000 
+     04341 0000 
+     04342 0000 
+     04343 0000 
+     04344 0000 
+     04345 0000 
+     04346 0000 
+     04347 0000 
+     04350 0000 
+     04351 0000 
+     04352 0000 
+     04353 0000 
+     04354 0000 
+     04355 0000 
+     04356 0000 
+     04357 0000 
+     04360 0000 
+     04361 0000 
+     04362 0000 
+     04363 0000 
+     04364 0000 
+     04365 0000 
+     04366 0000 
+     04367 0000 
+     04370 0000 
+     04371 0000 
+     04372 0000 
+     04373 0000 
+     04374 0000 
+     04375 0000 
+     04376 0000 
+     04377 0000 
+     04400 0000 
+     04401 0000 
+     04402 0000 
+     04403 0000 
+     04404 0000 
+     04405 0000 
+     04406 0000 
+     04407 0000 
+     04410 0000 
+     04411 0000 
+     04412 0000 
+     04413 0000 
+     04414 0000 
+     04415 0000 
+     04416 0000 
+     04417 0000 
+     04420 0000 
+     04421 0000 
+     04422 0000 
+     04423 0000 
+     04424 0000 
+     04425 0000 
+     04426 0000 
+     04427 0000 
+     04430 0000 
+     04431 0000 
+     04432 0000 
+     04433 0000 
+     04434 0000 
+     04435 0000 
+     04436 0000 
+     04437 0000 
+     04440 0000 
+     04441 0000 
+     04442 0000 
+     04443 0000 
+     04444 0000 
+1683            
+1684                    PAGE
+1685 04600 6002 SPCWAR, IOF             /RE-INITIALIZE ALL
+1686 04601 1377         TAD (SHIP1-1
+1687 04602 4500         ONDECK          /GET SHIP1 DATA
+1688 04603 4223         JMS STARTU
+1689 04604 1377         TAD (SHIP1-1
+1690 04605 4501         OFDECK          /COPY OUT
+1691 04606 1376         TAD (SHIP2-1
+1692 04607 4500         ONDECK          /GET SHIP2 INFO
+1693 04610 4223         JMS STARTU      /INITIALIZE
+1694 04611 1375         TAD (-2500
+1695 04612 3022         DCA QXPOS       /START #2 ON OTHER SIDE
+1696 04613 1376         TAD (SHIP2-1
+1697 04614 4501         OFDECK          /COPY OUT
+1698 04615 1374         TAD (MISTBL
+1699 04616 3066         DCA MISPNT      /INITIALIZE MISSELS
+1700 04617 3051         DCA NUMMIS      /NONE TO START
+1701 04620 4773         JMS I (STCLK    /START CLOCK UP
+1702 04621 6001         ION
+1703 04622 5772         JMP I (WAR-2
+1704            
+1705            
+1706            
+1707            /INITIALIZE PARAMETERS
+1708            
+1709 04623 0000 STARTU, 0
+1710 04624 3024         DCA QVX         /START WITH NO VELOCITY
+1711 04625 3025         DCA QVY         /IN EITHER DIRECTION
+1712 04626 1371         TAD (2500       /AT THIS X
+1713 04627 3022         DCA QXPOS       /ABOUT 2/3 OUT
+1714 04630 4477         RANDOM          /AND RANDOM Y
+1715 04631 3023         DCA QYPOS       /Y POSITION RANDOM
+1716 04632 3027         DCA QPHDOT      /NO ROTATION
+1717 04633 4477         RANDOM          /AND RANDOM ANGLE
+1718 04634 0370         AND (277        /MASK FOR GOOD ANGLE
+1719 04635 3026         DCA QPH
+1720 04636 7001         IAC
+1721 04637 3021         DCA ALIVE       /MAKE IT ALIVE
+1722 04640 3031         DCA SHIELD      /SHIELDS NOT ON
+1723 04641 3032         DCA HYPERS      /NOT IN HYPERSPACE.
+1724 04642 3044         DCA BREAKU      /NOT BREAKING UP
+1725 04643 1053         TAD MAXMIS      /# MISSELS/SHIP
+1726 04644 3033         DCA MISCNT      /ALLOWED
+1727 04645 3034         DCA ARMED       /START OUT ARMED
+1728 04646 4767         JMS I (SETGRV   /CALC GRAVITY TABLE
+1729 04647 5623         JMP I STARTUP
+1730            
+1731 04767 2662         PAGE
+     04770 0277 
+     04771 2500 
+     04772 5000 
+     04773 5446 
+     04774 3400 
+     04775 5300 
+     04776 1371 
+     04777 1350 
+1732            /THIS IS THE MAJOR CONTROL
+1733            
+1734 05000 7240         STA
+1735 05001 3777         DCA I (SUNHLF   /LET'S NOT HAVE TROUBLE WITH THIS
+1736 05002 1376 WAR,    TAD (DISBUF+2   /FOR NOW INTIALIZE
+1737 05003 3045         DCA DBUFP       /DISPLAY BUFFER POINTER
+1738 05004 6211         CDF D
+1739 05005 3775         DCA I (DISBUF
+1740 05006 3774         DCA I (DISBUF+1
+1741 05007 6201         CDF 0
+1742 05010 1373         TAD (SHIP1-1
+1743 05011 4500         ONDECK          /START OUT WITH SHIP1
+1744 05012 1021         TAD ALIVE       /NOW TO SEE IF HE EXISTS
+1745 05013 7650         SNA CLA         /SKIP IF ALIVE
+1746 05014 5232         JMP WARS2       /NOPE:GO TO SHIP2
+1747 05015 1372         TAD (-100
+1748 05016 3311         DCA STOVER      /SOMEONE STILL ALIVE
+1749 05017 7604         LAS             /GET SWITCHES
+1750            IFDEF M1703 <
+1751 05020 6144         6144            / USE M1703 INPUT
+1752            >
+1753 05021 4771         JMS I (WARSUB   /DO THE CALCS
+1754 05022 1032         TAD HYPERS
+1755 05023 7640         SZA CLA         /SKIP IF NOT IN HYPERSPACE
+1756 05024 5227         JMP WAR1E       /IGNORE CHECKING
+1757 05025 4775         JMS I (COLIDE   /CHECK FOR COLLISION WITH SUN
+1758 05026 4770         JMS I (BANG     /START EXPLOSION
+1759 05027 1373 WAR1E,  TAD (SHIP1-1
+1760 05030 4501         OFDECK
+1761 05031 4505         FLAME           /DISPLAY FLAME
+1762            
+1763            /NOW FOR SHIP2
+1764            
+1765 05032 1367 WARS2,  TAD (SHIP2-1
+1766 05033 4500         ONDECK          /NOW DO SHIP 2
+1767 05034 1021         TAD ALIVE       /NOW TO SEE IF HE EXISTS
+1768 05035 7650         SNA CLA         /SKIP IF ALIVE
+1769 05036 5260         JMP WARS3       /NOPE:GO TO SHIP2
+1770 05037 1372         TAD (-100
+1771 05040 3311         DCA STOVER      /SOMEONE STILL ALIVE
+1772 05041 7604         LAS             /GET SWITCHES
+1773            IFDEF M1703 <
+1774 05042 6144         6144            / USE M1703 INPUT
+1775            >
+1776 05043 4566         LSR;7           /OVER FOR WARSUB
+     05044 0007 
+1777 05045 4771         JMS I (WARSUB   /DO THE CALCULATIONS
+1778 05046 1032         TAD HYPERS
+1779 05047 7640         SZA CLA         /SKIP IF NOT IN HYPERSPACE
+1780 05050 5255         JMP WAR2E       /NO MORE CHECKING
+1781 05051 4775         JMS I (COLIDE   /COLLISION WITH SUN FIRST
+1782 05052 7410         SKP
+1783 05053 4766         JMS I (COLID1   /CHECK COLLISIONS
+1784 05054 4770         JMS I (BANG     /START THE EXPLOSION
+1785 05055 1367 WAR2E,  TAD (SHIP2-1
+1786 05056 4501         OFDECK
+1787 05057 4505         FLAME
+1788            
+1789            /NOW FOR THE MISSLES
+1790            
+1791 05060 6002 WARS3,  IOF
+1792 05061 4765         JMS I (MISSLS   /INTERRUPTS CAN BOMB HERE
+1793 05062 6001         ION
+1794            
+1795            /AND ANY BREAKUP
+1796            
+1797 05063 1044         TAD BREAKUP
+1798 05064 7640         SZA CLA         /SKIP IF ANY
+1799 05065 4764         JMS I (SCATTER  /DO IT
+1800            
+1801            /NOW TO DISPLAY IT
+1802            
+1803 05066 1045 WARDIS, TAD DBUFP
+1804 05067 7041         CIA
+1805 05070 1375         TAD (DISBUF
+1806 05071 6002         IOF             /NO INTS IN LINC MODE
+1807 05072 3275         DCA WARDX       /FOR DISPLAY ROUTINE
+1808 05073 1363         TAD (DISBUF-1
+1809 05074 4473         DISPLAY
+1810 05075 0000 WARDX,    0
+1811                    D1=DSUN
+1812                    D2=DSTARS
+1813 05076 4507         DSUN            /DISPLAY THE UNIVERSE OR SUN
+1814 05077 6001         ION
+1815 05100 2311         ISZ STOVER      /DELAY FOR AUTO RESTART
+1816 05101 7410         SKP
+1817 05102 5762         JMP I (SPCWAR   /START OVER
+1818                    IFNZRO FCLOCK+KW12+AX08+DK8EA+DK8EP <
+1819 05103 1310         TAD WAIT
+1820 05104 7650         SNA CLA
+1821 05105 5303         JMP .-2
+1822 05106 3310         DCA WAIT>
+1823 05107 5202         JMP WAR
+1824            
+1825 05110 0000 WAIT,   0               /-1 WHEN READY
+1826                                    /SET BY INTERRUPT ROUTINE
+1827 05111 0000 STOVER, 0               /DELAY FOR AUTO RESTART
+1828            
+1829            
+1830 05162 4600         PAGE
+     05163 3777 
+     05164 3723 
+     05165 3600 
+     05166 4023 
+     05167 1371 
+     05170 4105 
+     05171 5200 
+     05172 7700 
+     05173 1350 
+     05174 4001 
+     05175 4000 
+     05176 4002 
+     05177 3253 
+1831            /SUBROUTINE TO DO ALL OF THE SHIP CALCULATIONS.
+1832            /ENTER WITH BITS SET ACCORDING TO OPTIONS
+1833            
+1834 05200 0000 WARSUB, 0
+1835 05201 3777         DCA I (SWITCHES
+1836 05202 1777         TAD I (SWITCHES
+1837 05203 7010         RAR             /ROCKET BIT TO LINK
+1838 05204 7630         SZL CLA         /SKIP IF NOT ON
+1839 05205 1061         TAD QTHRUST     /COPY THRUST INTO QTHR
+1840 05206 3046         DCA QTHR        /IF ROCKETS ON
+1841 05207 3032         DCA HYPERS      /TAKE OUT OF HYPERSPACE
+1842 05210 1777         TAD I (SWITCHES
+1843 05211 0376         AND (6          /MASK ROT BITS
+1844 05212 7450         SNA             /SKIP IF ANY ON
+1845 05213 5232         JMP WAR1
+1846 05214 3054         DCA QTM1        /SAVE
+1847 05215 1054         TAD QTM1
+1848 05216 1375         TAD (-6         /TO SEE IF HYPERSPACE
+1849 05217 7650         SNA CLA         /SKIP IF NOT HYPERSPACE
+1850 05220 4774         JMS I (HYPER    /GO INTO HYPERSPACE
+1851 05221 1032         TAD HYPERS      /IF IN HYPERSPACE DON'T DO
+1852 05222 7640         SZA CLA         /THE CALCULATIONS
+1853 05223 5600         JMP I WARSUB
+1854 05224 1054         TAD QTM1
+1855 05225 7012         RTR             /GET CLOCKWISE INTO LINK
+1856 05226 7200         CLA             /GET RID OF OTHER BIT
+1857 05227 1063         TAD QRET        /RETRO CONSTANT
+1858 05230 7420         SNL             /SKIP IF CC
+1859 05231 7041         CIA
+1860 05232 3047 WAR1,   DCA QTHA        /SET RETRO THRUST
+1861 05233 1034         TAD ARMED       /TO SEE IF ALREADY ARMED
+1862 05234 7650         SNA CLA         /SKIP IF NOT YET
+1863 05235 5240         JMP .+3         /ALREADY ARMED
+1864 05236 2034         ISZ ARMED       /UPDATE TIME DELAY
+1865 05237 5244         JMP WAR2        /NOT ARMED.
+1866 05240 1777         TAD I (SWITCHES    /IS ARMED SO CHECK
+1867 05241 0373         AND (10         /FIRE BIT.
+1868 05242 7640         SZA CLA         /SKIP IF NOT FIRING
+1869 05243 4510         FIRE            /FIRE A MISSLE.
+1870 05244 4503 WAR2,   NXTPOS          /CALC NEW POSITION
+1871 05245 4504         NXTANG          /AND SHIP ANGLE
+1872 05246 4502         DRAW            /SET DISPLAY BUFFER
+1873 05247 4772 PSAUC1, JMS I (SAUC     /OR NOP FOR SHIPS
+1874 05250 5600         JMP I WARSUB
+1875            
+1876 05372 2000         PAGE
+     05373 0010 
+     05374 3357 
+     05375 7772 
+     05376 0006 
+     05377 1421 
+1877            /COME HERE FROM INTERRUPT
+1878            
+1879 05400 0000 SAVAC,  0
+1880 05401 0000 SAVLK,  0
+1881            
+1882 05402 3200 INTRPT, DCA SAVAC       /SAVE ACCUMULATOR
+1883 05403 7010         RAR
+1884 05404 3201         DCA SAVLK       /AND LINK
+1885 05405 6031         KSF             /KEYBOARD?
+1886 05406 5212         JMP .+4
+1887 05407 6036         KRB             /READ THE CHAR
+1888 05410 3220         DCA ICHAR       /STORE
+1889 05411 5644         JMP I OPTIONS
+1890 05412 6041         TSF             /TELEPRINTER
+1891 05413 5222         JMP CLKINT      /NO CHECK CLOCK
+1892 05414 6042         TCF             /CLEAR THAT FLAG
+1893 05415 3217         DCA TELSW       /SET NOT IN PROGRESS SWITCH
+1894 05416 5644         JMP I OPTIONS
+1895            
+1896 05417 0000 TELSW,  0
+1897 05420 0000 ICHAR,  0
+1898 05421 0000 DELAY1, 0
+1899            
+1900            CLKINT,
+1901                    IFNZRO KW12+DK8EP <
+1902                    CLSK            /SKIP IF CLOCK
+1903                    JMP INTEXT      /QUIT (UNDEFINED INT?)
+1904                    CLSA            /CLEAR THE FLAGS
+1905                    >
+1906                    IFNZRO FCLOCK <
+1907                    6131            /SKIP IF NOT FLAG
+1908                    SKP
+1909                    JMP INTEXT      /NOPE
+1910                    6132            /RECONNECT TO INT
+1911                    >
+1912                    IFNZRO DK8EA <
+1913 05422 6133         6133            /SKIP ON CLOCK
+1914 05423 5233         JMP INTEXT      /NOPE
+1915 05424 6131         6131            /MAKE SURE INT STILL ENABLED
+1916 05425 2221         ISZ DELAY1      /WANT 30/SEC
+1917 05426 5233         JMP INTEXT      /NOPE: NEXT TIME
+1918 05427 7346         CLL STA RTL     /-2
+1919 05430 3221         DCA DELAY1      /RESET DELAY1
+1920                    >
+1921                    IFNZRO AX08 <
+1922                    6321            /SKIP IF CLOCK
+1923                    JMP INTEXT      /WHO???
+1924                    6352            /CLEAR CLOCK
+1925                    ISZ DELAY1
+1926                    JMP INTEXT      /NOT YET
+1927                    TAD CLKLIM      /RESET INTRPS
+1928                    DCA DELAY1      /DELAY INTERVAL
+1929                    >
+1930            
+1931 05431 7240         STA             /AND SET WAITING
+1932 05432 3777         DCA I (WAIT
+1933            
+1934 05433 6402 INTEXT, 6402            /LINK
+1935 05434 6412         6412
+1936                    IFNZRO T30G <6161;NOP>
+1937 05435 7300         CLA CLL
+1938 05436 1201         TAD SAVLK       /GET LINK
+1939 05437 7104         RAL CLL
+1940 05440 1200         TAD SAVAC       /AND AC.
+1941 05441 6244         RMF             /RESTORE FIELDS
+1942 05442 6001         ION             /AND RESTOR INTERRUPTS
+1943 05443 5400         JMP I 0         /RETURN TO PROGRAM
+1944            
+1945            /GO BACK TO SPCWAR
+1946            
+1947 05444 5600 OPTION, KBOARD
+1948 05445 5233         JMP INTEXT
+1949            
+1950                    IFNZRO KW12+DK8EP <
+1951            /SUBROUTINE TO START UP CLOCK
+1952            /MAY BE HARDWARE DEPENDENT
+1953            /THIS IS FOR KW12A CLOCK - PDP12
+1954            /OR PROGRAMABLE PDP8E CLOCK DK8EP
+1955                    CLSK=6131       /SKIP IF CLOCK
+1956                    CLLR=6132       /LOAD CONTROL
+1957                    CLAB=6133       /AC TO BUFFER PRESET
+1958                    CLEN=6134       /LOAD ENABLE
+1959                    CLSA=6135       /BIT RESET FLAGS
+1960            
+1961            STCLK,  0
+1962                    CLA CLL         /JUST IN CASE
+1963            IFNZRO PDP12 <CLLR      /STOP CLOCK
+1964                    CLEN            /CLEAR INTERRUPTS
+1965                    >
+1966                    TAD (-40        /ABOUT 30CPS
+1967                    CLAB            /LOAD PRSET
+1968                    CLA CLL
+1969                    IFNZRO PDP12 <
+1970                    TAD (0100       /1KC - PRESET TIME
+1971                    CLLR            /LOAD CONTROL
+1972                    CLSA            /CLEAR STATUS AND POSSIBLE OVERFLOW
+1973                    CLA CLL
+1974                    TAD (300        /INTERRUPT ON OVERFLOW
+1975                    CLEN
+1976                    CLA CLL
+1977                    TAD (4100       /AND START UP CLOCK
+1978                    >
+1979                    IFNZRO DK8EP <
+1980                    /TAD (5300      /INTR ON CLOCK - 1KC
+1981                    TAD (5310       /INTR ON CLOCK - 1KC (Josh Dersch)
+1982                    >
+1983                    CLLR
+1984                    CLA CLL
+1985                    JMP I STCLK>
+1986            
+1987                    IFNZRO FCLOCK <
+1988            /DYER'S FUNNY CLOCK
+1989            
+1990            STCLK,  0
+1991                    6132
+1992                    JMP I STCLK>
+1993            
+1994                    IFNZRO DK8EA <
+1995            /DK8EA (LINE CLOCK)
+1996            
+1997 05446 0000 STCLK,  0
+1998 05447 7346         CLL STA RTL     /-2
+1999 05450 3221         DCA DELAY1      /RESET DELAY1
+2000 05451 6131         6131            /ENABLE INTERRUPTS
+2001 05452 5646         JMP I STCLK>
+2002            
+2003                    IFNZRO AX08 <
+2004            STCLK,  0
+2005                    CLA CLL
+2006                    TAD (400
+2007                    6346            /START CRYSTAL CLOCK
+2008                    TAD CLKLIM      /INITIALIZE CLOCK
+2009                    DCA DELAY1
+2010                    JMP I STCLK
+2011            
+2012            CLKLIM, 7400
+2013            >
+2014            
+2015                    IFZERO KW12+AX08+FCLOCK+DK8EA+DK8EP <
+2016            STCLK,  0
+2017                    JMP I STCLK>
+2018            
+2019 05577 5110         PAGE
+2020 05600 4324 KBOARD, JMS GETC        /GET THE CHAR
+2021 05601 4246         JMS DISPCH      /DISPATCH ON CHAR
+2022 05602 7460         -"P;OPHLAT
+     05603 6407 
+2023 05604 7475         -"C;OCURVE
+     05605 6422 
+2024 05606 7472          -"F;OSTARS     /FIELD OF STARS
+     05607 6433 
+2025 05610 7446          -"Z;OSUN       /POLARIS ONLY
+     05611 6442 
+2026 05612 7476          -"B;OBOUNCE    /BOUNCE MODE
+     05613 5747 
+2027 05614 7451          -"W;OWRAP      /WRAP AROUND
+     05615 6000 
+2028 05616 7477          -"A;OANGUL     /ANGULAR MOMENT CONSERVE
+     05617 6010 
+2029 05620 7462          -"N;ONORM      /NO ANG MOM CONS.
+     05621 6016 
+2030 05622 7471          -"G;OGRAV      /RESET GRAVITY
+     05623 6061 
+2031 05624 7463          -"M;OMISSL     /RESET NUMB MISSLES
+     05625 6102 
+2032 05626 7456          -"R;ORETRO     /RESET RETRO CONSTANT
+     05627 6120 
+2033 05630 7454          -"T;OTHRUS     /RESET THRUST CONSTANT
+     05631 6111 
+2034 05632 7455          -"S;OSHIPS     /DISPLAY SHIPS
+     05633 6250 
+2035 05634 7452          -"V;OVELOC     /MUSSEL VELOCITY OF MISSILES
+     05635 6400 
+2036 05636 7453          -"U;OUFO       /DISPLAY UFO'S
+     05637 6226 
+2037 05640 7461          -"O;OOPTION    /LIST OPTIONS
+     05641 6200 
+2038 05642 7575          -203;7600      /^C RETURN TO MONITOR
+     05643 7600 
+2039 05644 0000          0              /END OF LIST
+2040 05645 5777         JMP I (SPCWAR   /START OVER
+2041            
+2042            
+2043            /DISPATCH ON ACCUMULATOR
+2044            
+2045 05646 0000 DISPCH, 0
+2046 05647 3264         DCA OTM1        /TEMP STASH
+2047 05650 1646         TAD I DISPCH    /GET COMPARISON
+2048 05651 2246         ISZ DISPCH
+2049 05652 7450         SNA             /0 MEANS DONE
+2050 05653 5646         JMP I DISPCH    /NOT IN LIST
+2051 05654 1264         TAD OTM1        /CHECK AGAINST CAHR
+2052 05655 7650         SNA CLA         /SKIP IF NO MATCH
+2053 05656 5261         JMP .+3         /MATCH
+2054 05657 2246         ISZ DISPCH      /TO NEXT CHAR
+2055 05660 5250         JMP DISPCH+2    /CONTINUE
+2056 05661 1646         TAD I DISPCH    /FOUND IT
+2057 05662 3246         DCA DISPCH      /DO DOUBLE INDIRECT
+2058 05663 5646         JMP I DISPCH
+2059            
+2060 05664 0000 OTM1,   0
+2061            
+2062            
+2063            /PRINT A MESSAGE
+2064            
+2065 05665 0000 PRMSG,  0
+2066 05666 1665         TAD I PRMSG     /GET ADD OF MESSAGE
+2067 05667 3264         DCA OTM1        /STORE POINTER
+2068 05670 2265         ISZ PRMSG       /NORMAL EXIT
+2069 05671 1664 PRST1,  TAD I OTM1
+2070 05672 7012         RTR;RTR;RTR     /OVER FOR PRINT
+     05673 7012 
+     05674 7012 
+2071 05675 4302         JMS PRCHR       /PRINT LEFT HALF
+2072 05676 1664         TAD I OTM1
+2073 05677 4302         JMS PRCHR       /PRINT RIGHT HALF
+2074 05700 2264         ISZ OTM1        /NEXT WORD
+2075 05701 5271         JMP PRST1       /LOOP
+2076            
+2077 05702 0000 PRCHR,  0
+2078 05703 0376         AND (77
+2079 05704 7450         SNA
+2080 05705 5665         JMP I PRMSG     /IF ZERO QUIT
+2081 05706 1375         TAD (-40        /FOR EXTEND
+2082 05707 7510         SPA             /SKIP IF NEUMERIC
+2083 05710 1374         TAD (100        /IS ALPHA
+2084 05711 1373         TAD (240        /BACK TO CORRECT
+2085 05712 4314         JMS PCH /PRINT ROUTINE
+2086 05713 5702         JMP I PRCHR
+2087            
+2088            
+2089            /PRINT A CHARACTER ROUTINE
+2090            
+2091 05714 0000 PCH,    0
+2092 05715 6046         TLS             /OUTPUT IT
+2093 05716 3772         DCA I (TELSW    /SET TTY INPROGRESS
+2094 05717 4771         JMS I (OPTIONS  /AND WAIT TILL FINISHED
+2095 05720 1772         TAD I (TELSW    /KEYBOARD INTERRUPT
+2096 05721 7440         SZA
+2097 05722 5317         JMP .-3         /NOT YET
+2098 05723 5714         JMP I PCH       /DONE.
+2099            
+2100            /GET AN INPUT CHARACTER
+2101            
+2102 05724 0000 GETC,   0
+2103 05725 1770         TAD I (ICHAR    /FROM INTERRUPT SERVICE
+2104 05726 7440         SZA             /GOT ONE?
+2105 05727 5332         JMP .+3         /YEP
+2106 05730 4771         JMS I (OPTIONS  /WAIT SOME MORE
+2107 05731 5325         JMP GETC+1
+2108 05732 3336         DCA CHAR
+2109 05733 3770         DCA I (ICHAR
+2110 05734 1336         TAD CHAR
+2111 05735 5724         JMP I GETC      /AND RETURN WITH CHAR
+2112            
+2113 05736 0000 CHAR,   0
+2114            
+2115 05737 0000 CRLF,   0
+2116 05740 1367         TAD (215
+2117 05741 4314         JMS PCH
+2118 05742 1366         TAD (212
+2119 05743 4314         JMS PCH
+2120 05744 5737         JMP I CRLF
+2121            
+2122 05745 4771 REINITIALIZE,   JMS I (OPTIONS
+2123 05746 5200         JMP KBOARD
+2124            
+2125            /TURN ON BOUNCE
+2126            
+2127 05747 1365 OBOUNC, TAD (BOUNX
+2128 05750 3067         DCA BOUNCX
+2129 05751 1364         TAD (BOUNY
+2130 05752 3070         DCA BOUNCY
+2131 05753 4265         JMS PRMSG       /TELL HIME
+2132 05754 7037          MBOUNC
+2133 05755 4337         JMS CRLF
+2134 05756 5345         JMP REINIT
+2135            
+2136 05764 2155         PAGE
+     05765 2146 
+     05766 0212 
+     05767 0215 
+     05770 5420 
+     05771 5444 
+     05772 5417 
+     05773 0240 
+     05774 0100 
+     05775 7740 
+     05776 0077 
+     05777 4600 
+2137            /ROUTINE TO DISABLE BOUNCE
+2138            
+2139 06000 1377 OWRAP,  TAD (NULL
+2140 06001 3067         DCA BOUNCX
+2141 06002 1377         TAD (NULL
+2142 06003 3070         DCA BOUNCY
+2143 06004 4776         JMS I (PRMSG
+2144 06005 7044          MWRAP
+2145 06006 4775         JMS I (CRLF
+2146 06007 5774         JMP I (REINIT
+2147            
+2148            /ROUTINE TO CONSERVE ANGULAR MOM
+2149            
+2150 06010 7201 OANGUL, CLA IAC
+2151 06011 3050         DCA CONSER
+2152 06012 4776         JMS I (PRMSG
+2153 06013 7054          MANGCON
+2154 06014 4775         JMS I (CRLF
+2155 06015 5774         JMP I (REINIT
+2156            
+2157 06016 3050 ONORM,  DCA CONSER
+2158 06017 4776         JMS I (PRMSG
+2159 06020 7065          MNORMAL
+2160 06021 4775         JMS I (CRLF
+2161 06022 5774         JMP I (REINIT
+2162            
+2163            /ROUTINE TO INPUT AN OCTAL NUMBER FROM THE KEYBOARD.
+2164            /CALL:  JMS OCTAL
+2165            /        RET1           /NO INPUT
+2166            /        RET2           /AC=OCTAL NUMBER
+2167            
+2168 06023 0000 OCTALX, 0
+2169 06024 3257         DCA NUMB
+2170 06025 3260         DCA INPUT
+2171 06026 4773 OCTALL, JMS I (GETC
+2172 06027 4772         JMS I (PCH      /AND PRINT IT
+2173 06030 1771         TAD I (CHAR
+2174 06031 1370         TAD (-"8
+2175 06032 7500         SMA             /SKIP IF <"8
+2176 06033 5250         JMP NUMBEX      /EXIT
+2177 06034 1367         TAD ("8-"0      /NOW CHECK FOR OCTAL
+2178 06035 7510         SPA             /SKIP IF OK
+2179 06036 5250         JMP NUMBEX      /NO=QUIT
+2180 06037 3260         DCA INPUT       /SAVE NUMBER
+2181 06040 1257         TAD NUMB        /GET LAST NUMBER
+2182 06041 7104         CLL RAL;CLL RAL;CLL RAL
+     06042 7104 
+     06043 7104 
+2183 06044 1260         TAD INPUT       /STICK IN NEW NUMBER
+2184 06045 3257         DCA NUMB
+2185 06046 2260         ISZ INPUT       /MAKE SURE NON-ZERO
+2186 06047 5226         JMP OCTALL
+2187 06050 7300 NUMBEX, CLA CLL
+2188 06051 1260         TAD INPUT       /TO SEE IF ANY
+2189 06052 7640         SZA CLA
+2190 06053 2223         ISZ OCTALX      /TAKE YES RETURN
+2191 06054 4775         JMS I (CRLF
+2192 06055 1257         TAD NUMB        /STICK NUMBER IN AC
+2193 06056 5623         JMP I OCTALX    /AND RETURN
+2194            
+2195 06057 0000 NUMB,   0
+2196 06060 0000 INPUT,  0
+2197            
+2198            
+2199 06061 4776 OGRAV,  JMS I (PRMSG    /TELL HIM WHAT OPTION IS
+2200 06062 7100          MGRAVY
+2201 06063 4223         JMS OCTALX      /GET NEW VALUE
+2202 06064 5774         JMP I (REINIT   /NO INPUT
+2203 06065 3062         DCA QGRAV       /SET VALUE
+2204 06066 1366         TAD (KBOARD     /REINITIALIZE
+2205 06067 3765         DCA I (OPTIONS
+2206 06070 4764         JMS I (SETGRV   /SET UP TABLE
+2207 06071 1062         TAD QGRAV       /NOW TO SEE IF ANTI-GRAV.
+2208 06072 7700         SMA CLA         /SKIP IF YES
+2209 06073 5763         JMP I (WAR-2
+2210 06074 4776         JMS I (PRMSG
+2211 06075 7116          MAGRAV         /ANTI GRAVITY
+2212 06076 4775         JMS I (CRLF
+2213 06077 1366         TAD (KBOARD
+2214 06100 3765         DCA I (OPTIONS
+2215 06101 5763         JMP I (WAR-2
+2216            
+2217 06102 4776 OMISSL, JMS I (PRMSG
+2218 06103 7125          MMISSLS
+2219 06104 4223         JMS OCTALX      /GET A NUMBER
+2220 06105 5774         JMP I (REINIT
+2221 06106 7041         CIA             /SET MISSEL CONSTANT
+2222 06107 3053         DCA MAXMIS      /SET CONSTANT
+2223 06110 5774         JMP I (REINIT   /DONE
+2224            
+2225            /ROUTINE TO READJUST THRUST
+2226            
+2227 06111 4776 OTHRUS, JMS I (PRMSG
+2228 06112 7137          MTHRUS
+2229 06113 4223         JMS OCTALX
+2230 06114 5774         JMP I (REINIT
+2231 06115 7106         CLL RTL
+2232 06116 3061         DCA QTHRUS
+2233 06117 5774         JMP I (REINIT
+2234            
+2235            /ROUTINE TO SET RETRO CONSTANT
+2236            
+2237 06120 4776 ORETRO, JMS I (PRMSG
+2238 06121 7152          MRETRO
+2239 06122 4223         JMS OCTALX
+2240 06123 5774         JMP I (REINIT
+2241 06124 3063         DCA QRET
+2242 06125 5774         JMP I (REINIT
+2243            
+2244            /ROUTINE TO PRINT LOTS OF MESSAGES
+2245            
+2246 06126 0000 MMESG,  0
+2247 06127 4775         JMS I (CRLF     /NEW LINE
+2248 06130 1726         TAD I MMESG     /GET START OF MESSAGE
+2249 06131 7450         SNA             /SKIP IF MORE TO COME
+2250 06132 5726         JMP I MMESG
+2251 06133 3335         DCA .+2
+2252 06134 4776         JMS I (PRMSG    /PRINT IT
+2253 06135 0000          0
+2254 06136 2326         ISZ MMESG       /NEXT LINE
+2255 06137 5327         JMP MMESG+1     /MORE
+2256            
+2257            /PRINT OPTIONS
+2258            
+2259 06163 5000         PAGE
+     06164 2662 
+     06165 5444 
+     06166 5600 
+     06167 0010 
+     06170 7510 
+     06171 5736 
+     06172 5714 
+     06173 5724 
+     06174 5745 
+     06175 5737 
+     06176 5665 
+     06177 1003 
+2260 06200 4777 OOPTIO, JMS I (MMESG
+2261 06201 6622          MOPTA
+2262 06202 6647          MOPTB
+2263 06203 6674          MOPTBA
+2264 06204 6710          MOPTC
+2265 06205 6724          MOPTD
+2266 06206 6734          MOPTE
+2267 06207 6754          MOPTF
+2268 06210 7012          MCURVE
+2269 06211 7021          MPHLAT
+2270 06212 7027          MSTARS
+2271 06213 6744          MSUN
+2272 06214 7037          MBOUNC
+2273 06215 7044          MWRAP
+2274 06216 7054          MANGCO
+2275 06217 7065          MNORMA
+2276 06220 7125          MMISSL
+2277 06221 7137          MTHRUS
+2278 06222 7152          MRETRO
+2279 06223 6600          MVELOX
+2280 06224 0000          0
+2281 06225 5776         JMP I (REINIT
+2282            
+2283            /DISPLAY SAUCERS (UFO'S)
+2284            
+2285 06226 4775 OUFO,   JMS I (PRMSG
+2286 06227 6774          MUFO
+2287 06230 4774         JMS I (CRLF
+2288 06231 1373         TAD (JMS I PSAUCP
+2289 06232 3772         DCA I (PSAUC1
+2290 06233 1371         TAD (NOP
+2291 06234 3770         DCA I (PSAUC2
+2292 06235 1367         TAD (SAUC1
+2293 06236 3766         DCA I (SHIP1+QSHIP-QR
+2294 06237 1365         TAD (SAUC1E-SAUC1
+2295 06240 3764         DCA I (SHIP1+QSHIPN-QR
+2296 06241 1363         TAD (SAUC2
+2297 06242 3762         DCA I (SHIP2+QSHIP-QR
+2298 06243 1361         TAD (SAUC2E-SAUC2
+2299 06244 3760         DCA I (SHIP2+QSHIPN-QR
+2300 06245 1357 OUFOR,  TAD (KBOARD
+2301 06246 3756         DCA I (OPTIONS
+2302 06247 5755         JMP I (WAR-2
+2303            
+2304            /DISPLAY SHIPS
+2305            
+2306 06250 4775 OSHIPS, JMS I (PRMSG
+2307 06251 7003          MSHIPS
+2308 06252 4774         JMS I (CRLF
+2309 06253 1270         TAD OSHIPJ
+2310 06254 3770         DCA I (PSAUC2
+2311 06255 1371         TAD (NOP
+2312 06256 3772         DCA I (PSAUC1
+2313 06257 1354         TAD (SHIP1C
+2314 06260 3766         DCA I (SHIP1+QSHIP-QR
+2315 06261 1353         TAD (SHIP1E-SHIP1C
+2316 06262 3764         DCA I (SHIP1+QSHIPN-QR
+2317 06263 1352         TAD (SHIP2C
+2318 06264 3762         DCA I (SHIP2+QSHIP-QR
+2319 06265 1351         TAD (SHIP2E-SHIP2C
+2320 06266 3760         DCA I (SHIP2+QSHIPN-QR
+2321 06267 5245         JMP OUFOR
+2322            
+2323 06270 5323 OSHIPJ, PSAUC2+3&177+5200
+2324            
+2325            
+2326 06351 0050         PAGE
+     06352 1201 
+     06353 0060 
+     06354 1025 
+     06355 5000 
+     06356 5444 
+     06357 5600 
+     06360 1410 
+     06361 0006 
+     06362 1407 
+     06363 1315 
+     06364 1367 
+     06365 0016 
+     06366 1366 
+     06367 1163 
+     06370 1720 
+     06371 7000 
+     06372 5247 
+     06373 4465 
+     06374 5737 
+     06375 5665 
+     06376 5745 
+     06377 6126 
+2327            /RESET MUSSEL VELOCITY OF ROCKETS
+2328            
+2329 06400 4777 OVELOC, JMS I (PRMSG
+2330 06401 6600          MVELOX
+2331 06402 4776         JMS I (OCTALX
+2332 06403 5775         JMP I (REINIT
+2333 06404 7110         CLL RAR
+2334 06405 3064         DCA QTHROC      /RESET MUSSLE VELOCITY
+2335 06406 5775         JMP I (REINIT
+2336              
+2337            /SELECT FLAT OR CURVED SPACE
+2338              
+2339 06407 4777 OPHLAT, JMS I (PRMSG
+2340 06410 7021         MPHLAT
+2341 06411 4774         JMS I (CRLF
+2342 06412 7200         CLA
+2343 06413 1373         TAD (3777
+2344 06414 3041         DCA QTIME       /NO TIME CURVE ON OUTLINE
+2345 06415 1372         TAD (SC
+2346 06416 3771         DCA I (NEWPO7+1
+2347 06417 1372         TAD (SC
+2348 06420 3770         DCA I (NEWPO7+11
+2349 06421 5775         JMP I (REINIT
+2350              
+2351 06422 4777 OCURVE, JMS I (PRMSG
+2352 06423 7012         MCURVE
+2353 06424 4774         JMS I (CRLF
+2354 06425 7200         CLA
+2355 06426 1367         TAD (SC1
+2356 06427 3771         DCA I (NEWPO7+1
+2357 06430 1366         TAD (SC2
+2358 06431 3770         DCA I (NEWPO7+11
+2359 06432 5775         JMP I (REINIT
+2360              
+2361            /DISPLAY OPTIONAL SUN OR UNIVERSE
+2362             
+2363 06433 4777 OSTARS, JMS I (PRMSG
+2364 06434 7027         MSTARS
+2365 06435 4774         JMS I (CRLF
+2366 06436 7200         CLA
+2367 06437 1365         TAD (D2
+2368 06440 3764         DCA I (WARDX+1
+2369 06441 5775         JMP I (REINIT
+2370            
+2371 06442 4777 OSUN,   JMS I (PRMSG
+2372 06443 6744         MSUN
+2373 06444 4774         JMS I (CRLF
+2374 06445 7200         CLA
+2375 06446 1363         TAD (D1
+2376 06447 3764         DCA I (WARDX+1
+2377 06450 5775         JMP I (REINIT
+2378            
+2379 06563 4507         PAGE
+     06564 5076 
+     06565 4506 
+     06566 4776 
+     06567 4777 
+     06570 2452 
+     06571 2442 
+     06572 4315 
+     06573 3777 
+     06574 5737 
+     06575 5745 
+     06576 6023 
+     06577 5665 
+2380 06600 2605 MVELOX, TEXT \VELOCITY INITIAL OF MISSLES(2000):\
+     06601 1417 
+     06602 0311 
+     06603 2431 
+     06604 4011 
+     06605 1611 
+     06606 2411 
+     06607 0114 
+     06610 4017 
+     06611 0640 
+     06612 1511 
+     06613 2323 
+     06614 1405 
+     06615 2350 
+     06616 6260 
+     06617 6060 
+     06620 5172 
+     06621 0000 
+2381 06622 1720 MOPTA,  TEXT \OPTIONS ARE DESIGNATED BY FIRST CHARACTER\
+     06623 2411 
+     06624 1716 
+     06625 2340 
+     06626 0122 
+     06627 0540 
+     06630 0405 
+     06631 2311 
+     06632 0716 
+     06633 0124 
+     06634 0504 
+     06635 4002 
+     06636 3140 
+     06637 0611 
+     06640 2223 
+     06641 2440 
+     06642 0310 
+     06643 0122 
+     06644 0103 
+     06645 2405 
+     06646 2200 
+2382 06647 2410 MOPTB,  TEXT \THE NUMBER IN PARENS ARE "NORMAL" VALUES\
+     06650 0540 
+     06651 1625 
+     06652 1502 
+     06653 0522 
+     06654 4011 
+     06655 1640 
+     06656 2001 
+     06657 2205 
+     06660 1623 
+     06661 4001 
+     06662 2205 
+     06663 4042 
+     06664 1617 
+     06665 2215 
+     06666 0114 
+     06667 4240 
+     06670 2601 
+     06671 1425 
+     06672 0523 
+     06673 0000 
+2383 06674 1116 MOPTBA, TEXT \INPUT NUMBERS ARE OCTAL\
+     06675 2025 
+     06676 2440 
+     06677 1625 
+     06700 1502 
+     06701 0522 
+     06702 2340 
+     06703 0122 
+     06704 0540 
+     06705 1703 
+     06706 2401 
+     06707 1400 
+2384 06710 0126 MOPTC,  TEXT \AVAILABLE OPTIONS ARE:\
+     06711 0111 
+     06712 1401 
+     06713 0214 
+     06714 0540 
+     06715 1720 
+     06716 2411 
+     06717 1716 
+     06720 2340 
+     06721 0122 
+     06722 0572 
+     06723 0000 
+2385 06724 2540 MOPTD,  TEXT \U DISPLAY UFO'S\
+     06725 0411 
+     06726 2320 
+     06727 1401 
+     06730 3140 
+     06731 2506 
+     06732 1747 
+     06733 2300 
+2386 06734 2340 MOPTE,  TEXT \S DISPLAY SHIPS\
+     06735 0411 
+     06736 2320 
+     06737 1401 
+     06740 3140 
+     06741 2310 
+     06742 1120 
+     06743 2300 
+2387 06744 3240 MSUN,   TEXT 'Z POLARIS ONLY'
+     06745 2017 
+     06746 1401 
+     06747 2211 
+     06750 2340 
+     06751 1716 
+     06752 1431 
+     06753 0000 
+2388 06754 0740 MOPTF,  TEXT \G RESET GRAVITY CONSTANT(1000)\
+     06755 2205 
+     06756 2305 
+     06757 2440 
+     06760 0722 
+     06761 0126 
+     06762 1124 
+     06763 3140 
+     06764 0317 
+     06765 1623 
+     06766 2401 
+     06767 1624 
+     06770 5061 
+     06771 6060 
+     06772 6051 
+     06773 0000 
+2389 06774 0411 MUFO,   TEXT \DISPLAY UFO'S\
+     06775 2320 
+     06776 1401 
+     06777 3140 
+     07000 2506 
+     07001 1747 
+     07002 2300 
+2390 07003 0411 MSHIPS, TEXT \DISPLAY SHIPS\
+     07004 2320 
+     07005 1401 
+     07006 3140 
+     07007 2310 
+     07010 1120 
+     07011 2300 
+2391 07012 0325 MCURVE, TEXT 'CURVED SPACE'
+     07013 2226 
+     07014 0504 
+     07015 4023 
+     07016 2001 
+     07017 0305 
+     07020 0000 
+2392 07021 2010 MPHLAT, TEXT 'PHLAT SPACE'
+     07022 1401 
+     07023 2440 
+     07024 2320 
+     07025 0103 
+     07026 0500 
+2393 07027 0611 MSTARS,  TEXT 'FIELD OF STARS'
+     07030 0514 
+     07031 0440 
+     07032 1706 
+     07033 4023 
+     07034 2401 
+     07035 2223 
+     07036 0000 
+2394 07037 0217 MBOUNC, TEXT \BOUNCE ON\
+     07040 2516 
+     07041 0305 
+     07042 4017 
+     07043 1600 
+2395 07044 2722 MWRAP,  TEXT \WRAP-AROUND ON\
+     07045 0120 
+     07046 5501 
+     07047 2217 
+     07050 2516 
+     07051 0440 
+     07052 1716 
+     07053 0000 
+2396 07054 0116 MANGCO, TEXT \ANGULAR MOMENTUM\
+     07055 0725 
+     07056 1401 
+     07057 2240 
+     07060 1517 
+     07061 1505 
+     07062 1624 
+     07063 2515 
+     07064 0000 
+2397 07065 1617 MNORMA, TEXT \NON-ANGULAR MOMENTUM\
+     07066 1655 
+     07067 0116 
+     07070 0725 
+     07071 1401 
+     07072 2240 
+     07073 1517 
+     07074 1505 
+     07075 1624 
+     07076 2515 
+     07077 0000 
+2398 07100 2324 MGRAVY, TEXT \STRENGTH OF GRAVITY(1000):\
+     07101 2205 
+     07102 1607 
+     07103 2410 
+     07104 4017 
+     07105 0640 
+     07106 0722 
+     07107 0126 
+     07110 1124 
+     07111 3150 
+     07112 6160 
+     07113 6060 
+     07114 5172 
+     07115 0000 
+2399 07116 0116 MAGRAV, TEXT \ANTI-GRAVITY\
+     07117 2411 
+     07120 5507 
+     07121 2201 
+     07122 2611 
+     07123 2431 
+     07124 0000 
+2400 07125 1501 MMISSL, TEXT \MAX NUMBER MISSLES:\
+     07126 3040 
+     07127 1625 
+     07130 1502 
+     07131 0522 
+     07132 4015 
+     07133 1123 
+     07134 2314 
+     07135 0523 
+     07136 7200 
+2401 07137 2410 MTHRUS, TEXT \THRUST CONSTANT (2):\
+     07140 2225 
+     07141 2324 
+     07142 4003 
+     07143 1716 
+     07144 2324 
+     07145 0116 
+     07146 2440 
+     07147 5062 
+     07150 5172 
+     07151 0000 
+2402 07152 2205 MRETRO, TEXT \RETRO-THRUST (4):\
+     07153 2422 
+     07154 1755 
+     07155 2410 
+     07156 2225 
+     07157 2324 
+     07160 4050 
+     07161 6451 
+     07162 7200 
+2403            
+2404                    PAGE
+2405                    IFNZRO D <
+2406                    XXX=.
+2407                    FIELD D%10
+2408                    *1000>
+2409            
+2410                    DECIMAL
+2411            BIGSUN,
+2412 11000 0000         0;0
+     11001 0000 
+2413 11002 0006         6;4; -6;-4; 0;7; 0;-7; -6;4; 6;-4
+     11003 0004 
+     11004 7772 
+     11005 7774 
+     11006 0000 
+     11007 0007 
+     11010 0000 
+     11011 7771 
+     11012 7772 
+     11013 0004 
+     11014 0006 
+     11015 7774 
+2414 11016 7762         -14;0; 14;0; -7;-12; 7;12; 7;-12; -7;12
+     11017 0000 
+     11020 0016 
+     11021 0000 
+     11022 7771 
+     11023 7764 
+     11024 0007 
+     11025 0014 
+     11026 0007 
+     11027 7764 
+     11030 7771 
+     11031 0014 
+2415 11032 0000         0;-21; 0;21; 19;-11; -19;11; 19;11; -19;-11
+     11033 7753 
+     11034 0000 
+     11035 0025 
+     11036 0023 
+     11037 7765 
+     11040 7755 
+     11041 0013 
+     11042 0023 
+     11043 0013 
+     11044 7755 
+     11045 7765 
+2416 11046 0016         14;-25; -14;25; 28;0; -28;0; 14;25; -14;-25
+     11047 7747 
+     11050 7762 
+     11051 0031 
+     11052 0034 
+     11053 0000 
+     11054 7744 
+     11055 0000 
+     11056 0016 
+     11057 0031 
+     11060 7762 
+     11061 7747 
+2417 11062 0000         0;35; 0;-35; 20;30; -20;-30; -20;30; 20;-30
+     11063 0043 
+     11064 0000 
+     11065 7735 
+     11066 0024 
+     11067 0036 
+     11070 7754 
+     11071 7742 
+     11072 7754 
+     11073 0036 
+     11074 0024 
+     11075 7742 
+2418 11076 0000         0;0
+     11077 0000 
+2419            
+2420                    ESUN=.
+2421                    IFNZRO 0 <
+2422                    -2;12; 0;12; 3;12; -4;11; -1;11; 1;11; 4;11; 6;11
+2423            -6;10; -3;10; 2;10; 4;10; 8;10; -8;9; -4;9; -2;9; 0;9
+2424            4;9; 6;9; 7;9; -8;8; -6;8; -3;8; 2;8; 6;8; 8;8; 10;8; -10;7
+2425            8;7; 9;7; -8;6; -5;6; 0;6; 3;6; 10;6; 11;6; -11;5; -9;5
+2426            -2;5; 5;5; 7;5; 9;5; 11;5; -7;4; 3;4; 12;4; -10;3
+2427            -4;3; -1;3; 1;3; 7;3; 10;3; 11;3; -12;2
+2428            -11;2; -6;2; 4;2; 12;2; 13;2
+2429            -11;1; -10;1; -8;1; -2;1; 1;1; 8;1; 11;1; -12;0; 10;0
+2430            -5;0; 6;0; 13;0; -11;-1; -3;-1; 0;-1; 3;-1; 9;-1; 12;-1; -12;-2; -10;-2
+2431            -8;-1; -6;-2; -1;-2; 7;-2; 11;-2; 12;-2; -9;-3; -4;-3
+2432            4;-3; 11;-3; -11;-4; -9;-4; -7;-4; -1;-4; 2;-4; 7;-4
+2433            10;-4; 12;-4; 11;-5; -11;-6; -9;-6
+2434            -8;-6; -6;-6; 4;-6; 6;-6; 8;-6; 9;-6; 11;-6; -10;-7
+2435            -8;-7; -2;-7; 1;-7
+2436            -8;-8; -6;-8; 6;-8; 8;-8; 9;-8; -8;-9; -6;-9; -4;-9; 4;-9; 7;-9
+2437            -6;-10; -2;-10; 0;-10; 2;-10; 4;-10; 5;-10; 7;-10; -5;-11; -3;-11; -1;-11
+2438            2;-11; 5;-11; -3;-12; -1;-12; 1;-12; 3;-12
+2439            ESUN=.
+2440                    >
+2441                    PAGE
+2442            SUNPT1,                 /STAR FIELD
+2443            /ORION          SIGNUS  URSIA MAJOR     SCORPIO
+2444 11200 0022 18;-174;        62;108; -102;31;        -128;250
+     11201 7522 
+     11202 0076 
+     11203 0154 
+     11204 7632 
+     11205 0037 
+     11206 7600 
+     11207 0372 
+2445 11210 0057 47;-171;        106;85; -88;20;         -128;242
+     11211 7525 
+     11212 0152 
+     11213 0125 
+     11214 7650 
+     11215 0024 
+     11216 7600 
+     11217 0362 
+2446 11220 0041 33;-194;        91;91;  -91;9;          -139;225
+     11221 7476 
+     11222 0133 
+     11223 0133 
+     11224 7645 
+     11225 0011 
+     11226 7565 
+     11227 0341 
+2447 11230 0050 40;-191;        71;88;  -91;-23;        -146;216
+     11231 7501 
+     11232 0107 
+     11233 0130 
+     11234 7645 
+     11235 7751 
+     11236 7556 
+     11237 0330 
+2448            /SOME MISC.
+2449 11240 7553 -149;-213       /IN PUPPIS
+     11241 7453 
+2450 11242 7654 -84;-168        /PROCYON
+     11243 7530 
+2451 11244 0161 113;-46         /IN ANDROMEDA
+     11245 7722 
+2452 11246 7765 -11;77          /ELTANIN
+     11247 0115 
+2453            
+2454            /ORION          SIGNUS  URSIA MAJOR     SCORPIO
+2455 11250 0057 47;-188;        73;74;  -73;-20;        -153;213
+     11251 7504 
+     11252 0111 
+     11253 0112 
+     11254 7667 
+     11255 7754 
+     11256 7547 
+     11257 0325 
+2456 11260 0032 26;-211;        47;85;  -102;-9;        -164;194
+     11261 7455 
+     11262 0057 
+     11263 0125 
+     11264 7632 
+     11265 7767 
+     11266 7534 
+     11267 0302 
+2457 11270 0102 66;-199;        29;74;  -88;-3;         -175;196
+     11271 7471 
+     11272 0035 
+     11273 0112 
+     11274 7650 
+     11275 7775 
+     11276 7521 
+     11277 0304 
+2458 11300 0067                 55;120;                 -182;199
+     11301 0170 
+     11302 7512 
+     11303 0307 
+2459            
+2460            /PLUS SOME MISCELLANEOUS
+2461 11304 7613 -117;188
+     11305 0274 
+2462 11306 7530 -168;71         /ARCTURUS
+     11307 0107 
+2463 11310 0006 6;6;-6;-6       /SOME SUN SPOTS
+     11311 0006 
+     11312 7772 
+     11313 7772 
+2464 11314 0320 208;-105        /NECK OF CETUS
+     11315 7627 
+2465 11316 0320 208;102         /IN AQUARIUS
+     11317 0146 
+2466 11320 7417 -241;17         /SPICA
+     11321 0021 
+2467            
+2468            /CASEOPEA       CANUS MAJOR     PLEIADES
+2469 11322 0076 62;-23;         -18;-253;       117;-110
+     11323 7751 
+     11324 7756 
+     11325 7403 
+     11326 0165 
+     11327 7622 
+2470 11330 0111 73;-20;         -29;-239;       117;-108
+     11331 7754 
+     11332 7743 
+     11333 7421 
+     11334 0165 
+     11335 7624 
+2471 11336 0111 73;-11;         -18;-228;       113;-111
+     11337 7765 
+     11340 7756 
+     11341 7434 
+     11342 0161 
+     11343 7621 
+2472 11344 0130 88;-9;          -44;-222;       113;-108
+     11345 7767 
+     11346 7724 
+     11347 7442 
+     11350 0161 
+     11351 7624 
+2473 11352 0120 80;0;           -51;-213
+     11353 0000 
+     11354 7715 
+     11355 7453 
+2474 11356 7632                 -102;-239
+     11357 7421 
+2475 11360 7663                 -77;-239
+     11361 7421 
+2476 11362 7676                 -66;-248
+     11363 7410 
+2477 11364 7676                 -66;-219
+     11365 7445 
+2478 11366 7707                 -57;-222
+     11367 7442 
+2479            /PLUS SOME MISCELLANEOUS
+2480 11370 0006 6;-6;-6;6       /MORE SUN SPOTS
+     11371 7772 
+     11372 7772 
+     11373 0006 
+2481 11374 7432 -230;159        /IN LIBRA
+     11375 0237 
+2482 11376 7470 -200;-139       /ALPHARD
+     11377 7565 
+2483            
+2484            SUNPT2, 
+2485 11400 0000 0;1; 0;-1; 1;0; -1;0
+     11401 0001 
+     11402 0000 
+     11403 7777 
+     11404 0001 
+     11405 0000 
+     11406 7777 
+     11407 0000 
+2486 11410 0000 0;2; 0;-2; 2;0; -2;0
+     11411 0002 
+     11412 0000 
+     11413 7776 
+     11414 0002 
+     11415 0000 
+     11416 7776 
+     11417 0000 
+2487 11420 0000 0;4; 0;-4; 4;0; -4;0
+     11421 0004 
+     11422 0000 
+     11423 7774 
+     11424 0004 
+     11425 0000 
+     11426 7774 
+     11427 0000 
+2488 11430 0000 0;6; 0;-6; 6;0; -6;0
+     11431 0006 
+     11432 0000 
+     11433 7772 
+     11434 0006 
+     11435 0000 
+     11436 7772 
+     11437 0000 
+2489            
+2490            /VAIRABLES START HERE
+2491            /BRIGHT STARS
+2492 11440 0222 146;-29         /IN ANDROMEDA
+     11441 7743 
+2493 11442 0120 80;-143         /ALDEBARAN IN TAURUS
+     11443 7561 
+2494 11444 7623 -109;100        /ALPHECCA IN CORONA BOREALIS
+     11445 0144 
+2495 11446 0231 153;-68         /IN ARIES
+     11447 7674 
+2496            
+2497            /LEO            SAGITARIUS GEMINI       PEGASIS
+2498 11450 7470 -200;-17;       -18;250; -55;-114;      168;102
+     11451 7757 
+     11452 7756 
+     11453 0372 
+     11454 7711 
+     11455 7616 
+     11456 0250 
+     11457 0146 
+2499 11460 7442 -222;-43;       4;250;  -69;-120;       160;40
+     11461 7725 
+     11462 0004 
+     11463 0372 
+     11464 7673 
+     11465 7610 
+     11466 0240 
+     11467 0050 
+2500 11470 7470 -200;-43;       15;242; -73;-128;       193;46
+     11471 7725 
+     11472 0017 
+     11473 0362 
+     11474 7667 
+     11475 7600 
+     11476 0301 
+     11477 0056 
+2501 11500 0012 10;0;0;10;-10;0;0;-10   /MORE SUN
+     11501 0000 
+     11502 0000 
+     11503 0012 
+     11504 7766 
+     11505 0000 
+     11506 0000 
+     11507 7766 
+2502 11510 7506 -186;-37;       40;242; -58;-125;       164;0
+     11511 7733 
+     11512 0050 
+     11513 0362 
+     11514 7706 
+     11515 7603 
+     11516 0244 
+     11517 0000 
+2503            /BRIGHT STARS
+2504 11520 7502 -190;145        /IN LIBRA
+     11521 0221 
+2505 11522 0013 11;105          /LYRA
+     11523 0151 
+2506 11524 0105 69;-63          /MIRFAK IN PERSEUS
+     11525 7701 
+2507 11526 0244 164;-63         /IN ARIES
+     11527 7701 
+2508            
+2509            /LEO            SAGITARIUS GEMINI       PEGASIS
+2510 11530 7470 -200;-71;       51;239; -44;-122;       200;0
+     11531 7671 
+     11532 0063 
+     11533 0357 
+     11534 7724 
+     11535 7606 
+     11536 0310 
+     11537 0000 
+2511 11540 7530 -168;-71;       66;228; -33;-117
+     11541 7671 
+     11542 0102 
+     11543 0344 
+     11544 7737 
+     11545 7613 
+2512 11546 7512 -182;-85;       51;228; -58;-151
+     11547 7653 
+     11550 0063 
+     11551 0344 
+     11552 7706 
+     11553 7551 
+2513 11554 7525 -171;-83;       62;246; -58;-137
+     11555 7655 
+     11556 0076 
+     11557 0366 
+     11560 7706 
+     11561 7567 
+2514            /BRIGHT STARS
+2515 11562 7530 -168;-240       /IN PUPPIS
+     11563 7420 
+2516 11564 7442 -222;137        /IN LIBRA
+     11565 0211 
+2517 11566 7460 -208;29         /IN VIRGO
+     11567 0035 
+2518 11570 0130 88;157          /ALTAIR
+     11571 0235 
+2519            
+2520 11572 0000 0;12;12;0;-12;0;0;-12   /MOR SUN
+     11573 0014 
+     11574 0014 
+     11575 0000 
+     11576 7764 
+     11577 0000 
+     11600 0000 
+     11601 7764 
+2521            /LEO            SAGITARIUS GEMINI       PEGASIS
+2522 11602 7556 -146;-85;       66;239; -29;-137
+     11603 7653 
+     11604 0102 
+     11605 0357 
+     11606 7743 
+     11607 7567 
+2523 11610 7556 -146;-77;               -22;-154
+     11611 7663 
+     11612 7752 
+     11613 7546 
+2524 11614 7737                         -33;-159
+     11615 7541 
+2525            /AURIGA
+2526 11616 0032 26;-88;47;-114;29;-128;4;-97
+     11617 7650 
+     11620 0057 
+     11621 7616 
+     11622 0035 
+     11623 7600 
+     11624 0004 
+     11625 7637 
+2527 11626 0004 4;4;4;-4;-4;4;-4;-4     /MORE SUN
+     11627 0004 
+     11630 0004 
+     11631 7774 
+     11632 7774 
+     11633 0004 
+     11634 7774 
+     11635 7774 
+2528            
+2529 11636 0000 0;0
+     11637 0000 
+2530            
+2531            IFZERO EAE <
+2532            OCTAL
+2533            FIELD 0
+2534            / DIGITAL-8-17 EAE EMULATION FOLLOWS.
+2535            / (PAGE ZERO LAYOUT IS CHANGED AND CODE RELOCATED.)
+2536            *160
+2537            MQL=JMS I .
+2538 00160 7400         PSDMQL
+2539            DVI=JMS I .
+2540 00161 7505         PSDDVI
+2541            MUY=JMS I .
+2542 00162 7541         PSDMUY
+2543            NMI=JMS I .
+2544 00163 7300         PSDNMI
+2545            SHL=JMS I .
+2546 00164 7422         PSDSHL
+2547            ASR=JMS I .
+2548 00165 7451         PSDASR
+2549            LSR=JMS I .
+2550 00166 7443         PSDLSR
+2551            SCA=JMS I .
+2552 00167 7347         PSDSCA
+2553            MQA=JMS I .
+2554 00170 7356         PSDMQA
+2555            CAM=JMS I .
+2556 00171 7403         PSDCAM
+2557            /FIXTAB
+2558            /       PSDMQL
+2559            /*67
+2560 00172 0000 SUDOMQ, 0
+2561 00173 0000 SUDOSC, 0
+2562            /       PSDMQL
+2563            /       PSDDVI
+2564            /       MQLDVI
+2565            /       PSDMUY
+2566            /       MQLMUY
+2567            /       PSDNMI
+2568            /       PSDSHL
+2569            /       PSDASR
+2570            /       PSDLSR
+2571            /       PSDSCA
+2572            /       PSDMQA
+2573            /       PSDCAM
+2574            
+2575            *7300
+2576 07300 0000 PSDNMI, 0               /NMI
+2577 07301 3347         DCA PSDSCA      /SAVE AC
+2578 07302 3173         DCA SUDOSC      /CLEAR STEP COUNTER.
+2579 07303 1347         TAD PSDSCA
+2580 07304 7440         SZA
+2581 07305 5312         JMP .+5
+2582 07306 1172         TAD SUDOMQ
+2583 07307 7650         SNA CLA
+2584 07310 5700         JMP I PSDNMI    /0 AC AND MQ.
+2585 07311 1347 NMIBK2, TAD PSDSCA
+2586 07312 7004         RAL
+2587 07313 7430         SZL
+2588 07314 5330         JMP NMIOUT      /AC0=1
+2589 07315 7510         SPA
+2590 07316 5332         JMP NMIOUT+2    /AC0=0 AND AC1=1
+2591 07317 7200         CLA             /AC0=AC1=0
+2592 07320 1172 NMIBCK, TAD SUDOMQ
+2593 07321 7104         CLL RAL
+2594 07322 3172         DCA SUDOMQ
+2595 07323 1347         TAD PSDSCA
+2596 07324 7004         RAL
+2597 07325 3347         DCA PSDSCA
+2598 07326 2173         ISZ SUDOSC
+2599 07327 5311         JMP NMIBK2
+2600 07330 7510 NMIOUT, SPA
+2601 07331 5334         JMP .+3         /AC0=AC1=1
+2602 07332 7010         RAR             /AC0 DOES NOT EQUAL AC1
+2603 07333 5700         JMP I PSDNMI    /EXIT
+2604 07334 7010         RAR             /TEST IF NUMBER 6000 0000
+2605 07335 1346         TAD .+11
+2606 07336 7640         SZA CLA
+2607 07337 5320         JMP NMIBCK      /NOT 6000
+2608 07340 1172         TAD SUDOMQ
+2609 07341 7440         SZA
+2610 07342 5321         JMP NMIBCK+1    /NOT 0000
+2611 07343 7020         CML             /RESTORE LINK
+2612 07344 1347         TAD PSDSCA      /RESTORE 6000
+2613 07345 5700         JMP I PSDNMI    /EXIT
+2614 07346 2000         -6000
+2615 07347 0000 PSDSCA, 0               /SCA
+2616 07350 3356         DCA PSDMQA      /INCLUSIVE OR
+2617 07351 1356         TAD PSDMQA      /STEP COUNTER
+2618 07352 7040         CMA             /AND AC
+2619 07353 0173         AND SUDOSC
+2620 07354 1356         TAD PSDMQA
+2621 07355 5747         JMP I PSDSCA
+2622 07356 0000 PSDMQA, 0               /MQA
+2623 07357 3347         DCA PSDSCA      /INCLUSIVE OR
+2624 07360 1347         TAD PSDSCA      /MQ
+2625 07361 7040         CMA             /AND AC
+2626 07362 0172         AND SUDOMQ
+2627 07363 1347         TAD PSDSCA
+2628 07364 5756         JMP I PSDMQA
+2629            
+2630            *PSDNMI+100
+2631 07400 0000 PSDMQL, 0               /MQL
+2632 07401 3172         DCA Z SUDOMQ
+2633 07402 5600         JMP I PSDMQL
+2634 07403 0000 PSDCAM, 0               /CAM (CLA!MQL)
+2635 07404 7200         CLA
+2636 07405 3172         DCA Z SUDOMQ
+2637 07406 5603         JMP I PSDCAM
+2638 07407 0000 MQLMUY, 0               /MQL!MUY
+2639 07410 3172         DCA Z SUDOMQ
+2640 07411 1207         TAD MQLMUY      /SET UP
+2641 07412 3341         DCA PSDMUY      /FOR MUY SUBROUTINE
+2642 07413 5342         JMP PSDMUY+1
+2643 07414 0000 MQLDVI, 0               /MQL!DVI
+2644 07415 3172         DCA Z SUDOMQ
+2645 07416 1214         TAD MQLDVI      /SET UP
+2646 07417 3305         DCA PSDDVI      /FOR DVI SUBROUTINE
+2647 07420 5306         JMP PSDDVI+1
+2648 07421 0037         37
+2649 07422 0000 PSDSHL, 0               /SHL
+2650 07423 3203         DCA PSDCAM      /SAVE AC
+2651 07424 1622         TAD I PSDSHL    /SHIFT COUNT
+2652 07425 2222         ISZ PSDSHL      /EXIT POINT
+2653 07426 0221         AND PSDSHL-1    /5 BIT COUNTER
+2654 07427 7040         CMA
+2655 07430 3173         DCA SUDOSC
+2656 07431 1172         TAD SUDOMQ      /SHIFT COMBINED
+2657 07432 7104         CLL RAL         /AC AND MQ
+2658 07433 3172         DCA SUDOMQ      /1 BIT TO THE
+2659 07434 1203         TAD PSDCAM      /LEFT
+2660 07435 7004         RAL
+2661 07436 3203         DCA PSDCAM
+2662 07437 2173         ISZ SUDOSC
+2663 07440 5231         JMP .-7         /MORE SHIFTING
+2664 07441 1203         TAD PSDCAM
+2665 07442 5622         JMP I PSDSHL    /EXIT
+2666 07443 0000 PSDLSR, 0               /LSR
+2667 07444 3203         DCA PSDCAM      /SAVE AC
+2668 07445 1243         TAD PSDLSR      /USE ASR
+2669 07446 3251         DCA PSDASR      /ROUTINE
+2670 07447 7100         CLL
+2671 07450 5256         JMP PSDASR+5
+2672            
+2673 07451 0000 PSDASR, 0               /ASR
+2674 07452 7100         CLL             /SET LINK=SIGN
+2675 07453 7510         SPA
+2676 07454 7020         CML
+2677 07455 3203         DCA PSDCAM      /SAVE AC
+2678 07456 1651         TAD I PSDASR    /SHIFT COUNT
+2679 07457 2251         ISZ PSDASR      /EXIT POINT
+2680 07460 0221         AND PSDSHL-1    /5 BIT COUNTER
+2681 07461 7040         CMA
+2682 07462 3173         DCA SUDOSC
+2683 07463 1203         TAD PSDCAM      /RESTORE AC
+2684 07464 5270         JMP .+4
+2685 07465 1203         TAD PSDCAM
+2686 07466 7510         SPA
+2687 07467 7020         CML
+2688 07470 7010         RAR
+2689 07471 3203         DCA PSDCAM
+2690 07472 1172         TAD SUDOMQ
+2691 07473 7010         RAR
+2692 07474 3172         DCA SUDOMQ
+2693 07475 7100         CLL
+2694 07476 2173         ISZ SUDOSC
+2695 07477 5265         JMP .-12                /MORE SHIFTING
+2696 07500 1203         TAD PSDCAM
+2697 07501 7510         SPA
+2698 07502 7020         CML             /LINK=AC0
+2699 07503 5651         JMP I PSDASR
+2700 07504 7763         7763
+2701 07505 0000 PSDDVI, 0               /DVI
+2702 07506 3203         DCA PSDCAM      /SAVE HIGH ORDER DIVIDEND
+2703 07507 1705         TAD I PSDDVI    /DIVISOR
+2704 07510 2305         ISZ PSDDVI      /EXIT POINT
+2705 07511 7141         CLL CMA IAC
+2706 07512 3207         DCA MQLMUY      /2'S COMPLEMENT OF DIVISOR
+2707 07513 1203         TAD PSDCAM      /HIGH ORDER DIVIDEND
+2708 07514 1207         TAD MQLMUY
+2709 07515 7630         SZL CLA
+2710 07516 5705         JMP I PSDDVI    /DIVIDE OVERFLOW
+2711 07517 1304         TAD PSDDVI-1    /7763
+2712 07520 3243         DCA PSDLSR      /COUNTER
+2713 07521 5332         JMP .+11
+2714 07522 1203         TAD PSDCAM
+2715 07523 7004         RAL
+2716 07524 3203         DCA PSDCAM
+2717 07525 1203         TAD PSDCAM
+2718 07526 1207         TAD MQLMUY
+2719 07527 7430         SZL
+2720 07530 3203         DCA PSDCAM
+2721 07531 7200         CLA
+2722 07532 1172         TAD SUDOMQ
+2723 07533 7004         RAL
+2724 07534 3172         DCA SUDOMQ
+2725 07535 2243         ISZ PSDLSR
+2726 07536 5322         JMP .-14
+2727 07537 1203         TAD PSDCAM      /COUNT EXHAUSTED
+2728 07540 5705         JMP I PSDDVI    /EXIT
+2729            
+2730 07541 0000 PSDMUY, 0               /MUY
+2731 07542 7300         CLA CLL
+2732 07543 3214         DCA MQLDVI      /CLEAR PRODUCT (MOST SIG.) REGISTER
+2733 07544 1304         TAD PSDDVI-1
+2734 07545 3243         DCA PSDLSR      /LOOP COUNTER
+2735 07546 1741         TAD I PSDMUY
+2736 07547 3200         DCA PSDMQL      /OPERAND
+2737 07550 2341         ISZ PSDMUY      /EXIT POINT
+2738 07551 5361         JMP .+10
+2739 07552 1214         TAD MQLDVI
+2740 07553 7420         SNL
+2741 07554 5357         JMP .+3
+2742 07555 7100         CLL
+2743 07556 1200         TAD PSDMQL
+2744 07557 7010         RAR
+2745 07560 3214         DCA MQLDVI
+2746 07561 1172         TAD SUDOMQ
+2747 07562 7010         RAR
+2748 07563 3172         DCA SUDOMQ      /LOW ORDER PRODUCT
+2749 07564 2243         ISZ PSDLSR
+2750 07565 5352         JMP .-13
+2751 07566 1214         TAD MQLDVI      /HIGH ORDER PRODUCT
+2752 07567 5741         JMP I PSDMUY    /EXIT
+2753            /PAUSE
+2754            >
+2755            $
+
+ALIVE   0021
+ANGLES  2462
+ARMDLY  3356
+ARMED   0034
+ASR     4565
+AX08    0000
+BANG    4105
+BANGL1  4114
+BIGSUN  1000
+BOUNCX  0067
+BOUNCY  0070
+BOUNX   2146
+BOUNY   2155
+BREAKU  0044
+BRKTBL  4200
+BSHIP   1323
+BSHIPE  1351
+CALPL   1663
+CALPNT  1600
+CALPT   1755
+CALPT2  1760
+CALPTX  1756
+CALPTY  1757
+CALPX   1753
+CALPX1  1671
+CALPX2  1710
+CALPY   1754
+CALPY1  1675
+CALPY2  1714
+CALPY3  1722
+CALPY4  1761
+CALPY5  1762
+CAM     4571
+CHAR    5736
+CLKINT  5422
+COLID1  4023
+COLID2  4054
+COLIDE  4000
+COLIDS  4014
+COLLD1  4012
+COLLD2  4051
+COLLD3  4102
+COLLD4  4010
+COLLD5  4047
+COLLD6  4100
+COMPAR  2634
+CONSER  0050
+COS     4474
+CRLF    5737
+D       0010
+D1      4507
+D2      4506
+DBUFP   0045
+DELAY1  5421
+DFLAME  3142
+DISBUF  4000
+DISPCH  5646
+DISPLA  4473
+DIVIDE  4472
+DK8EA   0001
+DK8EP   0000
+DRAW    4502
+DSTARS  4506
+DSUN    4507
+DVI     4561
+EAE     0000
+ESUN    1100
+FCLOCK  0000
+FCOSPH  3322
+FIRE    4510
+FIRONE  3266
+FLAME   4505
+FLAMEX  1005
+FSINPH  3330
+GETC    5724
+GETMIS  3674
+GGRAV   4476
+GRVTBL  0600
+HYPER   3357
+HYPERS  0032
+ICHAR   5420
+INPUT   6060
+INTEXT  5433
+INTRPT  5402
+KBOARD  5600
+KW12    0000
+LOOKUP  2200
+LSR     4566
+M1703   0001
+MAGRAV  7116
+MANGCO  7054
+MAXMIS  0053
+MBOUNC  7037
+MCURVE  7012
+MGRAVY  7100
+MISCNT  0033
+MISPNT  0066
+MISSCN  3633
+MISSIN  3634
+MISSL1  3617
+MISSLS  3600
+MISST1  3635
+MISST2  3636
+MISSUB  3637
+MISTBL  3400
+MMESG   6126
+MMISSL  7125
+MNORMA  7065
+MOPTA   6622
+MOPTB   6647
+MOPTBA  6674
+MOPTC   6710
+MOPTD   6724
+MOPTE   6734
+MOPTF   6754
+MPHLAT  7021
+MQA     4570
+MQL     4560
+MQLDVI  7414
+MQLMUY  7407
+MRETRO  7152
+MSHIPS  7003
+MSTARS  7027
+MSUN    6744
+MTHRUS  7137
+MUFO    6774
+MULT    4471
+MUY     4562
+MVELOX  6600
+MWRAP   7044
+NEWPL1  3010
+NEWPL2  3046
+NEWPL3  3070
+NEWPL4  3051
+NEWPL5  3073
+NEWPL6  3023
+NEWPLH  3104
+NEWPLL  3105
+NEWPLS  3106
+NEWPO1  2407
+NEWPO2  2425
+NEWPO3  2417
+NEWPO4  2435
+NEWPO5  2471
+NEWPO6  2423 unreferenced
+NEWPO7  2441
+NEWPO8  2475
+NEWPOL  3000
+NEWPOS  2400
+NMI     4563
+NMIBCK  7320
+NMIBK2  7311
+NMIOUT  7330
+NNUMMI  0052
+NULL    1003
+NULL1   1000 unreferenced
+NUMB    6057
+NUMBEX  6050
+NUMMIS  0051
+NXTANG  4504
+NXTPOS  4503
+OANGUL  6010
+OBOUNC  5747
+OCTALL  6026
+OCTALX  6023
+OCURVE  6422
+OFDECK  4501
+OFFSET  2211
+OGRAV   6061
+OMISSL  6102
+ONDECK  4500
+ONORM   6016
+OOPTIO  6200
+OPHLAT  6407
+OPTION  5444
+ORETRO  6120
+OSHIPJ  6270
+OSHIPS  6250
+OSTARS  6433
+OSUN    6442
+OTHRUS  6111
+OTM1    5664
+OUFO    6226
+OUFOR   6245
+OVELOC  6400
+OWRAP   6000
+PCH     5714
+PDP12   0000
+POLARS  3254
+PRCHR   5702
+PRMSG   5665
+PRST1   5671
+PSAUC1  5247
+PSAUC2  1720
+PSAUCP  0065
+PSDASR  7451
+PSDCAM  7403
+PSDDVI  7505
+PSDLSR  7443
+PSDMQA  7356
+PSDMQL  7400
+PSDMUY  7541
+PSDNMI  7300
+PSDSCA  7347
+PSDSHL  7422
+PUTMIS  3707
+QALPHA  0007 unreferenced
+QBETA   0006 unreferenced
+QCNT1   0056
+QCNT2   0057 unreferenced
+QCNT3   0060
+QCOSPH  0040
+QCOSTH  0043
+QDISXR  0012
+QGRAV   0062
+QPH     0026
+QPHDOT  0027
+QPHR    0030
+QR      0020
+QRET    0063
+QSHIP   0035
+QSHIPN  0036
+QSINPH  0037
+QSINTH  0042
+QTHA    0047
+QTHR    0046
+QTHROC  0064
+QTHRUS  0061
+QTIME   0041
+QTM1    0054
+QTM2    0055
+QVX     0024
+QVY     0025
+QXPOS   0022
+QXR1    0010
+QXR2    0011
+QXR3    0013
+QYPOS   0023
+RANDOM  4477
+RANUMH  0361
+RANUML  0362
+RANUMT  0360
+REINIT  5745
+ROOT    3107
+ROOTI   3140
+ROOTL   3117
+ROOTL1  3123
+ROOTN2  3137
+ROOTT   3141
+SALPN1  2037
+SALPN2  2033
+SALPNL  2031
+SALPTX  2114
+SALPTY  2115
+SALPX   2116
+SALPY   2117
+SAUC    2000
+SAUC1   1163
+SAUC1E  1201
+SAUC2   1315
+SAUC2E  1323
+SAVAC   5400
+SAVLK   5401
+SC      4315
+SC1     4777
+SC2     4776
+SCA     4567
+SCALE   2515
+SCALE1  2600
+SCALE2  2635
+SCATBL  4320
+SCATTE  3723
+SCATTM  3754
+SETGR1  2706
+SETGRL  2671
+SETGRV  2662
+SETGRX  2677
+SHIELD  0031
+SHIP1   1351
+SHIP1C  1025
+SHIP1E  1105
+SHIP1X  1353
+SHIP1Y  1354
+SHIP2   1372
+SHIP2C  1201
+SHIP2E  1251
+SHIP2X  1374
+SHIP2Y  1375
+SHIPSZ  0021
+SHL     4564
+SIN     4475
+SINTAB  0400
+SPCWAR  4600
+STARTU  4623
+STCLK   5446
+STOVER  5111
+SUDOMQ  0172
+SUDOSC  0173
+SUN     3200
+SUNCNT  3251
+SUND2   3235 unreferenced
+SUNHLF  3253
+SUNL1   3241 unreferenced
+SUNL2   3237
+SUNPT1  1200
+SUNPT2  1400
+SUNTMP  3252
+SWITCH  1421
+T1      1622
+T2      1631
+T3      1653
+T30G    0000
+T4      1661
+TABLE   2212
+TELSW   5417
+TX      2627
+TY      2643
+VC8E    0001
+VC8I    0000
+WAIT    5110
+WAR     5002
+WAR1    5232
+WAR1E   5027
+WAR2    5244
+WAR2E   5055
+WARDIS  5066 unreferenced
+WARDX   5075
+WARS2   5032
+WARS3   5060
+WARSUB  5200
+XADDD   2120
+XADDD1  2145
+XADDD2  2141
+XCOSIN  0332
+XDISL   0274
+XDISPL  0261
+XDIVID  0234
+XGGRAV  2650
+XMULT   0202
+XMULT1  0217
+XMULTS  0233
+XOFDEC  1431
+XONDEC  1413
+XRANDO  0336
+XSINE   0313
+XSQUAR  2661
+XXX     7200
+XXXXXX  0111
