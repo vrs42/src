@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+# "Triple-packed" packed floppies just pack 2 words 
+# into 3 bytes.  Here, we just unpack the 3 bytes 
+# into two words.
+
+foreach $f (@ARGV) {
+  open(INPUT, $f) || die "$f: $!";
+  binmode(INPUT);
+  while (read(INPUT, $buf, 3) == 3) {
+    ($b1, $b2, $b3) = unpack("CCC", $buf);
+    $b1 &= 0177;
+    $b2 &= 0177;
+    $b3 &= 0177;
+#   print pack("CCC", $b2, $b3, $b1);
+    print pack("CCC", $b1, $b2, $b3);
+  }
+}
