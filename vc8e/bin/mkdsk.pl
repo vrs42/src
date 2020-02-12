@@ -8,9 +8,10 @@
 # Write a block to the new image.
 sub writeblk {
     local($blk, @buf) = @_;
-    seek(IMAGE, ($blk+$fsbase)*512, 0) || die "seek($iname+): $!";
+    seek(IMAGE, ($blk+$fsbase)*512, 0) || die "seek($iname): $!";
     $buf = pack("S*", @buf);
-    syswrite(IMAGE, $buf) || die "write($iname+): $!";
+    return unless length($buf);
+    syswrite(IMAGE, $buf) || die "write($iname) $f: $!";
 # FEATURE: Should book-keep which blocks were written, 
 # and which were forgotten.
 }
@@ -177,7 +178,7 @@ sub os8fs {
     $fsbase = oct($fsbase) if $fsbase =~ /^0/;
     &copyout("$fsname/.boot", 0, 0);
     $sblk = 07;
-    if (-x "$fsname/.kmon") {
+    if (-f "$fsname/.kmon") {
 	# System disk, copy out .kmon, etc.
         &copyout("$fsname/.kmon",  07,  012);
         &copyout("$fsname/.usr",   013, 015);

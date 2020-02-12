@@ -7,10 +7,11 @@ image: all
 
 all: $(BN)
 
-%.bn: %.pa
-	$(BIN)/pal -d $<
-	dd if=$(<:.pa=.bin) of=$@ bs=384 conv=sync
+%.bn: %.bin
+	$(BIN)/bin2bn.pl $< >$@
 
-%.bn: %.pal
+%.bin: %.pa
 	$(BIN)/pal -d $<
-	dd if=$(<:.pal=.bin) of=$@ bs=384 conv=sync
+
+%.bin: %.pal
+	$(BIN)/pal -d $<
