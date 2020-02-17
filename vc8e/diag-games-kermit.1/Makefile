@@ -1,5 +1,5 @@
 BIN = ../bin
-PA = kaleid.pa spacex.pa spcwr3.pa noeae.pa # life.pa
+PA = kaleid.pa spacex.pa spcwr3.pa noeae.pa life.pa
 BN  = $(PA:.pa=.bn)
 
 image: all
