@@ -156,12 +156,12 @@
  156            MEMORY=7 /TOTAL MEMORY FIELDS MINUS 1; WILL NOT ASSEMBLE IF TOO LITTLE MEMORY
  157            PARSER=0 /IF 0, RUNS THE NORMAL INIT ROUTINE; IF 1, TAKES RLE VIA TTY
  158            VC8E=1   /IF 0, ASSUMES A (VERY LARGE!) TERMINAL; IF 1, USE A VC8E
- 159            STORE=1  /IF 0, ASSUMES A NON-STORAGE OSCILLOSCOPE; IF 1, A STORAGE 'SCOPE
+ 159            STORE=0  /IF 0, ASSUMES A NON-STORAGE OSCILLOSCOPE; IF 1, A STORAGE 'SCOPE
  160            FASTR=0  /IF 0, SLOW RASTER; IF 1, FAST RASTER (NEEDS 32K); ONLY FOR STORE=0
  161            VT100=0  /IF 0, ASSUMES A DUMB TERMINAL; IF 1, A VT100-LIKE TERMINAL
  162            STATS=1  /IF 0, NO STATISTICS; IF 1, PRINTS GENERATION AND TOTAL LIFE
  163            PRTDOT=0 /IF 0, PRINTS SPACES FOR DEATH; IF 1, DOTS
- 164            SIMHVC=1 /IF 0, ASSUMES A REAL VC8E; IF 1, ASSUMES VC8 DEVICE IN SIMH
+ 164            SIMHVC=0 /IF 0, ASSUMES A REAL VC8E; IF 1, ASSUMES VC8 DEVICE IN SIMH
  165            
  166            /FUN INITIAL CONDITIONS; USE COMBINATIONS AS YOU LIKE
  167            /DEFINITIONS ARE AT THE END OF THE FILE
@@ -442,8 +442,8 @@ off page        	          ^
  384 00201 6040         6040            /CLEAR TTY FLAG
  385            START,
  386            IFNZRO STATS < /{
- 387 00202 4317         JMS RSTLIF      /RESET LIFE COUNTER
- 388 00203 4331         JMS RSTGEN      /RESET CYCLE COUNTER
+ 387 00202 4314         JMS RSTLIF      /RESET LIFE COUNTER
+ 388 00203 4326         JMS RSTGEN      /RESET CYCLE COUNTER
  389            > /}
  390                    JMS INIT        /INITIALIZE THE BITMAP
 off page        	        ^
@@ -452,12 +452,12 @@ off page        	        ^
  392                    JMS PRNTST      /PRINT INITIAL STATISTICS
 off page        	          ^
      00205 4775 
- 393 00206 4317         JMS RSTLIF      /RESET LIFE COUNTER
+ 393 00206 4314         JMS RSTLIF      /RESET LIFE COUNTER
  394            > /}
  395            IFNZRO VC8E&STORE < /{
- 396 00207 7200         CLA             /SET VC8E FOR STORAGE MODE
- 397 00210 1374         TAD (20
- 398 00211 6056         DILE
+ 396                    CLA             /SET VC8E FOR STORAGE MODE
+ 397                    TAD (20
+ 398                    DILE
  399            > /}
  400            IFNZRO VC8E&NOSTOR&FASTR < /{
  401                    CLA CMA         /INITIALIZE PREVIOUS Y VALUE FOR FAST RASTER
@@ -467,118 +467,117 @@ off page        	          ^
  405                    JMS RSTDF       /RESET CDF FOR FAST RASTER
  406            > /}
  407            
- 408 00212 7200         CLA             /INITIALIZE CURRENT BIT AND ADDRESS
- 409 00213 1373         TAD (-14
- 410 00214 3021         DCA CURBIT      /CURBIT = -14 (AKA BIT 0)
- 411 00215 3020         DCA ADDR        /ADDR = 0
- 412 00216 3023         DCA LIFDET
- 413 00217 3032         DCA TEMP
- 414 00220 1372         TAD (CACHE1     /SET UP THE CACHE
- 415 00221 3024         DCA TOPPTR
- 416 00222 1371         TAD (CACHE2
- 417 00223 3025         DCA MIDPTR
- 418 00224 1370         TAD (CACHE3
- 419 00225 3026         DCA BOTPTR
+ 408 00207 7200         CLA             /INITIALIZE CURRENT BIT AND ADDRESS
+ 409 00210 1374         TAD (-14
+ 410 00211 3021         DCA CURBIT      /CURBIT = -14 (AKA BIT 0)
+ 411 00212 3020         DCA ADDR        /ADDR = 0
+ 412 00213 3023         DCA LIFDET
+ 413 00214 3032         DCA TEMP
+ 414 00215 1373         TAD (CACHE1     /SET UP THE CACHE
+ 415 00216 3024         DCA TOPPTR
+ 416 00217 1372         TAD (CACHE2
+ 417 00220 3025         DCA MIDPTR
+ 418 00221 1371         TAD (CACHE3
+ 419 00222 3026         DCA BOTPTR
  420            
- 421 00226 1367         TAD (-WRDCOL-1  /COPY INITIAL CACHE
- 422 00227 3011         DCA CPTR1
- 423 00230 1366         TAD (CACHE1-1
- 424 00231 3012         DCA CPTR2
- 425 00232 1365         TAD (-WRDCOL    /COPYING ONE ROW
- 426 00233 3031         DCA CNT
- 427 00234 6211         CDF DFIELD
- 428 00235 1411         TAD I CPTR1
- 429 00236 6201         CDF 0
- 430 00237 7440         SZA
- 431 00240 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
- 432 00241 3412         DCA I CPTR2
- 433 00242 2031         ISZ CNT
- 434 00243 5234         JMP .-7
+ 421 00223 1370         TAD (-WRDCOL-1  /COPY INITIAL CACHE
+ 422 00224 3011         DCA CPTR1
+ 423 00225 1367         TAD (CACHE1-1
+ 424 00226 3012         DCA CPTR2
+ 425 00227 1366         TAD (-WRDCOL    /COPYING ONE ROW
+ 426 00230 3031         DCA CNT
+ 427 00231 6211         CDF DFIELD
+ 428 00232 1411         TAD I CPTR1
+ 429 00233 6201         CDF 0
+ 430 00234 7440         SZA
+ 431 00235 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 432 00236 3412         DCA I CPTR2
+ 433 00237 2031         ISZ CNT
+ 434 00240 5231         JMP .-7
  435            
- 436 00244 1032         TAD TEMP        /ANY LIFE?
- 437 00245 7640         SZA CLA
- 438 00246 7001         IAC             /YES
- 439 00247 1023         TAD LIFDET
- 440 00250 7104         CLL RAL
- 441 00251 3023         DCA LIFDET
- 442 00252 3032         DCA TEMP
+ 436 00241 1032         TAD TEMP        /ANY LIFE?
+ 437 00242 7640         SZA CLA
+ 438 00243 7001         IAC             /YES
+ 439 00244 1023         TAD LIFDET
+ 440 00245 7104         CLL RAL
+ 441 00246 3023         DCA LIFDET
+ 442 00247 3032         DCA TEMP
  443            
- 444 00253 1365         TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
- 445 00254 3031         DCA CNT
- 446 00255 6211         CDF DFIELD
- 447 00256 1411         TAD I CPTR1
- 448 00257 6201         CDF 0
- 449 00260 7440         SZA
- 450 00261 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
- 451 00262 3412         DCA I CPTR2
- 452 00263 2031         ISZ CNT
- 453 00264 5255         JMP .-7
+ 444 00250 1366         TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
+ 445 00251 3031         DCA CNT
+ 446 00252 6211         CDF DFIELD
+ 447 00253 1411         TAD I CPTR1
+ 448 00254 6201         CDF 0
+ 449 00255 7440         SZA
+ 450 00256 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 451 00257 3412         DCA I CPTR2
+ 452 00260 2031         ISZ CNT
+ 453 00261 5252         JMP .-7
  454            
- 455 00265 1032         TAD TEMP        /ANY LIFE?
- 456 00266 7640         SZA CLA
- 457 00267 7001         IAC             /YES
- 458 00270 1023         TAD LIFDET
- 459 00271 7104         CLL RAL
- 460 00272 3023         DCA LIFDET
- 461 00273 3032         DCA TEMP
+ 455 00262 1032         TAD TEMP        /ANY LIFE?
+ 456 00263 7640         SZA CLA
+ 457 00264 7001         IAC             /YES
+ 458 00265 1023         TAD LIFDET
+ 459 00266 7104         CLL RAL
+ 460 00267 3023         DCA LIFDET
+ 461 00270 3032         DCA TEMP
  462            
- 463 00274 1365         TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
- 464 00275 3031         DCA CNT
- 465 00276 6211         CDF DFIELD
- 466 00277 1411         TAD I CPTR1
- 467 00300 6201         CDF 0
- 468 00301 7440         SZA
- 469 00302 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
- 470 00303 3412         DCA I CPTR2
- 471 00304 2031         ISZ CNT
- 472 00305 5276         JMP .-7
+ 463 00271 1366         TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
+ 464 00272 3031         DCA CNT
+ 465 00273 6211         CDF DFIELD
+ 466 00274 1411         TAD I CPTR1
+ 467 00275 6201         CDF 0
+ 468 00276 7440         SZA
+ 469 00277 2032         ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 470 00300 3412         DCA I CPTR2
+ 471 00301 2031         ISZ CNT
+ 472 00302 5273         JMP .-7
  473            
- 474 00306 1032         TAD TEMP        /ANY LIFE?
- 475 00307 7640         SZA CLA
- 476 00310 2023         ISZ LIFDET      /YES
+ 474 00303 1032         TAD TEMP        /ANY LIFE?
+ 475 00304 7640         SZA CLA
+ 476 00305 2023         ISZ LIFDET      /YES
  477                    JMP CHKLIF      /JUMP TO THE MAIN LOOP
 off page        	          ^
-     00311 5764 
+     00306 5765 
  478            
  479            IFNZRO STATS < /{
  480            /INCREMENT LIFE COUNTER FOR STATISTICS
- 481 00312 0000 INCLIF, 0
- 482 00313 2027         ISZ LIFCNT      /INCREMENT BOTTOM 12
- 483 00314 5712         JMP I INCLIF    /NO OVERFLOW
- 484 00315 2030         ISZ LIFCNT+1    /OVERFLOW
- 485 00316 5712         JMP I INCLIF    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
+ 481 00307 0000 INCLIF, 0
+ 482 00310 2027         ISZ LIFCNT      /INCREMENT BOTTOM 12
+ 483 00311 5707         JMP I INCLIF    /NO OVERFLOW
+ 484 00312 2030         ISZ LIFCNT+1    /OVERFLOW
+ 485 00313 5707         JMP I INCLIF    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
  486            
  487            /RESET LIFE COUNTER FOR STATISTICS
- 488 00317 0000 RSTLIF, 0
- 489 00320 7200         CLA
- 490 00321 3027         DCA LIFCNT
- 491 00322 3030         DCA LIFCNT+1
- 492 00323 5717         JMP I RSTLIF
+ 488 00314 0000 RSTLIF, 0
+ 489 00315 7200         CLA
+ 490 00316 3027         DCA LIFCNT
+ 491 00317 3030         DCA LIFCNT+1
+ 492 00320 5714         JMP I RSTLIF
  493            
  494            /INCREMENT CYCLE COUNTER FOR STATISTICS
- 495 00324 0000 INCGEN, 0
- 496 00325 2173         ISZ GENCNT      /INCREMENT BOTTOM 12
- 497 00326 5724         JMP I INCGEN    /NO OVERFLOW
- 498 00327 2174         ISZ GENCNT+1    /OVERFLOW
- 499 00330 5724         JMP I INCGEN    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
+ 495 00321 0000 INCGEN, 0
+ 496 00322 2173         ISZ GENCNT      /INCREMENT BOTTOM 12
+ 497 00323 5721         JMP I INCGEN    /NO OVERFLOW
+ 498 00324 2174         ISZ GENCNT+1    /OVERFLOW
+ 499 00325 5721         JMP I INCGEN    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
  500            
  501            /RESET CYCLE COUNTER FOR STATISTICS
- 502 00331 0000 RSTGEN, 0
- 503 00332 7200         CLA
- 504 00333 3173         DCA GENCNT
- 505 00334 3174         DCA GENCNT+1
- 506 00335 5731         JMP I RSTGEN
+ 502 00326 0000 RSTGEN, 0
+ 503 00327 7200         CLA
+ 504 00330 3173         DCA GENCNT
+ 505 00331 3174         DCA GENCNT+1
+ 506 00332 5726         JMP I RSTGEN
  507            > /}
  508            
- 509 00364 0400         PAGE
-     00365 7760 
-     00366 0037 
-     00367 7757 
-     00370 0100 
-     00371 0060 
-     00372 0040 
-     00373 7764 
-     00374 0020 
+ 509 00365 0400         PAGE
+     00366 7760 
+     00367 0037 
+     00370 7757 
+     00371 0100 
+     00372 0060 
+     00373 0040 
+     00374 7764 
      00375 2034 
      00376 2217 
      00377 6616 
@@ -708,7 +707,7 @@ off page        	          ^
      00574 0017 
      00575 0003 
      00576 0014 
-     00577 0714 
+     00577 0713 
  621            
  622 00600 1424 NOTEDG, TAD I TOPPTR    /GET TOP WORD
  623 00601 7450         SNA
@@ -782,7 +781,7 @@ off page        	         ^
  689 00653 0420         AND I ADDR
  690 00654 3420         DCA I ADDR
  691 00655 6201         CDF 0
- 692 00656 5272         JMP BITLP
+ 692 00656 5271         JMP BITLP
  693            
  694            BIRTH,
  695            IFNZRO STATS < /{
@@ -795,81 +794,79 @@ off page        	          ^
  700            > /}
  701            IFNZRO VC8E&STORE < /{
  702                    JMS DISPT       /VC8E STORAGE, DISPLAY A POINT
-off page        	         ^
-     00660 4773 
  703            > /}
  704            IFZERO VC8E+NOPRT+RLYNPR < /{
  705                    JMS PRTLIF      /PRINT LIFE (YAY)
  706            > /}
- 707 00661 1421         TAD I CURBIT    /GET MASK
- 708 00662 7040         CMA
- 709 00663 6211         CDF DFIELD
- 710 00664 0420         AND I ADDR      /COMPLEMENT MASK AND 'AND' IT WITH CURRENT WORD
- 711 00665 6201         CDF 0
- 712 00666 1421         TAD I CURBIT    /ADD IN LIVE CELL
- 713 00667 6211         CDF DFIELD
- 714 00670 3420         DCA I ADDR      /SAVE IT
- 715 00671 6201         CDF 0
+ 707 00660 1421         TAD I CURBIT    /GET MASK
+ 708 00661 7040         CMA
+ 709 00662 6211         CDF DFIELD
+ 710 00663 0420         AND I ADDR      /COMPLEMENT MASK AND 'AND' IT WITH CURRENT WORD
+ 711 00664 6201         CDF 0
+ 712 00665 1421         TAD I CURBIT    /ADD IN LIVE CELL
+ 713 00666 6211         CDF DFIELD
+ 714 00667 3420         DCA I ADDR      /SAVE IT
+ 715 00670 6201         CDF 0
  716            
- 717 00672 2021 BITLP,  ISZ CURBIT      /NEXT BIT
+ 717 00671 2021 BITLP,  ISZ CURBIT      /NEXT BIT
  718                    JMP DOLIFE      /NOTHING ELSE TO DO HERE!
 off page        	          ^
-     00673 5777 
- 719 00674 7200         CLA             /NEED TO GO TO NEXT WORD AND RESET CURRENT BIT TO -14
- 720 00675 1372         TAD (-14
- 721 00676 3021         DCA CURBIT
- 722 00677 2020         ISZ ADDR        /FINAL BITMAP ADDRESS?
- 723 00700 5302         JMP CHKROW      /NO
- 724 00701 5320         JMP FINAL       /YES
+     00672 5777 
+ 719 00673 7200         CLA             /NEED TO GO TO NEXT WORD AND RESET CURRENT BIT TO -14
+ 720 00674 1373         TAD (-14
+ 721 00675 3021         DCA CURBIT
+ 722 00676 2020         ISZ ADDR        /FINAL BITMAP ADDRESS?
+ 723 00677 5301         JMP CHKROW      /NO
+ 724 00700 5317         JMP FINAL       /YES
  725            
- 726 00702 1020 CHKROW, TAD ADDR        /END OF ROW?
- 727 00703 0371         AND (WRDCOL-1
- 728 00704 7640         SZA CLA
- 729 00705 5310         JMP NOTDUN      /NO
+ 726 00701 1020 CHKROW, TAD ADDR        /END OF ROW?
+ 727 00702 0372         AND (WRDCOL-1
+ 728 00703 7640         SZA CLA
+ 729 00704 5307         JMP NOTDUN      /NO
  730            IFZERO VC8E+NOPRT+RLYNPR < /{
  731                    JMS DOCRLF      /YES
  732            > /}
  733                    JMS UCACHE      /UPDATE CACHE
 off page        	          ^
-     00706 4770 
+     00705 4771 
  734                    JMP CHKLIF
 off page        	         ^
-     00707 5767 
+     00706 5770 
  735            
- 736 00710 2024 NOTDUN, ISZ TOPPTR      /NEXT WORDS
- 737 00711 2025         ISZ MIDPTR
- 738 00712 2026         ISZ BOTPTR
+ 736 00707 2024 NOTDUN, ISZ TOPPTR      /NEXT WORDS
+ 737 00710 2025         ISZ MIDPTR
+ 738 00711 2026         ISZ BOTPTR
  739                    JMP DOLIFE
 off page        	         ^
-     00713 5777 
+     00712 5777 
  740            
  741            NOLIFE,
  742            IFZERO VC8E+NOPRT+RLYNPR < /{
  743                    JMS DTHROW      /PRINT A ROW OF DEATH...
  744            > /}
- 745 00714 1020         TAD ADDR        /END OF BITMAP?
- 746 00715 1366         TAD (WRDCOL
- 747 00716 7440         SZA
- 748 00717 5327         JMP NOTFIN      /NO
+ 745 00713 1020         TAD ADDR        /END OF BITMAP?
+ 746 00714 1367         TAD (WRDCOL
+ 747 00715 7440         SZA
+ 748 00716 5326         JMP NOTFIN      /NO
  749            FINAL,
- 750 00720 6031         KSF             /ANY CHARACTER?
- 751 00721 7410         SKP             /NOPE
+ 750 00717 6031         KSF             /ANY CHARACTER?
+ 751 00720 7410         SKP             /NOPE
  752                    JMS CHKCTL      /YES, CHECK FOR A CONTROL CHARACTER
 off page        	          ^
-     00722 4765 
+     00721 4766 
  753            IFNZRO STATS < /{
  754                    JMS INCGEN      /YES, INCREMENT CYCLE COUNT
 off page        	          ^
-     00723 4764 
+     00722 4765 
  755            IFZERO VC8E+NOPRT+RLYNPR < /{
  756                    JMS DOCRLF      /GO TO NEXT LINE IF NEEDED
  757            > /}
  758                    JMS PRNTST      /PRINT STATISTICS
 off page        	          ^
-     00724 4763 
+     00723 4764 
  759                    JMS RSTLIF      /AND RESET LIFE COUNTER
 off page        	          ^
-     00725 4762 
+     00724 4763 
  760            > /}
  761            IFZERO VC8E+NOPRT+RLYNPR < /{
  762                    JMS PRTHOM      /GO BACK HOME
@@ -877,28 +874,27 @@ off page        	          ^
  764            IFNZRO VC8E < /{
  765                    JMS RASERA      /EITHER DISPLAY A RASTER OR ERASE THE SCREEN
 off page        	          ^
-     00726 4761 
+     00725 4762 
  766            > /}
- 767 00727 3020 NOTFIN, DCA ADDR
+ 767 00726 3020 NOTFIN, DCA ADDR
  768                    JMS UCACHE      /UPDATE CACHE
 off page        	          ^
-     00730 4770 
+     00727 4771 
  769                    JMP CHKLIF      /AND TRY AGAIN
 off page        	          ^
-     00731 5767 
+     00730 5770 
  770            
- 771 00761 1200         PAGE
-     00762 0317 
-     00763 2034 
-     00764 0324 
-     00765 6600 
-     00766 0020 
-     00767 0400 
-     00770 1000 
-     00771 0017 
-     00772 7764 
-     00773 1047 
-     00774 0312 
+ 771 00762 1263         PAGE
+     00763 0314 
+     00764 2034 
+     00765 0321 
+     00766 6600 
+     00767 0020 
+     00770 0400 
+     00771 1000 
+     00772 0017 
+     00773 7764 
+     00774 0307 
      00775 7777 
      00776 7775 
      00777 0403 
@@ -1120,42 +1116,39 @@ off page        	          ^
  987            PREVY,  0
  988            > /}
  989            IFNZRO STORE < /{
- 990 01047 0000 DISPT,  0
- 991 01050 7300         CLA CLL
- 992 01051 1020         TAD ADDR        /X = (12 * (ADDR & (WRDCOL-1))) + CURBIT + 12 + STARTX
- 993 01052 0374         AND (WRDCOL-1
- 994 01053 3036         DCA X
- 995 01054 1036         TAD X
- 996 01055 1036         TAD X
- 997 01056 1036         TAD X
- 998 01057 7006         RTL
- 999 01060 1021         TAD CURBIT
-1000 01061 1373         TAD (12
-1001 01062 7106         CLL RTL
-1002 01063 1034         TAD STARTX
-1003 01064 6053         DILX
-1004 01065 3036         DCA X
+ 990            DISPT,  0
+ 991                    CLA CLL
+ 992                    TAD ADDR        /X = (12 * (ADDR & (WRDCOL-1))) + CURBIT + 12 + STARTX
+ 993                    AND (WRDCOL-1
+ 994                    DCA X
+ 995                    TAD X
+ 996                    TAD X
+ 997                    TAD X
+ 998                    RTL
+ 999                    TAD CURBIT
+1000                    TAD (12
+1001                    CLL RTL
+1002                    TAD STARTX
+1003                    DILX
+1004                    DCA X
 1005            
-1006 01066 1020         TAD ADDR        /Y = (((ADDR SHR 4) & 0377) + STARTY)
-1007 01067 7012         RTR
-1008 01070 7012         RTR
-1009 01071 0372         AND (377
-1010 01072 7106         CLL RTL
-1011 01073 7041         CMA IAC
-1012 01074 1035         TAD STARTY
-1013 01075 6054         DILY
-1014 01076 3037         DCA Y
+1006                    TAD ADDR        /Y = (((ADDR SHR 4) & 0377) + STARTY)
+1007                    RTR
+1008                    RTR
+1009                    AND (377
+1010                    CLL RTL
+1011                    CMA IAC
+1012                    TAD STARTY
+1013                    DILY
+1014                    DCA Y
 1015            
-1016 01077 7410         DISD
-1017 01100 5277         JMP .-1
-1018 01101 6055         DIXY            /X,Y
-1019 01102 5647         JMP I DISPT
+1016                    DISD
+1017                    JMP .-1
+1018                    DIXY            /X,Y
+1019                    JMP I DISPT
 1020            > /}
 1021            
-1022 01172 0377         PAGE
-     01173 0012 
-     01174 0017 
-     01175 0020 
+1022 01175 0020         PAGE
      01176 0006 
      01177 7760 
 1023            
@@ -1164,11 +1157,11 @@ off page        	          ^
 1026            /IF THE PREVIOUS WORD HAD ACTIVITY AND WE HAVE NOT YET FINISHED A LINE, THE
 1027            /Y DAC IS ALREADY SET UP FOR US. NO NEED TO RECALCULATE IT. THE X DAC IS
 1028            /ACTUALLY SET UP AS WELL, SO THAT'S HANDY.
-1029            RASTER, 0
-1030                    CLA
-1031                    DCA ADDR
-1032                    TAD (-14
-1033                    DCA CURBIT
+1029 01200 0000 RASTER, 0
+1030 01201 7200         CLA
+1031 01202 3020         DCA ADDR
+1032 01203 1377         TAD (-14
+1033 01204 3021         DCA CURBIT
 1034            IFNZRO RSTRSC < /{
 1035                    TAD STARTX
 1036                    DILX
@@ -1179,19 +1172,19 @@ off page        	          ^
 1041                    DCA SHRTCT      /SET UP FOR TAKING SHORTCUT
 1042            > /}
 1043            
-1044            RASLP,  CDF DFIELD
-1045                    TAD I ADDR
-1046                    CDF 0
-1047                    SZA
-1048                    JMP DODRAW
+1044 01205 6211 RASLP,  CDF DFIELD
+1045 01206 1420         TAD I ADDR
+1046 01207 6201         CDF 0
+1047 01210 7440         SZA
+1048 01211 5215         JMP DODRAW
 1049            IFNZRO RSTRSC < /{
 1050                    DCA SHRTCT      /CAN'T DO SHORTCUT
 1051            > /}
-1052            RSCONT, ISZ ADDR
-1053                    JMP RASLP
-1054                    JMP I RASTER    /YES, ALL DONE
+1052 01212 2020 RSCONT, ISZ ADDR
+1053 01213 5205         JMP RASLP
+1054 01214 5600         JMP I RASTER    /YES, ALL DONE
 1055            
-1056            DODRAW, DCA DRWWRD      /STORE WORD TO PLOT
+1056 01215 3262 DODRAW, DCA DRWWRD      /STORE WORD TO PLOT
 1057            IFNZRO RSTRSC < /{
 1058                    ISZ SHRTCT      /CAN WE DO THE SHORTCUT?
 1059                    JMP CALCXY      /NO, WE CAN'T
@@ -1205,25 +1198,25 @@ off page        	          ^
 1067                    JMP CALCY       /AND JUST CALCULATE Y
 1068            > /}
 1069            
-1070            CALCXY, TAD ADDR        /X = (4 * 12 * (ADDR & (WRDCOL-1))) + STARTX
-1071                    AND (WRDCOL-1
-1072                    DCA X
-1073                    TAD X
-1074                    TAD X
-1075                    TAD X
-1076                    CLL RTL
-1077                    CLL RTL
-1078                    TAD STARTX
-1079                    DILX
-1080                    DCA X
+1070 01216 1020 CALCXY, TAD ADDR        /X = (4 * 12 * (ADDR & (WRDCOL-1))) + STARTX
+1071 01217 0376         AND (WRDCOL-1
+1072 01220 3036         DCA X
+1073 01221 1036         TAD X
+1074 01222 1036         TAD X
+1075 01223 1036         TAD X
+1076 01224 7106         CLL RTL
+1077 01225 7106         CLL RTL
+1078 01226 1034         TAD STARTX
+1079 01227 6053         DILX
+1080 01230 3036         DCA X
 1081            
-1082            CALCY,  TAD ADDR        /Y = STARTY - (4 * ((ADDR SHR 4) & 0377))
-1083                    RTR
-1084                    AND (1774
-1085                    CMA IAC
-1086                    TAD STARTY
-1087                    DILY
-1088                    DCA Y
+1082 01231 1020 CALCY,  TAD ADDR        /Y = STARTY - (4 * ((ADDR SHR 4) & 0377))
+1083 01232 7012         RTR
+1084 01233 0375         AND (1774
+1085 01234 7041         CMA IAC
+1086 01235 1035         TAD STARTY
+1087 01236 6054         DILY
+1088 01237 3037         DCA Y
 1089            
 1090            IFNZRO RSTRSC < /{
 1091            SCTCON, CMA             /WE CAN TAKE A SHORTCUT NEXT TIME, MAYBE...
@@ -1253,30 +1246,30 @@ off page        	          ^
 1115            > /}
 1116            
 1117            IFZERO RSTRSC < /{
-1118            WRDLP,  TAD DRWWRD
-1119                    AND I CURBIT
-1120                    SNA CLA         /ARE WE PLOTTING A BIT OR NOT?
-1121                    JMP NXTBIT      /NOPE, SKIP AHEAD
-1122                    DISD            /YES, WAIT FOR DACS TO SETTLE
-1123                    JMP .-1
-1124                    DIXY
+1118 01240 1262 WRDLP,  TAD DRWWRD
+1119 01241 0421         AND I CURBIT
+1120 01242 7650         SNA CLA         /ARE WE PLOTTING A BIT OR NOT?
+1121 01243 5247         JMP NXTBIT      /NOPE, SKIP AHEAD
+1122 01244 6052         DISD            /YES, WAIT FOR DACS TO SETTLE
+1123 01245 5244         JMP .-1
+1124 01246 6055         DIXY
 1125            
-1126            NXTBIT, ISZ CURBIT
-1127                    JMP NEXTX
-1128                    TAD (-14
-1129                    DCA CURBIT
-1130                    JMP RSCONT
+1126 01247 2021 NXTBIT, ISZ CURBIT
+1127 01250 5254         JMP NEXTX
+1128 01251 1377         TAD (-14
+1129 01252 3021         DCA CURBIT
+1130 01253 5212         JMP RSCONT
 1131            
-1132            NEXTX,  TAD X           /INCREMENT X BY 4 BECAUSE OF OUR SCALE
-1133                    TAD (4
-1134                    DILX
-1135                    DCA X
-1136                    JMP WRDLP
+1132 01254 1036 NEXTX,  TAD X           /INCREMENT X BY 4 BECAUSE OF OUR SCALE
+1133 01255 1374         TAD (4
+1134 01256 6053         DILX
+1135 01257 3036         DCA X
+1136 01260 5240         JMP WRDLP
 1137            
-1138            SHRTCT, 0
+1138 01261 0000 SHRTCT, 0
 1139            > /}
 1140            
-1141            DRWWRD, 0
+1141 01262 0000 DRWWRD, 0
 1142            > /}
 1143            
 1144            IFZERO SLOWR+STORE < /{
@@ -1344,14 +1337,14 @@ off page        	          ^
 1206            /RASTER THE BITMAP HERE FOR SEVERAL LOOPS, OR ERASE THE
 1207            /SCREEN. YOU COULD ADD A DELAY BEFORE THE ERASE TO ADMIRE
 1208            /THE COMPLETED CYCLE LONGER.
-1209 01200 0000 RASERA, 0
+1209 01263 0000 RASERA, 0
 1210            IFNZRO STORE < /{
-1211 01201 7200         CLA
-1212 01202 1377         TAD (30         /ERASE VC8E
-1213 01203 6056         DILE
-1214 01204 7410         DISD            /WAIT FOR ERASE TO COMPLETE
-1215 01205 5204         JMP .-1
-1216 01206 7200         CLA
+1211                    CLA
+1212                    TAD (30         /ERASE VC8E
+1213                    DILE
+1214                    DISD            /WAIT FOR ERASE TO COMPLETE
+1215                    JMP .-1
+1216                    CLA
 1217            > /}
 1218            IFZERO STORE < /{
 1219            IFNZRO FASTR < /{
@@ -1377,18 +1370,22 @@ off page        	          ^
 1239                    DCA PREVY
 1240            > /}
 1241            IFZERO FASTR < /{
-1242                    CLA
-1243                    TAD (-20        /16 LOOPS
-1244                    DCA CNT
-1245                    JMS RASTER      /DO THE RASTER
-1246                    ISZ CNT
-1247                    JMP .-2
+1242 01264 7200         CLA
+1243 01265 1373         TAD (-20        /16 LOOPS
+1244 01266 3031         DCA CNT
+1245 01267 4200         JMS RASTER      /DO THE RASTER
+1246 01270 2031         ISZ CNT
+1247 01271 5267         JMP .-2
 1248            > /}
 1249            > /}
-1250 01207 5600         JMP I RASERA
+1250 01272 5663         JMP I RASERA
 1251            > /}
 1252            
-1253 01377 0030         PAGE
+1253 01373 7760         PAGE
+     01374 0004 
+     01375 1774 
+     01376 0017 
+     01377 7764 
 1254            
 1255            /RUN-LENGTH ENCODING INITIALIZER
 1256            
@@ -1518,7 +1515,7 @@ off page        	          ^
 1378 01572 0020         PAGE
      01573 7760 
      01574 0017 
-     01575 0312 
+     01575 0307 
      01576 0377 
      01577 7764 
 1379            
@@ -2362,154 +2359,3 @@ off page        	         ^
      06775 7756 
      06776 7775 
      06777 0177 
-
-ACORN   0000
-ADDR    0020
-ASCOUT  1731
-B       6000
-BAKRAK  0000
-BIRTH   0657
-BITLP   0672
-BOTPTR  0026
-BREED   0000
-CACHE1  0040
-CACHE2  0060
-CACHE3  0100
-CDFI    6716
-CHKCTL  6600
-CHKLIF  0400
-CHKROW  0702
-CNT     0031
-COPY    6670
-CPTR1   0011
-CPTR2   0012
-CRLF    2214
-CURBIT  0021
-CURDAT  1531 unreferenced
-CURSTA  1530
-DABADD  2000
-DABASC  1674
-DABDUN  1667
-DABLP   1614
-DEATH   0650
-DFIELD  0010
-DIEHAR  0000
-DILE    6056
-DILX    6053
-DILY    6054
-DIRE    6057 unreferenced
-DISD    7410
-DISPT   1047
-DIVDUN  1422
-DIXY    6055
-DOAND   0167
-DOCALC  0634
-DOCRLF  2200
-DOLIFE  0403
-DOROT   0120
-DUBDAB  1600
-DUBPTR  1723
-E       0000
-ERR     0143
-EXIT    6614
-FASTR   0000
-FILLER  0000
-FINAL   0720
-FIVEL   0152
-FIVER   0164
-FOURL   0146
-FOURR   0160
-FRMCDF  6712
-GENCNT  0173
-GENTXT  2054
-GLDERS  0000
-GOSPER  0000
-HWSS    0000
-INCGEN  0324
-INCLIF  0312
-INIT    2217
-JMPLOC  0172
-KAREL   0000
-L       1000
-LIFCNT  0027
-LIFDET  0023
-LIFTXT  2063
-MAXFIL  0000
-MEMORY  0007
-MIDPTR  0025
-MWSS    0000
-NEXTLN  1516
-NLBIT   0474
-NOLIFE  0714
-NOPRT   0000
-NOSTOR  0000
-NOTDUN  0710
-NOTEDG  0600
-NOTFIN  0727
-NWRDLF  0631
-NXTRLE  1401
-O       4000
-ONEL    0154 unreferenced
-ONER    0166
-OS8     0001
-OS8SAV  6722
-PARSER  0000
-PRIDX   0010
-PRNTST  2034
-PRTDOT  0000 unreferenced
-PUTC    2133
-PUTCSX  2124
-PUTS2   2073
-PUTSIX  2103
-RASERA  1200
-RCHECK  1513
-RCONT   1476
-RLE     1400
-RLECNT  1534
-RLEDUN  1526
-RLEPTR  0013
-RLIVE   1464
-RLOOP   1455
-RLYNPR  0000
-RMAIN   1436
-ROT     0171
-ROTTBL  0142
-RPENTO  0001
-RRPENT  2400
-RSTGEN  0331
-RSTLIF  0317
-RSTOS8  6647
-RSTRSC  0000 unreferenced
-SADDR   1532
-SAME    0644
-SAVOS8  6616
-SBIT    1533
-SCRATC  1724
-SIMHVC  0001
-SIXL    0145
-SIXR    0157
-SLODTH  0000 unreferenced
-SLOWR   0001
-SPCRAK  0000
-START   0202
-STARTX  0034
-STARTY  0035
-STATS   0001
-STORE   0001
-TAB     2072
-TEMP    0032
-THREEL  0153 unreferenced
-THREER  0165
-TMPPTR  0033
-TOCDF   6714
-TOPPTR  0024
-TOTAL   0022
-TWOL    0147 unreferenced
-TWOR    0161
-UCACHE  1000
-USETTY  0000
-VC8E    0001
-VT100   0000 unreferenced
-WRDCOL  0020
-X       0036
-Y       0037
