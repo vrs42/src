@@ -67,7 +67,7 @@ sub copyout {
         die "$d/$f not integer blocksize: $size\n" if ($mode eq "binary") && ($size % 384);
         $size = int(($size + 383) / 384);
         $end = $sblk + $size - 1;
-        die "Too may files for $d: $f" if $end >= 06260;
+        die "Too may blocks for $d: $f" if $end >= 06260;
         printf XML "<file name='$d/$f' start=0%o end=0%o mode=$mode></file>\n", $sblk, $end;
         $sblk = $end + 1;
     }
