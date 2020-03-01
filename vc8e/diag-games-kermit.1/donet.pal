@@ -1,0 +1,25 @@
+/
+/ Test how long until VC8E "done" is asserted.
+/
+DISD=6052	/ Skip Done
+DILX=6053	/ Load X
+DILY=6054	/ Load Y
+DIXY=6055	/ Intensify (X, Y)
+DILE=6056	/ Load Enable
+*200
+START,	DCA COUNT1	/ No iterations yet
+	DILX		/ Start something (should be a few)
+/	DILY		/ Start something (should be a few)
+/	DILE		/ Start something (should be many)
+/	DIXY		/ Start something (should be zero!)
+LOOP,	DISD		/ Done yet?
+	SKP		/ Nope
+	JMP DONE
+	ISZ COUNT1	/ Count a "not done" iteration
+	JMP LOOP	/ and try again
+/ Two cases: DISD skipped, or counter overflowed.
+DONE,	TAD COUNT1	/ Get how many iterations
+	HLT		/ into ac, then halt
+	JMP START	/ Do over!
+COUNT1,	.-.
+$
