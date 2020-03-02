@@ -1,26 +1,56 @@
    1            /
    2            / Test how long until VC8E "done" is asserted.
-   3            /
-   4            DISD=6052       / Skip Done
-   5            DILX=6053       / Load X
-   6            DILY=6054       / Load Y
-   7            DIXY=6055       / Intensify (X, Y)
-   8            DILE=6056       / Load Enable
-   9            *200
-  10 00200 7201 START,  CLA IAC         / Set as
-  11 00201 3213         DCA COUNT1      / first iteration
-  12 00202 6053         DILX            / Start something (should be a few)
-  13            /       DILY            / Start something (should be a few)
-  14            /       DIXY            / Start something (should be zero!)
-  15            /       DILE            / Start something (should be many)
-  16 00203 6052 LOOP,   DISD            / Done yet?
-  17 00204 7410         SKP             / Nope
-  18 00205 5210         JMP DONE
-  19 00206 2213         ISZ COUNT1      / Count a "not done" iteration
-  20 00207 5203         JMP LOOP        / and try again
-  21            / Two cases: DISD skipped, or counter overflowed.
-  22 00210 1213 DONE,   TAD COUNT1      / Get how many iterations
-  23 00211 7402         HLT             / into ac, then halt
-  24 00212 5200         JMP START       / Do over!
-  25 00213 0000 COUNT1, .-.
-  26            $
+   3            / Modified to test *that* done is asserted for
+   4            / each instruction that should assert it.
+   5            /
+   6            DISD=6052       / Skip Done
+   7            DILX=6053       / Load X
+   8            DILY=6054       / Load Y
+   9            DIXY=6055       / Intensify (X, Y)
+  10            DILE=6056       / Load Enable
+  11            *200
+  12            START,
+  13 00200 6053         DILX            / Start something (should be a few)
+  14 00201 4213         JMS WAIT        / Check for "done" flag
+  15 00202 6054         DILY            / Start something (should be a few)
+  16 00203 4213         JMS WAIT        / Check for "done" flag
+  17 00204 6055         DIXY            / Start something (should be zero!)
+  18 00205 4213         JMS WAIT        / Check for "done" flag
+  19 00206 6056         DILE            / Start something (should be many)
+  20 00207 4213         JMS WAIT        / Check for "done" flag
+  21 00210 6031         KSF             / User want attention?
+  22 00211 5200         JMP START       / No, go again
+  23 00212 5633         JMP I C7600     / Yes, return to OS/8
+  24 00213 0000 WAIT,   .-.             / Wait for "done"
+  25 00214 7201         CLA IAC         / Set as
+  26 00215 3235         DCA COUNT1      / first iteration
+  27 00216 6052 LOOP,   DISD            / Done yet?
+  28 00217 7410         SKP             / Nope
+  29 00220 5223         JMP DONE
+  30 00221 2235         ISZ COUNT1      / Count a "not done" iteration
+  31 00222 5216         JMP LOOP        / and try again
+  32            / Two cases: DISD skipped, or counter overflowed.
+  33 00223 1235 DONE,   TAD COUNT1      / Get how many iterations
+  34 00224 7640         SZA CLA         / Non-zero is OK
+  35 00225 5613         JMP I WAIT      / Return to user
+  36 00226 7344         CLA CLL CMA RAL / Get -2
+  37 00227 1213         TAD WAIT        / Get addr of failing instruction
+  38 00230 3213         DCA WAIT        / Get addr of failing instruction
+  39 00231 1613         TAD I WAIT      / Get the failing instruction
+  40 00232 7402         HLT             / into ac, then halt
+  41 00233 7600 C7600,  7600 CLA        / Resume with AC clear
+  42 00234 5613         JMP I WAIT      / Do over!
+  43 00235 0000 COUNT1, .-.
+  44            $
+
+C7600   0233
+COUNT1  0235
+DILE    6056
+DILX    6053
+DILY    6054
+DISD    6052
+DIXY    6055
+DONE    0223
+LOOP    0216
+START   0200
+WAIT    0213

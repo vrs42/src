@@ -1,5 +1,7 @@
 /
 / Test how long until VC8E "done" is asserted.
+/ Modified to test *that* done is asserted for
+/ each instruction that should assert it.
 /
 DISD=6052	/ Skip Done
 DILX=6053	/ Load X
@@ -7,12 +9,21 @@ DILY=6054	/ Load Y
 DIXY=6055	/ Intensify (X, Y)
 DILE=6056	/ Load Enable
 *200
-START,	CLA IAC		/ Set as
-	DCA COUNT1	/ first iteration
+START,
 	DILX		/ Start something (should be a few)
-/	DILY		/ Start something (should be a few)
-/	DIXY		/ Start something (should be zero!)
-/	DILE		/ Start something (should be many)
+	JMS WAIT	/ Check for "done" flag
+	DILY		/ Start something (should be a few)
+	JMS WAIT	/ Check for "done" flag
+	DIXY		/ Start something (should be zero!)
+	JMS WAIT	/ Check for "done" flag
+	DILE		/ Start something (should be many)
+	JMS WAIT	/ Check for "done" flag
+	KSF		/ User want attention?
+	JMP START	/ No, go again
+	JMP I C7600	/ Yes, return to OS/8
+WAIT,	.-.		/ Wait for "done"
+	CLA IAC		/ Set as
+	DCA COUNT1	/ first iteration
 LOOP,	DISD		/ Done yet?
 	SKP		/ Nope
 	JMP DONE
@@ -20,7 +31,14 @@ LOOP,	DISD		/ Done yet?
 	JMP LOOP	/ and try again
 / Two cases: DISD skipped, or counter overflowed.
 DONE,	TAD COUNT1	/ Get how many iterations
+	SZA CLA		/ Non-zero is OK
+	JMP I WAIT	/ Return to user
+	CLA CLL CMA RAL	/ Get -2
+	TAD WAIT	/ Get addr of failing instruction
+	DCA WAIT	/ Get addr of failing instruction
+	TAD I WAIT	/ Get the failing instruction
 	HLT		/ into ac, then halt
-	JMP START	/ Do over!
+C7600,	7600 CLA	/ Resume with AC clear
+	JMP I WAIT	/ Do over!
 COUNT1,	.-.
 $
