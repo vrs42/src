@@ -1,0 +1,353 @@
+   1            / VC8E *TV* HANDLER FOR A STORAGE SCOPE (DTB, CRW, JVZ)
+   2            
+   3            /THIS HANDLER USES A STANDARD VC8E INTERFACE TO PRODUCE
+   4            /OUTPUT ON A TEKTRONIX 611/613 STORAGE SCOPE.  THE MODI-
+   5            /FICATION IS TO CHANGE THE X- AND Y-AXES TO RUN FROM 0-
+   6            /1777 RATHER THAN -777 TO +777.  THIS REQUIRES REVERSING
+   7            /THE SIGN BIT (BIT 2).  THE INTERFACE IS ASSUMED TO HAVE
+   8            /BITS 6-8 OF THE ENABLE REGISTER ASSIGNED TO THE STORAGE
+   9            /SCOPE FUNCTIONS AS IS TRUE OF LATER VERSIONS.
+  10            
+  11            /THE HANDLER OUTPUTS CHARACTERS UNTIL THE SCREEN IS FULL
+  12            /THEN WAITS FOR KEYBOARD INPUT BEFORE ERASING EVERYTHING
+  13            /TYPING *CTRL/C* WILL CAUSE AN IMMEDIATE RETURN TO THE
+  14            /OS/8 KEYBOARD MONITOR.
+  15            
+  16            /NOTE: THE *MQ* REGISTER IS USED BY THE DISPLAY ROUTINE.
+  17            
+  18            /ACKNOWLEDGEMENTS:  THIS HANDLER BENEFITS FROM THE MANY
+  19            /HOURS OF HARD WORK BY DANIEL T. BROWN & CRAIG R. WYSS
+  20            /OF THE DEPT. OF PHYSIOLOGY AND BIOPHYSICS AT THE UNIV.
+  21            /OF WASHINGTON.
+  22            
+  23            
+  24                    DISD=6052
+  25                    DILX=6053
+  26                    DILY=6054
+  27                    DIXY=6055
+  28                    DILE=6056
+  29            
+  30            /PARAMETER BLOCK FOR *BUILD*:
+  31            
+  32                    PAGE 0
+  33 00000 7777         -1
+  34 00001 2603         DEVICE VC8E
+     00002 7005 
+  35 00003 2426         DEVICE TV
+     00004 0000 
+  36 00005 1300         1300;4175
+     00006 4175 
+  37 00007 0000         ZBLOCK 2
+     00010 0000 
+  38            
+  39                    PAGE 1
+  40 00200 0000 START,  0               /POINTS TO THE NEXT PAGE
+  41 00201 7326         CLA STL RTL
+  42 00202 6214         RDF
+  43 00203 1310         TAD CDF0        /COMPUTE THE RETURN *CDI*
+  44 00204 3245         DCA CDIX
+  45 00205 1775         TAD I CRT       /ARG1
+  46 00206 7500         SMA             /CHECK FOR A *READ*
+  47 00207 5241         JMP EXIT
+  48 00210 0377 K377,   AND (70
+  49 00211 1310         TAD CDF0
+  50 00212 3333         DCA CDFX        /BUFFER FIELD
+  51 00213 1775         TAD I CRT
+  52 00214 7004         RAL             /MULTIPLY BY 2
+  53 00215 0241         AND EXIT        /GET WORD COUNT
+  54 00216 7170         STL CMA RAR     /NEGATE & DIVIDE BY 2
+  55 00217 3240         DCA WCNT
+  56 00220 2375         ISZ CRT
+  57 00221 1775         TAD I CRT       /ARG2
+  58 00222 3257         DCA BUFF        /BUFFER ADDRESS
+  59 00223 5235         JMP BEGIN
+  60 00224 0000 TEMP,   0
+  61            
+  62 00225 4247 LOOP,   JMS GETC        /UNPACK THE BUFFER
+  63 00226 3224         DCA TEMP
+  64 00227 4247         JMS GETC        /FIRST TWO CHARACTERS ARE EASY
+  65 00230 7112         CLL RTR
+  66 00231 7012         RTR
+  67 00232 1224         TAD TEMP        /HERE*S HOW WE GET THE THIRD
+  68 00233 7012         RTR
+  69 00234 7012         RTR
+  70 00235 4307 BEGIN,  JMS PUTC        /SETS THE D.F. THE FIRST TIME
+  71 00236 2240         ISZ WCNT
+  72 00237 5225         JMP LOOP
+  73 00240 0000 WCNT,   0
+  74            
+  75 00241 7600 EXIT,   7600            /*CLA*
+  76 00242 2375         ISZ CRT         /PASS THE BLOCK NUMBER
+  77 00243 2375         ISZ CRT         /AND THE ERROR RETURN
+  78 00244 2375         ISZ CRT
+  79 00245 6203 CDIX,   CDF CIF
+  80 00246 5775         JMP I CRT       /**RETURN**
+  81            
+  82 00247 0000 GETC,   0               /READ THE BUFFER
+  83 00250 1657         TAD I BUFF
+  84 00251 4307         JMS PUTC        /AND WRITE IT OUT
+  85 00252 1657         TAD I BUFF
+  86 00253 0255         AND .+2         /GET THE UPPER FOUR BITS
+  87 00254 2257         ISZ BUFF
+  88 00255 7400         7400            /= *NOP*
+  89 00256 5647         JMP I GETC
+  90 00257 0000 BUFF,   0
+  91            
+  92 00260 7772 M6,     -6
+  93 00261 7766 MLF,    -12
+  94 00262 0177 K177,   177
+  95 00263 6031 WAIT,   KSF             /WAIT AT THE BOTTOM OF A PAGE
+  96 00264 5263         JMP .-1
+  97 00265 7041         CIA             /GET *34*
+  98 00266 6056         DILE            /PUSH THE *ERASE* BUTTON
+  99 00267 6036         KRB             /CLEAR THE FLAG
+ 100 00270 0262         AND K177        /REMOVE PARITY
+ 101 00271 1372         TAD MCC
+ 102 00272 7650         SNA CLA         /CTRL/C?
+ 103 00273 5641         JMP I EXIT      /-> 7600
+ 104 00274 6052         DISD            /WAIT A WHILE...
+ 105 00275 5274         JMP .-1
+ 106 00276 1337         TAD C1744
+ 107 00277 5305         JMP LF+5        /AND START FROM THE TOP AGAIN
+ 108            
+ 109 00300 3373 LF,     DCA X           /RESET THE X POSITION
+ 110 00301 1374         TAD Y
+ 111 00302 1306         TAD M40         /MOVE DOWNWARD A LINE
+ 112 00303 7510         SPA
+ 113 00304 5263         JMP WAIT        /AC=XX34
+ 114 00305 3374         DCA Y
+ 115 00306 7740 M40,    SMA SZA CLA     /EFFECTIVE *JMP CDFX*
+ 116            
+ 117 00307 0000 PUTC,   0               /CHARACTER CHECKS
+ 118 00310 6201 CDF0,   CDF 0           /FOR ACCESS TO PAGE 2
+ 119 00311 0262         AND K177
+ 120 00312 7450         SNA
+ 121 00313 5333         JMP CDFX        /IGNORE NULLS
+ 122 00314 1261         TAD MLF
+ 123 00315 7450         SNA             /NEW LINE?
+ 124 00316 5300         JMP LF          /YES - *CR* IS IGNORED
+ 125 00317 1324         TAD M20
+ 126 00320 7450         SNA             /END OF FILE?
+ 127 00321 5241         JMP EXIT        /YES
+ 128 00322 1260         TAD M6
+ 129 00323 7510         SPA             /NON-PRINTING? USE A SPACE
+ 130 00324 7760 M20,    SMA SZA SNL CLA /=212-232; EFFECTIVE *SKP*
+ 131 00325 7104         CLL RAL         /X2
+ 132 00326 1200         TAD START       /PLUS BEGINNING
+ 133 00327 3344         DCA ADDR        /= PATTERN ADDRESS
+ 134 00330 4335         JMS OUTC        /WRITE THE BIT PATTERN
+ 135 00331 4335         JMS OUTC
+ 136 00332 4346         JMS PLTC        /PLUS A LITTLE SPACE
+ 137 00333 6201 CDFX,   CDF             /FOR ACCESS TO THE BUFFER
+ 138 00334 5707         JMP I PUTC
+ 139            MQL=7421
+ 140 00335 0000 OUTC,   0               /WRITE TWO VERTICAL LINES
+ 141 00336 2344         ISZ ADDR
+ 142 00337 1744 C1744,  TAD I ADDR      /FIELD 0, OF COURSE
+ 143 00340 7421         MQL
+ 144 00341 4346         JMS PLTC        /PRINT THE DOTS
+ 145 00342 4346         JMS PLTC
+ 146 00343 5735         JMP I OUTC
+ 147 00344 0000 ADDR,   0
+ 148 00345 0000 CNTR,   0
+ 149 00346 0000 PLTC,   0               /NOW FOR SOME ACTION!
+ 150 00347 1260         TAD M6
+ 151 00350 3345         DCA CNTR        /6 DOTS HIGH
+ 152 00351 7125         STL IAC RAL     /=3
+ 153 00352 1373         TAD X           /SET THE X-COORDINATE
+ 154 00353 6053         DILX
+ 155 00354 3373         DCA X           /SAVE FOR THE NEXT COLUMN
+ 156            SWP=7521
+ 157 00355 1374         TAD Y
+ 158 00356 6054 DOTS,   DILY            /SET THE Y-COORDINATE
+ 159 00357 1371         TAD C4          /ADVANCE AND SAVE
+ 160 00360 7521         SWP
+ 161 00361 7510         SPA             /READ THE PATTERN
+ 162 00362 6055         DIXY            /INTENSIFY
+ 163 00363 7104         CLL RAL
+ 164 00364 7521         SWP             /SWAP AND SAVE AGAIN
+ 165 00365 2345         ISZ CNTR        /COUNT THE DOTS
+ 166 00366 5356         JMP DOTS
+ 167 00367 7200         CLA             /REMOVE VERTICAL VALUE
+ 168 00370 5746         JMP I PLTC
+ 169 00371 0004 C4,     +4
+ 170 00372 7775 MCC,    -3
+ 171            
+ 172 00373 0000 X,      0               /INITIAL VALUES
+ 173 00374 1744 Y,      TAD I ADDR      /PRACTICALLY FS
+ 174            
+ 175                    *400-3
+ 176 00375 0001 CRT,    "A&77           /HERE*S THE ENTRY POINT!
+ 177 00376 4200         JMS START       /GET THE ADDRESS OF PAGE 2
+ 178            
+ 179 00377 0070         PAGE 2
+ 180            
+ 181 00400 0000         0000            /SPACE
+ 182 00401 0000         0000
+ 183 00402 5600         5600            /!
+ 184 00403 0000         0000
+ 185 00404 0303         0303            /"
+ 186 00405 0000         0000
+ 187 00406 1477         1477            /#
+ 188 00407 7714         7714
+ 189 00410 5652         5652            /$
+ 190 00411 7772         7772
+ 191 00412 2313         2313            /%
+ 192 00413 6462         6462
+ 193 00414 7652         7652            /&
+ 194 00415 7752         7752
+ 195 00416 0300         0300            /'
+ 196 00417 0000         0000
+ 197 00420 3641         3641            /(
+ 198 00421 0000         0000
+ 199 00422 4136         4136            /)
+ 200 00423 0000         0000
+ 201 00424 0005         0005            /*
+ 202 00425 0205         0205
+ 203 00426 1034         1034            /+
+ 204 00427 1000         1000
+ 205 00430 0040         0040            /,
+ 206 00431 3000         3000
+ 207 00432 1010         1010            /-
+ 208 00433 1000         1000
+ 209 00434 4000         4000            /.
+ 210 00435 0000         0000
+ 211 00436 2010         2010            //
+ 212 00437 0402         0402
+ 213 00440 3641         3641            /0
+ 214 00441 4136         4136
+ 215 00442 4442         4442            /1
+ 216 00443 7740         7740
+ 217 00444 4261         4261            /2
+ 218 00445 5146         5146
+ 219 00446 2145         2145            /3
+ 220 00447 5321         5321
+ 221 00450 1710         1710            /4
+ 222 00451 1077         1077
+ 223 00452 4745         4745            /5
+ 224 00453 4531         4531
+ 225 00454 7750         7750            /6
+ 226 00455 5070         5070
+ 227 00456 6111         6111            /7
+ 228 00457 0503         0503
+ 229 00460 2255         2255            /8
+ 230 00461 5522         5522
+ 231 00462 0705         0705            /9
+ 232 00463 0577         0577
+ 233 00464 2400         2400            /:
+ 234 00465 0000         0000
+ 235 00466 0040         0040            /;
+ 236 00467 3200         3200
+ 237 00470 1024         1024            /<
+ 238 00471 4200         4200
+ 239 00472 1212         1212            /=
+ 240 00473 1200         1200
+ 241 00474 4224         4224            />
+ 242 00475 1000         1000
+ 243 00476 0255         0255            /?
+ 244 00477 0300         0300
+ 245            
+ 246 00500 7775         7775            /@
+ 247 00501 4577         4577
+ 248 00502 7611         7611            /A
+ 249 00503 1176         1176
+ 250 00504 7745         7745            /B
+ 251 00505 4532         4532
+ 252 00506 3641         3641            /C
+ 253 00507 4122         4122
+ 254 00510 7741         7741            /D
+ 255 00511 4136         4136
+ 256 00512 7745         7745            /E
+ 257 00513 4541         4541
+ 258 00514 7705         7705            /F
+ 259 00515 0501         0501
+ 260 00516 7741         7741            /G
+ 261 00517 5173         5173
+ 262 00520 7710         7710            /H
+ 263 00521 1077         1077
+ 264 00522 4177         4177            /I
+ 265 00523 4100         4100
+ 266 00524 2040         2040            /J
+ 267 00525 4037         4037
+ 268 00526 7714         7714            /K
+ 269 00527 2241         2241
+ 270 00530 7740         7740            /L
+ 271 00531 4040         4040
+ 272 00532 7702         7702            /M
+ 273 00533 0277         0277
+ 274 00534 7706         7706            /N
+ 275 00535 3077         3077
+ 276 00536 7741         7741            /O
+ 277 00537 4177         4177
+ 278 00540 7705         7705            /P
+ 279 00541 0502         0502
+ 280 00542 3641         3641            /Q
+ 281 00543 6176         6176
+ 282 00544 7715         7715            /R
+ 283 00545 2542         2542
+ 284 00546 2245         2245            /S
+ 285 00547 5122         5122
+ 286 00550 0177         0177            /T
+ 287 00551 0100         0100
+ 288 00552 3740         3740            /U
+ 289 00553 4037         4037
+ 290 00554 1720         1720            /V
+ 291 00555 4037         4037
+ 292 00556 7730         7730            /W
+ 293 00557 3077         3077
+ 294 00560 4136         4136            /X
+ 295 00561 3641         3641
+ 296 00562 0374         0374            /Y
+ 297 00563 7403         7403
+ 298 00564 6151         6151            /Z
+ 299 00565 4543         4543
+ 300 00566 7741         7741            /[
+ 301 00567 0000         0000
+ 302 00570 0204         0204            /\
+ 303 00571 1020         1020
+ 304 00572 4177         4177            /]
+ 305 00573 0000         0000
+ 306 00574 0436         0436            /^
+ 307 00575 0400         0400
+ 308 00576 0416         0416            /_
+ 309 00577 3704         3704
+ 310            $
+
+ADDR    0344
+BEGIN   0235
+BUFF    0257
+C1744   0337
+C4      0371
+CDF0    0310
+CDFX    0333
+CDIX    0245
+CNTR    0345
+CRT     0375
+DILE    6056
+DILX    6053
+DILY    6054
+DISD    6052
+DIXY    6055
+DOTS    0356
+EXIT    0241
+GETC    0247
+K177    0262
+K377    0210 unreferenced
+LF      0300
+LOOP    0225
+M20     0324
+M40     0306
+M6      0260
+MCC     0372
+MLF     0261
+MQL     7421
+OUTC    0335
+PLTC    0346
+PUTC    0307
+START   0200
+SWP     7521
+TEMP    0224
+WAIT    0263
+WCNT    0240
+X       0373
+Y       0374

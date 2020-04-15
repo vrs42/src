@@ -1,0 +1,115 @@
+               A VC8E 'TV' HANDLER FOR A STORAGE OSCILLOSCOPE
+
+
+     Programmers with a storage 'scope and a VC8E controller at their dis-
+posal can use this handler to quickly examine directories, check listings,
+or scan through data files using the CRT for output.  The handler can also
+be used to add annotation to graphics displays or for interactive purposes
+in which queries are displayed on the screen rather than on the terminal.
+To be effective for the latter operation the calling program must have a
+mechanism similar to the OUTPUT BUFFER command in U/W-FOCAL which permits
+the screen to be updated on a line-at-a-time basis whenever necessary.
+The name 'TV:' was chosen in order to make this handler compatible with
+the CCL commands which recognize the '-S' option.
+
+    A 4x6 matrix is used to generate all 64 'displayable' characters and
+spaces are substituted for all control codes except 'linefeed'.  Lower case
+letters will not display properly unless an appropriate pattern table just
+'happens' to exist in the locations immediately following the handler.  'LF'
+rather than 'CR' is recognized as the start of a new line in order to make
+the handler compatible with the output of programs such as SRCCOM which gen-
+erate multiple linefeeds as well as those which always use a CR/LF combina-
+tion.  Those who prefer to recognize a CR as the start of a new line can
+easily install the simple patch shown below for this option(1).
+
+     The handler will pause for keyboard input after the last line on the
+screen has been written.  Striking any key will then erase the screen (see
+below), wait while it clears, and then continue with more output.  Except
+for Version A, striking CTRL/C will return to the OS/8 keyboard monitor.
+Unfortunately there just isn't enough room in this version for this check.
+
+     Four different versions (designated A-D) have been developed for use
+with various revisions of the VC8E interface.  Since the original design
+only provided XYZ outputs and had no provision for erasing the screen, Ver-
+sion A simply pauses so the operator can manually push the 'ERASE' botton.
+It is obviously nicer to let the computer perform this function, so each
+time the keyboard is struck a 'clear display flag' IOT is issued and the
+handler delays for half a second before continuing.  Connecting the signal
+from the 'clear flag' line to the erase circuit of the scope will thus pro-
+vide 'automatic' paging.  Version B of the handler, on the other hand, was
+written for a later revision of the controller which uses bits 6-8 of the
+enable register for storage scope functions and which also has a hardware
+delay for the erase cycle.  These features permit adding the 4 instructions
+necessary to check for CTRL/C.
+
+     Normally the D/A converters use coordinates ranging from -777 to +777.
+If the user is willing to reverse the 'sign bit' (bit 2) at the point where
+it enters the converter the full output range can be represented by 0-1777
+instead, and the logic within the handler can be simplified.  In the M855
+module this bit is, in fact, already inverted so simply bypassing that gate
+(a 7404) produces the desired result.  This hardware change then makes it
+possible to add a CTRL/C check to the handler.  While such a feature is de-
+finately desirable, especially when examining a long listing for errors,
+those who have other programs which use the conventional display coordinates
+may wish to forego this modification.  Versions C and D of the handler have
+been written for such an interface.  Version C is, again, designed for the
+original VC8E controller and Version D for the later revisions.  Due to space
+limitations, Version C does not include a check for erroneous 'read' calls.
+
+
+
+     Although this is a 2-page handler, only 1 page is actually available
+for the display and unpacking routines since the second page is filled by
+the pattern codes.  Some clever coding(2) is thus required to pack things
+in and tradeoffs of the sort discussed above are unfortunately necessary.
+It would, of course, be nice to have the CTRL/C check in Version A and per-
+haps someone else will be able to figure out how to do it.  Users should
+also note that the MQ register is used in the display loop and thus any in-
+formation stored there will be destroyed when calling the handler.
+
+     To add this handler to your system, run the BUILD program as indicated
+in the summary guide below: (for more information see the OS/8 Handbook)
+
+                         .RUN SYS:BUILD
+                         $LOAD PTR:
+                         $INSERT VC8E
+                         $INSERT ...
+                         $BOOT
+                         .SAVE SYS:BUILD
+
+
+
+NOTES:
+------
+
+(1) To change the 'new line' check from 'LF' to 'CR' only two patches are
+required.  The first is to change the constant 'MLF' from -12 to -15 and
+the second is to replace the 'TAD M20' instruction with 'TAD MLF' (i.e.
+'TAD M15').  This may be done either by editing the source file, or just
+as easily, by using the ALTER command in BUILD.  Note that the addresses
+used by ALTER are 200 less than the addresses shown in the listings.
+Thus in Version A the changes would be:
+
+                         $AL VC8E,61
+                         7766/ 7763
+
+                         $AL VC8E,116
+                         1323/ 1261
+
+With this change output from programs such as SRCCOM will not be displayed
+correctly since the LF's will be converted to spaces, but data files which
+might contain CR's without LF's -will- appear properly.  Since there just
+isn't enough room to check for both CR and LF, the user must decide which
+convention is most useful on his system.
+
+(2) The author would especially like to acknowledge the efforts of Daniel
+T. Brown and Craig R. Wyss of the Dept. of Physiology and Biophysics at the
+University of Washington who initially developed the plan for this handler
+several years ago.  Their version (for a 'home-built' interface) was then
+revised and extended to work with a standard controller as described above.
+
+
+
+ Jim van Zee, Dept. of Chemistry - U/W, Seattle, WA 98195  (31 July 1976)
+
+
