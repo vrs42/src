@@ -26,6 +26,7 @@
 	This program takes the following command line switches
 
 		-d	dump the symbol table at end of assembly
+		-l	do not warn about offpage references
 		-r	produce output in rim format (default is bin format)
 
    known bugs:  Only a minimal effort has been made to keep the listing
@@ -67,10 +68,12 @@ char objname[NAMELEN];	/* object file's name */
 FILE *lst = NULL;	/* listing file */
 FILE *lstsave = NULL;	/* alternate listing file */
 char lstname[NAMELEN];	/* listing file's name */
+int linkmsg = 1;	/* Suppress "off page" messages */
 int dumpflag = 0;	/* dump symtab if 1 (defaults to no dump) */
 int rimflag = 0;	/* generate rim format if 1 (defaults bin) */
 int cksum = 0;		/* checksum generated for .bin files */
 int errors = 0;		/* number of errors found so far */
+int dosmode = 0;	/* Input file has CR */
 
 /* return c as upper-case if it is lower-case; else no change */
 int c2upper(c)
@@ -92,6 +95,8 @@ char *argv[];
 			for (j=1; argv[i][j] != 0; j++) {
 				if (argv[i][1] == 'd') {
 					dumpflag = 1;
+				} else if (argv[i][1] == 'l') {
+					linkmsg = 0;
 				} else if (argv[i][1] == 'r') {
 					rimflag = 1;
 				} else {
@@ -325,7 +330,10 @@ char *msg;
 				}
 			}
 		}
-		fputs( "^\n", tlst );
+		fputc( '^', tlst );
+		if (dosmode)
+			fputc( '\r', tlst );
+		fputc( '\n', tlst );
 		fprintf( stderr, "%4d  %s\n", lineno, msg );
 	}
 	listed = 1;
@@ -346,6 +354,8 @@ readline()
 		line[2] = '\000';
 		error( "end of file" );
 	}
+        /* At strlen-1 is presumably '\n' */
+        dosmode = (line[strlen(line)-2] == '\r');
 }
 
 /* dump symbol table */
@@ -354,7 +364,10 @@ dump()
 {
 	struct symbol tmp;
 	int i, again;
-	fprintf( lst, "\f\n" );
+	fputc( '\f', lst );
+	if (dosmode)
+		fputc( '\r', lst );
+	fputc( '\n', lst );
 	// Sort the symbol table with a ripple sort
 sort:
 	again = 0;
@@ -370,9 +383,12 @@ sort:
 		goto sort;
 	// Dump the symbol table
 	for (i = firstsym; symtab[i].sym[0] != '\0'; i++) {
-		fprintf( lst, "%-6s  %04o%s\n",
+		fprintf( lst, "%-6s  %04o%s",
 			 symtab[i].sym, symtab[i].val,
 			 symtab[i].refs? "" : " unreferenced");
+		if (dosmode)
+			fputc( '\r', lst );
+		fputc( '\n', lst );
 	}
 }
 
@@ -494,6 +510,8 @@ short int val;
 		} else {
 			fprintf( lst, "     %1.1o%4.4o %4.4o ",
 				 field, loc, val);
+                        if (dosmode)
+				putc( '\r', lst );
 			putc( '\n', lst );
 		}
 	}
@@ -922,8 +940,9 @@ more:	/* here, we check if we are done */
 		} else {
 			/* off page MRI */
 			int loc;
-			error("off page"); errors--; /* warning only */
-
+			if (linkmsg) {
+				error("off page"); errors--; /* warning only */
+			}
 			/* having complained, fix it up */
 			loc = 00177;
 			while ((loc > cplc) && (cp[loc] != temp)) {
@@ -1100,7 +1119,12 @@ restart:
 			case 5: /* EJECT */
 				if (lst != NULL) {
 					/* this will do for now */
-					fprintf( lst, "\n\f\n" );
+					if (dosmode)
+						fputc( '\r', lst );
+					fprintf( lst, "\n\f" );
+					if (dosmode)
+						fputc( '\r', lst );
+					fputc( '\n', lst );
 					goto getline;
 				}
 				break;
