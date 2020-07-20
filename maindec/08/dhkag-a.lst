@@ -1,0 +1,2857 @@
+   1               /PDP-8/E INSTRUCTION TEST 2  MAINDEC-8E-D0BB
+   2               /COPYRIGHT 1970, 1971, DIGITAL EQUIPMENT CORP., MAYNARD, MASS. 01754
+   3               
+   4               / This is reconstructed from the binary and a comparison with 8E-D0BB.
+   5               / Much of the APT support code has made up labels.  vrs July 2020
+   6               
+   7               SKON=6000               /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+   8               SRQ=6003                /SKIP IF INTERRUPT REQUEST
+   9               GTF=6004                /GET INTERRUPT FLAGS
+  10               RTF=6005                /RESTORE INTERRUPT FLAGS AND TURN INTERRUPT ON
+  11               CAF=6007                /CLEAR ALL FLAGS, AC, LINK, AND ENABLE TTY INTERRUPT F.F.
+  12               SPF=6040                /SET PRINTER FLAG
+  13               KIE=6035                /ENABLE TTY INTERRUPT F.F., WHEN AC EQUALS A 1
+  14               BSW=7002                /SWAP BYTES IN AC
+  15               
+  16               *0
+  17 000000  0000          0               /LOC 0
+  18 000001  5001          JMP 1           /LOC 1
+  19 000002  0002          2               /LOC 2
+  20 000003  0003          3               /LOC 3
+  21               
+  22                       /CONSTANTS AAND VARIABLES
+  23 000004  7777  K7777,  7777
+  24 000005  3777  K3777,  3777
+  25 000006  5777  K5777,  5777
+  26 000007  0000          0               /LOC 7
+  27               *20
+  28 000020  0000  SWR,    0000            /Software switch register
+  29 000021  4000  OP1,    4000            /4000 - Use HW Switches
+  30 000022  0000  OP2,    0000            /0400 - Console package active
+  31                                       /4000 - APT active?
+  32 000023  6777  K6777,  6777
+  33 000024  7377  K7377,  7377
+  34 000025  7577  K7577,  7577
+  35 000026  7677  K7677,  7677
+  36 000027  7737  K7737,  7737
+  37 000030  0000          0000
+  38 000031  7757  K7757,  7757
+  39 000032  7767  K7767,  7767
+  40 000033  7773  K7773,  7773
+  41 000034  7775  K7775,  7775
+  42 000035  7776  K7776,  7776
+  43 000036  0000  K0,     0000
+  44 000037  1777  K1777,  1777
+  45 000040  0777  K0777,  0777
+  46 000041  0377  K0377,  0377
+  47 000042  0177  K0177,  0177
+  48 000043  0077  K0077,  0077
+  49 000044  0037  K0037,  0037
+  50 000045  0017  K0017,  0017
+  51 000046  0007  K0007,  0007
+  52 000047  0003  K0003,  0003
+  53 000050  0000          0
+  54 000051  0001  K0001,  0001
+  55 000052  4400  K4400,  4400
+  56 000053  4577  K4577,  4577
+  57 000054  2525  K2525,  2525
+  58 000055  6666  K6666,  6666
+  59 000056  4444  K4444,  4444
+  60 000057  7070  K7070,  7070
+  61 000060  0707  K0707,  0707
+  62 000061  5252  K5252,  5252
+  63 000062  1111  K1111,  1111
+  64 000063  5555  K5555,  5555
+  65 000064  5200  K5200,  5200
+  66 000065  0004  K4,     4
+  67 000066  4672  APTERR, WAERRO
+  68               
+  69               *110
+  70 000110  0000          0
+  71               
+  72               *172
+  73 000172  0176  K176,   176             /LOC 172
+  74 000173  0172  K172,   172             /173
+  75 000174  0173  K173,   173             /174
+  76 000175  0174  K174,   174             /175
+  77 000176  0175  K175,   175             /176
+  78 000177  1234  K1234,  1234            /177
+  79               
+  80               *200
+  81 000200  5601          JMP I .+1       /GO CHECK FOR APT
+  82 000201  4600          APTCHK
+  83               
+  84               /DCA TEST 1
+  85 000202  0000  TP0,    0000
+  86 000203  1052          TAD K4400
+  87 000204  3377          DCA TP177
+  88 000205  7440          SZA 
+  89 000206  7402          HLT             /DCA DID NOT CLEAR AC
+  90 000207  7410          SKP 
+  91 000210  0000          0
+  92 000211  1052          TAD K4400
+  93 000212  7041          CIA             /AC=-(4400)
+  94 000213  1377          TAD TP177
+  95 000214  7440          SZA 
+  96 000215  7402          HLT             /DCA FAILED
+  97                                       /AC SHOULD EQUAL ZERO
+  98               
+  99               /DCA TEST 2
+ 100               
+ 101 000216  7200          CLA 
+ 102 000217  1053          TAD K4577
+ 103 000220  3202          DCA TP0
+ 104 000221  7440          SZA 
+ 105 000222  7402          HLT             /DCA DID NOT CLEAR AC
+ 106 000223  1053          TAD K4577
+ 107 000224  7041          CIA
+ 108 000225  1202          TAD TP0
+ 109 000226  7440          SZA 
+ 110 000227  7402          HLT             /DCA FAILED
+ 111                                       /AC SHOULD EQUAL ZERO
+ 112               
+ 113               /DCA TEST 3
+ 114               
+ 115 000230  7200          CLA 
+ 116 000231  1004          TAD K7777
+ 117 000232  3202          DCA TP0
+ 118 000233  7440          SZA 
+ 119 000234  7402          HLT             /DCA DID NOT CLEAR AC
+ 120 000235  1202          TAD TP0
+ 121 000236  7040          CMA 
+ 122 000237  7440          SZA 
+ 123 000240  7402          HLT             /DCA FAILED
+ 124                                       /AC SHOULD EQUAL ZERO
+ 125               
+ 126               /DCA TEST 4
+ 127               
+ 128 000241  7200          CLA 
+ 129 000242  1036          TAD K0
+ 130 000243  3202          DCA TP0
+ 131 000244  7440          SZA
+ 132 000245  7402          HLT             /DCA DID NOT CLEAR AC
+ 133 000246  1202          TAD TP0
+ 134 000247  7440          SZA             /DCA FAILED
+ 135 000250  7402          HLT             /AC SHOULD BE ZERO
+ 136               
+ 137               /DCA TEST 5
+ 138               
+ 139 000251  7200          CLA 
+ 140 000252  1054          TAD K2525
+ 141 000253  3202          DCA TP0
+ 142 000254  7440          SZA 
+ 143 000255  7402          HLT             /DCA DID NOT CLEAR AC
+ 144 000256  1054          TAD K2525
+ 145 000257  7041          CIA
+ 146 000260  1202          TAD TP0
+ 147 000261  7440          SZA             /DCA FAILED
+ 148 000262  7402          HLT             /AC SHOULD BE ZERO
+ 149               
+ 150               /DCA TEST 6
+ 151               
+ 152 000263  7200          CLA
+ 153 000264  1055          TAD K6666
+ 154 000265  3202          DCA TP0
+ 155 000266  7440          SZA 
+ 156 000267  7402          HLT             /DCA DID NOT CLEAR AC
+ 157 000270  1055          TAD K6666
+ 158 000271  7041          CIA
+ 159 000272  1202          TAD TP0
+ 160 000273  7440          SZA             /DCA FAILED
+ 161 000274  7402          HLT             /AC SHOULD BE ZERO
+ 162               
+ 163               /DCA TEST 7
+ 164               
+ 165 000275  7200          CLA 
+ 166 000276  1056          TAD K4444
+ 167 000277  3377          DCA TP177
+ 168 000300  7440          SZA 
+ 169 000301  7402          HLT             /DCA DID NOT CLEAR AC
+ 170 000302  1056          TAD K4444
+ 171 000303  7041          CIA
+ 172 000304  1377          TAD TP177
+ 173 000305  7440          SZA             /DCA FAILED
+ 174 000306  7402          HLT             /AC SHOULD BE ZERO
+ 175               
+ 176               /DCA TEST 8
+ 177               
+ 178 000307  7200          CLA 
+ 179 000310  1057          TAD K7070
+ 180 000311  3377          DCA TP177
+ 181 000312  7440          SZA 
+ 182 000313  7402          HLT             /DCA DID NOT CLEAR AC
+ 183 000314  1057          TAD K7070
+ 184 000315  7041          CIA
+ 185 000316  1377          TAD TP177
+ 186 000317  7440          SZA             /DCA FAILED
+ 187 000320  7402          HLT             /AC SHOULD BE ZERO
+ 188               
+ 189               /DCA TEST 9
+ 190               
+ 191 000321  7200          CLA 
+ 192 000322  1060          TAD K0707
+ 193 000323  3000          DCA 0
+ 194 000324  7440          SZA 
+ 195 000325  7402          HLT             /DCA DID NOT CLEAR AC
+ 196 000326  1060          TAD K0707
+ 197 000327  7041          CIA
+ 198 000330  1000          TAD 0
+ 199 000331  7440          SZA             /DCA FAILED
+ 200 000332  7402          HLT             /AC SHOULD BE ZERO
+ 201               
+ 202               /DCA TEST 10
+ 203               
+ 204 000333  7200          CLA 
+ 205 000334  1061          TAD K5252
+ 206 000335  3000          DCA 0
+ 207 000336  7440          SZA
+ 208 000337  7402          HLT             /DCA DID NOT CLEAR AC
+ 209 000340  1061          TAD K5252
+ 210 000341  7041          CIA
+ 211 000342  1000          TAD 0
+ 212 000343  7440          SZA             /DCA FAILED
+ 213 000344  7402          HLT             /AC SHOULD BE ZERO
+ 214               
+ 215               /DCA TEST 11
+ 216               
+ 217 000345  7200          CLA 
+ 218 000346  1062          TAD K1111
+ 219 000347  3000          DCA 0
+ 220 000350  7440          SZA 
+ 221 000351  7402          HLT             /DCA DID NOT CLEAR AC
+ 222 000352  1062          TAD K1111
+ 223 000353  7041          CIA
+ 224 000354  1000          TAD 0
+ 225 000355  7440          SZA             /DCA FAILED
+ 226 000356  7402          HLT             /AC SHOULD BE ZERO
+ 227               
+ 228               /DCA TEST 12
+ 229               
+ 230 000357  7200          CLA 
+ 231 000360  1063          TAD K5555
+ 232 000361  3000          DCA 0
+ 233 000362  7440          SZA 
+ 234 000363  7402          HLT             /DCA DID NOT CLEAR AC
+ 235 000364  1063          TAD K5555
+ 236 000365  7041          CIA
+ 237 000366  1000          TAD 0
+ 238 000367  7440          SZA             /DCA FAILED
+ 239 000370  7402          HLT             /AC SHOULD BE ZERO
+ 240 000371  7000          NOP
+ 241 000372  7000          NOP
+ 242 000373  7000          NOP
+ 243 000374  7000          NOP
+ 244 000375  7000          NOP
+ 245               *.+1
+ 246 000377  0000  TP177,  0
+ 247               
+ 248               *400
+ 249               
+ 250               / INDIRECT ADDRESSING TEST 1
+ 251               
+ 252 000400  7200          CLA
+ 253 000401  1442          TAD I K0177     /OPERAND=1234
+ 254 000402  7041          CIA
+ 255 000403  1177          TAD K1234
+ 256 000404  7440          SZA 
+ 257 000405  7402          HLT             /TAD INDIRECT FAILED
+ 258                                       /AC SHOULD BE ZERO
+ 259               
+ 260               / INDIRECT ADDRESSING TEST 2
+ 261               
+ 262 000406  7200          CLA 
+ 263 000407  7410          SKP
+ 264 000410  0000          0
+ 265 000411  1004          TAD K7777
+ 266 000412  0442          AND I K0177     /OPERAND=1234
+ 267 000413  7041          CIA
+ 268 000414  1177          TAD K1234
+ 269 000415  7440          SZA 
+ 270 000416  7402          HLT             /AND INDIRECT FAILED
+ 271                                       /AC SHOULD BE ZERO
+ 272               
+ 273               / INDIRECT ADDRESSING TEST 3
+ 274               
+ 275 000417  7200          CLA 
+ 276 000420  1004          TAD K7777
+ 277 000421  3000          DCA 0
+ 278 000422  2436          ISZ I K0
+ 279 000423  7402          HLT             /ISZ FAILED. NO SKIP
+ 280 000424  1000          TAD 0
+ 281 000425  7440          SZA 
+ 282 000426  7402          HLT             /ISZ INDIRECT FAILED
+ 283                                       /AC SHOULD BE ZERO
+ 284               
+ 285               / INDIRECT ADDRESSING TEST 4
+ 286               
+ 287 000427  7200          CLA 
+ 288 000430  1572          TAD I K176      /OPERAND=175
+ 289 000431  7041          CIA
+ 290 000432  1176          TAD K175
+ 291 000433  7440          SZA 
+ 292 000434  7402          HLT             /TAD INDIRECT FAILED
+ 293                                       /AC SHOULD BE ZERO
+ 294               
+ 295               / INDIRECT ADDRESSING TEST 5
+ 296               
+ 297 000435  7200          CLA 
+ 298 000436  1004          TAD K7777
+ 299 000437  0572          AND I K176      /OPERAND=175
+ 300 000440  7041          CIA
+ 301 000441  1176          TAD K175
+ 302 000442  7440          SZA 
+ 303 000443  7402          HLT             /AND INDIRECT FAILED
+ 304                                       /AC SHOULD BE ZERO
+ 305               
+ 306               / INDIRECT ADDRESSING TEST 6
+ 307               
+ 308 000444  7200          CLA 
+ 309 000445  1172          TAD K176
+ 310 000446  3000          DCA 0
+ 311 000447  2436          ISZ I K0
+ 312 000450  7410          SKP
+ 313 000451  7402          HLT             /ISZ SKIPPED ILLEGALLY
+ 314 000452  1000          TAD 0
+ 315 000453  7041          CIA
+ 316 000454  1172          TAD K176
+ 317 000455  7040          CMA 
+ 318 000456  7440          SZA 
+ 319 000457  7402          HLT             /DCA INDIRECT FAILED
+ 320                                       /AC SHOULD BE ZERO
+ 321               
+ 322               / INDIRECT ADDRESSING TEST 7
+ 323               
+ 324 000460  7200          CLA 
+ 325 000461  1573          TAD I K172      /OPERAND=176
+ 326 000462  7041          CIA
+ 327 000463  1172          TAD K176
+ 328 000464  7440          SZA 
+ 329 000465  7402          HLT             /TAD INDIRECT FAILED
+ 330                                       /AC SHOULD BE ZERO
+ 331               
+ 332               / INDIRECT ADDRESSING TEST 8
+ 333               
+ 334 000466  7200          CLA 
+ 335 000467  1004          TAD K7777
+ 336 000470  0573          AND I K172      /OPERAND=176
+ 337 000471  7041          CIA
+ 338 000472  1172          TAD K176
+ 339 000473  7440          SZA 
+ 340 000474  7402          HLT             /AND INDIRECT FAILED
+ 341                                       /AC SHOULD BE ZERO
+ 342               
+ 343               / INDIRECT ADDRESSING TEST 9
+ 344               
+ 345 000475  7200          CLA 
+ 346 000476  1173          TAD K172
+ 347 000477  3000          DCA 0
+ 348 000500  2436          ISZ I K0
+ 349 000501  7410          SKP 
+ 350 000502  7402          HLT             /ISZ SKIPPED ILLEGALLY
+ 351 000503  1000          TAD 0
+ 352 000504  7041          CIA
+ 353 000505  1173          TAD K172
+ 354 000506  7040          CMA 
+ 355 000507  7440          SZA 
+ 356 000510  7402          HLT             /ISZ INDIRECT FAILED
+ 357                                       /AC SHOULD BE ZERO
+ 358               
+ 359               / INDIRECT ADDRESSING TEST 10
+ 360               
+ 361 000511  7200          CLA 
+ 362 000512  1574          TAD I K173      /OPERAND=172
+ 363 000513  7041          CIA
+ 364 000514  1173          TAD K172
+ 365 000515  7440          SZA 
+ 366 000516  7402          HLT             /TAD INDIRECT FAILED
+ 367                                       /AC SHOULD BE ZERO
+ 368               
+ 369               / INDIRECT ADDRESSING TEST 11
+ 370               
+ 371 000517  7200          CLA 
+ 372 000520  1004          TAD K7777
+ 373 000521  0574          AND I K173      /OPERAND=172
+ 374 000522  7041          CIA
+ 375 000523  1173          TAD K172
+ 376 000524  7440          SZA 
+ 377 000525  7402          HLT             /AND INDIRECT FAILED
+ 378                                       /AC SHOULD BE ZERO
+ 379               
+ 380               / INDIRECT ADDRESSING TEST 12
+ 381               
+ 382 000526  7200          CLA 
+ 383 000527  1174          TAD K173
+ 384 000530  3000          DCA 0
+ 385 000531  2436          ISZ I K0
+ 386 000532  7410          SKP 
+ 387 000533  7402          HLT             /ISZ SKIPPED ILLEGALLY
+ 388 000534  1000          TAD 0
+ 389 000535  7041          CIA
+ 390 000536  1174          TAD K173
+ 391 000537  7040          CMA 
+ 392 000540  7440          SZA 
+ 393 000541  7402          HLT             /ISZ INDIRECT FAILED
+ 394                                       /AC SHOULD BE ZERO
+ 395               
+ 396               / INDIRECT ADDRESSING TEST 13
+ 397               
+ 398 000542  7200          CLA
+ 399 000543  1575          TAD I K174      /OPERAND=173
+ 400 000544  7041          CIA
+ 401 000545  1174          TAD K173
+ 402 000546  7440          SZA 
+ 403 000547  7402          HLT             /TAD INDIRECT FAILED
+ 404                                       /AC SHOULD BE ZERO
+ 405               
+ 406               / INDIRECT ADDRESSING TEST 14
+ 407               
+ 408 000550  7200          CLA 
+ 409 000551  1004          TAD K7777
+ 410 000552  0575          AND I K174      /OPERAND=173
+ 411 000553  7041          CIA
+ 412 000554  1174          TAD K173
+ 413 000555  7440          SZA 
+ 414 000556  7402          HLT             /AND INDIRECT FAILED
+ 415                                       /AC SHOULD BE ZERO
+ 416               
+ 417               / INDIRECT ADDRESSING TEST 15
+ 418               
+ 419 000557  7200          CLA 
+ 420 000560  1175          TAD K174
+ 421 000561  3000          DCA 0
+ 422 000562  2436          ISZ I K0
+ 423 000563  7410          SKP 
+ 424 000564  7402          HLT             /ISZ SKIPPED ILLEGALLY
+ 425 000565  1000          TAD 0
+ 426 000566  7041          CIA
+ 427 000567  1175          TAD K174
+ 428 000570  7040          CMA 
+ 429 000571  7440          SZA 
+ 430 000572  7402          HLT             /ISZ INDIRECT FAILED
+ 431                                       /AC SHOULD BE ZERO
+ 432 000573  5377          JMP .+4
+ 433 000574  7000          NOP
+ 434 000575  7000          NOP
+ 435 000576  7000          NOP
+ 436 000577  7000          NOP
+ 437               
+ 438               *600
+ 439               /INDIRECT ADDRESSING TEST 16
+ 440               
+ 441 000600  7200          CLA 
+ 442 000601  1576          TAD I K175      /OPERAND=174
+ 443 000602  7041          CIA
+ 444 000603  1175          TAD K174
+ 445 000604  7440          SZA 
+ 446 000605  7402          HLT             /TAD INDIRECT FAILED
+ 447                                       /AC SHOULD BE ZERO
+ 448               
+ 449               /AUTO INDEX TEST 1
+ 450               
+ 451 000606  7200          CLA 
+ 452 000607  1036          TAD K0          /CONSTANT TO BE INDEXED
+ 453 000610  3010          DCA 10
+ 454 000611  0410          AND I 10        /DO AUTO INDEX
+ 455 000612  1010          TAD 10
+ 456 000613  1035          TAD K7776       /AC SHOULD EQUAL 7777
+ 457 000614  7040          CMA 
+ 458 000615  7440          SZA             /AC SHOULD BE ZERO
+ 459 000616  7402          HLT             /AUTO INDEX ERROR
+ 460               
+ 461               /AUTO INDEX TEST 2
+ 462               
+ 463 000617  7200          CLA 
+ 464 000620  1035          TAD K7776       /CONSTANT TO BE INDEXED
+ 465 000621  3010          DCA 10
+ 466 000622  0410          AND I 10        /DO AUTO INDEX
+ 467 000623  1010          TAD 10
+ 468 000624  1036          TAD K0          /AC SHOULD EQUAL 7777
+ 469 000625  7040          CMA 
+ 470 000626  7440          SZA             /AC SHOULD BE ZERO
+ 471 000627  7402          HLT             /AUTO INDEX ERROR
+ 472               
+ 473               /AUTO INDEX TEST 3
+ 474               
+ 475 000630  7200          CLA 
+ 476 000631  1034          TAD K7775       /CONSTANT TO BE INDEXED
+ 477 000632  3010          DCA 10
+ 478 000633  3410          DCA I 10        /DO AUTO INDEX
+ 479 000634  1010          TAD 10
+ 480 000635  1051          TAD K0001       /AC SHOULD EQUAL 7777
+ 481 000636  7040          CMA 
+ 482 000637  7440          SZA             /AC SHOULD BE ZERO
+ 483 000640  7402          HLT             /AUTO INDEX ERROR
+ 484               
+ 485               /AUTO INDEX TEST 4
+ 486               
+ 487 000641  7200          CLA 
+ 488 000642  1033          TAD K7773       /CONSTANT TO BE INDEXED
+ 489 000643  3010          DCA 10
+ 490 000644  1410          TAD I 10        /DO AUTO INDEX
+ 491 000645  7200          CLA 
+ 492 000646  1010          TAD 10
+ 493 000647  1047          TAD K0003       /AC SHOULD EQUAL 7777
+ 494 000650  7040          CMA 
+ 495 000651  7440          SZA             /AC SHOULD BE ZERO
+ 496 000652  7402          HLT             /AUTO INDEX ERROR
+ 497               
+ 498               /AUTO INDEX TEST 5
+ 499               
+ 500 000653  7200          CLA 
+ 501 000654  1032          TAD K7767       /CONSTANT TO BE INDEXED
+ 502 000655  3010          DCA 10
+ 503 000656  0410          AND I 10        /DO AUTO INDEX
+ 504 000657  1010          TAD 10
+ 505 000660  1046          TAD K0007       /AC SHOULD EQUAL 7777
+ 506 000661  7040          CMA 
+ 507 000662  7440          SZA             /AC SHOULD BE ZERO
+ 508 000663  7402          HLT             /AUTO INDEX ERROR
+ 509               
+ 510               /AUTO INDEX TEST 6
+ 511               
+ 512 000664  7200          CLA 
+ 513 000665  1031          TAD K7757       /CONSTANT TO BE INDEXED
+ 514 000666  3010          DCA 10
+ 515 000667  0410          AND I 10        /DO AUTO INDEX
+ 516 000670  1010          TAD 10
+ 517 000671  1045          TAD K0017       /AC SHOULD EQUAL 7777
+ 518 000672  7040          CMA 
+ 519 000673  7440          SZA             /AC SHOULD BE ZERO
+ 520 000674  7402          HLT             /AUTO INDEX ERROR
+ 521               
+ 522               /AUTO INDEX TEST 7
+ 523               
+ 524 000675  7200          CLA 
+ 525 000676  1027          TAD K7737       /CONSTANT TO BE INDEXED
+ 526 000677  3010          DCA 10
+ 527 000700  0410          AND I 10        /DO AUTO INDEX
+ 528 000701  1010          TAD 10
+ 529 000702  1044          TAD K0037       /AC SHOULD EQUAL 7777
+ 530 000703  7040          CMA 
+ 531 000704  7440          SZA             /AC SHOULD BE ZERO
+ 532 000705  7402          HLT             /AUTO INDEX ERROR
+ 533               
+ 534               /AUTO INDEX TEST 8
+ 535               
+ 536 000706  7200          CLA 
+ 537 000707  1026          TAD K7677       /CONSTANT TO BE INDEXED
+ 538 000710  3010          DCA 10
+ 539 000711  0410          AND I 10        /DO AUTO INDEX
+ 540 000712  1010          TAD 10
+ 541 000713  1043          TAD K0077       /AC SHOULD EQUAL 7777
+ 542 000714  7040          CMA 
+ 543 000715  7440          SZA             /AC SHOULD BE ZERO
+ 544 000716  7402          HLT             /AUTO INDEX ERROR
+ 545               
+ 546               /AUTO INDEX TEST 9
+ 547               
+ 548 000717  7200          CLA 
+ 549 000720  1025          TAD K7577       /CONSTANT TO BE INDEXED
+ 550 000721  3010          DCA 10
+ 551 000722  0410          AND I 10        /DO AUTO INDEX
+ 552 000723  1010          TAD 10
+ 553 000724  1042          TAD K0177       /AC SHOULD EQUAL 7777
+ 554 000725  7040          CMA 
+ 555 000726  7440          SZA             /AC SHOULD BE ZERO
+ 556 000727  7402          HLT             /AUTO INDEX ERROR
+ 557               
+ 558               /AUTO INDEX TEST 10
+ 559               
+ 560 000730  7200          CLA 
+ 561 000731  1024          TAD K7377       /CONSTANT TO BE INDEXED
+ 562 000732  3010          DCA 10
+ 563 000733  0410          AND I 10        /DO AUTO INDEX
+ 564 000734  1010          TAD 10
+ 565 000735  1041          TAD K0377       /AC SHOULD EQUAL 7777
+ 566 000736  7040          CMA 
+ 567 000737  7440          SZA             /AC SHOULD BE ZERO
+ 568 000740  7402          HLT             /AUTO INDEX ERROR
+ 569               
+ 570               /AUTO INDEX TEST 11
+ 571               
+ 572 000741  7200          CLA 
+ 573 000742  1023          TAD K6777       /CONSTANT TO BE INDEXED
+ 574 000743  3010          DCA 10
+ 575 000744  0410          AND I 10        /DO AUTO INDEX
+ 576 000745  1010          TAD 10
+ 577 000746  1040          TAD K0777       /AC SHOULD EQUAL 7777
+ 578 000747  7040          CMA 
+ 579 000750  7440          SZA             /AC SHOULD BE ZERO
+ 580 000751  7402          HLT             /AUTO INDEX ERROR
+ 581               
+ 582               /AUTO INDEX TEST 12
+ 583               
+ 584 000752  7200          CLA 
+ 585 000753  1006          TAD K5777       /CONSTANT TO BE INDEXED
+ 586 000754  3010          DCA 10
+ 587 000755  2410          ISZ I 10        /DO AUTO INDEX
+ 588 000756  7000          NOP
+ 589 000757  1010          TAD 10
+ 590 000760  1037          TAD K1777       /AC SHOULD EQUAL 7777
+ 591 000761  7040          CMA 
+ 592 000762  7440          SZA             /AC SHOULD BE ZERO
+ 593 000763  7402          HLT             /AUTO INDEX ERROR
+ 594               
+ 595               /AUTO INDEX TEST 13
+ 596               
+ 597 000764  7200          CLA 
+ 598 000765  1005          TAD K3777       /CONSTANT TO BE INDEXED
+ 599 000766  3010          DCA 10
+ 600 000767  0410          AND I 10        /DO AUTO INDEX
+ 601 000770  1010          TAD 10
+ 602 000771  1005          TAD K3777       /AC SHOULD EQUAL 7777
+ 603 000772  7040          CMA 
+ 604 000773  7440          SZA             /AC SHOULD BE ZERO
+ 605 000774  7402          HLT             /AUTO INDEX ERROR
+ 606 000775  7000          NOP
+ 607 000776  7000          NOP
+ 608 000777  7000          NOP
+ 609               
+ 610               *1000
+ 611               
+ 612               /AUTO INDEX TEST 14
+ 613               
+ 614 001000  7200          CLA
+ 615 001001  1004          TAD K7777       /CONSTANT TO BE INDEXED
+ 616 001002  3010          DCA 10
+ 617 001003  0410          AND I 10        /DO AUTO INDEX
+ 618 001004  1010          TAD 10
+ 619 001005  1004          TAD K7777       /AC SHOULD EQUAL 7777
+ 620 001006  7040          CMA 
+ 621 001007  7410          SKP 
+ 622 001010  0000          0
+ 623 001011  7440          SZA             /AC SHOULD BE ZERO
+ 624 001012  7402          HLT             /AUTO INDEX ERROR
+ 625               
+ 626               /AUTO INDEX TEST 15
+ 627               
+ 628 001013  7200          CLA 
+ 629 001014  1036          TAD K0          /CONSTANT TO BE INDEXED
+ 630 001015  3011          DCA 11
+ 631 001016  0411          AND I 11        /DO AUTO INDEX
+ 632 001017  1011          TAD 11
+ 633 001020  1035          TAD K7776       /AC SHOULD EQUAL 7777
+ 634 001021  7040          CMA 
+ 635 001022  7440          SZA             /AC SHOULD BE ZERO
+ 636 001023  7402          HLT             /AUTO INDEX ERROR
+ 637               
+ 638               /AUTO INDEX TEST 16
+ 639               
+ 640 001024  7200          CLA
+ 641 001025  1035          TAD K7776       /CONSTANT TO BE INDEXED
+ 642 001026  3011          DCA 11
+ 643 001027  0411          AND I 11        /DO AUTO INDEX
+ 644 001030  1011          TAD 11
+ 645 001031  1036          TAD K0          /AC SHOULD EQUAL 7777
+ 646 001032  7040          CMA 
+ 647 001033  7440          SZA             /AC SHOULD BE ZERO
+ 648 001034  7402          HLT             /AUTO INDEX ERROR
+ 649               
+ 650               /AUTO INDEX TEST 17
+ 651 001035  7200          CLA 
+ 652 001036  1034          TAD K7775       /CONSTANT TO BE INDEXED
+ 653 001037  3011          DCA 11
+ 654 001040  3411          DCA I 11        /DO AUTO INDEX
+ 655 001041  1011          TAD 11
+ 656 001042  1051          TAD K0001       /AC SHOULD EQUAL 7777
+ 657 001043  7040          CMA 
+ 658 001044  7440          SZA             /AC SHOULD BE ZERO
+ 659 001045  7402          HLT             /AUTO INDEX ERROR
+ 660               
+ 661               /AUTO INDEX TEST 18
+ 662 001046  7200          CLA 
+ 663 001047  1033          TAD K7773       /CONSTANT TO BE INDEXED
+ 664 001050  3011          DCA 11
+ 665 001051  1411          TAD I 11        /DO AUTO INDEX
+ 666 001052  7200          CLA
+ 667 001053  1011          TAD 11
+ 668 001054  1047          TAD K0003       /AC SHOULD EQUAL 7777
+ 669 001055  7040          CMA 
+ 670 001056  7440          SZA             /AC SHOULD BE ZERO
+ 671 001057  7402          HLT             /AUTO INDEX ERROR
+ 672               
+ 673               /AUTO INDEX TEST 19
+ 674 001060  7200          CLA 
+ 675 001061  1032          TAD K7767       /CONSTANT TO BE INDEXED
+ 676 001062  3011          DCA 11
+ 677 001063  0411          AND I 11        /DO AUTO INDEX
+ 678 001064  1011          TAD 11
+ 679 001065  1046          TAD K0007       /AC SHOULD EQUAL 7777
+ 680 001066  7040          CMA 
+ 681 001067  7440          SZA             /AC SHOULD BE ZERO
+ 682 001070  7402          HLT             /AUTO INDEX ERROR
+ 683               
+ 684               /AUTO INDEX TEST 20
+ 685 001071  7200          CLA 
+ 686 001072  1031          TAD K7757       /CONSTANT TO BE INDEXED
+ 687 001073  3011          DCA 11
+ 688 001074  0411          AND I 11        /DO AUTO INDEX
+ 689 001075  1011          TAD 11
+ 690 001076  1045          TAD K0017       /AC SHOULD EQUAL 7777
+ 691 001077  7040          CMA 
+ 692 001100  7440          SZA             /AC SHOULD BE ZERO
+ 693 001101  7402          HLT             /AUTO INDEX ERROR
+ 694               
+ 695               /AUTO INDEX TEST 21
+ 696 001102  7200          CLA 
+ 697 001103  1027          TAD K7737       /CONSTANT TO BE INDEXED
+ 698 001104  3011          DCA 11
+ 699 001105  0411          AND I 11        /DO AUTO INDEX
+ 700 001106  1011          TAD 11
+ 701 001107  1044          TAD K0037       /AC SHOULD EQUAL 7777
+ 702 001110  7040          CMA 
+ 703 001111  7440          SZA             /AC SHOULD BE ZERO
+ 704 001112  7402          HLT             /AUTO INDEX ERROR
+ 705               
+ 706               /AUTO INDEX TEST 22
+ 707 001113  7200          CLA 
+ 708 001114  1026          TAD K7677       /CONSTANT TO BE INDEXED
+ 709 001115  3011          DCA 11
+ 710 001116  0411          AND I 11        /DO AUTO INDEX
+ 711 001117  1011          TAD 11
+ 712 001120  1043          TAD K0077       /AC SHOULD EQUAL 7777
+ 713 001121  7040          CMA 
+ 714 001122  7440          SZA             /AC SHOULD BE ZERO
+ 715 001123  7402          HLT             /AUTO INDEX ERROR
+ 716               
+ 717               /AUTO INDEX TEST 23
+ 718 001124  7200          CLA 
+ 719 001125  1025          TAD K7577       /CONSTANT TO BE INDEXED
+ 720 001126  3011          DCA 11
+ 721 001127  0411          AND I 11        /DO AUTO INDEX
+ 722 001130  1011          TAD 11
+ 723 001131  1042          TAD K0177       /AC SHOULD EQUAL 7777
+ 724 001132  7040          CMA 
+ 725 001133  7440          SZA             /AC SHOULD BE ZERO
+ 726 001134  7402          HLT             /AUTO INDEX ERROR
+ 727               
+ 728               /AUTO INDEX TEST 24
+ 729 001135  7200          CLA 
+ 730 001136  1024          TAD K7377       /CONSTANT TO BE INDEXED
+ 731 001137  3011          DCA 11
+ 732 001140  0411          AND I 11        /DO AUTO INDEX
+ 733 001141  1011          TAD 11
+ 734 001142  1041          TAD K0377       /AC SHOULD EQUAL 7777
+ 735 001143  7040          CMA 
+ 736 001144  7440          SZA             /AC SHOULD BE ZERO
+ 737 001145  7402          HLT             /AUTO INDEX ERROR
+ 738               
+ 739               /AUTO INDEX TEST 25
+ 740 001146  7200          CLA 
+ 741 001147  1023          TAD K6777       /CONSTANT TO BE INDEXED
+ 742 001150  3011          DCA 11
+ 743 001151  0411          AND I 11        /DO AUTO INDEX
+ 744 001152  1011          TAD 11
+ 745 001153  1040          TAD K0777       /AC SHOULD EQUAL 7777
+ 746 001154  7040          CMA 
+ 747 001155  7440          SZA             /AC SHOULD BE ZERO
+ 748 001156  7402          HLT             /AUTO INDEX ERROR
+ 749               
+ 750               /AUTO INDEX TEST 26
+ 751 001157  7200          CLA 
+ 752 001160  1006          TAD K5777       /CONSTANT TO BE INDEXED
+ 753 001161  3011          DCA 11
+ 754 001162  2411          ISZ I 11        /DO AUTO INDEX
+ 755 001163  7000          NOP
+ 756 001164  1011          TAD 11
+ 757 001165  1037          TAD K1777       /AC SHOULD EQUAL 7777
+ 758 001166  7040          CMA 
+ 759 001167  7440          SZA             /AC SHOULD BE ZERO
+ 760 001170  7402          HLT             /AUTO INDEX ERROR
+ 761 001171  7000          NOP
+ 762 001172  5376          JMP .+4
+ 763 001173  7000          NOP
+ 764 001174  7000          NOP
+ 765 001175  7000          NOP
+ 766               
+ 767               /PAUSE
+ 768               
+ 769               /TEST 2  -  TAPE 2
+ 770               
+ 771               *1200
+ 772               
+ 773               /AUTO INDEX TEST 27
+ 774 001200  7200          CLA 
+ 775 001201  1005          TAD K3777       /CONSTANT TO BE INDEXED
+ 776 001202  3011          DCA 11
+ 777 001203  0411          AND I 11        /DO AUTO INDEX
+ 778 001204  1011          TAD 11
+ 779 001205  1005          TAD K3777       /AC SHOULD EQUAL 7777
+ 780 001206  7040          CMA 
+ 781 001207  7440          SZA             /AC SHOULD BE ZERO
+ 782 001210  7402          HLT             /AUTO INDEX ERROR
+ 783               
+ 784               /AUTO INDEX TEST 28
+ 785 001211  7200          CLA 
+ 786 001212  1004          TAD K7777       /CONSTANT TO BE INDEXED
+ 787 001213  3011          DCA 11
+ 788 001214  0411          AND I 11        /DO AUTO INDEX
+ 789 001215  1011          TAD 11
+ 790 001216  1004          TAD K7777       /AC SHOULD EQUAL 7777
+ 791 001217  7040          CMA 
+ 792 001220  7440          SZA             /AC SHOULD BE ZERO
+ 793 001221  7402          HLT             /AUTO INDEX ERROR
+ 794               
+ 795               /AUTO INDEX TEST 29
+ 796 001222  7200          CLA 
+ 797 001223  1036          TAD K0          /CONSTANT TO BE INDEXED
+ 798 001224  3012          DCA 12
+ 799 001225  0412          AND I 12        /DO AUTO INDEX
+ 800 001226  1012          TAD 12
+ 801 001227  1035          TAD K7776       /AC SHOULD EQUAL 7777
+ 802 001230  7040          CMA 
+ 803 001231  7440          SZA             /AC SHOULD BE ZERO
+ 804 001232  7402          HLT             /AUTO INDEX ERROR
+ 805               
+ 806               /AUTO INDEX TEST 30
+ 807 001233  7200          CLA 
+ 808 001234  1035          TAD K7776       /CONSTANT TO BE INDEXED
+ 809 001235  3012          DCA 12
+ 810 001236  0412          AND I 12        /DO AUTO INDEX
+ 811 001237  1012          TAD 12
+ 812 001240  1036          TAD K0          /AC SHOULD EQUAL 7777
+ 813 001241  7040          CMA 
+ 814 001242  7440          SZA             /AC SHOULD BE ZERO
+ 815 001243  7402          HLT             /AUTO INDEX ERROR
+ 816               
+ 817               /AUTO INDEX TEST 31
+ 818 001244  7200          CLA 
+ 819 001245  1034          TAD K7775       /CONSTANT TO BE INDEXED
+ 820 001246  3012          DCA 12
+ 821 001247  3412          DCA I 12        /DO AUTO INDEX
+ 822 001250  1012          TAD 12
+ 823 001251  1051          TAD K0001       /AC SHOULD EQUAL 7777
+ 824 001252  7040          CMA 
+ 825 001253  7440          SZA             /AC SHOULD BE ZERO
+ 826 001254  7402          HLT             /AUTO INDEX ERROR
+ 827               
+ 828               /AUTO INDEX TEST 32
+ 829 001255  7200          CLA
+ 830 001256  1033          TAD K7773       /CONSTANT TO BE INDEXED
+ 831 001257  3012          DCA 12
+ 832 001260  1412          TAD I 12        /DO AUTO INDEX
+ 833 001261  7200          CLA 
+ 834 001262  1012          TAD 12
+ 835 001263  1047          TAD K0003       /AC SHOULD EQUAL 7777
+ 836 001264  7040          CMA 
+ 837 001265  7440          SZA             /AC SHOULD BE ZERO
+ 838 001266  7402          HLT             /AUTO INDEX ERROR
+ 839               
+ 840               /AUTO INDEX TEST 33
+ 841 001267  7200          CLA 
+ 842 001270  1032          TAD K7767       /CONSTANT TO BE INDEXED
+ 843 001271  3012          DCA 12
+ 844 001272  0412          AND I 12        /DO AUTO INDEX
+ 845 001273  1012          TAD 12
+ 846 001274  1046          TAD K0007       /AC SHOULD EQUAL 7777
+ 847 001275  7040          CMA 
+ 848 001276  7440          SZA             /AC SHOULD BE ZERO
+ 849 001277  7402          HLT             /AUTO INDEX ERROR
+ 850               
+ 851               /AUTO INDEX TEST 34
+ 852 001300  7200          CLA 
+ 853 001301  1031          TAD K7757       /CONSTANT TO BE INDEXED
+ 854 001302  3012          DCA 12
+ 855 001303  0412          AND I 12        /DO AUTO INDEX
+ 856 001304  1012          TAD 12
+ 857 001305  1045          TAD K0017       /AC SHOULD EQUAL 7777
+ 858 001306  7040          CMA 
+ 859 001307  7440          SZA             /AC SHOULD BE ZERO
+ 860 001310  7402          HLT             /AUTO INDEX ERROR
+ 861               
+ 862               /AUTO INDEX TEST 35
+ 863 001311  7200          CLA 
+ 864 001312  1027          TAD K7737       /CONSTANT TO BE INDEXED
+ 865 001313  3012          DCA 12
+ 866 001314  0412          AND I 12        /DO AUTO INDEX
+ 867 001315  1012          TAD 12
+ 868 001316  1044          TAD K0037       /AC SHOULD EQUAL 7777
+ 869 001317  7040          CMA 
+ 870 001320  7440          SZA             /AC SHOULD BE ZERO
+ 871 001321  7402          HLT             /AUTO INDEX ERROR
+ 872               
+ 873               /AUTO INDEX TEST 36
+ 874 001322  7200          CLA 
+ 875 001323  1026          TAD K7677       /CONSTANT TO BE INDEXED
+ 876 001324  3012          DCA 12
+ 877 001325  0412          AND I 12        /DO AUTO INDEX
+ 878 001326  1012          TAD 12
+ 879 001327  1043          TAD K0077       /AC SHOULD EQUAL 7777
+ 880 001330  7040          CMA 
+ 881 001331  7440          SZA             /AC SHOULD BE ZERO
+ 882 001332  7402          HLT             /AUTO INDEX ERROR
+ 883               
+ 884               /AUTO INDEX TEST 37
+ 885 001333  7200          CLA 
+ 886 001334  1025          TAD K7577
+ 887 001335  3012          DCA 12
+ 888 001336  0412          AND I 12        /DO AUTO INDEX
+ 889 001337  1012          TAD 12
+ 890 001340  1042          TAD K0177       /AC SHOULD EQUAL 7777
+ 891 001341  7040          CMA 
+ 892 001342  7440          SZA             /AC SHOULD BE ZERO
+ 893 001343  7402          HLT             /AUTO INDEX ERROR
+ 894               
+ 895               /AUTO INDEX TEST 38
+ 896 001344  7200          CLA 
+ 897 001345  1024          TAD K7377       /CONSTANT TO BE INDEXED
+ 898 001346  3012          DCA 12
+ 899 001347  0412          AND I 12        /DO AUTO INDEX
+ 900 001350  1012          1012
+ 901 001351  1041          TAD K0377       /AC SHOULD EQUAL 7777
+ 902 001352  7040          CMA 
+ 903 001353  7440          SZA             /AC SHOULD BE ZERO
+ 904 001354  7402          HLT             /AUTO INDEX ERROR
+ 905               
+ 906               /AUTO INDEX TEST 39
+ 907 001355  7200          CLA 
+ 908 001356  1023          TAD K6777       /CONSTANT TO BE INDEXED
+ 909 001357  3012          DCA 12
+ 910 001360  0412          AND I 12        /DO AUTO INDEX
+ 911 001361  1012          TAD 12
+ 912 001362  1040          TAD K0777       /AC SHOULD EQUAL 7777
+ 913 001363  7040          CMA 
+ 914 001364  7440          SZA             /AC SHOULD BE ZERO
+ 915 001365  7402          HLT             /AUTO INDEX ERROR
+ 916               
+ 917               /AUTO INDEX TEST 40
+ 918 001366  7200          CLA 
+ 919 001367  1006          TAD K5777       /CONSTANT TO BE INDEXED
+ 920 001370  3012          DCA 12
+ 921 001371  2412          ISZ I 12        /DO AUTO INDEX
+ 922 001372  7000          NOP
+ 923 001373  1012          TAD 12
+ 924 001374  1037          TAD K1777       /AC SHOULD EQUAL 7777
+ 925 001375  7040          CMA 
+ 926 001376  7440          SZA             /AC SHOULD BE ZERO
+ 927 001377  7402          HLT             /AUTO INDEX ERROR
+ 928               
+ 929                       *1400
+ 930               /AUTO INDEX TEST 41
+ 931 001400  7200          CLA 
+ 932 001401  1005          TAD K3777       /CONSTANT TO BE INDEXED
+ 933 001402  3012          DCA 12
+ 934 001403  0412          AND I 12        /DO AUTO INDEX
+ 935 001404  1012          TAD 12
+ 936 001405  1005          TAD K3777       /AC SHOULD EQUAL 7777
+ 937 001406  7040          CMA 
+ 938 001407  7440          SZA             /AC SHOULD BE ZERO
+ 939 001410  7402          HLT             /AUTO INDEX ERROR
+ 940               
+ 941               /AUTO INDEX TEST 42
+ 942 001411  7200          CLA 
+ 943 001412  1004          TAD K7777       /CONSTANT TO BE INDEXED
+ 944 001413  3012          DCA 12
+ 945 001414  0412          AND I 12        /DO AUTO INDEX
+ 946 001415  1012          TAD 12
+ 947 001416  1004          TAD K7777       /AC SHOULD EQUAL 7777
+ 948 001417  7040          CMA 
+ 949 001420  7440          SZA             /AC SHOULD BE ZERO
+ 950 001421  7402          HLT             /AUTO INDEX ERROR
+ 951               
+ 952               /AUTO INDEX TEST 43
+ 953 001422  7200          CLA 
+ 954 001423  1036          TAD K0          /CONSTANT TO BE INDEXED
+ 955 001424  3013          DCA 13
+ 956 001425  0413          AND I 13        /DO AUTO INDEX
+ 957 001426  1013          TAD 13
+ 958 001427  1035          TAD K7776       /AC SHOULD EQUAL 7777
+ 959 001430  7040          CMA 
+ 960 001431  7440          SZA             /AC SHOULD BE ZERO
+ 961 001432  7402          HLT             /AUTO INDEX ERROR
+ 962               
+ 963               /AUTO INDEX TEST 44
+ 964 001433  7200          CLA 
+ 965 001434  1035          TAD K7776       /CONSTANT TO BE INDEXED
+ 966 001435  3013          DCA 13
+ 967 001436  0413          AND I 13        /DO AUTO INDEX
+ 968 001437  1013          TAD 13
+ 969 001440  1036          TAD K0          /AC SHOULD EQUAL 7777
+ 970 001441  7040          CMA 
+ 971 001442  7440          SZA             /AC SHOULD BE ZERO
+ 972 001443  7402          HLT             /AUTO INDEX ERROR
+ 973               
+ 974               /AUTO INDEX TEST 45
+ 975 001444  7200          CLA 
+ 976 001445  1034          TAD K7775       /CONSTANT TO BE INDEXED
+ 977 001446  3013          DCA 13
+ 978 001447  3413          DCA I 13        /DO AUTO INDEX
+ 979 001450  1013          TAD 13
+ 980 001451  1051          TAD K0001       /AC SHOULD EQUAL 7777
+ 981 001452  7040          CMA 
+ 982 001453  7440          SZA             /AC SHOULD BE ZERO
+ 983 001454  7402          HLT             /AUTO INDEX ERROR
+ 984               
+ 985               /AUTO INDEX TEST 46
+ 986 001455  7200          CLA 
+ 987 001456  1033          TAD K7773       /CONSTANT TO BE INDEXED
+ 988 001457  3013          DCA 13
+ 989 001460  1413          TAD I 13        /DO AUTO INDEX
+ 990 001461  7200          CLA 
+ 991 001462  1013          TAD 13
+ 992 001463  1047          TAD K0003       /AC SHOULD EQUAL 7777
+ 993 001464  7040          CMA 
+ 994 001465  7440          SZA             /AC SHOULD BE ZERO
+ 995 001466  7402          HLT             /AUTO INDEX ERROR
+ 996               
+ 997               /AUTO INDEX TEST 47
+ 998 001467  7200          CLA 
+ 999 001470  1032          TAD K7767       /CONSTANT TO BE INDEXED
+1000 001471  3013          DCA 13
+1001 001472  0413          AND I 13        /DO AUTO INDEX
+1002 001473  1013          TAD 13
+1003 001474  1046          TAD K0007       /AC SHOULD EQUAL 7777
+1004 001475  7040          CMA 
+1005 001476  7440          SZA             /AC SHOULD BE ZERO
+1006 001477  7402          HLT             /AUTO INDEX ERROR
+1007               
+1008               /AUTO INDEX TEST 48
+1009 001500  7200          CLA 
+1010 001501  1031          TAD K7757       /CONSTANT TO BE INDEXED
+1011 001502  3013          DCA 13
+1012 001503  0413          AND I 13        /DO AUTO INDEX
+1013 001504  1013          TAD 13
+1014 001505  1045          TAD K0017       /AC SHOULD EQUAL 7777
+1015 001506  7040          CMA 
+1016 001507  7440          SZA             /AC SHOULD BE ZERO
+1017 001510  7402          HLT             /AUTO INDEX ERROR
+1018               
+1019               /AUTO INDEX TEST 49
+1020 001511  7200          CLA 
+1021 001512  1027          TAD K7737       /CONSTANT TO BE INDEXED
+1022 001513  3013          DCA 13
+1023 001514  0413          AND I 13        /DO AUTO INDEX
+1024 001515  1013          TAD 13
+1025 001516  1044          TAD K0037       /AC SHOULD EQUAL 7777
+1026 001517  7040          CMA 
+1027 001520  7440          SZA             /AC SHOULD BE ZERO
+1028 001521  7402          HLT             /AUTO INDEX ERROR
+1029               
+1030               /AUTO INDEX TEST 50
+1031 001522  7200          CLA 
+1032 001523  1026          TAD K7677       /CONSTANT TO BE INDEXED
+1033 001524  3013          DCA 13
+1034 001525  0413          AND I 13        /DO AUTO INDEX
+1035 001526  1013          TAD 13
+1036 001527  1043          TAD K0077       /AC SHOULD EQUAL 7777
+1037 001530  7040          CMA 
+1038 001531  7440          SZA             /AC SHOULD BE ZERO
+1039 001532  7402          HLT             /AUTO INDEX ERROR
+1040               
+1041               /AUTO INDEX TEST 51
+1042 001533  7200          CLA 
+1043 001534  1025          TAD K7577       /CONSTANT TO BE INDEXED
+1044 001535  3013          DCA 13
+1045 001536  0413          AND I 13        /DO AUTO INDEX
+1046 001537  1013          TAD 13
+1047 001540  1042          TAD K0177       /AC SHOULD EQUAL 7777
+1048 001541  7040          CMA 
+1049 001542  7440          SZA             /AC SHOULD BE ZERO
+1050 001543  7402          HLT             /AUTO INDEX ERROR
+1051               
+1052               /AUTO INDEX TEST 52
+1053 001544  7200          CLA 
+1054 001545  1024          TAD K7377       /CONSTANT TO BE INDEXED
+1055 001546  3013          DCA 13
+1056 001547  0413          AND I 13        /DO AUTO INDEX
+1057 001550  1013          TAD 13
+1058 001551  1041          TAD K0377       /AC SHOULD EQUAL 7777
+1059 001552  7040          CMA 
+1060 001553  7440          SZA             /AC SHOULD BE ZERO
+1061 001554  7402          HLT             /AUTO INDEX ERROR
+1062               
+1063               /AUTO INDEX TEST 53
+1064 001555  7200          CLA 
+1065 001556  1023          TAD K6777       /CONSTANT TO BE INDEXED
+1066 001557  3013          DCA 13
+1067 001560  0413          AND I 13        /DO AUTO INDEX
+1068 001561  1013          TAD 13
+1069 001562  1040          TAD K0777       /AC SHOULD EQUAL 7777
+1070 001563  7040          CMA 
+1071 001564  7440          SZA             /AC SHOULD BE ZERO
+1072 001565  7402          HLT             /AUTO INDEX ERROR
+1073               
+1074               /AUTO INDEX TEST 54
+1075 001566  7200          CLA 
+1076 001567  1006          TAD K5777       /CONSTANT TO BE INDEXED
+1077 001570  3013          DCA 13
+1078 001571  2413          ISZ I 13        /DO AUTO INDEX
+1079 001572  7000          NOP
+1080 001573  1013          TAD 13
+1081 001574  1037          TAD K1777       /AC SHOULD EQUAL 7777
+1082 001575  7040          CMA 
+1083 001576  7440          SZA             /AC SHOULD BE ZERO
+1084 001577  7402          HLT             /AUTO INDEX ERROR
+1085               
+1086                       *1600
+1087               /AUTO INDEX TEST 55
+1088 001600  7200          CLA 
+1089 001601  1005          TAD K3777       /CONSTANT TO BE INDEXED
+1090 001602  3013          DCA 13
+1091 001603  0413          AND I 13        /DO AUTO INDEX
+1092 001604  1013          TAD 13
+1093 001605  1005          TAD K3777       /AC SHOULD EQUAL 7777
+1094 001606  7040          CMA 
+1095 001607  7440          SZA             /AC SHOULD BE ZERO
+1096 001610  7402          HLT             /AUTO INDEX ERROR
+1097               
+1098               /AUTO INDEX TEST 56
+1099 001611  7200          CLA 
+1100 001612  1004          TAD K7777       /CONSTANT TO BE INDEXED
+1101 001613  3013          DCA 13
+1102 001614  0413          AND I 13        /DO AUTO INDEX
+1103 001615  1013          TAD 13
+1104 001616  1004          TAD K7777       /AC SHOULD EQUAL 7777
+1105 001617  7040          CMA 
+1106 001620  7440          SZA             /AC SHOULD BE ZERO
+1107 001621  7402          HLT             /AUTO INDEX ERROR
+1108               
+1109               /AUTO INDEX TEST 57
+1110 001622  7200          CLA 
+1111 001623  1036          TAD K0          /CONSTANT TO BE INDEXED
+1112 001624  3014          DCA 14
+1113 001625  0414          AND I 14        /DO AUTO INDEX
+1114 001626  1014          TAD 14
+1115 001627  1035          TAD K7776       /AC SHOULD EQUAL 7777
+1116 001630  7040          CMA 
+1117 001631  7440          SZA             /AC SHOULD BE ZERO
+1118 001632  7402          HLT             /AUTO INDEX ERROR
+1119               
+1120               /AUTO INDEX TEST 58
+1121 001633  7200          CLA 
+1122 001634  1035          TAD K7776       /CONSTANT TO BE INDEXED
+1123 001635  3014          DCA 14
+1124 001636  0414          AND I 14        /DO AUTO INDEX
+1125 001637  1014          TAD 14
+1126 001640  1036          TAD K0          /AC SHOULD EQUAL 7777
+1127 001641  7040          CMA 
+1128 001642  7440          SZA             /AC SHOULD BE ZERO
+1129 001643  7402          HLT             /AUTO INDEX ERROR
+1130               
+1131               /AUTO INDEX TEST 59
+1132 001644  7200          CLA 
+1133 001645  1034          TAD K7775       /CONSTANT TO BE INDEXED
+1134 001646  3014          DCA 14
+1135 001647  3414          DCA I 14        /DO AUTO INDEX
+1136 001650  1014          TAD 14
+1137 001651  1051          TAD K0001       /AC SHOULD EQUAL 7777
+1138 001652  7040          CMA 
+1139 001653  7440          SZA             /AC SHOULD BE ZERO
+1140 001654  7402          HLT             /AUTO INDEX ERROR
+1141               
+1142               /AUTO INDEX TEST 60
+1143 001655  7200          CLA 
+1144 001656  1033          TAD K7773       /CONSTANT TO BE INDEXED
+1145 001657  3014          DCA 14
+1146 001660  1414          TAD I 14        /DO AUTO INDEX
+1147 001661  7200          CLA 
+1148 001662  1014          TAD 14
+1149 001663  1047          TAD K0003       /AC SHOULD EQUAL 7777
+1150 001664  7040          CMA 
+1151 001665  7440          SZA             /AC SHOULD BE ZERO
+1152 001666  7402          HLT             /AUTO INDEX ERROR
+1153               
+1154               /AUTO INDEX TEST 61
+1155 001667  7200          CLA 
+1156 001670  1032          TAD K7767       /CONSTANT TO BE INDEXED
+1157 001671  3014          DCA 14
+1158 001672  0414          AND I 14        /DO AUTO INDEX
+1159 001673  1014          TAD 14
+1160 001674  1046          TAD K0007       /AC SHOULD EQUAL 7777
+1161 001675  7040          CMA 
+1162 001676  7440          SZA             /AC SHOULD BE ZERO
+1163 001677  7402          HLT             /AUTO INDEX ERROR
+1164               
+1165               /AUTO INDEX TEST 62
+1166 001700  7200          CLA 
+1167 001701  1031          TAD K7757       /CONSTANT TO BE INDEXED
+1168 001702  3014          DCA 14
+1169 001703  0414          AND I 14        /DO AUTO INDEX
+1170 001704  1014          TAD 14
+1171 001705  1045          TAD K0017       /AC SHOULD EQUAL 7777
+1172 001706  7040          CMA 
+1173 001707  7440          SZA             /AC SHOULD BE ZERO
+1174 001710  7402          HLT             /AUTO INDEX ERROR
+1175               
+1176               /AUTO INDEX TEST 63
+1177 001711  7200          CLA 
+1178 001712  1027          TAD K7737       /CONSTANT TO BE INDEXED
+1179 001713  3014          DCA 14
+1180 001714  0414          AND I 14        /DO AUTO INDEX
+1181 001715  1014          TAD 14
+1182 001716  1044          TAD K0037       /AC SHOULD EQUAL 7777
+1183 001717  7040          CMA 
+1184 001720  7440          SZA             /AC SHOULD BE ZERO
+1185 001721  7402          HLT             /AUTO INDEX ERROR
+1186               
+1187               /AUTO INDEX TEST 64
+1188 001722  7200          CLA 
+1189 001723  1026          TAD K7677       /CONSTANT TO BE INDEXED
+1190 001724  3014          DCA 14
+1191 001725  0414          AND I 14        /DO AUTO INDEX
+1192 001726  1014          TAD 14
+1193 001727  1043          TAD K0077       /AC SHOULD EQUAL 7777
+1194 001730  7040          CMA 
+1195 001731  7440          SZA             /AC SHOULD BE ZERO
+1196 001732  7402          HLT             /AUTO INDEX ERROR
+1197               
+1198               /AUTO INDEX TEST 65
+1199 001733  7200          CLA 
+1200 001734  1025          TAD K7577       /CONSTANT TO BE INDEXED
+1201 001735  3014          DCA 14
+1202 001736  0414          AND I 14        /DO AUTO INDEX
+1203 001737  1014          TAD 14
+1204 001740  1042          TAD K0177       /AC SHOULD EQUAL 7777
+1205 001741  7040          CMA 
+1206 001742  7440          SZA             /AC SHOULD BE ZERO
+1207 001743  7402          HLT             /AUTO INDEX ERROR
+1208               
+1209               /AUTO INDEX TEST 66
+1210 001744  7200          CLA 
+1211 001745  1024          TAD K7377       /CONSTANT TO BE INDEXED
+1212 001746  3014          DCA 14
+1213 001747  0414          AND I 14        /DO AUTO INDEX
+1214 001750  1014          TAD 14
+1215 001751  1041          TAD K0377       /AC SHOULD EQUAL 7777
+1216 001752  7040          CMA
+1217 001753  7440          SZA             /AC SHOULD BE ZERO
+1218 001754  7402          HLT             /AUTO INDEX ERROR
+1219               
+1220               /AUTO INDEX TEST 67
+1221 001755  7200          CLA 
+1222 001756  1023          TAD K6777       /CONSTANT TO BE INDEXED
+1223 001757  3014          DCA 14
+1224 001760  0414          AND I 14        /DO AUTO INDEX
+1225 001761  1014          TAD 14
+1226 001762  1040          TAD K0777       /AC SHOULD EQUAL 7777
+1227 001763  7040          CMA 
+1228 001764  7440          SZA             /AC SHOULD BE ZERO
+1229 001765  7402          HLT             /AUTO INDEX ERROR
+1230               
+1231               /AUTO INDEX TEST 68
+1232 001766  7200          CLA 
+1233 001767  1006          TAD K5777       /CONSTANT TO BE INDEXED
+1234 001770  3014          DCA 14
+1235 001771  2414          ISZ I 14        /DO AUTO INDEX
+1236 001772  7000          NOP
+1237 001773  1014          TAD 14
+1238 001774  1037          TAD K1777       /AC SHOULD EQUAL 7777
+1239 001775  7040          CMA 
+1240 001776  7440          SZA             /AC SHOULD BE ZERO
+1241 001777  7402          HLT             /AUTO INDEX ERROR
+1242               
+1243                       *2000
+1244               /AUTO INDEX TEST 69
+1245 002000  7200          CLA
+1246 002001  1005          TAD K3777       /CONSTANT TO BE INDEXED
+1247 002002  3014          DCA 14
+1248 002003  0414          AND I 14        /DO AUTO INDEX
+1249 002004  1014          TAD 14
+1250 002005  1005          TAD K3777       /AC SHOULD EQUAL 7777
+1251 002006  7040          CMA 
+1252 002007  7410          SKP 
+1253 002010  0000          0
+1254 002011  7440          SZA             /AC SHOULD BE ZERO
+1255 002012  7402          HLT             /AUTO INDEX ERROR
+1256               
+1257               /AUTO INDEX TEST 70
+1258 002013  7200          CLA 
+1259 002014  1004          TAD K7777       /CONSTANT TO BE INDEXED
+1260 002015  3014          DCA 14
+1261 002016  0414          AND I 14        /DO AUTO INDEX
+1262 002017  1014          TAD 14
+1263 002020  1004          TAD K7777       /AC SHOULD EQUAL 7777
+1264 002021  7040          CMA 
+1265 002022  7440          SZA             /AC SHOULD BE ZERO
+1266 002023  7402          HLT             /AUTO INDEX ERROR
+1267               
+1268               /AUTO INDEX TEST 71
+1269 002024  7200          CLA 
+1270 002025  1036          TAD K0          /CONSTANT TO BE INDEXED
+1271 002026  3015          DCA 15
+1272 002027  0415          AND I 15        /DO AUTO INDEX
+1273 002030  1015          TAD 15
+1274 002031  1035          TAD K7776       /AC SHOULD EQUAL 7777
+1275 002032  7040          CMA 
+1276 002033  7440          SZA             /AC SHOULD BE ZERO
+1277 002034  7402          HLT             /AUTO INDEX ERROR
+1278               
+1279               /AUTO INDEX TEST 72
+1280 002035  7200          CLA 
+1281 002036  1035          TAD K7776       /CONSTANT TO BE INDEXED
+1282 002037  3015          DCA 15
+1283 002040  0415          AND I 15        /DO AUTO INDEX
+1284 002041  1015          TAD 15
+1285 002042  1036          TAD K0          /AC SHOULD EQUAL 7777
+1286 002043  7040          CMA 
+1287 002044  7440          SZA             /AC SHOULD BE ZERO
+1288 002045  7402          HLT             /AUTO INDEX ERROR
+1289               
+1290               /AUTO INDEX TEST 73
+1291 002046  7200          CLA 
+1292 002047  1034          TAD K7775       /CONSTANT TO BE INDEXED
+1293 002050  3015          DCA 15
+1294 002051  3415          DCA I 15        /DO AUTO INDEX
+1295 002052  1015          TAD 15
+1296 002053  1051          TAD K0001       /AC SHOULD EQUAL 7777
+1297 002054  7040          CMA 
+1298 002055  7440          SZA             /AC SHOULD BE ZERO
+1299 002056  7402          HLT             /AUTO INDEX ERROR
+1300               
+1301               /AUTO INDEX TEST 74
+1302 002057  7200          CLA 
+1303 002060  1033          TAD K7773       /CONSTANT TO BE INDEXED
+1304 002061  3015          DCA 15
+1305 002062  1415          TAD I 15        /DO AUTO INDEX
+1306 002063  7200          CLA 
+1307 002064  1015          TAD 15
+1308 002065  1047          TAD K0003       /AC SHOULD EQUAL 7777
+1309 002066  7040          CMA 
+1310 002067  7440          SZA             /AC SHOULD BE ZERO
+1311 002070  7402          HLT             /AUTO INDEX ERROR
+1312               
+1313               /AUTO INDEX TEST 75
+1314 002071  7200          CLA 
+1315 002072  1032          TAD K7767       /CONSTANT TO BE INDEXED
+1316 002073  3015          DCA 15
+1317 002074  0415          AND I 15        /DO AUTO INDEX
+1318 002075  1015          TAD 15
+1319 002076  1046          TAD K0007       /AC SHOULD EQUAL 7777
+1320 002077  7040          CMA 
+1321 002100  7440          SZA             /AC SHOULD BE ZERO
+1322 002101  7402          HLT             /AUTO INDEX ERROR
+1323               
+1324               /AUTO INDEX TEST 76
+1325 002102  7200          CLA 
+1326 002103  1031          TAD K7757       /CONSTANT TO BE INDEXED
+1327 002104  3015          DCA 15
+1328 002105  0415          AND I 15        /DO AUTO INDEX
+1329 002106  1015          TAD 15
+1330 002107  1045          TAD K0017       /AC SHOULD EQUAL 7777
+1331 002110  7040          CMA 
+1332 002111  7440          SZA             /AC SHOULD BE ZERO
+1333 002112  7402          HLT             /AUTO INDEX ERROR
+1334               
+1335               /AUTO INDEX TEST 77
+1336 002113  7200          CLA 
+1337 002114  1027          TAD K7737       /CONSTANT TO BE INDEXED
+1338 002115  3015          DCA 15
+1339 002116  0415          AND I 15        /DO AUTO INDEX
+1340 002117  1015          TAD 15
+1341 002120  1044          TAD K0037       /AC SHOULD EQUAL 7777
+1342 002121  7040          CMA 
+1343 002122  7440          SZA             /AC SHOULD BE ZERO
+1344 002123  7402          HLT             /AUTO INDEX ERROR
+1345               
+1346               /AUTO INDEX TEST 78
+1347 002124  7200          CLA 
+1348 002125  1026          TAD K7677       /CONSTANT TO BE INDEXED
+1349 002126  3015          DCA 15
+1350 002127  0415          AND I 15        /DO AUTO INDEX
+1351 002130  1015          TAD 15
+1352 002131  1043          TAD K0077       /AC SHOULD EQUAL 7777
+1353 002132  7040          CMA 
+1354 002133  7440          SZA             /AC SHOULD BE ZERO
+1355 002134  7402          HLT             /AUTO INDEX ERROR
+1356               
+1357               /AUTO INDEX TEST 79
+1358 002135  7200          CLA 
+1359 002136  1025          TAD K7577       /CONSTANT TO BE INDEXED
+1360 002137  3015          DCA 15
+1361 002140  0415          AND I 15        /DO AUTO INDEX
+1362 002141  1015          TAD 15
+1363 002142  1042          TAD K0177       /AC SHOULD EQUAL 7777
+1364 002143  7040          CMA 
+1365 002144  7440          SZA             /AC SHOULD BE ZERO
+1366 002145  7402          HLT             /AUTO INDEX ERROR
+1367               
+1368               /AUTO INDEX TEST 80
+1369 002146  7200          CLA 
+1370 002147  1024          TAD K7377       /CONSTANT TO BE INDEXED
+1371 002150  3015          DCA 15
+1372 002151  0415          AND I 15        /DO AUTO INDEX
+1373 002152  1015          TAD 15
+1374 002153  1041          TAD K0377       /AC SHOULD EQUAL 7777
+1375 002154  7040          CMA 
+1376 002155  7440          SZA             /AC SHOULD BE ZERO
+1377 002156  7402          HLT             /AUTO INDEX ERROR
+1378               
+1379               /AUTO INDEX TEST 81
+1380 002157  7200          CLA 
+1381 002160  1023          TAD K6777       /CONSTANT TO BE INDEXED
+1382 002161  3015          DCA 15
+1383 002162  0415          AND I 15        /DO AUTO INDEX
+1384 002163  1015          TAD 15
+1385 002164  1040          TAD K0777       /AC SHOULD EQUAL 7777
+1386 002165  7040          CMA 
+1387 002166  7440          SZA             /AC SHOULD BE ZERO
+1388 002167  7402          HLT             /AUTO INDEX ERROR
+1389 002170  7000          NOP
+1390 002171  7000          NOP
+1391               *.+1
+1392 002173  7000          NOP
+1393 002174  7000          NOP
+1394 002175  7000          NOP
+1395               
+1396                       *2200
+1397               /AUTO INDEX TEST 82
+1398 002200  7200          CLA 
+1399 002201  1006          TAD K5777       /CONSTANT TO BE INDEXED
+1400 002202  3015          DCA 15
+1401 002203  2415          ISZ I 15        /DO AUTO INDEX
+1402 002204  7000          NOP
+1403 002205  1015          TAD 15
+1404 002206  1037          TAD K1777       /AC SHOULD EQUAL 7777
+1405 002207  7040          CMA
+1406 002210  7440          SZA             /AC SHOULD BE ZERO
+1407 002211  7402          HLT             /AUTO INDEX ERROR
+1408               
+1409               /AUTO INDEX TEST 83
+1410 002212  7200          CLA 
+1411 002213  1005          TAD K3777       /CONSTANT TO BE INDEXED
+1412 002214  3015          DCA 15
+1413 002215  0415          AND I 15        /DO AUTO INDEX
+1414 002216  1015          TAD 15
+1415 002217  1005          TAD K3777       /AC SHOULD EQUAL 7777
+1416 002220  7040          CMA 
+1417 002221  7440          SZA             /AC SHOULD BE ZERO
+1418 002222  7402          HLT             /AUTO INDEX ERROR
+1419               
+1420               /AUTO INDEX TEST 84
+1421 002223  7200          CLA 
+1422 002224  1004          TAD K7777       /CONSTANT TO BE INDEXED
+1423 002225  3015          DCA 15
+1424 002226  0415          AND I 15        /DO AUTO INDEX
+1425 002227  1015          TAD 15
+1426 002230  1004          TAD K7777       /AC SHOULD EQUAL 7777
+1427 002231  7040          CMA 
+1428 002232  7440          SZA             /AC SHOULD BE ZERO
+1429 002233  7402          HLT             /AUTO INDEX ERROR
+1430               
+1431               /AUTO INDEX TEST 85
+1432 002234  7200          CLA 
+1433 002235  1036          TAD K0          /CONSTANT TO BE INDEXED
+1434 002236  3016          DCA 16
+1435 002237  0416          AND I 16        /DO AUTO INDEX
+1436 002240  1016          TAD 16
+1437 002241  1035          TAD K7776       /AC SHOULD EQUAL 7777
+1438 002242  7040          CMA 
+1439 002243  7440          SZA             /AC SHOULD BE ZERO
+1440 002244  7402          HLT             /AUTO INDEX ERROR
+1441               
+1442               /AUTO INDEX TEST 86
+1443 002245  7200          CLA 
+1444 002246  1035          TAD K7776       /CONSTANT TO BE INDEXED
+1445 002247  3016          DCA 16
+1446 002250  0416          AND I 16        /DO AUTO INDEX
+1447 002251  1016          TAD 16
+1448 002252  1036          TAD K0          /AC SHOULD EQUAL 7777
+1449 002253  7040          CMA 
+1450 002254  7440          SZA             /AC SHOULD BE ZERO
+1451 002255  7402          HLT             /AUTO INDEX ERROR
+1452               
+1453               /AUTO INDEX TEST 87
+1454 002256  7200          CLA
+1455 002257  1034          TAD K7775       /CONSTANT TO BE INDEXED
+1456 002260  3016          DCA 16
+1457 002261  3416          DCA I 16        /DO AUTO INDEX
+1458 002262  1016          TAD 16
+1459 002263  1051          TAD K0001       /AC SHOULD EQUAL 7777
+1460 002264  7040          CMA 
+1461 002265  7440          SZA             /AC SHOULD BE ZERO
+1462 002266  7402          HLT             /AUTO INDEX ERROR
+1463               
+1464               /AUTO INDEX TEST 88
+1465 002267  7200          CLA 
+1466 002270  1033          TAD K7773       /CONSTANT TO BE INDEXED
+1467 002271  3016          DCA 16
+1468 002272  1416          TAD I 16        /DO AUTO INDEX
+1469 002273  7200          CLA 
+1470 002274  1016          TAD 16
+1471 002275  1047          TAD K0003       /AC SHOULD EQUAL 7777
+1472 002276  7040          CMA 
+1473 002277  7440          SZA             /AC SHOULD BE ZERO
+1474 002300  7402          HLT             /AUTO INDEX ERROR
+1475               
+1476               /AUTO INDEX TEST 89
+1477 002301  7200          CLA 
+1478 002302  1032          TAD K7767       /CONSTANT TO BE INDEXED
+1479 002303  3016          DCA 16
+1480 002304  0416          AND I 16        /DO AUTO INDEX
+1481 002305  1016          TAD 16
+1482 002306  1046          TAD K0007       /AC SHOULD EQUAL 7777
+1483 002307  7040          CMA 
+1484 002310  7440          SZA             /AC SHOULD BE ZERO
+1485 002311  7402          HLT             /AUTO INDEX ERROR
+1486               
+1487               /AUTO INDEX TEST 90
+1488 002312  7200          CLA 
+1489 002313  1031          TAD K7757       /CONSTANT TO BE INDEXED
+1490 002314  3016          DCA 16
+1491 002315  0416          AND I 16        /DO AUTO INDEX
+1492 002316  1016          TAD 16
+1493 002317  1045          TAD K0017       /AC SHOULD EQUAL 7777
+1494 002320  7040          CMA 
+1495 002321  7440          SZA             /AC SHOULD BE ZERO
+1496 002322  7402          HLT             /AUTO INDEX ERROR
+1497               
+1498               /AUTO INDEX TEST 91
+1499 002323  7200          CLA 
+1500 002324  1027          TAD K7737       /CONSTANT TO BE INDEXED
+1501 002325  3016          DCA 16
+1502 002326  0416          AND I 16        /DO AUTO INDEX
+1503 002327  1016          TAD 16
+1504 002330  1044          TAD K0037       /AC SHOULD EQUAL 7777
+1505 002331  7040          CMA 
+1506 002332  7440          SZA             /AC SHOULD BE ZERO
+1507 002333  7402          HLT             /AUTO INDEX ERROR
+1508               
+1509               /AUTO INDEX TEST 92
+1510 002334  7200          CLA 
+1511 002335  1026          TAD K7677       /CONSTANT TO BE INDEXED
+1512 002336  3016          DCA 16
+1513 002337  0416          AND I 16        /DO AUTO INDEX
+1514 002340  1016          TAD 16
+1515 002341  1043          TAD K0077       /AC SHOULD EQUAL 7777
+1516 002342  7040          CMA 
+1517 002343  7440          SZA             /AC SHOULD BE ZERO
+1518 002344  7402          HLT             /AUTO INDEX ERROR
+1519               
+1520               /AUTO INDEX TEST 93
+1521 002345  7200          CLA 
+1522 002346  1025          TAD K7577       /CONSTANT TO BE INDEXED
+1523 002347  3016          DCA 16
+1524 002350  0416          AND I 16        /DO AUTO INDEX
+1525 002351  1016          TAD 16
+1526 002352  1042          TAD K0177       /AC SHOULD EQUAL 7777
+1527 002353  7040          CMA 
+1528 002354  7440          SZA             /AC SHOULD BE ZERO
+1529 002355  7402          HLT             /AUTO INDEX ERROR
+1530               
+1531               /AUTO INDEX TEST 94
+1532 002356  7200          CLA 
+1533 002357  1024          TAD K7377       /CONSTANT TO BE INDEXED
+1534 002360  3016          DCA 16
+1535 002361  0416          AND I 16        /DO AUTO INDEX
+1536 002362  1016          TAD 16
+1537 002363  1041          TAD K0377       /AC SHOULD EQUAL 7777
+1538 002364  7040          CMA 
+1539 002365  7440          SZA             /AC SHOULD BE ZERO
+1540 002366  7402          HLT             /AUTO INDEX ERROR
+1541               
+1542               /AUTO INDEX TEST 95
+1543 002367  7200          CLA 
+1544 002370  1023          TAD K6777       /CONSTANT TO BE INDEXED
+1545 002371  3016          DCA 16
+1546 002372  0416          AND I 16        /DO AUTO INDEX
+1547 002373  1016          TAD 16
+1548 002374  1040          TAD K0777       /AC SHOULD EQUAL 7777
+1549 002375  7040          CMA 
+1550 002376  7440          SZA             /AC SHOULD BE ZERO
+1551 002377  7402          HLT             /AUTO INDEX ERROR
+1552               
+1553               /PAUSE
+1554               
+1555               /TEST 2 - TAPE 3
+1556               
+1557                       *2400
+1558               
+1559               /AUTO INDEX TEST 96
+1560 002400  7200          CLA 
+1561 002401  1006          TAD K5777       /CONSTANT TO BE INDEXED
+1562 002402  3016          DCA 16
+1563 002403  2416          ISZ I 16        /DO AUTO INDEX
+1564 002404  7000          NOP
+1565 002405  1016          TAD 16
+1566 002406  1037          TAD K1777       /AC SHOULD EQUAL 7777
+1567 002407  7040          CMA 
+1568 002410  7440          SZA             /AC SHOULD BE ZERO
+1569 002411  7402          HLT             /AUTO INDEX ERROR
+1570               
+1571               /AUTO INDEX TEST 97
+1572 002412  7200          CLA 
+1573 002413  1005          TAD K3777       /CONSTANT TO BE INDEXED
+1574 002414  3016          DCA 16
+1575 002415  0416          AND I 16        /DO AUTO INDEX
+1576 002416  1016          TAD 16
+1577 002417  1005          TAD K3777       /AC SHOULD EQUAL 7777
+1578 002420  7040          CMA 
+1579 002421  7440          SZA             /AC SHOULD BE ZERO
+1580 002422  7402          HLT             /AUTO INDEX ERROR
+1581               
+1582               /AUTO INDEX TEST 98
+1583 002423  7200          CLA 
+1584 002424  1004          TAD K7777       /CONSTANT TO BE INDEXED
+1585 002425  3016          DCA 16
+1586 002426  0416          AND I 16        /DO AUTO INDEX
+1587 002427  1016          TAD 16
+1588 002430  1004          TAD K7777       /AC SHOULD EQUAL 7777
+1589 002431  7040          CMA 
+1590 002432  7440          SZA             /AC SHOULD BE ZERO
+1591 002433  7402          HLT             /AUTO INDEX ERROR
+1592               
+1593               /AUTO INDEX TEST 99
+1594 002434  7200          CLA 
+1595 002435  1036          TAD K0          /CONSTANT TO BE INDEXED
+1596 002436  3017          DCA 17
+1597 002437  0417          AND I 17        /DO AUTO INDEX
+1598 002440  1017          TAD 17
+1599 002441  1035          TAD K7776       /AC SHOULD EQUAL 7777
+1600 002442  7040          CMA 
+1601 002443  7440          SZA             /AC SHOULD BE ZERO
+1602 002444  7402          HLT             /AUTO INDEX ERROR
+1603               
+1604               /AUTO INDEX TEST 100
+1605 002445  7200          CLA 
+1606 002446  1035          TAD K7776       /CONSTANT TO BE INDEXED
+1607 002447  3017          DCA 17
+1608 002450  0417          AND I 17        /DO AUTO INDEX
+1609 002451  1017          TAD 17
+1610 002452  1036          TAD K0          /AC SHOULD EQUAL 7777
+1611 002453  7040          CMA 
+1612 002454  7440          SZA             /AC SHOULD BE ZERO
+1613 002455  7402          HLT             /AUTO INDEX ERROR
+1614               
+1615               /AUTO INDEX TEST 101
+1616 002456  7200          CLA 
+1617 002457  1034          TAD K7775       /CONSTANT TO BE INDEXED
+1618 002460  3017          DCA 17
+1619 002461  3417          DCA I 17        /DO AUTO INDEX
+1620 002462  1017          TAD 17
+1621 002463  1051          TAD K0001       /AC SHOULD EQUAL 7777
+1622 002464  7040          CMA 
+1623 002465  7440          SZA             /AC SHOULD BE ZERO
+1624 002466  7402          HLT             /AUTO INDEX ERROR
+1625               
+1626               /AUTO INDEX TEST 102
+1627 002467  7200          CLA 
+1628 002470  1033          TAD K7773       /CONSTANT TO BE INDEXED
+1629 002471  3017          DCA 17
+1630 002472  1417          TAD I 17        /DO AUTO INDEX
+1631 002473  7200          CLA 
+1632 002474  1017          TAD 17
+1633 002475  1047          TAD K0003       /AC SHOULD EQUAL 7777
+1634 002476  7040          CMA 
+1635 002477  7440          SZA             /AC SHOULD BE ZERO
+1636 002500  7402          HLT             /AUTO INDEX ERROR
+1637               
+1638               /AUTO INDEX TEST 103
+1639 002501  7200          CLA 
+1640 002502  1032          TAD K7767       /CONSTANT TO BE INDEXED
+1641 002503  3017          DCA 17
+1642 002504  0417          AND I 17        /DO AUTO INDEX
+1643 002505  1017          TAD 17
+1644 002506  1046          TAD K0007       /AC SHOULD EQUAL 7777
+1645 002507  7040          CMA 
+1646 002510  7440          SZA             /AC SHOULD BE ZERO
+1647 002511  7402          HLT             /AUTO INDEX ERROR
+1648               
+1649               /AUTO INDEX TEST 104
+1650 002512  7200          CLA 
+1651 002513  1031          TAD K7757       /CONSTANT TO BE INDEXED
+1652 002514  3017          DCA 17
+1653 002515  0417          AND I 17        /DO AUTO INDEX
+1654 002516  1017          TAD 17
+1655 002517  1045          TAD K0017       /AC SHOULD EQUAL 7777
+1656 002520  7040          CMA 
+1657 002521  7440          SZA             /AC SHOULD BE ZERO
+1658 002522  7402          HLT             /AUTO INDEX ERROR
+1659               
+1660               /AUTO INDEX TEST 105
+1661 002523  7200          CLA 
+1662 002524  1027          TAD K7737       /CONSTANT TO BE INDEXED
+1663 002525  3017          3017
+1664 002526  0417          AND I 17        /DO AUTO INDEX
+1665 002527  1017          TAD 17
+1666 002530  1044          TAD K0037       /AC SHOULD EQUAL 7777
+1667 002531  7040          CMA 
+1668 002532  7440          SZA             /AC SHOULD BE ZERO
+1669 002533  7402          HLT             /AUTO INDEX ERROR
+1670               
+1671               /AUTO INDEX TEST 106
+1672 002534  7200          CLA 
+1673 002535  1026          TAD K7677       /CONSTANT TO BE INDEXED
+1674 002536  3017          DCA 17
+1675 002537  0417          AND I 17        /DO AUTO INDEX
+1676 002540  1017          TAD 17
+1677 002541  1043          TAD K0077       /AC SHOULD EQUAL 7777
+1678 002542  7040          CMA 
+1679 002543  7440          SZA             /AC SHOULD BE ZERO
+1680 002544  7402          HLT             /AUTO INDEX ERROR
+1681               
+1682               /AUTO INDEX TEST 107
+1683 002545  7200          CLA 
+1684 002546  1025          TAD K7577       /CONSTANT TO BE INDEXED
+1685 002547  3017          DCA 17
+1686 002550  0417          AND I 17        /DO AUTO INDEX
+1687 002551  1017          TAD 17
+1688 002552  1042          TAD K0177       /AC SHOULD EQUAL 7777
+1689 002553  7040          CMA 
+1690 002554  7440          SZA             /AC SHOULD BE ZERO
+1691 002555  7402          HLT             /AUTO INDEX ERROR
+1692               
+1693               /AUTO INDEX TEST 108
+1694 002556  7200          CLA 
+1695 002557  1024          TAD K7377       /CONSTANT TO BE INDEXED
+1696 002560  3017          DCA 17
+1697 002561  0417          AND I 17        /DO AUTO INDEX
+1698 002562  1017          TAD 17
+1699 002563  1041          TAD K0377       /AC SHOULD EQUAL 7777
+1700 002564  7040          CMA 
+1701 002565  7440          SZA             /AC SHOULD BE ZERO
+1702 002566  7402          HLT             /AUTO INDEX ERROR
+1703               
+1704               /AUTO INDEX TEST 109
+1705 002567  7200          CLA 
+1706 002570  1023          TAD K6777       /CONSTANT TO BE INDEXED
+1707 002571  3017          DCA 17
+1708 002572  0417          AND I 17        /DO AUTO INDEX
+1709 002573  1017          TAD 17
+1710 002574  1040          TAD K0777       /AC SHOULD EQUAL 7777
+1711 002575  7040          CMA 
+1712 002576  7440          SZA             /AC SHOULD BE ZERO
+1713 002577  7402          HLT             /AUTO INDEX ERROR
+1714               
+1715                       *2600
+1716               /AUTO INDEX TEST 110
+1717 002600  7200          CLA 
+1718 002601  1006          TAD K5777       /CONSTANT TO BE INDEXED
+1719 002602  3017          DCA 17
+1720 002603  2417          ISZ I 17        /DO AUTO INDEX
+1721 002604  7000          NOP
+1722 002605  1017          TAD 17
+1723 002606  1037          TAD K1777       /AC SHOULD EQUAL 7777
+1724 002607  7040          CMA 
+1725 002610  7440          SZA             /AC SHOULD BE ZERO
+1726 002611  7402          HLT             /AUTO INDEX ERROR
+1727               
+1728               /AUTO INDEX TEST 111
+1729 002612  7200          CLA 
+1730 002613  1005          TAD K3777       /CONSTANT TO BE INDEXED
+1731 002614  3017          DCA 17
+1732 002615  0417          AND I 17        /DO AUTO INDEX
+1733 002616  1017          TAD 17
+1734 002617  1005          TAD K3777       /AC SHOULD EQUAL 7777
+1735 002620  7040          CMA 
+1736 002621  7440          SZA             /AC SHOULD BE ZERO
+1737 002622  7402          HLT             /AUTO INDEX ERROR
+1738               
+1739               /AUTO INDEX TEST 112
+1740 002623  7200          CLA 
+1741 002624  1004          TAD K7777       /CONSTANT TO BE INDEXED
+1742 002625  3017          DCA 17
+1743 002626  0417          AND I 17        /DO AUTO INDEX
+1744 002627  1017          TAD 17
+1745 002630  1004          TAD K7777       /AC SHOULD EQUAL 7777
+1746 002631  7040          CMA 
+1747 002632  7440          SZA             /AC SHOULD BE ZERO
+1748 002633  7402          HLT             /AUTO INDEX ERROR
+1749               
+1750               /AUTO INDEX TEST 113
+1751 002634  5236          JMP .+2
+1752 002635  7402          HLT             /JMP FAILED
+1753 002636  7410          SKP             /JMP WORKED (A LITTLE)
+1754 002637  2644          2644
+1755 002640  1237          TAD .-1
+1756 002641  3010          DCA 10
+1757 002642  5410          JMP I 10        /TEST INSTRUCTION
+1758 002643  7402          HLT             /JMP INDIRECT FAILED
+1759 002644  7402          HLT             /LOCATION 2610.  NO INDEX
+1760                                       /IN DEFER STATE.
+1761               /AUTO INDEX TEST 114
+1762 002645  4247          JMS .+2
+1763 002646  7402          HLT             /JMS FAILED
+1764 002647  7402          HLT             /JMS FAILED
+1765 002650  1247          TAD .-1
+1766 002651  7410          SKP 
+1767 002652  2646          .-4
+1768 002653  7041          CIA
+1769 002654  1252          TAD .-2
+1770 002655  7440          SZA 
+1771 002656  7402          HLT             /WRONG ADDRESS STORED
+1772                                       /DURING JMS
+1773 002657  7410          SKP             /JMS WORKS (I GUESS)
+1774 002660  2664          .+4
+1775 002661  1260          TAD .-1
+1776 002662  3010          DCA 10
+1777 002663  4410          JMS I 10        /TEST INSTRUCTION
+1778 002664  7402          HLT             /JMS FAILED
+1779 002665  7402          HLT             /JMS FAILED
+1780 002666  1265          TAD .-1
+1781 002667  7410          SKP 
+1782 002670  2664          .-4
+1783 002671  7041          CIA
+1784 002672  1270          TAD .-2
+1785 002673  7440          SZA 
+1786 002674  7402          HLT             /WRONG ADDRESS STORED DURING JMS
+1787 002675  4777          JMS I (BELLCK   /POSSIBLY RING THE BELL
+1788 002676  5677          JMP I .+1
+1789 002677  4200          PIOTST
+1790               
+1791               /INTERRUPT TEST 1
+1792 002700  4701  INTEST, JMS I .+1
+1793 002701  4011          STR
+1794 002702  6040          SPF             /SET PRINTER FLAG
+1795 002703  6041          TSF 
+1796 002704  7402          HLT             /SPF OR TSF FAILED
+1797 002705  7200          CLA 
+1798 002706  1314          TAD BACK1       /FLAG IS ON
+1799 002707  3002          DCA 2
+1800 002710  6001          ION
+1801 002711  7000          NOP             /GO TO LOC 0000
+1802 002712  7402          HLT             /NO INTERRUPT
+1803 002713  2712  OUT1,   .-1
+1804 002714  2715  BACK1,  .+1
+1805 002715  7440          SZA             /RETURN FROM LOC 1
+1806 002716  7402          HLT             /AC SHOULD BE 0
+1807 002717  1000          TAD 0
+1808 002720  7041          CIA
+1809 002721  1313          TAD OUT1
+1810 002722  7640          SZA CLA 
+1811 002723  7402          HLT             /INTERRUPT ERRROR
+1812                                       /WRONG ADDRESS STORED
+1813               
+1814               /INTERRUPT TEST 2
+1815 002724  6040          SPF             /SET PRINTER FLAG
+1816 002725  6041          TSF 
+1817 002726  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1818 002727  7200          CLA             /FLAG IS ON
+1819 002730  1336          TAD BACK3
+1820 002731  3002          DCA 2
+1821 002732  6001          ION
+1822 002733  1004          TAD K7777
+1823 002734  7402          HLT             /NO INTERRUPT
+1824 002735  2734  OUT3,   .-1
+1825 002736  2737  BACK3,  .+1
+1826 002737  7040          CMA             /RETURN FROM LOC1
+1827 002740  7440          SZA 
+1828 002741  7402          HLT             /CONFIDENCE CHECK
+1829                                       /AC SHOULD BE 0
+1830 002742  1000          TAD 0
+1831 002743  7041          CIA
+1832 002744  1335          TAD OUT3
+1833 002745  7640          SZA CLA         /INTERRUPT ERROR
+1834 002746  7402          HLT             /WRONG ADDRESS STORED
+1835               
+1836               /INTERRUPT TEST 3
+1837 002747  6040          SPF             /SET PRINTER FLAG
+1838 002750  6041          TSF 
+1839 002751  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1840 002752  7200          CLA             /FLAG IS ON
+1841 002753  1362          TAD BACK2
+1842 002754  3002          DCA 2
+1843 002755  1004          TAD K7777
+1844 002756  6001          ION
+1845 002757  0004          AND K7777
+1846 002760  7402          HLT             /NO INTERRUPT
+1847 002761  2760  OUT2,   .-1
+1848 002762  2763  BACK2,  .+1
+1849 002763  7040          CMA             /RETURN FROM LOC1
+1850 002764  7440          SZA 
+1851 002765  7402          HLT             /CONFIDENCE CHECK
+1852                                       /AC SHOULD BE 0
+1853 002766  1000          TAD 0
+1854 002767  7041          CIA
+1855 002770  1361          TAD OUT2
+1856 002771  7640          SZA CLA 
+1857 002772  7402          HLT             /INTERRUPT ERROR
+1858                                       /WRONG ADDRESS STORED
+1859 002773  5774          JMP I .+1
+1860 002774  3000          3000
+1861               
+1862 002777  4704  *3000
+1863               /INTERRUPT TEST 4
+1864 003000  6040          SPF             /SET PRINTER FLAG
+1865 003001  6041          TSF 
+1866 003002  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1867 003003  7200          CLA             /FLAG IS ON
+1868 003004  1213          TAD BACK4
+1869 003005  3002          DCA 2
+1870 003006  1004          TAD K7777
+1871 003007  6001          ION
+1872 003010  3003          DCA 3
+1873 003011  7402          HLT             /NO INTERRUPT
+1874 003012  3011  OUT4,   .-1
+1875 003013  3014  BACK4,  .+1
+1876 003014  7440          SZA             /RETURN FROM LOC1
+1877 003015  7402          HLT             /CONFIDENCE CHECK
+1878                                       /AC SHOULD BE ZERO
+1879 003016  1003          TAD 3
+1880 003017  7040          CMA 
+1881 003020  7440          SZA 
+1882 003021  7402          HLT             /DCA PRIOR TO INTERRUPT
+1883                                       /FAILED
+1884 003022  3003          DCA 3
+1885 003023  1000          TAD 0
+1886 003024  7041          CIA
+1887 003025  1212          TAD OUT4
+1888 003026  7640          SZA CLA 
+1889 003027  7402          HLT             /INTERRUPT ERROR
+1890                                       /WRONG ADDRESS STORED
+1891               /INTERRUPT TEST 5
+1892 003030  6040          SPF             /SET PRINTER FLAG
+1893 003031  6041          TSF 
+1894 003032  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1895 003033  7200          CLA             /FLAG IS ON
+1896 003034  1244          TAD BACK5
+1897 003035  3002          DCA 2
+1898 003036  1035          TAD K7776
+1899 003037  3003          DCA 3
+1900 003040  6001          ION
+1901 003041  2003          ISZ 3
+1902 003042  7402          HLT             /NO INTERRUPT
+1903 003043  3042  OUT5,   .-1
+1904 003044  3045  BACK5,  .+1
+1905 003045  7440          SZA             /RETURN FROM LOC1
+1906 003046  7402          HLT             /CONFIDENCE CHECK
+1907                                       /AC SHOULD BE ZERO
+1908 003047  1003          TAD 3
+1909 003050  7040          CMA 
+1910 003051  7440          SZA 
+1911 003052  7402          HLT             /ISZ PRIOR TO
+1912                                       /INTERRUPT FAILED
+1913 003053  3003          DCA 3
+1914 003054  1000          TAD 0
+1915 003055  7041          CIA
+1916 003056  1243          TAD OUT5
+1917 003057  7640          SZA CLA 
+1918 003060  7402          HLT             /INTERRUPT ERROR
+1919               /INTERRUPT TEST 6
+1920 003061  6040          SPF             /SET PRINTER FLAG
+1921 003062  6041          TSF 
+1922 003063  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1923 003064  7200          CLA             /FLAG IS ON
+1924 003065  1276          TAD BACK6
+1925 003066  3002          DCA 2
+1926 003067  1004          TAD K7777
+1927 003070  3003          DCA 3
+1928 003071  6001          ION
+1929 003072  2003          ISZ 3
+1930 003073  7402          HLT             /NO INTERRUPT
+1931 003074  7402          HLT
+1932 003075  3074  OUT6,   .-1
+1933 003076  3077  BACK6,  .+1
+1934 003077  7440          SZA             /RETURN FROM LOC1
+1935 003100  7402          HLT             /CONFIDENCE CHECK
+1936                                       /AC SHOULD BE ZERO
+1937 003101  1003          TAD 3
+1938 003102  7440          SZA 
+1939 003103  7402          HLT             /ISZ PRIOR TO
+1940                                       /INTERRUPT FAILED
+1941 003104  3003          DCA 3
+1942 003105  1000          TAD 0
+1943 003106  7041          CIA
+1944 003107  1275          TAD OUT6
+1945 003110  7640          SZA CLA
+1946 003111  7402          HLT             /INTERRUPT ERROR
+1947                                       /WRONG ADDRESS STORED
+1948               
+1949               /INTERRUPT TEST 7
+1950 003112  6040          SPF             /SET PRINTER FLAG
+1951 003113  6041          TSF 
+1952 003114  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1953 003115  7200          CLA             /FLAG IS ON
+1954 003116  1324          TAD BACK7
+1955 003117  3002          DCA 2
+1956 003120  6001          ION
+1957 003121  5321          JMP .
+1958 003122  7402          HLT             /NO INTERRUPT
+1959 003123  3121  OUT7,   3121
+1960 003124  3125  BACK7,  3125
+1961 003125  7440          SZA             /RETURN FROM LOC1
+1962 003126  7402          HLT             /CONFIDENCE CHECK
+1963                                       /AC SHOULD BE ZERO
+1964 003127  1000          TAD 0
+1965 003130  7041          CIA
+1966 003131  1323          TAD OUT7
+1967 003132  7640          SZA CLA 
+1968 003133  7402          HLT             /INTERRUPT ERROR
+1969                                       /WRONG ADDRESS STORED
+1970               
+1971               /INTERRUPT TEST 8
+1972 003134  6040          SPF             /SET PRINTER FLAG
+1973 003135  6041          TSF 
+1974 003136  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+1975 003137  7200          CLA             /FLAG IS ON
+1976 003140  1346          TAD BACK8
+1977 003141  3002          DCA 2
+1978 003142  6001          ION
+1979 003143  4003          JMS 3
+1980 003144  7402          HLT             /NO INTERRUPT
+1981 003145  3144  OUT8,   .-1
+1982 003146  3147  BACK8,  .+1
+1983 003147  7440          SZA             /RETURN FROM LOC1
+1984 003150  7402          HLT             /CONFIDENCE CHECK
+1985                                       /AC SHOULD BE ZERO
+1986 003151  1003          TAD 3
+1987 003152  7041          CIA
+1988 003153  1345          TAD OUT8
+1989 003154  7440          SZA 
+1990 003155  7402          HLT             /JMS ERROR  PRIOR
+1991                                       /TO INTERRUPT WRONG
+1992                                       /ADDRESS STORED
+1993 003156  1000          TAD 0
+1994 003157  7041          CIA
+1995 003160  1065          TAD K4
+1996 003161  7640          SZA CLA 
+1997 003162  7402          HLT             /INTERRUPT ERROR
+1998                                       /WRONG ADDRESS STORED
+1999 003163  5764          JMP I .+1
+2000 003164  3200          3200
+2001               
+2002                       *3200
+2003               /INTERRUPT TEST 9
+2004 003200  6040          SPF             /SET PRINTER FLAG
+2005 003201  6041          TSF 
+2006 003202  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2007 003203  7200          CLA             /FLAG IS ON
+2008 003204  1213          TAD BACK9
+2009 003205  3002          DCA 2
+2010 003206  1004          TAD K7777
+2011 003207  6001          ION
+2012 003210  7200          CLA 
+2013 003211  7402          HLT             /NO INTERRUPT
+2014 003212  3211  OUT9,   .-1
+2015 003213  3214  BACK9,  .+1
+2016 003214  7440          SZA             /RETURN FROM LOC 1
+2017 003215  7402          HLT             /CLA PRIOR TO INTERRUPT
+2018                                       /FAILED
+2019 003216  1000          TAD 0
+2020 003217  7041          CIA
+2021 003220  1212          TAD OUT9
+2022 003221  7640          SZA CLA 
+2023 003222  7402          HLT             /INTERRUPT FAILED
+2024                                       /WRONG ADDRESS STORED
+2025               
+2026               /INTERRUPT TEST 10
+2027 003223  6040          SPF             /SET PRINTER FLAG
+2028 003224  6041          TSF 
+2029 003225  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2030 003226  7200          CLA             /FLAG IS ON
+2031 003227  1236          TAD BACK10
+2032 003230  3002          DCA 2
+2033 003231  6001          ION
+2034 003232  6041          TSF 
+2035 003233  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2036 003234  7402          HLT
+2037 003235  3234  OUT10,  .-1
+2038 003236  3237  BACK10, .+1
+2039 003237  7440          SZA             /RETURN FROM LOC 1
+2040 003240  7402          HLT             /CONFIDENCE CHECK
+2041                                       /AC SHOULD BE ZERO
+2042 003241  1000          TAD 0
+2043 003242  7041          CIA
+2044 003243  1235          TAD OUT10
+2045 003244  7640          SZA CLA 
+2046 003245  7402          HLT             /INTERRUPT ERROR
+2047                                       /WRONG ADDRESS STORED
+2048               
+2049               /INTERRUPT TEST 11
+2050 003246  6040          SPF             /SET PRINTER FLAG
+2051 003247  6041          TSF 
+2052 003250  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2053 003251  7200          CLA             /FLAG IS ON
+2054 003252  1311          TAD BACK11
+2055 003253  3002          DCA 2
+2056 003254  6001          ION
+2057 003255  6002          IOF
+2058 003256  6001          ION
+2059 003257  6002          IOF
+2060 003260  6001          ION
+2061 003261  6002          IOF
+2062 003262  6001          ION
+2063 003263  6002          IOF
+2064 003264  6001          ION
+2065 003265  6002          IOF
+2066 003266  6001          ION
+2067 003267  6002          IOF
+2068 003270  6001          ION
+2069 003271  6002          IOF
+2070 003272  6001          ION
+2071 003273  6002          IOF
+2072 003274  6001          ION
+2073 003275  6002          IOF
+2074 003276  6001          ION
+2075 003277  6002          IOF
+2076 003300  6001          ION
+2077 003301  6002          IOF
+2078 003302  6001          ION
+2079 003303  6002          IOF
+2080 003304  6001          ION
+2081 003305  6002          IOF
+2082               
+2083 003306  6041          TSF 
+2084 003307  7402          HLT             /WHAT HAPPENED TO MY FLAG
+2085 003310  7410          SKP 
+2086 003311  3313  BACK11, .+2
+2087 003312  7410          SKP 
+2088 003313  7402          HLT             /INTERRUPT OCCURRED DURING
+2089                                       /ION-IOF SEQUENCE
+2090                                       /SEE LOCATION 0000
+2091               
+2092               /INTERRUPT TEST 12
+2093 003314  6042          TCF             /CLEAR FLAG
+2094 003315  7200          CLA 
+2095 003316  1326          TAD BACK12
+2096 003317  3002          DCA 2
+2097 003320  6001          ION
+2098 003321  7000          NOP
+2099 003322  7000          NOP
+2100 003323  7000          NOP
+2101 003324  7000          NOP
+2102 003325  7410          SKP 
+2103 003326  3330  BACK12, .+2
+2104 003327  7410          SKP 
+2105 003330  7402          HLT             /INTERRUPT WITH NO
+2106                                       /FLAG
+2107 003331  6002          IOF
+2108               
+2109               /INTERRUPT TEST 13
+2110 003332  6040          SPF             /SET PRINTER FLAG
+2111 003333  6041          TSF 
+2112 003334  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2113 003335  7200          CLA 
+2114 003336  1345          TAD BAC13
+2115 003337  3002          DCA 2
+2116 003340  6001          ION
+2117 003341  7410          SKP 
+2118 003342  7402          HLT
+2119 003343  7402          HLT             /NO INTERRUPT
+2120 003344  3343  OUTT13, .-1
+2121 003345  3346  BAC13,  .+1
+2122 003346  7440          SZA
+2123 003347  7402          HLT
+2124 003350  1000          TAD 0
+2125 003351  7041          CIA
+2126 003352  1344          TAD OUTT13
+2127 003353  7640          SZA CLA 
+2128 003354  7402          HLT             /INTERRUPT ERROR
+2129                                       /WRONG ADDRESS STORED
+2130               
+2131               /INTERRUPT TEST 14
+2132 003355  6040          SPF             /SET PRINTER FLAG
+2133 003356  6041          TSF 
+2134 003357  7402          HLT             /SPF FAILED TO SET PRINTER FLAG
+2135 003360  7200          CLA 
+2136 003361  1370          TAD BAC14
+2137 003362  3002          DCA 2
+2138 003363  6001          ION
+2139 003364  5765          JMP I .+1
+2140 003365  3366          .+1
+2141 003366  7402          HLT             /NO INTERRUPT
+2142 003367  3366  OUTT14, .-1
+2143 003370  3371  BAC14,  .+1
+2144 003371  7440          SZA
+2145 003372  7402          HLT
+2146 003373  1000          TAD 0
+2147 003374  7041          CIA
+2148 003375  1367          TAD OUTT14
+2149 003376  7640          SZA CLA 
+2150 003377  7402          HLT             /INTERRUPT ERROR
+2151                                       /WRONG ADDRESS STORED
+2152               
+2153                       *3400
+2154               /INTERRUPT TEST 15
+2155 003400  6007          CAF             /CLEAR THE WORLD
+2156 003401  1212          TAD BAC15       /GET RETURN INTERRUPT ADDRESS
+2157 003402  3002          DCA 2           /STORE IT IN ADDRESS 2
+2158 003403  6001          ION             /INTERRUPT ON
+2159 003404  7000          NOP             /
+2160 003405  6007          CAF             /CLEAR THE WORLD
+2161 003406  6040          SPF             /SET PRINTER FLAG
+2162 003407  6000          SKON
+2163 003410  5213          JMP .+3
+2164 003411  7402          HLT             /CAF FAILED TO CLEAR ION
+2165 003412  3411  BAC15,  .-1
+2166 003413  6007          CAF
+2167 003414  5615          JMP I .+1
+2168 003415  3600          IAIT1
+2169               
+2170                       PAGE
+2171               
+2172               /ILLEGAL AUTO INDEX TEST1
+2173               
+2174 003600  7200  IAIT1,  CLA 
+2175 003601  5602          JMP I .+1
+2176 003602  4000          AND1
+2177 003603  4010  K4010,  4010
+2178               
+2179               *4000
+2180 004000  0610  AND1,   AND I 4010      /TEST INSTRUCTION
+2181 004001  5602          JMP I .+1
+2182 004002  3604          RET1
+2183               
+2184               *K4010+1
+2185 003604  1603  RET1,   TAD I K4010
+2186 003605  7440          SZA 
+2187 003606  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2188                                       /AND I 4010 ALTERED (4010)
+2189 003607  7200          CLA
+2190 003610  3603          DCA I K4010
+2191               
+2192               /ILLEGAL AUTO INDEX TEST 2
+2193               
+2194 003611  7200          CLA 
+2195 003612  5613          JMP I .+1
+2196 003613  2173          AND2
+2197 003614  2010  K2010,  2010
+2198               
+2199               *2170
+2200 002170  5771          JMP I .+1
+2201 002171  2200          2200
+2202               *.+1
+2203 002173  0610  AND2,   AND I 2010      /TEST INSTRUCTION
+2204 002174  5775          JMP I .+1
+2205 002175  3615          RET2
+2206               
+2207               *K2010+1
+2208 003615  1614  RET2,   TAD I K2010
+2209 003616  7440          SZA 
+2210 003617  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2211                                       /AND I 2010 ALTERED (2010)
+2212 003620  5621          JMP I .+1
+2213 003621  3622          AITST3
+2214               
+2215               /ILLEGAL AUTO INDEX TEST 3
+2216               
+2217 003622  7200  AITST3, CLA
+2218 003623  5624          JMP I .+1
+2219 003624  1173          AND3
+2220 003625  1010  K1010,  1010
+2221               
+2222               *1171
+2223 001171  5772          JMP I .+1
+2224 001172  1200          1200
+2225 001173  0610  AND3,   AND I 1010      /TEST INSTRUCTION
+2226 001174  5775          JMP I .+1
+2227 001175  3626          RET3
+2228               
+2229               *K1010+1
+2230 003626  1625  RET3,   TAD I K1010
+2231 003627  7440          SZA 
+2232 003630  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2233                                       /AND I 1010 ALTERED (1010)
+2234 003631  7200          CLA 
+2235 003632  3625          DCA I K1010
+2236               
+2237               /ILLEGAL AUTO INDEX TEST 4
+2238               
+2239 003633  7200  AITST4, CLA
+2240 003634  5635          JMP I .+1
+2241 003635  0575          AND4
+2242 003636  0410  K410,   410
+2243               
+2244               *573
+2245 000573  5774          JMP I .+1
+2246 000574  0600          600
+2247 000575  0610  AND4,   AND I 410       /TEST INSTRUCTION
+2248 000576  5777          JMP I .+1
+2249 000577  3637          RET4
+2250               
+2251               *K410+1
+2252 003637  1636  RET4,   TAD I K410
+2253 003640  7440          SZA 
+2254 003641  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2255                                       /AND I 410 ALTERED (410)
+2256 003642  7200          CLA 
+2257 003643  3636          DCA I K410
+2258               
+2259               /ILLEGAL AUTO INDEX TEST 5
+2260               
+2261 003644  7200          CLA
+2262 003645  5646          JMP I .+1
+2263 003646  0373          AND5
+2264 003647  0210  K210,   0210
+2265               
+2266               *371
+2267 000371  5772          JMP I .+1
+2268 000372  0400          400
+2269 000373  0610  AND5,   AND I 210       /TEST INSTRUCTION
+2270 000374  5775          JMP I .+1
+2271 000375  3650          RET5
+2272               
+2273               *K210+1
+2274 003650  1647  RET5,   TAD I K210
+2275 003651  7440          SZA 
+2276 003652  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2277                                       /AND I 210 ALTERED (210)
+2278 003653  7200          CLA 
+2279 003654  3647          DCA I K210
+2280               
+2281               /ILLEGAL AUTO INDEX TEST 6
+2282               
+2283 003655  7200          CLA 
+2284 003656  5657          JMP I .+1
+2285 003657  0130          AND6
+2286 003660  0110  K110,   0110
+2287               
+2288               *130
+2289 000130  0510  AND6,   AND I 110       /TEST INSTRUCTION
+2290 000131  5532          JMP I .+1
+2291 000132  3661          RET6
+2292               
+2293               *K110+1
+2294 003661  1660  RET6,   TAD I K110
+2295 003662  7440          SZA 
+2296 003663  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2297                                       /AND I 110 ALTERED (110)
+2298 003664  7200          CLA 
+2299 003665  3110          DCA 110
+2300               
+2301               /ILLEGAL AUTO INDEX TEST 7
+2302               
+2303 003666  7200          CLA 
+2304 003667  5670          JMP I .+1
+2305 003670  0124          AND7
+2306 003671  0050  K50,    50
+2307               
+2308               *124
+2309 000124  0450  AND7,   AND I 50        /TEST INSTRUCTION
+2310 000125  5526          JMP I .+1
+2311 000126  3672          RET7
+2312               
+2313               *K50+1
+2314 003672  1671  RET7,   TAD I K50
+2315 003673  7440          SZA 
+2316 003674  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2317                                       /AND I 50 ALTERED (50)
+2318 003675  7200          CLA 
+2319 003676  3050          DCA 50
+2320               
+2321               /ILLEGAL AUTO INDEX TEST 8
+2322               
+2323 003677  7200          CLA 
+2324 003700  5701          JMP I .+1
+2325 003701  0120          AND8
+2326 003702  0030  K30,    0030
+2327               
+2328               *120
+2329 000120  0430  AND8,   AND I 30        /TEST INSTRUCTION
+2330 000121  5522          JMP I .+1
+2331 000122  3703          RET8
+2332               
+2333               *K30+1
+2334 003703  1702  RET8,   TAD I K30
+2335 003704  7440          SZA 
+2336 003705  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2337                                       /AND I 30 ALTERED (30)
+2338 003706  7200          CLA 
+2339 003707  3030          DCA 30
+2340               
+2341               /ILLEGAL AUTO INDEX TEST 9
+2342               
+2343 003710  7200          CLA 
+2344 003711  3000          DCA 0
+2345 003712  5713          JMP I .+1
+2346 003713  0074  IAITS9, AND9
+2347               
+2348               *74
+2349 000074  0400  AND9,   AND I 0         /TEST INSTRUCTION
+2350 000075  5476          JMP I .+1
+2351 000076  3714          RET9
+2352               
+2353               *IAITS9+1
+2354 003714  1436  RET9,   TAD I K0
+2355 003715  7440          SZA 
+2356 003716  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2357                                       /AND I 0 ALTERED (0)
+2358 003717  7200          CLA 
+2359 003720  3000          DCA 0
+2360               
+2361               /ILLEGAL AUTO INDEX TEST 10
+2362               
+2363 003721  7200          CLA 
+2364 003722  5723          JMP I .+1
+2365 003723  0070  IAIT10, AND10
+2366               
+2367               *70
+2368 000070  0407  AND10,  AND I 7         /TEST INSTRUCTION
+2369 000071  5472          JMP I .+1
+2370 000072  3724          RET10
+2371               
+2372               *IAIT10+1
+2373 003724  1446  RET10,  TAD I K0007
+2374 003725  7440          SZA 
+2375 003726  7402          HLT             /ERROR, AC SHOULD BE ZERO
+2376                                       /AND I 7 ALTERED (7)
+2377 003727  7200          CLA 
+2378 003730  3007          DCA 7
+2379               
+2380               /CHECK FOR TTY BELL
+2381               
+2382 003731  7200  CKAPT,  CLA 
+2383 003732  1022          TAD OP2
+2384 003733  7700          SMA CLA         /APT??
+2385 003734  5346          JMP CKBELL      /NO, CHECK FOR BELL
+2386 003735  2345          ISZ APTCNT      /YES, TIME UP?
+2387 003736  5777          JMP I (TP0+1    /NO, RESUME
+2388 003737  4776          JMS I (APTTMR   /YES, SET UP CRASH TIMEOUT
+2389 003740  7200          CLA 
+2390 003741  1344          TAD APTICT      /RESET COUNTER
+2391 003742  3345          DCA APTCNT
+2392 003743  5777          JMP I (TP0+1    /RESUME
+2393 003744  7003  APTICT, -775
+2394 003745  7003  APTCNT, -775
+2395 003746  1364  CKBELL, TAD BLCNT
+2396 003747  7001          IAC
+2397 003750  3364          DCA BLCNT
+2398 003751  1364          TAD BLCNT
+2399 003752  1365          TAD RNGCNT
+2400 003753  7640          SZA CLA 
+2401 003754  5777          JMP I (TP0+1    /RESUME
+2402 003755  3364          DCA BLCNT
+2403 003756  1366          TAD BELCOD
+2404 003757  6046          TLS
+2405 003760  6041          TSF 
+2406 003761  5360          JMP .-1
+2407 003762  5763          JMP I .+1
+2408 003763  0200  K200,   200
+2409 003764  0000  BLCNT,  0000
+2410 003765  4762  RNGCNT, -3016
+2411 003766  0207  BELCOD, 207
+2412               
+2413 003776  4644  *4010
+     003777  0203  
+2414 004010  0000          0
+2415               
+2416 004011  0000  STR,    0
+2417 004012  1220          TAD JMPIX
+2418 004013  3001          DCA 1
+2419 004014  3002          DCA 2
+2420 004015  3003          DCA 3
+2421 004016  2211          ISZ STR
+2422 004017  5611          JMP I STR
+2423 004020  5402  JMPIX,  5402
+2424               
+2425               /PROCESSOR IOT TESTS
+2426                       PAGE
+2427               
+2428 004200  7300  PIOTST, CLA CLL 
+2429 004201  4602          JMS I .+1
+2430 004202  4011          STR
+2431               
+2432               /PROCESSOR IOT TEST 1
+2433 004203  7360          CLA CMA CLL CML
+2434 004204  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2435 004205  7410          SKP 
+2436 004206  7402          HLT             /CAF SHOULD NOT SKIP
+2437 004207  7420          SNL 
+2438 004210  7440          SZA 
+2439 004211  7402          HLT             /CAF FAILED, AC AND LINK SHOULD BE ZERO
+2440               
+2441               /PROCESSOR IOT TEST 2
+2442 004212  6040          SPF             /SET PRINTER FLAG
+2443 004213  7410          SKP 
+2444 004214  7402          HLT             /SPF SHOULD NOT SKIP
+2445 004215  6041          TSF 
+2446 004216  7402          HLT             /SPF OR TSF FAILED
+2447 004217  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2448 004220  6041          TSF 
+2449 004221  7410          SKP 
+2450 004222  7402          HLT             /CAF FAILED, TTY FLAG SHOULD BE CLEAR
+2451 004223  6003          SRQ             /SKIP IF INTERRUP REQUEST
+2452 004224  7410          SKP 
+2453 004225  7402          HLT             /SRQ FAILED OR SPURIOUS INTERRUPT OCCURRED
+2454               
+2455               /PROCESSOR IOT TEST 3
+2456 004226  6007          CAF             /CLEAR ALL FLAGS, AC, LINK, AND ENABLE TTY INTERRUPT
+2457 004227  6040          SPF             /SET PRINTER FLAG
+2458 004230  6003          SRQ             /SKIP IF INTERRUPT REQUEST
+2459 004231  7402          HLT             /SRQ FAILED OR CAF FAILED TO ENABLE TTY INTERRUPT
+2460               
+2461               /PROCESSOR IOT TEST 4
+2462 004232  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2463 004233  6035          KIE             /DISABLE TTY INTERRUPT. (AC EQUALS ZERO)
+2464 004234  7410          SKP 
+2465 004235  7402          HLT             /KIE SHOULD NOT SKIP
+2466 004236  6040          SPF             /SET PRINTER FLAG
+2467 004237  6041          TSF 
+2468 004240  7402          HLT             /SPF OR TSF FAILED
+2469 004241  6003          SRQ             /SKIP IF INTERRUPT REQUEST
+2470 004242  7410          SKP 
+2471 004243  7402          HLT             /KIE FAILED TO DISABLE TTY INTERRUPT OR SRQ FAILED
+2472               
+2473               /PROCESSOR IOT TEST 5
+2474 004244  7201          CLA IAC
+2475 004245  6035          KIE             /ENABLE TTY INTERRUPT (AC11 IS SET)
+2476 004246  6040          SPF             /SET PRINTER FLAG
+2477 004247  6041          TSF 
+2478 004250  7402          HLT             /SPF OR TSF FAILED
+2479 004251  6003          SRQ             /SKIP IF INTERRUPT REQUEST
+2480 004252  7402          HLT             /KIE FAILED TO ENABLE TTY INTERRUPT OR SRQ FAILED
+2481               
+2482               /PROCESSOR IOT TEST 6
+2483 004253  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2484 004254  1267          TAD BACK13
+2485 004255  3002          DCA 2
+2486 004256  6001          ION             /TURN INTERRUPT ON
+2487 004257  7410          SKP 
+2488 004260  7402          HLT             /ION SHOULD NOT SKIP
+2489 004261  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2490 004262  7402          HLT             /SKON FAILED TO SKIP OR ION FAILED
+2491 004263  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2492 004264  7410          SKP 
+2493 004265  7402          HLT             /SKON FAILED
+2494 004266  5271          JMP .+3
+2495 004267  4270  BACK13, .+1
+2496 004270  7402          HLT             /ILLEGAL INTERRUPT OCCURRED
+2497               
+2498               /PROCESSOR IOT TEST 7
+2499 004271  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2500 004272  1304          TAD BACK14
+2501 004273  3002          DCA 2
+2502 004274  6001          ION             /TURN INTERRUPTS ON
+2503 004275  6002          IOF             /TURN INTERRUPTS OFF
+2504 004276  7410          SKP 
+2505 004277  7402          HLT             /IOF SHOULD NOT SKIP
+2506 004300  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2507 004301  7410          SKP 
+2508 004302  7402          HLT             /IOF FAILED
+2509 004303  5306          JMP .+3
+2510 004304  4305  BACK14, .+1
+2511 004305  7402          HLT             /ILLEGAL INTERRUPT OCCURRED
+2512               
+2513               /PROCESSOR IOT TEST 8
+2514 004306  6007          CAF             /CLEAR ALL FLAGS, AC, AND LINK
+2515 004307  7040          CMA 
+2516 004310  6004          GTF             /GET INTERRUPT FLAG
+2517 004311  7410          SKP 
+2518 004312  7402          HLT             /GTF SHOULD NOT SKIP
+2519 004313  0064          AND K5200       /MASK
+2520 004314  7440          SZA 
+2521 004315  7402          HLT             /GTF FAILED. (AC SHOULD EQUAL 0000)
+2522               
+2523               /PROCESSOR IOT TEST 9
+2524 004316  7360          CLA CMA CLL CML /SET LINK AND AC
+2525 004317  6004          GTF             /GET INTERRUPT FLAGS (AC SHOULD EQUAL 4000)
+2526 004320  7420          SNL 
+2527 004321  7402          HLT             /LINK SHOULD BE 1
+2528 004322  0064          AND K5200       /MASK
+2529 004323  7104          CLL RAL         /AC SHOULD EQUAL ZERO
+2530 004324  7430          SZL 
+2531 004325  7440          SZA 
+2532 004326  7402          HLT             /GTF FAILED
+2533               
+2534               /PROCESSOR IOT TEST 10
+2535 004327  6007          CAF             /CLEAR ALL FLAGS. (AC, LINK, AND ENABLE TTY INTERRUPT)
+2536 004330  6040          SPF             /SET PRINTER FLAG
+2537 004331  6004          GTF             /GET INTERRUPT FLAGS. (AC SHOULD EQUAL 1000)
+2538 004332  0064          AND K5200       /MASK
+2539 004333  7006          RTL             /PUT INTERRUPT BUS-   (AC SHOULD EQUAL 4000)
+2540 004334  7004          RAL             /FLAG INTO LINK. (AC SHOULD EQUAL ZERO)
+2541 004335  7430          SZL 
+2542 004336  7440          SZA 
+2543 004337  7402          HLT             /GTF FAILED TO GET INTERRUPT BUS FLAG
+2544               
+2545               /PROCESSOR IOT TEST 11
+2546 004340  6007          CAF             /CLEAR ALL FLAGS
+2547 004341  1356          TAD BACK15
+2548 004342  3002          DCA 2
+2549 004343  6001          ION             /TURN INTERRUPT ON
+2550 004344  6004          GTF             /GET INTERRUPT FLAGS. (AC SHOULD EQUAL 0200)
+2551 004345  0064          AND K5200       /MASK
+2552 004346  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2553 004347  7402          HLT             /GTF CLEARED INTERRUPT (ION)
+2554 004350  7102          CLL BSW         /PUT INTERRUPT BUS-   (AC SHOULD EQUAL 0002)
+2555 004351  7012          RTR             /FLAG INTO LINK. (AC SHOULD EQUAL ZERO)
+2556 004352  7430          SZL 
+2557 004353  7440          SZA 
+2558 004354  7402          HLT             /GTF FAILED TO GET INTERRUPT FLAG
+2559 004355  5360          JMP .+3
+2560 004356  4357  BACK15, .+1
+2561 004357  7402          HLT             /ILLEGAL INTERRUPT OCCURRED
+2562               
+2563               /PROCESSOR IOT TEST 12
+2564 004360  7320          CLA CLL CML 
+2565 004361  1375          TAD BACK16
+2566 004362  3002          DCA 2
+2567 004363  6005          RTF             /RESTORE ALL FLAGS
+2568 004364  7410          SKP 
+2569 004365  7402          HLT             /RTF SHOULD NOT SKIP
+2570 004366  7420          SNL             /LINK SHOULD BE ZERO
+2571 004367  7440          SZA             /AC EQUALS ZERO
+2572 004370  7402          HLT             /RTF FAILED, LINK AND AC SHOULD BE ZERO
+2573 004371  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2574 004372  7402          HLT             /RTF FAILED TO TURN INTERRUPT ON
+2575 004373  5774          JMP I .+1
+2576 004374  4400          PTST14
+2577 004375  4376  BACK16, .+1
+2578 004376  7402          HLT
+2579               
+2580                       PAGE
+2581               
+2582               /PROCESSOR IOT TEST 13
+2583 004400  6007  PTST14, CAF
+2584 004401  1215          TAD BACK17
+2585 004402  3002          DCA 2
+2586 004403  7330          CLA CLL CML RAR /AC EQUALS 4000
+2587 004404  6005          RTF             /RESTORE ALL FLAGS
+2588 004405  7420          SNL
+2589 004406  7402          HLT             /RTF FAILED TO RESTORE LINK
+2590 004407  6000          SKON            /SKIP IF INTERRUPT ON AND TURN INTERRUPT OFF
+2591 004410  7402          HLT             /RTF FAILED TO TURN INTERRUPT ON
+2592 004411  6007          CAF             /CLEAR ALL FLAGS. AC, LINK, AND ENABLE TTY INTERRUPT
+2593 004412  7300          CLA CLL
+2594 004413  5614          JMP I .+1       /GO TO INTERRUPT TESTS
+2595 004414  2700          INTEST
+2596 004415  4416  BACK17, .+1
+2597 004416  7402          HLT             /ILLEGAL INTERRUPT OCCURRED
+2598               
+2599               /
+2600               / The following disassembly by vrs, July 2020.
+2601               /
+2602               / This routine walks the tests, replacing all the "HLT" with
+2603               / "JMS I APTERR".  Location APTERR points to WAERRO.
+2604               /
+2605                       *4600
+2606 004600  7200  APTCHK, CLA 
+2607 004601  1241          TAD APTDNE      /SET NON-ZERO TO DISABLE REPEAT
+2608 004602  7640          SZA CLA 
+2609 004603  5242          JMP APTRET      /APT DISABLED
+2610 004604  7040          CMA             /SET NO-REPEAT FLAG
+2611 004605  3241          DCA APTDNE
+2612 004606  1022          TAD OP2         /TEST FOR APT
+2613 004607  7700          SMA CLA         /WANT APT RUN?
+2614 004610  5242          JMP APTRET      /NO, NORMAL RUN
+2615 004611  1235          TAD APTBEG      /YES, START LOOKING AT 0203
+2616 004612  3010          DCA 10
+2617 004613  1410  APTNXT, TAD I 10        /LOOK AT A WORD
+2618 004614  7041          CIA
+2619 004615  1237          TAD KHLT        /IS IT A HLT?
+2620 004616  7650          SNA CLA 
+2621 004617  5227          JMP APTFIX      /YES, FIX IT
+2622 004620  1010  APTETS, TAD 10          /REACHED THE END?
+2623 004621  7041          CIA
+2624 004622  1236          TAD APTEND
+2625 004623  7640          SZA CLA 
+2626 004624  5213          JMP APTNXT      /NO, KEEP GOING
+2627 004625  4244          JMS APTTMR      /YES, SET CRASH TIMEOUT
+2628 004626  5242          JMP APTRET
+2629 004627  7040  APTFIX, CMA             /BACK UP AUTO INDEX
+2630 004630  1010          TAD 10
+2631 004631  3010          DCA 10
+2632 004632  1240          TAD APTJMS      /GET OUR JMS, AND
+2633 004633  3410          DCA I 10        /CLOBBER THE HLT
+2634 004634  5220          JMP APTETS      /KEEP LOOKING
+2635 004635  0203  APTBEG, 0203
+2636 004636  4417  APTEND, 4417
+2637 004637  7402  KHLT,   HLT
+2638 004640  4466  APTJMS, JMS I APTERR    /CALL ERROR REPORT ROUNTE
+2639 004641  0000  APTDNE, 0000
+2640 004642  7200  APTRET, CLA 
+2641 004643  5777          JMP I (TP0+1
+2642               /
+2643               / This routine sets up the APT crash timer.
+2644               / I have no idea what the delay loop is for.
+2645               /
+2646 004644  0000  APTTMR, 0
+2647 004645  6002          IOF
+2648 004646  7200          CLA 
+2649 004647  1266          TAD OUTERI      /INITIALIZE OUTER DELAY
+2650 004650  3270          DCA OUTERD
+2651 004651  1267  APTDLY, TAD INNERI      /INITIALIZE INNER DELAY
+2652 004652  3271          DCA INNERD
+2653 004653  2271          ISZ INNERD      /INNER DELAY LOOP
+2654 004654  5253          JMP .-1
+2655 004655  2270          ISZ OUTERD      /OUTER DELAY LOOP
+2656 004656  5251          JMP APTDLY
+2657 004657  6224          RIF             /GET CURRENT INSTRUCTION FIELD
+2658 004660  1376          TAD (CDF
+2659 004661  3262          DCA .+1
+2660 004662  6201          CDF 00          /CDF TO CURRENT INSTRUCTION FIELD
+2661 004663  6272          CIF 70          /FIELD 7, LOCATION OF UV PROM
+2662 004664  4775          JMS I (6500     /76500, SETS UP HALT TIMEOUT
+2663 004665  5644          JMP I APTTMR
+2664 004666  7771  OUTERI, 7771
+2665 004667  0000  INNERI, 0
+2666 004670  0000  OUTERD, 0
+2667 004671  0000  INNERD, 0
+2668               /
+2669               /THIS ROUTINE WILL NOTIFY APT OF AN ERROR AND SEND THE ERROR
+2670               /PC TO THE APT SYSTEM
+2671               /
+2672 004672  0000  WAERRO, 0
+2673 004673  7200          CLA 
+2674 004674  6224          RIF             /GET CURRENT INSTRUCTION FIELD
+2675 004675  1376          TAD (CDF
+2676 004676  3301          DCA .+3
+2677 004677  7040          CMA 
+2678 004700  1272          TAD WAERRO      /GET PC
+2679 004701  6201          CDF 00          /REPLACED WITH CURRENT INSTRUCTION FIELD
+2680 004702  6272          CIF 70          /FIELD OF UVPROM
+2681 004703  5774          JMP I (6520     /NOTIFY APT OF ERROR
+2682               /
+2683               / THIS DECIDES WHETHER THE USER WANTS TO HEAR THE BELL OR NOT.
+2684               /
+2685 004704  0000  BELLCK, 0
+2686 004705  7200          CLA 
+2687 004706  1022          TAD OP2         /USING APT?
+2688 004707  7700          SMA CLA 
+2689 004710  5704          JMP I BELLCK    /NOPE, RETURN
+2690 004711  1021          TAD OP1         /YES, CHECK FOR HW SWITCHES
+2691 004712  7710          SPA CLA 
+2692 004713  5316          JMP .+3         /HW SWITCHES, GO READ THEM
+2693 004714  1020          TAD SWR         /GET SW SWITCHES
+2694 004715  7410          SKP 
+2695 004716  7604          CLA OSR         /GET HW SWITCHES
+2696 004717  7110          CLL RAR         /CHECK SW11
+2697 004720  7620          SNL CLA 
+2698 004721  5704          JMP I BELLCK    /NO SET, NEVER MIND
+2699 004722  5773          JMP I (CKAPT    /SET, GO POSSIBLY RING THE BELL
+2700 004773  3731  $
+     004774  6520  
+     004775  6500  
+     004776  6201  
+     004777  0203  
+
+AITST3  3622
+AITST4  3633 unreferenced
+AND1    4000
+AND10   0070
+AND2    2173
+AND3    1173
+AND4    0575
+AND5    0373
+AND6    0130
+AND7    0124
+AND8    0120
+AND9    0074
+APTBEG  4635
+APTCHK  4600
+APTCNT  3745
+APTDLY  4651
+APTDNE  4641
+APTEND  4636
+APTERR  0066
+APTETS  4620
+APTFIX  4627
+APTICT  3744
+APTJMS  4640
+APTNXT  4613
+APTRET  4642
+APTTMR  4644
+BAC13   3345
+BAC14   3370
+BAC15   3412
+BACK1   2714
+BACK10  3236
+BACK11  3311
+BACK12  3326
+BACK13  4267
+BACK14  4304
+BACK15  4356
+BACK16  4375
+BACK17  4415
+BACK2   2762
+BACK3   2736
+BACK4   3013
+BACK5   3044
+BACK6   3076
+BACK7   3124
+BACK8   3146
+BACK9   3213
+BELCOD  3766
+BELLCK  4704
+BLCNT   3764
+CAF     6007
+CKAPT   3731
+CKBELL  3746
+GTF     6004
+IAIT1   3600
+IAIT10  3723
+IAITS9  3713
+INNERD  4671
+INNERI  4667
+INTEST  2700
+JMPIX   4020
+K0      0036
+K0001   0051
+K0003   0047
+K0007   0046
+K0017   0045
+K0037   0044
+K0077   0043
+K0177   0042
+K0377   0041
+K0707   0060
+K0777   0040
+K1010   3625
+K110    3660
+K1111   0062
+K1234   0177
+K172    0173
+K173    0174
+K174    0175
+K175    0176
+K176    0172
+K1777   0037
+K200    3763 unreferenced
+K2010   3614
+K210    3647
+K2525   0054
+K30     3702
+K3777   0005
+K4      0065
+K4010   3603
+K410    3636
+K4400   0052
+K4444   0056
+K4577   0053
+K50     3671
+K5200   0064
+K5252   0061
+K5555   0063
+K5777   0006
+K6666   0055
+K6777   0023
+K7070   0057
+K7377   0024
+K7577   0025
+K7677   0026
+K7737   0027
+K7757   0031
+K7767   0032
+K7773   0033
+K7775   0034
+K7776   0035
+K7777   0004
+KHLT    4637
+KIE     6035
+OP1     0021
+OP2     0022
+OUT1    2713
+OUT10   3235
+OUT2    2761
+OUT3    2735
+OUT4    3012
+OUT5    3043
+OUT6    3075
+OUT7    3123
+OUT8    3145
+OUT9    3212
+OUTERD  4670
+OUTERI  4666
+OUTT13  3344
+OUTT14  3367
+PIOTST  4200
+PTST14  4400
+RET1    3604
+RET10   3724
+RET2    3615
+RET3    3626
+RET4    3637
+RET5    3650
+RET6    3661
+RET7    3672
+RET8    3703
+RET9    3714
+RNGCNT  3765
+RTF     6005
+SKON    6000
+SPF     6040
+SRQ     6003
+STR     4011
+SWR     0020
+TP0     0202
+TP177   0377
+WAERRO  4672
