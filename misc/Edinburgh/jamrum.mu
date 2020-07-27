@@ -1,0 +1,456 @@
+/MUSIC
+/JAM RUM
+
+C=240
+
+!=B
+
+C (F--,C-),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (F--,C-),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (C-,B),Q (R,R)
+Q (B+,C+)
+
+Y
+C (F--,C-),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (F--,C-),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (C-,B),Q (R,R)
+Q (B+,C+)
+
+Y
+C (F--,C-),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (C-,A),Q (R,R)
+Q (C,R)
+Q (F,A+,C+,R)
+C (F--,C-),Q (R,R)
+Q (A+,C+)
+
+Y
+C (G!--,D!-),Q (R,R)
+Q (D!,R)
+Q (F,A+,C+,R)
+C (D!-,B),Q (R,R)
+Q (D!,R)
+Q (F,A+,C+,R)
+C (G!--,D!-),Q (R,R)
+Q (A+,C+)
+
+Y
+C (G--,D-),Q (R,R)
+Q (D,R)
+Q (F,A+,C+,R)
+C (D-,B),Q (R,R)
+Q (F,A+,C+,R)
+C (G--,D-),Q (R,R)
+Q (A+,C+)
+
+Y
+C (C--,C-),Q (R,R)
+Q (D,R)
+Q (E,B+,C+,R)
+C (R,R,R),Q C-
+Q C
+
+
+C.(R,R,R),Q (C+,C+,C+)
+
+Y
+C (F--,C-),Q (C+,R)
+Q (D+,E)
+Q (G,C+,R,R)
+C (C-,B),Q (B+,R)
+Q (A+,R)
+Q (B+,R,R,R)
+C (C-,R),Q (A+,C)
+Q (E,G)
+
+Y
+C (F--,C-),Q (F|)
+C (A+,R)
+Q (R,R)
+Q (C,R),C (C-,A)
+M F,Q D
+Q (C,R,R)
+C (C-,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (G,R)
+C (B+,R)
+Q (R,R)
+C (C-,B),Q (D,R)
+M (E,G)
+Q (C,R)
+C C-,Q D
+Q C
+
+Y
+C (F--,C-),Q (A+,R)
+C (C+,R)
+Q (R,R)
+Q (E,R),C (C-,A)
+C D,Q A+
+Q (C+,R,R)
+C (C-,C),Q (C+,R)
+Q (C+,R)
+
+Y
+C (F--,C-),Q (C+,R)
+Q (E,D+)
+Q (G,C+,R,R)
+C (C-,B),Q (B+,R)
+Q (A+,R)
+Q (B+,R,R,R)
+C (C-,R),Q (C,A+)
+Q (E,G)
+
+Y
+C (F--,C-),Q (F,R)
+C (A+,R)
+Q (R,R)
+C (C-,A),Q (C,R)
+M F,Q D
+Q (C,R,R)
+C (C-,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (G,R)
+C (B+,R)
+Q (R,R)
+C (C-,B),Q (D,R)
+C E,Q D
+Q (C,R,R)
+C (C-,G,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (F,F)
+Q (F+,G#)
+C (F,R),Q (D+,A+)
+Q (C+,R)
+Q (C,R,R,R)
+
+
+C.(R,R,R),Q (C+,C+,C+)
+
+Y
+C (F--,C-),Q (C+,R)
+Q (D+,E)
+Q (G,C+,R,R)
+C (C-,B),Q (B+,R)
+Q (A+,R)
+Q (B+,R,R,R)
+C (C-,A-),Q (A+,C)
+Q (E,G)
+
+Y
+C (F--,C-),Q (F,R)
+C (A+,R)
+Q (R,R)
+Q (C,R),C (C-,A)
+M F,Q D
+Q (C,R,R)
+C (C-,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (G,R)
+C (B+,R)
+Q (R,R)
+C (C-,B),Q (D,R)
+M (E,G)
+Q (C,R)
+C C-,Q D
+Q C
+
+Y
+C (F--,C-),Q (A+,R)
+C (C+,R)
+Q (R,R)
+Q (E,R),C (C-,A)
+C D,Q A+
+Q (C+,R,R)
+C (C-,C),Q (C+,R)
+Q (C+,R)
+
+Y
+C (F--,C-),Q (C+,R)
+Q (E,D+)
+Q (G,C+,R,R)
+C (C-,B),Q (B+,R)
+Q (A+,R)
+Q (B+,R,R,R)
+C (C-,R),Q (C,A+)
+Q (E,G)
+
+Y
+C (F--,C-),Q (B,R)
+C (A+,R)
+Q (R,R)
+C (C-,A),Q (C,R)
+M F,Q D
+Q (C,R,R)
+C (C-,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (G,R)
+C (B+,R)
+Q (R,R)
+C (C-,B),Q (D,R)
+C E,Q D
+Q (C,R,R)
+C (C-,G,R),Q D
+Q C
+
+Y
+C (F--,C-),Q (F,F)
+Q (F+,G#)
+C (F,R),Q (D+,A+)
+Q (C+,R)
+Q (C,RR,R)
+
+
+C. (R,R),Q (G#-,F)
+Q (A,D)
+Q (C,R)
+
+Y
+M C-,Q (R,R,R)
+Q (E,B+,C+)
+Q (E,B+,C+)
+Q (R,R,R)
+C D-,Q (F,B+,C+)
+Q (F,B+,C+)
+C E-,Q (R,R,R)
+Q (G,B+,C+)
+
+Y
+C C-,Q (F-,R,R)
+C G-,Q (A+,C+)
+Q (A+,C+,R)
+C C-,QTM A,Q (R,R)
+M (F,A+)
+Q C
+Q D
+Q C
+
+Y
+C C-,Q (G-,R,R)
+C A,Q (B+,C+)
+Q (B+,C+,R)
+C C-,QTM B,Q (R,R)
+M (E,G)
+Q C
+Q D
+Q C
+
+Y
+C C-,Q (A,R,R)
+C B,Q (A+,C+)
+Q (A+,C+,R)
+C C-,QTM C,Q (R,R)
+M (F,A+)
+Q C
+Q D
+Q C
+
+Y
+C C-,M C,Q (R,R)
+Q (B+,C+)
+Q (B+,C+,R)
+C C-,Q (R,R)
+C D,Q (B+,C+)
+Q (B+,C+,R)
+C E,Q (R,R,R)
+Q (G,B+,C+)
+
+Y
+C C,Q (F,R,R)
+C G,Q (A++,C++)
+Q (A++,C++,R)
+QTM (C,A+),Q (R,R)
+M A++,Q D+
+Q C+
+Q D+
+Q C+
+
+Y
+C (F--,C-),C. G,Q R
+Q B
+Q (C,E,R)
+C (C-,B),C. R,Q A+
+Q B+
+Q (G,R,R)
+C (C-,R),Q (D,F)
+Q (E,G)
+
+Y
+C (D!-,A!)Q (R,R)
+Q (C!+,E!+)
+Q (C!+,E!+,R,R)
+C (D!,A!+),Q (R,R)
+Q (C!+,E!+)
+Q (C!+,E!+,R,R)
+C (D!-,A!),Q (R,R)
+Q (C!+,E!+)
+
+Y
+C (D!-,A!),Q (R,R)
+Q (C!+,E!+)
+Q (C!+,E!+,R,R)
+C (D!,A!+),Q (R,R)
+Q (C!+,E!+)
+Q (C!+,E!+,R,R)
+C (D!-,A!),Q (R,R)
+Q (C!+,E!+)
+
+Y
+C (G!-,D!),Q (R,R)
+Q (B+,D!+)
+Q (B+,D!+,R,R)
+C (D!,G!),Q (R,R)
+Q (B+,D!+)
+Q (B+,D!+,R,R)
+C (G!-,D!),Q (R,R)
+Q (B+,D!+)
+
+Y
+C (C-,G-),Q (R,R)
+Q (B+,D+)
+Q (B+,D+,R,R)
+C C,Q (R,R,R)
+Q (C+,R,R)
+C. (R,R,R),Q C++
+Q C++
+Q C++
+
+Y
+C (F--,C-),Q (C++,R)
+Q (E+,D++)
+Q (G+,C++,R,R)
+C (C-,B),Q (B++,R)
+Q (A++,R)
+Q (B++,R,R,R)
+C (C-,R)
+Q (A++,C+)
+Q (G+,E+)
+
+Y
+C (F--,C-),Q (F+,R)
+C (A++,R)
+Q (R,R)
+C (C-,A),Q (C+,R)
+M F+,Q D+
+Q (C+,R,R)
+C (C-,R),Q D+
+Q C+
+
+Y
+C (F--,C-),Q (G+,R)
+C (B++,R)
+Q (R,R)
+Q (C-,B,,D+,R)
+M (E+,G+)
+Q (C+,R)
+C C-,Q D+
+Q C+
+
+Y
+C (F--,C-),Q (A++,R)
+C (C++,R)
+Q (R,R)
+Q (C-,A,E+,R)
+C D,Q A++
+Q (C++,R,R)
+C C,Q (C++,R,R)
+Q C++
+
+Y
+C (F--,C-),Q (C++,R)
+Q (D++,E+)
+Q (G+,C++,R,R)
+C (C-,B),Q (B++,R)
+Q (A++,R)
+Q (B++,R,R),Q R
+C (C-,R),Q (A++,C+)
+Q (E+,G+)
+
+Y
+C (F--,C-),Q (F+,R)
+C (A++,R)
+Q (R,R)
+Q (C-,A,C+,R)
+M F+,Q D+
+Q (C+,R,R)
+C (C-,R)
+Q D+
+Q C+
+
+Y
+C (F--,D!-),C. G!+,Q R
+Q (B+,D!+)
+Q (B+,D!+,R)
+Q (D!-,B,A!++,R)
+Q (D!-,B,B++,R)
+Q (B+,D+,G+,R)
+C (F--,D!-),Q (F+,R)
+Q (D!+,G+)
+
+Y
+C (F--,C-),C. G+,Q R
+Q (B+,D+)
+Q (B+,D+,R)
+C (C-,B),Q (A++,R)
+Q (B++,R)
+Q (B+,D+,G+,R)
+C (F--,C-),Q (F+,R)
+Q (E+,G+)
+
+Y
+C F+,Q (F++,A+++),B R
+Q (A++,C++)
+M. R,Q (G#+,B"++)
+Q (C++,F++)
+Q (F+,A++)
+Q (E+,G#+)
+Q (B"++,D++)
+Q (D+,F+)
+
+Y
+C F,Q (A++,R),B R
+Q (A+,C+)
+M. R,Q (G#,B"+)
+Q (C+,F+)
+Q (F,A+)
+Q (E,G)
+Q (B"+,D+)
+Q (D,F)
+
+Y
+C F-,Q (F,A+),B R
+Q (A,C)
+M. R,Q (G#-,B")
+Q (C,F)
+Q (A,R)
+Q (E-,G#-)
+Q (B",D)
+Q (F-,R)
+
+Y
+C R
+C (B,C#,F#,G#)
+Q (A,C,G,D+)
+
+
+$
