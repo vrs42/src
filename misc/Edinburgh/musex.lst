@@ -1,0 +1,467 @@
+   1               /MUSEX.PA 75.05.05
+   2               
+   3               /MUSEX IS MUSIC.PA + EXPLST.PA
+   4               
+   5               /MUSIC.PA
+   6               
+   7               /DISASSEMBLED BY TIM CLARKE
+   8               /FROM JOHN SPIES MUSIC PROGRAMS
+   9               
+  10                       NOTEBS=400      /BASE OF EXPONENTIAL LIST
+  11                       DATA0=600       /START LOC OF MUSIC DATA
+  12               
+  13                       *0
+  14 000000  7600          7600
+  15                       *5
+  16               
+  17               
+  18 000005  1067  SETDUR, TAD M14         /SET DURATION, GET LOOP COUNT
+  19 000006  3110          DCA BITCTR      /PUT IT INTO A WORKING LOC
+  20 000007  1074          TAD DURATN      /GET DURATION WORD
+  21 000010  7041          CIA             /NEGATE IT
+  22 000011  3074          DCA DURATN      /RETURN IT AS NEGATIVE
+  23               
+  24               /LOC 12 IS USED AS AN AUTO INDEX BASE POINTER
+  25               /IT ONLY POINTS FROM 101-122,
+  26               /SO IT IS ALWAYS EXECUTED AS AN AND
+  27               
+  28 000012  0000  PNOTE,  0               /ZAI12 IS USED AS A BASE POINTER
+  29               
+  30               /THE FOLLOWING IS A 12 X 12 TO 24 BIT MULTIPLY
+  31               
+  32 000013  3103          DCA DPACLO      /CLEAR DPAC
+  33 000014  3107          DCA DPACHI
+  34 000015  1524          TAD I PDATA     /GET NEXT DATA WORD
+  35 000016  3104          DCA MULARG      /SAVE IT
+  36               
+  37 000017  1104  DLOOP,  TAD MULARG      /GET IT AGAIN
+  38 000020  7010          RAR
+  39 000021  3104          DCA MULARG      /SAVE VALUE/2
+  40 000022  7430          SZL             /ADD IN MULTIPICAND?
+  41 000023  5057          JMP DADD        /YES
+  42               
+  43 000024  1103  MULOOP, TAD DPACLO      /NO-ROTATE DPAC
+  44 000025  7010          RAR
+  45 000026  7200          CLA
+  46 000027  1107          TAD DPACHI
+  47 000030  7010          RAR
+  48 000031  3107          DCA DPACHI
+  49 000032  1103          TAD DPACLO
+  50 000033  7010          RAR
+  51 000034  3103          DCA DPACLO      /ROTATION THRU
+  52               
+  53 000035  2110          ISZ BITCTR      /ENUF LOOPS? (14 (12) OF THEM)
+  54 000036  5017          JMP DLOOP
+  55               
+  56 000037  1107          TAD DPACHI      /GET DPACHI, SAVE ABCD
+  57 000040  7100          CLL
+  58 000041  0125          AND MASK        /AFTER MASKING,
+  59 000042  7006          RTL
+  60 000043  7006          RTL
+  61 000044  7006          RTL
+  62 000045  3107          DCA DPACHI      /AS CD00
+  63               
+  64 000046  1103          TAD DPACLO      /LIKEWISE DPACLO
+  65 000047  7012          RTR
+  66 000050  7012          RTR
+  67 000051  7012          RTR
+  68 000052  0125          AND MASK        /AFTER MASKING, 00AB
+  69               
+  70 000053  1107          TAD DPACHI      /COMBINE WITH DPACHI
+  71               
+  72               /RESULT IS NOW MIDDLE 4 DIGITS (OF 8)
+  73               
+  74 000054  7041          CIA             /NEGATE
+  75 000055  3074          DCA DURATN
+  76 000056  5577          JMP I PGTNEW
+  77               
+  78               
+  79 000057  7100  DADD,   CLL
+  80 000060  1107          TAD DPACHI      /ADD DPAC
+  81 000061  1074          TAD DURATN      /& MULTIPICAND
+  82 000062  3107          DCA DPACHI      /LO ORDER
+  83 000063  7004          RAL             /IF CARRY
+  84 000064  1103          TAD DPACLO      /ADD IT
+  85 000065  3103          DCA DPACLO      /INTO HI ORDER
+  86 000066  5024          JMP MULOOP      /RETURN
+  87               
+  88               
+  89               
+  90 000067  7764  M14,    -14             /LOOP COUNTER FOR MULTIPLY
+  91 000070  0400  PNOTEB, NOTEBS          /POINTER TO NOTE LIST BASE
+  92                                       /CHANGE P500B TO CHANGE 'KEY'
+  93 000071  0500  P500B,  500             /POINTER TO 500 BASE
+  94 000072  7700  DURAN0, -100            /INITIAL VALUE FOR INNER DURATION COUNTER
+  95 000073  7650  DURAU0, -130            /INITIAL VALUE FOR OUTER DURATION COUNTER
+  96 000074  0000  DURATN, 0               /BASIC DURATION VALUE
+  97 000075  0000  DURANC, 0               /INNER DURATION COUNTER
+  98 000076  0000  DURAUC, 0               /OUTER DURATION COUNTER
+  99                       * .+1           /77 SEEMS TO BE NOT USED
+ 100 000100  0000  LSTPTR, 0               /LIST POINTER
+ 101                       * .+1           /101 NEVER SEEMS TO BE USED
+ 102               
+ 103               /THE NOTE TABLE FOLLOWS: 4 NOTES, 4 ENTRIES PER NOTE
+ 104               
+ 105               /THE ENTRIES HAVE THE FOLLOWING FUNCTIONS:
+ 106               /       0: INITIAL COUNTDOWN VALUE
+ 107               /       1: COUNTER LOC FOR ISZ COUNTDOWN FOR AC ON OR OFF
+ 108               /       2: RESET VALUE FOR AC ON COUNT
+ 109               /       3: ARGUMENT FOR AC OFF DURATION (NR OF LOOPS)
+ 110               
+ 111 000102  7675  PRSET0, -103            /CONSTANT
+ 112               DPACLO,                 /USED IN DP MULTIPLY ROUTINE
+ 113 000103  0000  CNTR0,  0               /EXPONENTIAL NOTE VALUE
+ 114               MULARG,
+ 115 000104  0000  ONCNT0, 0               /500 TABLE EVEN
+ 116 000105  0000  OFCNT0, 0               /500 TABLE ODD
+ 117               
+ 118 000106  7715  PRSET1, -63
+ 119               DPACHI,                 /USED IN DP MULTIPLY ROUTINE
+ 120 000107  0000  CNTR1,  0
+ 121               BITCTR,                 /USED IN DP MULTIPLY ROUTINE
+ 122 000110  0000  ONCNT1, 0
+ 123 000111  0000  OFCNT1, 0
+ 124               
+ 125 000112  7735  PRSET2, -43
+ 126 000113  0000  CNTR2,  0
+ 127 000114  0000  ONCNT2, 0
+ 128 000115  0000  OFCNT2, 0
+ 129               
+ 130 000116  7755  PRSET3, -23
+ 131 000117  0000  CNTR3,  0
+ 132 000120  0000  ONCNT3, 0
+ 133 000121  0000  OFCNT3, 0
+ 134               
+ 135               
+ 136 000122  0000  SW2OR4, 0               /SWITCH FOR 2 PARTS OR 4 PARTS
+ 137               
+ 138 000123  0577  PDATA0, DATA0-1         /POINTER TO START OF MUSIC DATA
+ 139 000124  0000  PDATA,  0               /MAIN DATA POINTER
+ 140 000125  0077  MASK,   0077
+ 141 000126  0101  PNOTE0, PRSET0-1        /POINTER TO NOTE TABLE BASE
+ 142               TEMP,
+ 143 000127  0000  OFFCTR, 0               /AC OFF TIME COUNTER
+ 144               
+ 145               
+ 146               
+ 147 000130  0000  STNOTE, 0               /SETS NOTE TABLE FROM AC DATA WORD
+ 148 000131  0125          AND MASK        /GET LOW ORDER DIGITS
+ 149 000132  3127          DCA TEMP        /SAVE
+ 150 000133  1127          TAD TEMP        /GET BACK & USE AS INDEX
+ 151 000134  1070          TAD PNOTEB      /INTO NOTE EXPONENTIAL LIST
+ 152 000135  3100          DCA LSTPTR
+ 153 000136  1412          TAD I PNOTE     /GET TABLE VALUE 0
+ 154 000137  3412          DCA I PNOTE     /PUT IT INTO TABLE VALUE 1
+ 155 000140  1500          TAD I LSTPTR    /GET NOTE EXPONENTIAL VALUE
+ 156 000141  3412          DCA I PNOTE     /PUT IT INTO TABLE VALUE 2
+ 157 000142  1127          TAD TEMP        /GET ORIGINAL MASKED DATA
+ 158 000143  1176          TAD NR7         /ADD 7
+ 159 000144  0175          AND MASK2       /MASK WITH 0170
+ 160 000145  7112          CLL RTR         /WHAT'S THIS
+ 161 000146  7010          RAR             /INEFFICIENT
+ 162 000147  7104          CLL RAL         /GARBAGE ?
+ 163 000150  1071          TAD P500B       /ADD TO 500 BASE
+ 164 000151  3100          DCA LSTPTR
+ 165 000152  1500          TAD I LSTPTR    /GET LIST VALUE
+ 166 000153  3412          DCA I PNOTE     /PUT IT INTO TABLE VALUE 3
+ 167 000154  2100          ISZ LSTPTR
+ 168 000155  1500          TAD I LSTPTR    /GET NEXT 500 LIST VALUE
+ 169 000156  1076          TAD DURAUC      /& ADD
+ 170 000157  3076          DCA DURAUC      /TO OUTER DURATION COUNTER
+ 171 000160  5530          JMP I STNOTE    /RETURN
+ 172               
+ 173               
+ 174               
+ 175                       *175
+ 176 000175  0170  MASK2,  0170
+ 177 000176  0007  NR7,    7
+ 178 000177  0206  PGTNEW, NWNOTE
+ 179               
+ 180                       PAGE
+ 181                      *200
+ 182               
+ 183 000200  5400          JMP I 0         /RETURN TO SYST IF STARTED AT 200
+ 184 000201  1072          TAD DURAN0      /INITIALIZE DURATION
+ 185 000202  3074          DCA DURATN
+ 186 000203  1123          TAD PDATA0      /INITIALIZE MUSIC DATA POINTER
+ 187 000204  3124          DCA PDATA
+ 188 000205  3122          DCA SW2OR4      /INIT 2 OR 4 PART SWITCH
+ 189               
+ 190               
+ 191               
+ 192 000206  2124  NWNOTE, ISZ PDATA       /BUMP DATA POINTER
+ 193 000207  1524          TAD I PDATA     /GET NEXT DATA WORD
+ 194 000210  7001          IAC             /CHECK FOR 7777
+ 195 000211  7650          SNA CLA         /WAS IT 7777?
+ 196 000212  5354          JMP TSTBR       /YES-CHECK FOR BRANCH CONDITIONS
+ 197               
+ 198 000213  1074          TAD DURATN      /NO-SET DURATIONS
+ 199 000214  3075          DCA DURANC      /INNER DURATION COUNTER
+ 200 000215  1073          TAD DURAU0
+ 201 000216  3076          DCA DURAUC      /OUTER DURATION COUNTER
+ 202 000217  1126          TAD PNOTE0      /GET NOTE TABLE BASE
+ 203 000220  3012          DCA PNOTE       /PUT INTO AUTO INDEX POINTER
+ 204               
+ 205               /USE THE DATA TO SET NOTE TABLE - 4 TIMES
+ 206               
+ 207 000221  1524          TAD I PDATA     /GET CURRENT DATA WORD
+ 208 000222  4130          JMS STNOTE      /1 SET THE NOTE
+ 209               
+ 210 000223  1524          TAD I PDATA     /GET CURRENT DATA WORD
+ 211 000224  7012          RTR
+ 212 000225  7012          RTR
+ 213 000226  7012          RTR
+ 214 000227  4130          JMS STNOTE      /2 SET NOTE WITH HI ORDER DIGITS
+ 215               
+ 216 000230  1122          TAD SW2OR4      /GET SWITCH WORD
+ 217 000231  7440          SZA             /4 NOTES, OR 2 NOTES?
+ 218 000232  2124          ISZ PDATA       /4 NOTES-BUMP POINTER
+ 219               
+ 220               /IF ONLY 2 NOTES, DON'T BUMP POINTER
+ 221               
+ 222 000233  0524          AND I PDATA     /IF 2, OPERATE ON 0
+ 223 000234  4130          JMS STNOTE      /3
+ 224               
+ 225 000235  1524          TAD I PDATA
+ 226 000236  0122          AND SW2OR4
+ 227 000237  7012          RTR
+ 228 000240  7012          RTR
+ 229 000241  7012          RTR
+ 230 000242  4130          JMS STNOTE      /4
+ 231               
+ 232               /THRU SETTING NOTES - NOW PLAY THEM
+ 233               
+
+
+ 234                       EJECT
+ 235               /NUMBERS AFTER INSTRUCTIONS ARE MACHINE CYCLES
+ 236 000243  7360          STA STL         /TURN ON THE AC FOR AC ON LOOP
+ 237               
+ 238 000244  0777  ONLOOP, AND 500         /START OF 500 TABLE (=7777)
+ 239                                       /3 3
+ 240               
+ 241 000245  2103          ISZ CNTR0       /2 5
+ 242 000246  5253          JMP .+5         /1 6
+ 243               
+ 244 000247  1104          TAD ONCNT0      /IF COUNTER 0 OVERFLOWS
+ 245 000250  3103          DCA CNTR0       /RESET IT WITH ONCOUNT 0 & GO TO ACOFF
+ 246 000251  1105          TAD OFCNT0      /USE OFF COUNT0 AS AN ARG TO ACOFF
+ 247 000252  4307          JMS ACOFF
+ 248               
+ 249 000253  2107          ISZ CNTR1       /2 8
+ 250 000254  5261          JMP .+5         /1 9
+ 251               
+ 252 000255  1110          TAD ONCNT1
+ 253 000256  3107          DCA CNTR1
+ 254 000257  1111          TAD OFCNT1
+ 255 000260  4307          JMS ACOFF
+ 256               
+ 257 000261  2113          ISZ CNTR2       /2 11
+ 258 000262  5267          JMP .+5         /1 12
+ 259               
+ 260 000263  1114          TAD ONCNT2
+ 261 000264  3113          DCA CNTR2
+ 262 000265  1115          TAD OFCNT2
+ 263 000266  4307          JMS ACOFF
+ 264               
+ 265 000267  2117          ISZ CNTR3       /2 14
+ 266 000270  5275          JMP .+5         /1 15
+ 267               
+ 268 000271  1120          TAD ONCNT3
+ 269 000272  3117          DCA CNTR3
+ 270 000273  1121          TAD OFCNT3
+ 271 000274  4307          JMS ACOFF
+ 272               
+ 273                                       /BUMP INNER DURATION COUNTER
+ 274 000275  2075          ISZ DURANC      /2 17  LONG ENUF?
+ 275 000276  5244          JMP ONLOOP      /1 18  NO-DO MORE WITH AC ON
+ 276               
+ 277               
+ 278 000277  7200          CLA             /YES, LONG ENUF
+ 279 000300  1074          TAD DURATN      /RESET DURANC
+ 280 000301  3075          DCA DURANC      /INNER DURATION COUNTER
+ 281 000302  7360          STA STL         /KEEP THE AC SET!
+ 282 000303  2076          ISZ DURAUC      /BUMP OUTER DURATION COUNTER-LONG ENUF?
+ 283 000304  5244          JMP ONLOOP      /NO-DO MORE WITH AC ON
+ 284               
+ 285               
+ 286 000305  7200          CLA             /YES-LONG ENUF, THRU WITH THIS NOTE
+ 287 000306  5206          JMP NWNOTE      /GET THE NEXT NOTE TO PLAY
+ 288               
+
+
+ 289                       EJECT
+ 290               
+ 291 000307  0000  ACOFF,  0               /SUBROUTINE & LOOP FOR TIME THE AC IS OFF
+ 292 000310  3127          DCA OFFCTR      /SET UP THE OFF TIME COUNTER & CLEAR AC
+ 293               
+ 294 000311  2127  OFFLOP, ISZ OFFCTR      /2 2  THRU COUNT?
+ 295 000312  7410          SKP             /1 3  NO
+ 296 000313  5352          JMP GOACON      /YES-RETURN
+ 297               
+ 298 000314  6770          IOT 770         /IOT (3+) 6  IOT ? - REALLY!
+ 299               
+ 300 000315  2103          ISZ CNTR0       /2 8  TEST FOR NOTE 0 OVERFLOW
+ 301 000316  5324          JMP .+6         /1 9
+ 302               
+ 303 000317  1127          TAD OFFCTR      /THIS GROUP SEZ:  IF ANY OTHER NOTE
+ 304 000320  1105          TAD OFCNT0      /OVERFLOWS (INDICATIONG THAT IT SHOULD TURN OFF
+ 305 000321  3127          DCA OFFCTR      /THE AC), BACKUP THE OFF TIME COUNTER BY
+ 306 000322  1104          TAD ONCNT0      /THAT MUCH MORE, SO COLLIDING PULSES OF
+ 307 000323  3103          DCA CNTR0       /DURATIONS D1 & D2 WILL RESULT IN PULSE OF (D1+D2)
+ 308               
+ 309 000324  2107          ISZ CNTR1       /2 11
+ 310 000325  5333          JMP .+6         /1 12
+ 311               
+ 312 000326  1127          TAD OFFCTR      /EACH OF THESE GROUPS IS
+ 313 000327  1121          TAD OFCNT3      /10 (DECIMAL) CYCLES LONG
+ 314 000330  3127          DCA OFFCTR
+ 315 000331  1110          TAD ONCNT1
+ 316 000332  3107          DCA CNTR1
+ 317               
+ 318 000333  2113          ISZ CNTR2       /2 14
+ 319 000334  5342          JMP .+6         /1 15
+ 320               
+ 321 000335  1127          TAD OFFCTR      /EXTEND THE OFF
+ 322 000336  1115          TAD OFCNT2      /       "
+ 323 000337  3127          DCA OFFCTR      /       "
+ 324 000340  1114          TAD ONCNT2      /RESET THE ON COUNT
+ 325 000341  3113          DCA CNTR2       /       "
+ 326               
+ 327 000342  2117          ISZ CNTR3       /2 16
+ 328 000343  5311          JMP OFFLOP      /1 18
+ 329               
+ 330 000344  1127          TAD OFFCTR
+ 331 000345  1121          TAD OFCNT3
+ 332 000346  3127          DCA OFFCTR
+ 333 000347  1120          TAD ONCNT3
+ 334 000350  3117          DCA CNTR3
+ 335               
+ 336 000351  5311          JMP OFFLOP
+ 337               
+ 338 000352  7360  GOACON, STA STL         /GO TO AC ON ROUTINE & LOOP
+ 339 000353  5707          JMP I ACOFF
+ 340               
+ 341               /TEST & BRANCH:  CALLED ONLY WHEN NOTE SPECIFIED IS 7777
+ 342               /       (A HIGH UNISON), WHICH INDICATES A PARAMETER CHANGE
+ 343 000354  2124  TSTBR,  ISZ PDATA       /BUMP DATA POINTER
+ 344 000355  1524          TAD I PDATA     /GET NEXT DATA WORD
+ 345 000356  7001          IAC             /TEST IT FOR 7777
+ 346 000357  7450          SNA             /WAS IT 7777?
+ 347 000360  5200          JMP 200         /YES-RETURN TO SYSTEM
+ 348               
+ 349 000361  7001          IAC             /TEST FOR 7776
+ 350 000362  7640          SZA CLA         /WAS IT 7600?
+ 351 000363  5005          JMP SETDUR      /NO-SET DURATION WITH DATA POINT
+ 352               
+ 353 000364  1122          TAD SW2OR4      /YES-COMPLEMENT 2 OR 4 SWITCH
+ 354 000365  7040          CMA
+ 355 000366  3122          DCA SW2OR4
+ 356 000367  5206          JMP NWNOTE      /AND RETURN
+ 357               
+ 358 000377  0500          PAGE
+ 359               /EXPLST.MU 73.12.18
+ 360               
+ 361               /LIST OF EXPONENTIAL TIME VALUES FOR MUSIC
+ 362               
+ 363               
+ 364                       *400
+ 365               
+ 366 000400  0001          1
+ 367               
+ 368 000401  6540          -1240   /F0
+ 369 000402  6606          -1172
+ 370 000403  6652          -1126   /G0
+ 371 000404  6713          -1065
+ 372 000405  6753          -1025   /A0
+ 373 000406  7011          -767
+ 374 000407  7045          -733    /B0
+ 375 000410  7100          -700    /C0
+ 376 000411  7131          -647
+ 377 000412  7161          -617    /D0
+ 378 000413  7210          -570
+ 379               
+ 380 000414  7235          -543    /E1
+ 381 000415  7261          -517    /F1
+ 382 000416  7304          -474
+ 383 000417  7326          -452    /G1
+ 384 000420  7346          -432
+ 385 000421  7366          -412    /A1
+ 386 000422  7405          -373
+ 387 000423  7423          -355    /B1
+ 388 000424  7441          -337    /C1
+ 389 000425  7455          -323
+ 390 000426  7471          -307    /D1
+ 391 000427  7505          -273
+ 392               
+ 393 000430  7517          -261
+ 394 000431  7531          -247
+ 395 000432  7543          -235
+ 396 000433  7554          -224
+ 397 000434  7564          -214
+ 398 000435  7574          -204
+ 399 000436  7603          -175
+ 400 000437  7612          -166
+ 401 000440  7621          -157
+ 402 000441  7627          -151
+ 403 000442  7635          -143
+ 404 000443  7643          -135
+ 405               
+ 406 000444  7650          -130
+ 407 000445  7655          -123
+ 408 000446  7662          -116
+ 409 000447  7667          -111
+ 410 000450  7673          -105
+ 411 000451  7677          -101
+ 412 000452  7702          -76
+ 413 000453  7706          -72
+ 414 000454  7711          -67
+ 415 000455  7714          -64
+ 416 000456  7717          -61
+ 417 000457  7722          -56
+ 418               
+ 419 000460  7725          -53
+ 420 000461  7727          -51
+ 421 000462  7732          -46
+ 422 000463  7734          -44
+ 423 000464  7736          -42
+ 424 000465  7740          -40
+ 425 000466  7742          -36
+ 426 000467  7744          -34
+ 427 000470  7745          -33
+ 428 000471  7747          -31
+ 429 000472  7750          -30
+ 430 000473  7752          -26
+ 431               
+ 432 000474  7753          -25     /E5
+ 433 000475  7754          -24     /F5
+ 434 000476  7756          -22
+ 435 000477  7757          -21     /G5
+ 436               
+ 437               /HERE STARTS THE SO-CALLED '500' TABLE
+ 438               
+ 439                       *500
+ 440               
+ 441 000500  7777          -1
+ 442 000501  0000          0
+ 443 000502  7763          -15
+ 444 000503  0002          2
+ 445 000504  7767          -11
+ 446 000505  0002          2
+ 447 000506  7771          -7
+ 448 000507  0003          3
+ 449 000510  7773          -5
+ 450 000511  0003          3
+ 451 000512  7773          -5
+ 452 000513  0005          5
+ 453 000514  7774          -4
+ 454 000515  0006          6
+ 455 000516  7775          -3
+ 456 000517  0010          10
+ 457 000520  7775          -3
+ 458 000521  0015          15
+ 459               
+ 460               /END OF '500' TABLE
+ 461               
+ 462               
+ 463               $$$$
