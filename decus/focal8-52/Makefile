@@ -1,7 +1,7 @@
 #!/usr/bin/make
 ALL = focal.bin extend.bin # 2user.bin
 PAL = pal
-BINCMP = ../bincmp
+BINCMP = ~/pdp8/8tools/bincmp
 
 all: $(ALL)
 
