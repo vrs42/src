@@ -324,7 +324,8 @@ sub process {
       next if $f =~ /[.]url$/i;
       $match = 0;
       foreach $e (sort bylengthr keys %exts) {
-        next unless $f =~ /(.*)$e$/;
+$ee = $e; $ee =~ s/[.]/\\\./;
+        next unless $f =~ /(.*)$ee$/;
         $r = $1;
         if (defined($files{$r})) {
           $files{$r} .= " $e";

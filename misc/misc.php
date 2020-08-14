@@ -51,12 +51,12 @@ If you know or discover something about these, please let me know.
 <td>BIN Punch
 <td><table width=100%><col width=50%><col width=50%>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pa>misc-binpunch-pa</a><td>(DEC PAL tape)<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pa.lbl>misc-binpunch-pa.lbl</a><td>(PAL Tape label)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pa.od>misc-binpunch-pa.od</a><td>(PAL image in octal)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pa.txt>misc-binpunch-pa.txt</a><td>(PAL Source as text file)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pb>misc-binpunch-pb</a><td>(BIN image)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pb.lbl>misc-binpunch-pb.lbl</a><td>(Tape label)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch-pb.od>misc-binpunch-pb.od</a><td>(BIN image in octal)<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./binpunch.pa.lbl>misc-binpunch.pa.lbl</a><td>(PAL tape label)<tr>
 </table>
 </tr><tr>
 <td>BIN Read
@@ -513,17 +513,17 @@ If you know or discover something about these, please let me know.
 <td>Systems Engineering Lab's Graphical Implementation 1
 <td><table width=100%><col width=50%><col width=50%>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selgi-1-pa>misc-selgi-1-pa</a><td>(DEC PAL tape)<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selgi-1-pa.lbl>misc-selgi-1-pa.lbl</a><td>(PAL Tape label)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selgi-1-pa.od>misc-selgi-1-pa.od</a><td>(PAL image in octal)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selgi-1-pa.txt>misc-selgi-1-pa.txt</a><td>(PAL Source as text file)<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selgi-1.pa.lbl>misc-selgi-1.pa.lbl</a><td>(PAL tape label)<tr>
 </table>
 </tr><tr>
 <td>SELMA-0
 <td><table width=100%><col width=50%><col width=50%>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selma-0-pa>misc-selma-0-pa</a><td>(DEC PAL tape)<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selma-0-pa.lbl>misc-selma-0-pa.lbl</a><td>(PAL Tape label)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selma-0-pa.od>misc-selma-0-pa.od</a><td>(PAL image in octal)<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selma-0-pa.txt>misc-selma-0-pa.txt</a><td>(PAL Source as text file)<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/misc/./selma-0.pa.lbl>misc-selma-0.pa.lbl</a><td>(PAL tape label)<tr>
 </table>
 </tr><tr>
 <td>3D Sketch, SA=0265
