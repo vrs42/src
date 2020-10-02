@@ -1,0 +1,61 @@
+C		MKARRY is used to scan through a given data file until the
+C		the given time is found for the POT, then it fills the FLUX
+C		arrray with the A/D values for the 37 calorimeters and the
+C		the values from the POT and the PYRHELIOMETER channels. Then
+C		these values are converted to engineering units with the con-
+C		version  ENG=ADVAL*COEF(N) where COEF(N)  is a conversion 
+C		factor for channel N.
+
+
+
+	SUBROUTINE MKARRY(SCTIME,INVALD,INPUT,FMAX,BMAX)
+
+	INTEGER SCREEN,OUTPUT,INPUT
+
+	REAL FLUX(39,73),DATE(13),POSIT(13),STIME(13),HOUR
+	REAL MIN,SEC,DAY,SCTIME,BMAX,FMAX,COEF(37),LINE(80)
+	REAL PHI
+
+	LOGICAL INVALD(128)
+
+	COMMON /FLUCKS/FLUX
+
+	DATA SCREEN/4/
+
+C		The values of the coeficients for the calorimeters are 
+C		entered here...
+
+	DATA COEF/.0863647,.0801392,.0899048,.1039430,.0831299,.0852661
+     $            .0831299,.0791626,.0791626,.0820930,.0863640,.0801392
+     $            .0875244,.0791626,.0831299,.0923462,.0886841,.0831299
+     $            .0886841,.0852661,.0875244,.0899048,.0831299,.0811157
+     $            .0820923,.0831299,.0875244,.0791626,.0831299,.0899048
+     $            .0841675,.0852661,.0831299,.0886841,.0806841,.0820923/
+
+C		Now go get the flux array filled from the data file.
+
+	CALL GETFLX(FLUX,INVALD,SCTIME,INPUT)
+
+C		Begin processing the array
+C		First convert to watts/centimeter-squred and find the maximum flux
+C		over the entire plane FMAX, and the maximum flux around the border
+C		BMAX.
+	FMAX=0.0
+	BMAX=0.0
+	DO 20 M=1,73
+	   FLUX(39,M)=FLUX(39,M)*0.6531
+	   IF (FLUX(39,M).EQ.0.0) FLUX(39,M)=FLUX(39,M-1)
+	   DO 30 N=1,37
+	      IF (FLUX(N,M).GT.2048.0) FLUX(N,M)=0.0
+	      PHI=FLUX(N,M)*COEF(N)
+	      IF (PHI.GE.FMAX) FMAX=PHI
+	      IF (((M.EQ.1).OR.(M.EQ.73).OR.(N.EQ.1).OR.(N.EQ.37))
+     1  	   .AND.(PHI.GE.BMAX))  BMAX=PHI
+	      FLUX(N,M)=PHI
+30	   CONTINUE
+	   FLUX(4,M)=(FLUX(3,M)+FLUX(5,M))/2
+	   CALL CURPOS(14,M)
+	   CALL CHROUT(32)
+20	CONTINUE
+	RETURN
+	END
