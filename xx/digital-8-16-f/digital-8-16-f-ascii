@@ -1,0 +1,291 @@
+
+
+
+/DIGITAL-8-16-F
+/DOUBLE PRECISION SINE
+/POINTERS TO DIGITAL-8-13-F
+DMUL=0200
+B=0341
+C=0342
+*400
+
+DSIN,     0
+          TAD I DSIN          /ADDRESS OF ARGUMENT
+          DCA TEMP
+          TAD I TEMP          /HIGH ORDER
+          DCA X2
+          ISZ TEMP
+          TAD I TEMP          /LOW ORDER
+          DCA X2+1
+          ISZ DSIN            /FIX EXIT
+          TAD DSIN            /SAVE ON PUSHDOWN LIST
+          DCA I PUSH
+          ISZ PUSH
+          TAD X2              /CHECK FOR ZERO
+          SZA CLA
+          JMP NEG
+          TAD X2+1
+          SZA CLA
+          JMP NEG             /NO
+          CLA
+          DCA I PNT3          /SIN(0)=0
+          DCA I PNT3+1
+XIT1,     CLA CMA             /EXIT
+          TAD PUSH
+          DCA PUSH
+          TAD I PUSH
+          DCA TEMP
+          JMP I TEMP
+NEG,      TAD X2              /CHECK FOR NEGATIVE X
+          SMA CLA
+          JMP POS
+          TAD X2+1            /SIN(-X)=-SIN(X)
+          CLL CMA IAC
+          DCA X2+1
+          TAD X2
+          CMA
+          SZL
+          IAC
+          DCA X2
+
+
+
+
+
+/DIGITAL-8-16-F
+/PAGE 2
+          JMS DSIN            /RECURSIVE CALL FOR SINE
+          X2
+XIT2,     TAD I PNT3+1        /NEGATE THE ANSWER
+          CLL CMA IAC
+          DCA I PNT3+1
+          TAD I PNT3
+          CMA
+          SZL
+          IAC
+          DCA I PNT3
+          JMP XIT1
+POS,      CLL                 /IS X<PI?
+          TAD X2+1
+          TAD MPI+1
+          DCA TEMP
+          RAL                 /CARRY
+          TAD X2
+          TAD MPI
+          SPA
+          JMP PCHK
+          DCA X2              /SIN(X)=-SIN(X-PI)
+          TAD TEMP
+          DCA X2+1
+          JMS DSIN
+          X2
+          JMP XIT2
+PCHK,     CLA CLL             /IS X<PI/2?
+          TAD X2+1
+          TAD MPIO+1
+          DCA TEMP
+          RAL
+          TAD X2
+          TAD MPIO
+          SPA
+          JMP ALG
+          SZA
+          JMP P2NG
+          TAD TEMP
+          SZA
+          JMP P2NG
+          CMA CLL             /SIN(PI/2)=1
+          RAR
+          DCA I PNT3
+          CMA
+          DCA I PNT3+1
+          JMP XIT1
+
+
+
+
+
+/DIGITAL-8-16-F
+/PAGE 3
+P2NG,     CLL CLA
+          TAD X2+1
+          TAD MPI+1           /SIN(X)=-SIN(X-PI)
+          DCA X2+1
+          RAL
+          TAD X2
+          TAD MPI
+          DCA X2
+          JMS DSIN            /RECURSIVE CALL FOR SINE
+          X2
+          JMP XIT2
+ALG,      CLA                 /ALIGN SCALING FOR ALGORITHM
+          TAD X2+1
+          CLL RAL
+          DCA I PNT2+1
+          TAD X2
+          RAL
+          DCA I PNT2
+          JMP I PNT4
+/SYMBOLS AND CONSTANTS FOR THIS PAGE
+X2,       0
+          0
+TEMP,     0
+PNT2,     X
+          X+1
+PNT3,     ARG
+          ARG+1
+PNT4,     DALG
+MPI,      4667                /-(PI)
+          4023
+MPIO,     6333                /-(PI/2)
+          6012
+PUSH,     PUSH+1              / POINTER FOR PUSHDOWN LIST
+
+
+
+
+
+
+/DIGITAL-8-16-F
+/PAGE 4
+*DSIN+200
+DALG,     JMS I DMTG          /FORM (2/PI)*ARG
+          X
+          TOPI
+          JMS SCAL            /GET RID OF EXTRA SIGN BIT
+          JMS SCAL            /SCALING = 0 NOW
+          JMS ROUND
+          X
+          JMS I DMTG          /GET X*X
+          X
+          X
+          JMS SCAL            /GET RID OF EXTRA SIGN BIT
+          JMS ROUND
+          XSQR
+          TAD FYX             /INI
+          DCA PNT             /   T
+          TAD FOUR            /    I
+          DCA CHK             /     A
+          DCA ARG             /      L
+          DCA ARG+1           /       IZE
+LOOP,     CLL
+          TAD I PNT
+          TAD ARG+1
+          DCA ARG+1
+          ISZ PNT
+          RAL
+          TAD ARG
+          TAD I PNT
+          DCA ARG
+          ISZ PNT             /INCREMENT POINTER FOR NEXT
+          JMS I DMTG
+          ARG
+          XSQR
+          JMS SCAL            /GET RID OF SIGN BIT
+          JMS ROUND
+          ARG
+          ISZ CHK
+          JMP LOOP
+          CLL
+          TAD ARG             /SHIFT ARG 1 PLACE
+          SPA
+          CML
+          RAR
+          DCA ARG
+          TAD ARG+1
+          RAR
+          DCA ARG+1
+
+
+
+
+/DIGITAL-8-16-F
+/PAGE 5
+
+          CLL                 /ADD IN LAST CONSTANT
+          TAD C1+1
+          TAD ARG+1
+          DCA ARG+1
+          RAL                 /CARRY
+          TAD ARG
+          TAD C1
+          DCA ARG
+          JMS I DMTG
+          ARG
+          X
+          JMS SCAL            /PUT SCALING BACK TO ZERO
+          JMS SCAL            /GET RID OF SIGN BIT
+          JMS ROUND
+          ARG
+          JMP I OUT
+OUT,      XIT1
+SCAL,     0                   /ROUTINE TO ADJUST SCALING
+          DCA TEM2
+          TAD I CTG
+          CLL RAL
+          DCA I CTG
+          TAD I BTG
+          RAL
+          DCA I BTG
+          TAD TEM2
+          RAL
+          JMP I SCAL
+ROUND,    0
+          DCA TEM1
+          TAD I ROUND         /ADDRESS OF HIGH ORDER
+          ISZ ROUND
+          DCA TEM2
+          TAD TEM1
+          DCA I TEM2
+          TAD TEM2
+          IAC
+          DCA TEM1
+          TAD I BTG
+          DCA I TEM1
+          TAD I CTG
+          SPA CLA               /BIT 0=1??
+          JMP I ROUND           /NO; EXIT
+          ISZ I TEM1            /YES: ROUND
+          JMP I ROUND
+          ISZ I TEM2            /CARRY
+          JMP I ROUND
+
+
+
+
+/DIGITAL-8-16-F
+/PAGE 6
+/SYMBOLS AND CONSTANTS
+X,        0
+          0
+XSQR,     0
+          0
+ARG,      0
+          0
+PNT,      0
+CHK,      0
+TEM1,     0
+TEM2,     0
+DMTG,     DMUL
+BTG,      B
+CTG,      C
+FYX,      C9
+FOUR,     -4
+TOPI,     2427                /2/PI
+          6303
+C1,       3110
+          3755
+C9,       2367                /C3-C9 STORED IN BACKWARDS ORDER
+          0000
+C7,       3331
+          7766
+C5,       1505
+          0243
+C3,       0420
+          5325
+          $
+
+
+
+
+

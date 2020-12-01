@@ -1,0 +1,215 @@
+   1               
+   2                       /TC01 SUB-ROUTINES      REV. 7/67
+   3               
+   4               DTXA=6764       /XOR AC TO STATUS A
+   5               DTRB=6772       /READ STATUS B
+   6               DTCA=6762       /CLEAR STATUS A
+   7               DTRA=6761       /READ STATUS A
+   8               DTLA=6766       /LOAD STATUS A (CLEAR AND XOR)
+   9               DTLB=6774       /LOAD STATUS B
+  10               DTSF=6771       /SKIP ON TC01 FLAGS
+  11               
+  12 000000  0000  R128,   0               /READ 128 WORDS
+  13 000001  4171          JMS DWAIT       /WAIT IF MOTION IS ON
+  14 000002  1000          TAD R128
+  15 000003  3006          DCA W128
+  16 000004  7201          CLA IAC         /SET TO WRITE
+  17 000005  5010          JMP DGR-2
+  18               
+  19 000006  0000  W128,   0               /WRITE 128 WORDS
+  20 000007  4171          JMS DWAIT       /WAIT IF MOTION IS ON
+  21 000010  1062          TAD DR128C      /DR128
+  22 000011  3027          DCA DRET        /READ WRITE RETURN AFTER SEARCH
+  23 000012  7240  DGR,    CLA CMA
+  24 000013  4032          JMS DGET
+  25 000014  3000          DCA R128        /FIRST CORE LOCATION-1 OF TRANSFER
+  26 000015  4032          JMS DGET
+  27 000016  3030          DCA DUF         /UNIT AND FIELD
+  28 000017  4032          JMS DGET
+  29 000020  3065          DCA DNCB        / -NUMBER OF BLOCKS TO BE TRANSFERRED
+  30 000021  1036          TAD DCRET
+  31 000022  3077          DCA DSERH
+  32 000023  3163          DCA DSTOP       /DON'T STOP TRANSPORT AFTER SEARCH
+  33 000024  4032          JMS DGET        /GET BLOCK NO.
+  34 000025  3071          DCA DTEM        /AND STORE
+  35 000026  5104          JMP DTS1        /INITIATE SEARCH
+  36 000027  0000  DRET,   0               /DR128 IF WRITE,  OR DR128+1 IF READ
+  37 000030  0000  DUF,    0               /UNIT AND FIELD
+  38 000031  5406          JMP I W128
+  39               
+  40               
+  41               DTEMP,
+  42               DTEMX,
+  43 000032  0000  DGET,   0               /PICK UP ARGUMENTS
+  44 000033  1406          TAD I W128
+  45 000034  2006          ISZ W128
+  46 000035  5432          JMP I DGET
+  47 000036  0027  DCRET,  DRET
+  48 000037  1070  DR128,  TAD D20         /WRITE (NOT READ),(40-20)
+  49 000040  1066          TAD D30         /READ,CANCEL SEARCH (20+10)
+  50 000041  6764          DTXA            /SET FUNCTION
+  51 000042  1000          TAD R128        /1ST CORE LOC.-1 OF TRANSFER
+  52 000043  3463          DCA I DCAA      /TO 7755(CA)
+  53                       ISZ MCOM        /POINT INTERRUPT RETURN TO DATA
+undefined       	       ^
+     000044  2000  
+  54               
+  55               /PAGE 2
+  56               
+  57 000045  6764  DR127,  DTXA            /SEND READ OR WRITE
+  58 000046  1135          TAD D7600       /SET WORD COUNT FOR 1 PAGE
+  59 000047  3464          DCA I DWC       /-128 TO 7754 (WC)
+  60                       JMP I DIS       /EXIT
+undefined       	        ^
+     000050  5400  
+  61               
+  62 000051  5123          JMP DTS3A
+  63 000052  6772  DINT,   DTRB            /READ STATUS B
+  64 000053  7710          SPA CLA
+  65 000054  5151          JMP DER         /ERROR FLAG
+  66 000055  2065          ISZ DNCB        /COUNT BLOCKS
+  67 000056  5045          JMP DR127       /CONTINUE OPERATION
+  68 000057  1076  DTURNX, TAD D200        /COMPLEMENT MOTION AND DIRECTION
+  69 000060  1073          TAD D400
+  70 000061  5045          JMP DR127
+  71               
+  72 000062  0037  DR128C, DR128
+  73 000063  7755  DCAA,   7755            /POINTER TO CURRENT ADDRESS
+  74 000064  7754  DWC,    7754            /POINTER TO WORD COUNT
+  75 000065  0000  DNCB,   0
+  76 000066  0030  D30,    30
+  77 000067  0051  DCINT,  DINT-1
+  78 000070  0020  D20,    20
+  79 000071  0000  DTEM,   0               /HOLDS REQUIRED BLK NO.
+  80 000072  0075  DBLK,   DTBLK
+  81 000073  0400  D400,   400             /CHANGE DIRECTION
+  82 000074  0614  D614,   614             /REVERSE, GO, SEARCH INTERRUPT ENABLE
+  83 000075  0000  DTBLK,  0               /BLOCK NUMBER DEPOSITED HERE BY CONTROL
+  84 000076  0200  D200,   200             /CHANGE STOP/GO
+  85               
+  86 000077  0000  DSERH,  0
+  87 000100  3071          DCA DTEM        /STORE BLOCK NO
+  88 000101  4171          JMS DWAIT
+  89 000102  1057          TAD DTURNX
+  90 000103  3163          DCA DSTOP       /STOP TRANSPORT AFTER SEARCH
+  91 000104  1072  DTS1,   TAD DBLK        /DTBLK TO 7755 (CA)
+  92 000105  3463          DCA I DCAA
+  93 000106  1067          TAD DCINT       /DINT-1
+  94                       DCA MCOM        /INTERRUPT RETURN
+undefined       	       ^
+     000107  3000  
+  95 000110  7201  DTS2,   CLA IAC
+  96 000111  1077          TAD DSERH       /DRET
+  97 000112  3032          DCA DTEMP
+  98 000113  1432          TAD I DTEMP
+  99 000114  0133          AND D7000       /PICK UP UNIT NUMBER
+ 100 000115  1074          TAD D614        /SET TO SEARCH,NORMAL,REVERSE
+ 101 000116  6766          DTLA            /LOAD STATUS A
+ 102 000117  6774          DTLB            /FIELD 0
+ 103 000120  2032          ISZ DTEMP
+ 104 000121  6001          ION             /ENABLE INTERRUPT
+ 105 000122  5432          JMP I DTEMP     /DUF+1, RETURN TO USER
+ 106               
+ 107               /PAGE 3
+ 108               
+ 109 000123  6772  DTS3A,  DTRB            /READ STATUS B
+ 110 000124  7006          RTL             /LOOK AT BIT 2
+ 111 000125  7710          SPA CLA         /END ZONE?
+ 112 000126  5057          JMP DTURNX      /YES (MOTION BIT=0), TURN
+ 113 000127  6772          DTRB
+ 114 000130  7710          SPA CLA
+ 115 000131  5151          JMP DER         /ERROR FLAG BIT 0=1
+ 116 000132  6761          DTRA
+ 117 000133  7006  D7000,  RTL
+ 118 000134  7006          RTL             /FOR-REV STATUS (BIT 3) IN LINK
+ 119 000135  7600  D7600,  7600            /GROUP 2 CLA
+ 120 000136  1075          TAD DTBLK
+ 121 000137  7041          CMA IAC
+ 122 000140  1071          TAD DTEM        /LINK COMP. IF REQUIRED BLK NO.
+ 123 000141  7450          SNA             /IS BIGGER I.E. MUST GO FORWARD
+ 124 000142  5157          JMP DTFIND      /FOUND BLOCK CHECK DIRECTION
+ 125 000143  7041          CMA IAC
+ 126 000144  7420          SNL
+ 127 000145  7001          IAC             /GO 2 MORE BLOCKS BEFORE TURNING
+ 128 000146  7620          SNL CLA
+ 129 000147  1073  DTURN,  TAD D400        /TURN IF HERE
+ 130 000150  5045          JMP DR127       /XOR TO A STATUS AND DISMIS
+ 131 000151  6761  DER,    DTRA            /ERROR ROUTINE, READ STATUS A
+ 132 000152  0076          AND D200        /STOP TAPE IF RUNNING,  I.E. SET BIT 4 TO 0
+ 133 000153  1170          TAD D2          /DON'T CLEAR ERRORS     BIT 10=1
+ 134 000154  6764          DTXA
+ 135 000155  6772          DTRB            /ERROR STATUS B
+ 136                       JMP I DTERR
+undefined       	          ^
+     000156  5400  
+ 137 000157  7620  DTFIND, SNL CLA         /TEST DIRECTION
+ 138 000160  5045          JMP DR127       /DONT TURN YET, STILL IN REVERSE
+ 139 000161  1477          TAD I DSERH     /DRET, GET COMPLETION RETURN
+ 140 000162  3077          DCA DSERH       /SINCE MOTION IS FORWARD
+ 141 000163  0000  DSTOP,  0               /EITHER 0 (NOP) OR TAD D200 (STOP)
+ 142 000164  6764          DTXA            /CLEAR FLAG
+ 143 000165  1030          TAD DUF
+ 144 000166  6774          DTLB            /SET MEMORY FIELD
+ 145 000167  5477          JMP I DSERH     /EXIT TO COMPLETION RETURN
+ 146 000170  0002  D2,     2
+ 147               
+ 148               
+ 149 000171  0000  DWAIT,  0               /WAIT FOR NO MOTION
+ 150 000172  6761          DTRA            /IOR STATUS A
+ 151 000173  6761          DTRA            /AGAIN, IN CASE MOTION BIT
+ 152 000174  0076          AND D200        /WAS 0 DUE TO END ZONE
+ 153 000175  7640          SZA CLA
+ 154 000176  5172          JMP .-4
+ 155 000177  5571          JMP I DWAIT
+ 156               
+ 157               PAUSE
+undefined           ^
+     000200  0000  
+ 158                159               $
+end of file     ^
+
+D2      0170
+D20     0070
+D200    0076
+D30     0066
+D400    0073
+D614    0074
+D7000   0133
+D7600   0135
+DBLK    0072
+DCAA    0063
+DCINT   0067
+DCRET   0036
+DER     0151
+DGET    0032
+DGR     0012
+DINT    0052
+DNCB    0065
+DR127   0045
+DR128   0037
+DR128C  0062
+DRET    0027
+DSERH   0077
+DSTOP   0163
+DTBLK   0075
+DTCA    6762 unreferenced
+DTEM    0071
+DTEMP   0032
+DTEMX   0032 unreferenced
+DTFIND  0157
+DTLA    6766
+DTLB    6774
+DTRA    6761
+DTRB    6772
+DTS1    0104
+DTS2    0110 unreferenced
+DTS3A   0123
+DTSF    6771 unreferenced
+DTURN   0147 unreferenced
+DTURNX  0057
+DTXA    6764
+DUF     0030
+DWAIT   0171
+DWC     0064
+R128    0000
+W128    0006

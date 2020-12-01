@@ -1,0 +1,79 @@
+
+/DIGITAL 8-20-U
+/CHARACTER STRING TYPE-OUT
+/CALL WITH STRING ADDRESS IN
+/C(AC); ALL CODES MAY BE DEVELOPED
+/RETURN FOLLOWING THE JMS
+
+TYPSTG,   0
+          DCA TEMQ            /STORE INITIAL ADDRESS
+          DCA FLAG            /CLEAR FLAG
+TSCC1,    TAD I TEMQ          /PICK UP DATA
+          RTR                 /ROTATE 6 BITS RIGHT
+          RTR
+          RTR
+          JMS TSCC2           /TYPE FIRST CHARACTER
+          TAD I TEMQ          /PICK UP DATA
+          JMS TSCC2           /TYPE SECOND CHARACTER
+          ISZ TEMQ            /INCREMENT STORAGE ADDRESS
+          JMP TSCC1           /GO BACK FOR MORE
+
+TSCC2,    0
+          AND K77             /MASK OFF 6 BITS
+          DCA TEMR            /SAVE CHARACTER
+          TAD FLAG            /TEST "SPECIAL" FLAG
+          SZA CLA
+          JMP TYPSP           /SET: TYPE SPECIAL
+          TAD TEMR            /NO: REGULAR CHARACTER
+          SNA                 /IS IT ZERO?
+          JMP .+3             /YES: SET FLAG
+TYPAT,    JMS PRINT           /NO: PRINT IT
+          JMP I TSCC2         /RETURN
+          ISZ FLAG            /SET "SPECIAL" FLAG
+          JMP I TSCC2         /EXIT
+
+TYPSP,    DCA FLAG            /CLEAR "SPECIAL" FLAG
+          TAD TEMR            /TEST FOR "0"
+          CIA
+          SNA
+          JMP TYPAT           /0: TYPE "@"
+
+
+
+
+          IAC                 /TEST FOR 01
+          SNA CLA
+          JMP I TYPSTG     /YES: EXIT CODE
+          TAD SKIPMA          /ALTER INSTRUCTION
+          DCA SWITCH          /TO BE "SMA"
+          TAD TEMR            /TYPE CHARACTER
+          JMS PRINT
+          TAD SKIPPA          /ALTER INSTRUCTION
+          DCA SWITCH          /TO BE "SPA"
+          JMP I TSCC2         /RETURN
+
+PRINT,    0
+          TAD M40             /COMPARE WITH 40
+SWITCH,   SPA                 /OR SMA FOR SPECIAL CODES
+          TAD C100
+          TAD C240
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I PRINT
+
+/CONSTANTS AND TEMPORARY REGISTERS
+TEMQ,     0                   /CONTAINS STRING ADDRESS
+TEMR,     0                   /CONTAINS 6 BIT CHARACTER
+FLAG,     0                   /"SPECIAL" FLAG
+K77,      77
+M40,      -40
+C100,     100
+C240,     240
+SKIPMA,   SMA
+SKIPPA,   SPA
+
+          $
+
+*U*5$
