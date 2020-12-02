@@ -2918,10 +2918,22 @@ digital-8-12-u-pa<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-13-f/digital-8-13-f-pa>digital-8-13-f-pa</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-13-s>digital-8-13-s</a></td>
+<td>One Dimensional Display and Analysis</td>
+<td>
+digital-8-13-s-d<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-f>digital-8-14-f</a></td>
 <td>Double Precision Divide Subroutine</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-f/digital-8-14-f-pa>digital-8-14-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-s>digital-8-14-s</a></td>
+<td>Multianalyser Programs</td>
+<td>
+digital-8-14-s-pa<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u>digital-8-14-u</a></td>
@@ -2929,6 +2941,18 @@ digital-8-12-u-pa<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u/digital-8-14-u-pa>digital-8-14-u-pa</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u/digital-8-14-u-d.pdf>digital-8-14-u-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-15-f>digital-8-15-f</a></td>
+<td>Single Precision Sine Routine</td>
+<td>
+digital-8-15-f<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-15-s>digital-8-15-s</a></td>
+<td>Oceanographic Analysis</td>
+<td>
+digital-8-15-s-pa<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-15-u>digital-8-15-u</a></td>
@@ -2948,6 +2972,12 @@ digital-8-12-u-pa<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-s/digital-8-16-s-d.pdf>digital-8-16-s-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-s/digital-8-16-s-pb>digital-8-16-s-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-u>digital-8-16-u</a></td>
+<td>Binary to BCD Conversion (IBM Magtape format)</td>
+<td>
+digital-8-16-u-pa<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-17-u>digital-8-17-u</a></td>
@@ -3069,6 +3099,18 @@ digital-8-25-f-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-u/digital-8-25-u-pa>digital-8-25-u-pa</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-26-u>digital-8-26-u</a></td>
+<td>DECTOG</td>
+<td>
+digital-8-26-u-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-27-u>digital-8-27-u</a></td>
+<td>DECtape Subroutines</td>
+<td>
+digital-8-27-u-pa<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-28-u>digital-8-28-u</a></td>
 <td>Single Decimal to Binary Conversion and ASR-33 Input</td>
 <td>
@@ -3089,6 +3131,30 @@ digital-8-28-u-pa<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-3-s/digital-8-3-s-pb>digital-8-3-s-pb</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-3-u>digital-8-3-u</a></td>
+<td>DECtape System Loader</td>
+<td>
+digital-8-3-u-pa<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-32-u>digital-8-32-u</a></td>
+<td>Binary Punch (6 Channel)</td>
+<td>
+digital-8-32-u<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-33-u>digital-8-33-u</a></td>
+<td>DECtape Formatter</td>
+<td>
+digital-8-33-u-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-34-u>digital-8-34-u</a></td>
+<td>DECtape Exerciser</td>
+<td>
+digital-8-34-u-pb<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s>digital-8-35-s</a></td>
 <td>680 Character Assembly Routines</td>
 <td>
@@ -3102,6 +3168,12 @@ digital-8-28-u-pa<br>
 <td>DDT (Dynamic Debugger)</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-4-s/digital-8-4-s-pb>digital-8-4-s-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-4-u>digital-8-4-u</a></td>
+<td>Read-In-Mode (RIM) Punch</td>
+<td>
+digital-8-4-u-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-5-s>digital-8-5-s</a></td>
@@ -3145,6 +3217,12 @@ digital-8-5-s-pb<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-7-u/digital-8-7-u-pa>digital-8-7-u-pa</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-s>digital-8-8-s</a></td>
+<td>MACRO-8 Assembler</td>
+<td>
+digital-8-8-sC-pb<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-u>digital-8-8-u</a></td>
 <td>Arithmetic Shift Subroutines, Single and Double Precision</td>
 <td>
@@ -3155,6 +3233,12 @@ digital-8-5-s-pb<br>
 <td>Square Root</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-f/digital-8-9-f-pa>digital-8-9-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-s>digital-8-9-s</a></td>
+<td>DECtape FORTRAN</td>
+<td>
+digital-8-9-s-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-u>digital-8-9-u</a></td>
@@ -5238,10 +5322,46 @@ ak-b189a / maindec-801-1-pm<br>
 maindec-801-3a-d<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-810>maindec-810</a></td>
+<td>PDP-8 Teletype Reader Test</td>
+<td>
+maindec-810-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-811>maindec-811</a></td>
+<td>PDP-8 High Speed Reader Test</td>
+<td>
+maindec-811-pb<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-812>maindec-812</a></td>
 <td>TTY Punch Test</td>
 <td>
 maindec-812-pm<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-814>maindec-814</a></td>
+<td>PDP-8 Teleprinter Test</td>
+<td>
+maindec-814-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-817>maindec-817</a></td>
+<td>PDP-8 High Speed Punch Test</td>
+<td>
+maindec-817-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-820-1>maindec-820-1</a></td>
+<td>Extended Memory Control Test, Part 1</td>
+<td>
+maindec-820-1-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-820-2>maindec-820-2</a></td>
+<td>Extended Memory Checkerboard Part 2</td>
+<td>
+maindec-820-2-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-825>maindec-825</a></td>
@@ -5268,6 +5388,36 @@ maindec-827-pb<br>
 <td>
 ac-b787a / maindec-828-d<br>
 ak-b789a / maindec-828-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-831>maindec-831</a></td>
+<td>DECtape Maintenance Package</td>
+<td>
+maindec-831-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-832>maindec-832</a></td>
+<td>Real-Time Clock Test</td>
+<td>
+maindec-832-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-833>maindec-833</a></td>
+<td>Lots of Little Pictures on the Eight</td>
+<td>
+maindec-833-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-834>maindec-834</a></td>
+<td>Type 338 Display PJMP Test</td>
+<td>
+maindec-834-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-835>maindec-835</a></td>
+<td>Type 338 POP Test</td>
+<td>
+maindec-835-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839>maindec-839</a></td>
