@@ -1,0 +1,58 @@
+
+/DIGITAL 8-22-F
+/TWO'S COMPLEMENT, SINGLE PRECISION,
+/SIGNED DIVIDE SUBROUTINE WITH EAE.
+/RETURN QUOTIENT IN AC; REMAINDER IN DVD.
+/IF HIGH ORDER DIVIDEND IS EQUAL TO OR
+/GREATER THAN THE DIVISOR, DIVIDE OVERFLOW
+/WILL OCCUR AND THE LINK IS SET TO ONE.
+SPDIV,    0
+          CLL
+          SPA                 /TEST FOR NEGATIVE DIVIDEND.
+          CMA CML
+          DCA DVD             /SAVE HIGH ORDER DIVIDEND.
+          SNL
+          CMA
+          DCA RMSGN           /7777 IF DIVIDEND POSITIVE.
+          TAD I SPDIV         /LOW ORDER DIVIDEND.
+          SZL
+          JMP NEG             /GO TO COMPLEMENT DIVIDEND.
+DV2,      MQL                 /LOW ORDER DIVIDEND TO MQ.
+          ISZ SPDIV
+          TAD I SPDIV         /DIVISOR.
+          ISZ SPDIV           /SET UP FOR EXIT.
+          SPA                 /TEST FOR NEGATIVE DIVISOR.
+          CMA CML IAC
+          DCA .+6             /STORE DIVISOR.
+          SNL
+          CMA
+          DCA SIGN            /7777 IF QUOTIENT POSITIVE.
+          TAD DVD             /HIGH ORDER DIVIDEND.
+          DVI
+          0                   /DIVISOR
+          SZL
+          JMP I SPDIV         /DIVIDE OVERFLOW --- LINK=1
+          ISZ RMSGN
+          CMA IAC
+          DCA DVD             /REMAINDER WITH SIGN OF DIVIDEND.
+          STL
+          MQA                 /QUOTIENT TO AC.
+          SPA
+          JMP I SPDIV         /OVERFLOW --- 12 BIT QUOTIENT.
+          ISZ SIGN
+          CMA IAC
+          CLL
+          JMP I SPDIV
+NEG,      CMA CML IAC
+          SZL
+          ISZ DVD             /2'S COMPLEMENT OF HIGH IF LOW=0.
+          STL                 /RESTORE LINK TO 1.
+          JMP DV2
+SIGN,     0                   /7777 IF QUOTIENT POSITIVE.
+RMSGN,    0                   /7777 IF DIVIDEND POSITIVE.
+DVD,      0                   /REMAINDER.
+
+          $
+
+
+

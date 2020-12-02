@@ -1,0 +1,83 @@
+digital
+Digital-8-24-U-ASCII    1/19/66
+Unsigned Decimal Print,
+Double Precision
+/UNSIGNED DECIMAL PRINT, DOUBLE PRECISION
+/CALLING SEQUENCE:   JMS UDPRNT /SUBROUTINE CALLED
+/                    HI ADDR    /ADDRESS OF HIGH ORDER WORD
+/                    RETURN     /RETURN WITH AC AND L CLEAR
+
+UDPRNT,   0
+          CLA CLL
+          TAD I UDPRNT          /PICK UP ADDRESS OF HIGH-ORDER WORD
+          DCA UDGET
+          TAD I UDGET           /PICK UP BOTH WORDS FOR USE IN SUBROUTINE
+          DCA UDHIGH
+          ISZ UDGET
+          TAD I UDGET
+          DCA UDLOW
+          TAD UDLOOP            /INITIALIZE DIGIT COUNTER FOR "8"
+          DCA UDCNT
+          TAD UDADDR            /INITIALIZE TO TABLE OF POWERS OF TEN
+          DCA UDPTR
+          ISZ UDPRNT            /INDEX LINKAGE FOR CORRECT RETURN
+UDARND,   TAD I UDPTR           /PICK UP CURRENT POWER OF TEN FOR
+          ISZ UDPTR             /USE IN SUBTRACTION
+          DCA UDHSUB
+          TAD I UDPTR
+          ISZ UDPTR
+          DCA UDLSUB
+UDDO,     CLL                   /DOUBLE PRECISION SUBTRACTION
+          TAD UDLSUB
+          TAD UDLOW
+          DCA UDTEML
+          RAL
+          TAD UDHSUB
+          TAD UDHIGH
+          SNL                   /DID IT UNDERFLOW?
+          JMP UDOUT             /NO, COUNT IS DONE
+          ISZ UDBOX             /YES, COUNT NOT DONE YET. INDEX DIGIT
+          DCA UDHIGH            /DEPOSIT REMAINING PORTIONS OF WORD
+          TAD UDTEML
+          DCA UDLOW
+          JMP UDDO              /GO BACK AND SUBTRACT AGAIN
+UDOUT,    CLA
+          TAD UDBOX             /PICK UP RESULTING DIGIT
+          TAD UDTWO             /ADD "260" TO IT
+          TLS                   /TYPE IT OUT
+          TSF
+          JMP .-1
+          CLA CLL
+          DCA UDBOX             /INITIALIZE DIGIT TO "0"
+          ISZ UDCNT             /HAVE WE TYPED "8" DIGITS
+          JMP UDARND            /NO, DETERMINE NEXT DIGIT
+          JMP I UDPRNT          /YES, SUBROUTINE DONE. RETURN
+UDLOOP,   -10                   /COUNT OF "8" DIGITS
+UDADDR,   UDCON1                /INITIAL ADDRESS OF POWERS OF TEN
+UDTWO,    260                   /ICODE  FOR DIGITS
+UDCNT,    0                     /STORAGE LOCATIONS
+UDHIGH,   0
+UDLOW,    0
+UDHSUB,   0
+UDLSUB,   0
+UDBOX,    0
+UDTEML,   0
+UDGET,    0
+UDPTR,    0
+UDCON1,   3166                  /POWERS OF TEN
+          4600                  /-10,000,000
+          7413                  /-1,000,000
+          6700
+          7747                  /-100,000
+          4540
+          7775                  /-10,000
+          4360
+          7777                  /-1,000
+          6030
+          7777                  /-100
+          7634
+          7777                  /-10
+          7766
+          7777                  /-1
+          7777
+PAUSE

@@ -2866,20 +2866,33 @@ dec-t8-ywzb-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-10-u>digital-8-10-u</a></td>
 <td>BCD Binary Conversion Routines</td>
 <td>
-digital-8-10-u-ascii<br>
+digital-8-10-u-pa<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-10-u/digital-8-10-u-d.pdf>digital-8-10-u-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-f>digital-8-11-f</a></td>
+<td>Single Precision Multiply Routine</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-f/digital-8-11-f-pa>digital-8-11-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-s>digital-8-11-s</a></td>
+<td>DATAK Programming Manual</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-s/digital-8-11-s-d.pdf>digital-8-11-s-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-u>digital-8-11-u</a></td>
 <td>Double Precision BCD to Binary Conversion Routine</td>
 <td>
-digital-8-11-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-11-u/digital-8-11-u-d.pdf>digital-8-11-u-d</a><br>
+digital-8-11-u-pa<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-12-f>digital-8-12-f</a></td>
 <td>Signed Single Precision Divide Routine</td>
 <td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-12-f/digital-8-12-f-ascii>digital-8-12-f-ascii</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-12-f/digital-8-12-f-pa>digital-8-12-f-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-12-s>digital-8-12-s</a></td>
@@ -2899,22 +2912,35 @@ ak-4970a / digital-8-12-u-pb<br>
 digital-8-12-u-pa<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-13-f>digital-8-13-f</a></td>
+<td>Signed Double Precision Multiply Routine</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-13-f/digital-8-13-f-pa>digital-8-13-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-f>digital-8-14-f</a></td>
+<td>Double Precision Divide Subroutine</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-f/digital-8-14-f-pa>digital-8-14-f-pa</a><br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u>digital-8-14-u</a></td>
 <td>Binary to BCD Conversion Routine</td>
 <td>
-digital-8-14-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u/digital-8-14-u-pa>digital-8-14-u-pa</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-14-u/digital-8-14-u-d.pdf>digital-8-14-u-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-15-u>digital-8-15-u</a></td>
 <td>Binary to BCD Conversion Routine (4 Digit)</td>
 <td>
-digital-8-15-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-15-u/digital-8-15-u-pa>digital-8-15-u-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-f>digital-8-16-f</a></td>
 <td>Double Precision Sine</td>
 <td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-f/digital-8-16-f-ascii>digital-8-16-f-ascii</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-f/digital-8-16-f-pa>digital-8-16-f-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-16-s>digital-8-16-s</a></td>
@@ -2927,8 +2953,41 @@ digital-8-15-u-ascii<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-17-u>digital-8-17-u</a></td>
 <td>EAE Instruction Set Simulator</td>
 <td>
-digital-8-17-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-17-u/digital-8-17-u-pa>digital-8-17-u-pa</a><br>
 digital-8-17-u-d<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-18-f>digital-8-18-f</a></td>
+<td>Double Precision Cosine Subroutine</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-18-f/digital-8-18-f-pa>digital-8-18-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-18-u>digital-8-18-u</a></td>
+<td>Alphanumeric Message Typeout</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-18-u/digital-8-18-u-pa>digital-8-18-u-pa</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-18-u/digital-8-18-u-d.pdf>digital-8-18-u-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-19-u>digital-8-19-u</a></td>
+<td>Teletype Output Subroutines</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-19-u/digital-8-19-u-pa>digital-8-19-u-pa</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-19-u/digital-8-19-u-d.pdf>digital-8-19-u-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-2-s>digital-8-2-s</a></td>
+<td>FORTRAN COMPILER</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-2-s/digital-8-2-s-fc-pb>digital-8-2-s-fc-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-2-s/digital-8-2-s-pb>digital-8-2-s-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-2-u>digital-8-2-u</a></td>
+<td>BINARY LOADER</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-2-u/digital-8-2-u-pm>digital-8-2-u-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-20-f>digital-8-20-f</a></td>
@@ -2959,52 +3018,90 @@ digital-8-21-f-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-21-u/digital-8-21-u-pb>digital-8-21-u-pb</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-22>digital-8-22</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-22-f>digital-8-22-f</a></td>
 <td>Signed Single Precision Divide</td>
 <td>
-digital-8-22-f-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-22-f/digital-8-22-f-pa>digital-8-22-f-pa</a><br>
 digital-8-22-f-d<br>
-digital-8-22-u-ascii<br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-23>digital-8-23</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-22-u>digital-8-22-u</a></td>
+<td>Unsigned Decimal Print</td>
+<td>
+digital-8-22-u-pa<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-22-u/digital-8-22-u-d.pdf>digital-8-22-u-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-23-f>digital-8-23-f</a></td>
+<td>Double Precision Multiply (EAE Version)</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-23-f/digital-8-23-f-pa>digital-8-23-f-pa</a><br>
+digital-8-23-f-d<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-23-u>digital-8-23-u</a></td>
 <td>Signed Decimal Print, Single Precision</td>
 <td>
-digital-8-23-f-ascii<br>
-digital-8-23-f-d<br>
-digital-8-23-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-23-u/digital-8-23-u-d.pdf>digital-8-23-u-d</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-24>digital-8-24</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-24-u>digital-8-24-u</a></td>
 <td>Unsigned Decimal Print, Double Precision</td>
 <td>
-digital-8-24-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-24-u/digital-8-24-u-pa>digital-8-24-u-pa</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-24-u/digital-8-24-u-d.pdf>digital-8-24-u-d</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25>digital-8-25</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-f>digital-8-25-f</a></td>
+<td>EAE Floating Point Package</td>
+<td>
+digital-8-25-f-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-f/digital-8-25-f-pb1>digital-8-25-f-pb1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-f/digital-8-25-f-pb2>digital-8-25-f-pb2</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-f/digital-8-25-f-pb3>digital-8-25-f-pb3</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-f/digital-8-25-f-pb4>digital-8-25-f-pb4</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-u>digital-8-25-u</a></td>
 <td>Signed Decimal Print, Double Precision</td>
 <td>
-digital-8-25-f-bin<br>
-digital-8-25-f-d<br>
-digital-8-25-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-u/digital-8-25-u-d.pdf>digital-8-25-u-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-25-u/digital-8-25-u-pa>digital-8-25-u-pa</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-28>digital-8-28</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-28-u>digital-8-28-u</a></td>
 <td>Single Decimal to Binary Conversion and ASR-33 Input</td>
 <td>
-digital-8-28-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-28-u/digital-8-28-u-d.pdf>digital-8-28-u-d</a><br>
+digital-8-28-u-pa<br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-29>digital-8-29</a></td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-29-u>digital-8-29-u</a></td>
 <td>Double Decimal to Binary Conversion and ASR-33 Input</td>
 <td>
-digital-8-29-u-ascii<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-29-u/digital-8-29-u-d.pdf>digital-8-29-u-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-29-u/digital-8-29-u-pa>digital-8-29-u-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-3-s>digital-8-3-s</a></td>
 <td>PAL III (dec-08-asaa)</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-3-s/digital-8-3-s-pb>digital-8-3-s-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s>digital-8-35-s</a></td>
+<td>680 Character Assembly Routines</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s/digital-8-35-s-d1.pdf>digital-8-35-s-d1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s/digital-8-35-s-d2.pdf>digital-8-35-s-d2</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s/digital-8-35-s-pa1>digital-8-35-s-pa1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-35-s/digital-8-35-s-pa2>digital-8-35-s-pa2</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-4-s>digital-8-4-s</a></td>
+<td>DDT (Dynamic Debugger)</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-4-s/digital-8-4-s-pb>digital-8-4-s-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-5-s>digital-8-5-s</a></td>
@@ -3036,10 +3133,34 @@ digital-8-5-s-pb<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-6-u/digital-8-6-u-d.pdf>digital-8-6-u-d</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-7-s>digital-8-7-s</a></td>
+<td>DECtape Programming Manual</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-7-s/digital-8-7-s-d.pdf>digital-8-7-s-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-7-u>digital-8-7-u</a></td>
+<td>Logical Subroutines</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-7-u/digital-8-7-u-pa>digital-8-7-u-pa</a><br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-u>digital-8-8-u</a></td>
 <td>Arithmetic Shift Subroutines, Single and Double Precision</td>
 <td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-u/digital-8-8-u-ascii>digital-8-8-u-ascii</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-u/digital-8-8-u-pa>digital-8-8-u-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-f>digital-8-9-f</a></td>
+<td>Square Root</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-f/digital-8-9-f-pa>digital-8-9-f-pa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-u>digital-8-9-u</a></td>
+<td>Logical Shift Right Subroutines</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-9-u/digital-8-9-u-pa>digital-8-9-u-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/libkit-08-labpa>libkit-08-labpa</a></td>

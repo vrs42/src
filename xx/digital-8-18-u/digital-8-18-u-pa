@@ -1,0 +1,64 @@
+
+/DIGITAL 8-18-U
+/MESSAGE TYPE-OUT
+/CALL WITH A JMS MESAGE
+/WITH DATA FOLLOWING
+/RETURN FOLLOWING END OF MESSAGE
+/CODE(00)
+
+MESAGE,   0
+          CLA CMA             /SET C(AC)=-1
+          TAD MESAGE          /ADD LOCATION
+          DCA 10              /AUTO-INDEX REGISTER
+          TAD I 10            /FETCH FIRST WORD
+          DCA MSRGHT          /SAVE IT
+          TAD MSRGHT
+          RTR
+          RTR                 /ROTATE 6 BITS RIGHT
+          RTR
+          JMS TYPECH          /TYPE IT
+          TAD MSRGHT          /GET DATA AGAIN
+          JMS TYPECH          /TYPE RIGHT HALF
+          JMP MESAGE+4        /CONTINUE
+MSRGHT,   0                   /TEMPORARY STORAGE
+
+TYPECH,   0                   /TYPE CHARACTER IN C(AC)6-11
+          AND MASK77
+          SNA                 /IS IT END OF MESSAGE?
+          JMP I 10            /YES: EXIT
+          TAD M40             /SUBTRACT 40
+          SMA                 /<40?
+          JMP .+3             /NO
+          TAD C340            /YES: ADD 300
+          JMP MTP             /TO CODES <40
+          TAD M3              /SUBTRACT 3
+          SZA                 /IS IT ZERO?
+          JMP .+3             /NO
+          TAD C212            /YES: CODE 43 IS
+          JMP MTP             /LINE-FEED (212)
+          TAD M2              /SUBTRACT 2
+          SZA                 /IS IT ZERO?
+          JMP .+3             /NO
+          TAD C215            /YES: CODE 45 IS
+          JMP MTP             /CARRIAGE-RETURN (215)
+          TAD C245            /ADD 200 TO OTHERS >40
+MTP,      TLS                 /TRANSMIT CHARACTER
+          TSF                 /WAIT FOR FLAG
+          JMP .-1             /NOT SET YET
+          CLA                 /SET: CLEAR C(AC)
+          JMP I TYPECH        /RETURN
+
+
+/CONSTANTS
+MASK77,   77
+M40,      -40
+C340,     340
+M3,       -3
+C212,     212
+M2,       -2
+C215,     215
+C245,     245
+
+          $
+
+

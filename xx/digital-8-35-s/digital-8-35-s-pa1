@@ -1,0 +1,347 @@
+
+/TYPE 680 TELETYPE LINE MULTIPLEXER
+/CHARACTER ASSEMBLY ROUTINE
+/LMH  910/15/65  5 BIT
+
+TTI=6402             /TELETYPE INPUT COMMAND
+TTO=6404             /TELETYPE OUTPUT COMMAND
+TTCL=6411            /CLEAR LINE REGISTER
+TTRL=6414            /READ LINE REGISTER
+TTSL=6412            /SET LINE REGISTER, CLR AC
+TT5ON=6424           /TURN CLOCK ON
+TT5OFF=6422          /TURN CLOCK OFF
+T5SKP=6421           /SKIP ON CLOCK FLAG
+TTINCR=6401          /INCREMENT LINE REGISTER
+
+/680 LINE MULTIPLEXER
+/LIST OF ITEMS
+T5IBF=7200
+T5OBF2=7000
+T5OBF=6600
+T5IN=5600
+TT5PG0=145
+T5AX1=10
+T5AX2=11
+T5AX3=12
+T5AX4=13
+TT5BGN=5200
+TTCHAR=177
+
+*TT5PG0
+T5INFL,   0          /INPUT READY FLAG
+T5BFK,    T5IBF-1    /TO RESET INPUT BUFFER POINTER
+T5NL,     0          /-NUMBER OF LINES
+T5SOUT,   T5OUTS     /SKIP IF OUTPUT FREE
+T5SIN,    T5INS      /SKIP IF INPUT READY
+T5GO,     T5GOS      /INITIALIZE ROUTINE
+T5OUTK,   T5OBF      /POINTER TO 1ST OUTPUT BUFFER
+T5CNT1,   -4         /HOLDS MAJOR LOOP COUNTER
+T5CNT2,   0          /MINOR LOOP COUNTER
+T5CNT3,   0          /COUNTER FOR INPUT BUFFER
+T5K10,    177        /FOR ANDING
+T5K36,    T5OBF2     /2ND OUTPUT BUFFER
+T5CNT5,   0          /OUTPUT COUNTER
+T5CNT6,   0          /7 BIT COUNTER
+T5K2,	-10		/TO RESET BIT COUNTER
+T5K3,	T5IN		/RESET INPUT TTI POINTER
+T5K5,     -2         /FOR SUBTRACTION
+T5K6,	400	/TO RESET 5 BIT ASSEMBLY WORD
+T5K7,     T5OBF      /K FOR 1ST OUTPUT BUFFER
+T5K8,     T5COM      /TO ENTER COMMON ROUTINE
+T5K9,     0          /LINE NUMBER -1
+T5K9A,    T5OBF-1    /FOR CLEARING
+T5K9B,    T5CM1A     /TO AVOID OUTPUTTING
+T5K9C,    JMP T5CM10 /TO SET OUTPUT BUFFER FROM DOUBLE BUFFER
+T5K9D,    T5COM      /FOR NORMAL RETURN
+T5K9E,    NOP        /TO DO INPUT ONLY
+
+*TT5BGN
+/MULTIPLE LEVEL INTERRUPT ROUTINE
+/ALLOWS MULTIPLE LEVEL INTERRUPT TO THIS ROUTINE
+/AND UNLIMITED
+
+T5DIS,	ISZ T5LC		/LEVEL COUNTER
+	JMP T5DIS3		/2ND LEVEL INTERRUPT
+	DCA T5SA		/SAVE ACCUMULATOR
+	RAR		/GET LINK
+	DCA T5SVLK		/SAVE LINK
+	TAD Z 0		/INTERRUPT ADDRESS
+	DCA T5SV0		/SAVE ADDRESS
+          TTRL                  /READ LINE NUMBER
+          DCA T5SVLN            /SAVE LINE NUMBER
+          TT5ON                 /TO CLEAR CLOCK FLAG ONLY
+T5DIS2,   ION                   /RE-ENABLE PROGRAM INTERRUPT
+          TAD T5K9              /STARTING LINE-1
+          TTSL+1                /SET LINE REGISTER, CLR AC
+	JMP I Z T5K3	/SET LINE REGISTER, CLR AC
+
+/2ND LEVEL INTERRUPT
+T5DIS3,   TT5ON                 /CLEAR CLOCK FLAG
+          ION                   /RE-ENABLE PROGRAM INTERRUPT
+          JMP I Z 0             /RETURN TO THE MAIN PROGRAM
+
+/RETURN FROM INPUT TTI LOOP
+T5COM,    TAD T5MNC             /-NO. OF LINES/8
+          DCA Z T5CNT2          /MINOR LOOP COUNTER
+          TAD T5LN              /LINE NUMBER
+	TTSL+1		/SET LINE NUMBER
+T5COM0,   TAD I Z T5OUTK        /OUTPUT WORD
+          SNA                   /CHARACTER AVAILABLE
+          JMP T5COM8            /NOTHING TO TRANSMIT
+          TTO+1                 /INCREMENT AND TRANSMIT
+          DCA I Z T5OUTK        /RESTORE CHARACTER
+T5COM1,   ISZ Z T5OUTK          /UPDATE OUTPUT POINTER
+          ISZ Z T5CNT2          /ARE ONE-EIGHTH OF LINES DONE
+          JMP T5COM0            /CHECK NEXT OUTPUT LINE
+          TTRL                  /READ LINE NUMBER
+          DCA T5LN              /SAVE LINE NUMBER
+T5CM1A,   TAD T5MNC2            /NO OF LINES/4
+          DCA T5CNT2            /MINOR LOOP COUNTER
+T5COM2,	ISZ T5AX1		/ADVANCE FOR NEXT INPUT LINE
+	TAD I Z T5AX1	/CHARACTER ASSEMBLY WORD
+	CLL RTR		/PUT BIT 10 IN LINK
+          SZL                   /CHARACTER NOT COMPLETED
+          JMP T5COM6            /STORE CHARACTER
+          CLA                   /CLEAR AC FOR TAD
+
+T5COM3,   NOP                   /OR JMP T5CM10
+          ISZ Z T5AX1           /UPDATE FOR NEXT INPUT LINE
+	ISZ T5LN2		/UPDATE LINE NUMBER
+          ISZ T5CNT2            /ARE ONE-FOURTH OF LINES CHECKED?
+          JMP T5COM2            /CHECK NEXT LINE
+T5COM4,   ISZ T5CNT1            /HAVE ALL INPUT LINES BEEN CHECKED
+          JMP T5COM5            /RESET AND DISMISS
+	TAD Z T5K3		/T5IN
+          DCA Z T5AX1           /RESET TTI POINTER
+	TAD Z T5K9		/START LINE-1
+	IAC		/SET TO FIRST LINE
+          DCA T5LN2             /RESET LINE NUMBER
+          TAD T5K2A             /-4
+          DCA T5CNT1            /INPUT CHECK COUNTER
+          ISZ Z T5CNT5          /HAVE ALL OUTPUT LINES BEEN CHECKED
+          JMP T5COM5            /RESET AND DISMISS
+          TAD Z T5K5            /-2
+          DCA Z T5CNT5          /RESET COUNTER
+          TAD Z T5K9            /START LINE-1
+          DCA T5LN              /RESET LINE NUMBER
+          ISZ Z T5CNT6          /ENDING 7TH BIT?
+          JMP T5COM9            /NO RESET NORMALLY
+          TAD T5K2              /-10
+          DCA Z T5CNT6          /RESET COUNTER
+          ISZ Z T5CNT5          /ADD 1 TO COUNTER
+          TAD Z T5K9A           /T5OBF-1
+          DCA Z T5AX4           /OUTPUT POINTER
+          TAD Z T5K36           /T5OBF2
+          DCA T5OUTK            /2ND BUFFER POINTER
+          TAD Z T5K9B           /SPECIAL ADDRESS, T5CM1A
+          DCA Z T5K8            /RESET ADDRESS
+          TAD Z T5K9C           /JMP T5CM10
+          DCA T5COM3            /SET TO DO OUTPUT
+T5COM5,   IOF                   /TURN OFF INTERRUPT
+          STA                   /-1
+          TAD T5LC              /LEVEL COUNTER
+          DCA T5LC              /RESTORE LEVEL COUNTER
+          TAD T5LC              /LEVEL COUNTER
+          SMA CLA                   /RESTORE AC, ETC.
+          JMP T5DIS2           /CHECK INPUT AGAIN, ETC.
+          TAD T5SVLN            /LINE NUMBER
+          TTSL+1                  /SET LINE REGISTER, CLR AC
+          TAD T5SVLK           /PICK UP LINK
+          CLL RAL               /RESTORE LINK
+          TAD T5SA              /RESTORE AC
+          ION                   /RE-ENABLE PROGRAM INTERRUPT
+          JMP I T5SV0           /RETURN TO THE MAIN PROGRAM
+
+T5COM6,	CLL RTR		/REMOVE START CODE
+	RTR
+          DCA I Z T5AX2         /STORE CHARACTER
+          TAD T5LN2             /LINE NUMBER
+          DCA I Z T5AX2         /STORE LINE NUMBER
+          TAD Z T5AX1           /TTI POINTER
+          TAD Z T5K5            /-2
+          DCA Z T5AX1           /RESET POINTER
+          DCA I Z T5AX1         /ZERO STATUS AND COUNTER WORD
+          TAD Z T5K6            /WORD TO RESTORE ASSEMBLY WORD
+          DCA I Z T5AX1         /RESET CHARACTER ASSEMBLY WORD
+          ISZ Z T5INFL          /SET INPUT READY FLAG
+          ISZ Z T5CNT3          /HAS END OF BUFFER BEEN REACHED?
+          JMP T5COM3            /CONTINUE
+T5COM7,   TAD Z T5BFK           /T5IBF-1
+          DCA Z T5AX2           /RESET INPUT BUFFER ADDRESS
+          TAD T5NL              /-NUMBER OF LINES
+          DCA Z T5CNT3          /RESET LENGTH COUNTER
+          JMP T5COM3            /CONTINUE
+T5COM8,   TTINCR                /INCREMENT LINE NUMBER
+          JMP T5COM1            /CONTINUE
+T5COM9,   TAD Z T5K7            /T5OBF
+          DCA Z T5OUTK          /RESET OUTPUT POINTER
+          TAD Z T5K9D           /NORMAL ADDRESS, T5COM
+          DCA Z T5K8            /RESET ADDRESS
+          TAD Z T5K9E           /NOP
+          JMP T5COM5-1          /CONTINUE
+T5CM10,	TAD I Z T5OUTK	/2ND BUFFER CHARACTER
+          DCA I Z T5AX4         /STORE IN 1ST BUFFER
+          DCA I T5OUTK          /CLEAR 2ND BUFFER
+          ISZ T5OUTK            /UPDATE POINTER
+          JMP T5COM3+1          /CONTINUE
+
+/CONSTANTS
+T5LC,     -1                    /INTERRUPT LEVEL COUNTER
+T5SA,     0                     /SAVE ACCUMULATOR
+T5SVLK,   0                     /SAVE LINK
+T5SV0,    0                     /SAVE PROGRAM COUNTER
+T5SVLN,   0                     /SAVE LINE NUMBER
+T5MNC,    0                     /-NO OF LINES/8
+T5MNC2,   0                     /-NO OF LINES/4
+T5LN,     0                     /LINE NUMBER FOR OUTPUT
+T5LN2,    0                     /LINE NUMBER FOR INPUT
+T5K2A,    -4                    /TO RESET MAJOR LOOP COUNTER
+
+/PSEUDO-OPERATIONS
+*TT5BGN+200
+/SKIP IF OUTPUT IS FREE AND TRANSMIT CHARACTER AT TTCHAR, OTHERWISE
+/DON'T SKIP LINE NUMBER MUST BE IN AC. 24US MIN., 42US MAX.
+T5SOF=JMS I Z T5SOUT
+T5OUTS,   0
+          AND Z T5K10           /177
+          TAD T5SL              /-STARTING LINE NUMBER
+          TAD Z T5K36           /OUTPUT BUFFER ADDRESS
+          DCA T5WA              /WORK AREA
+          TAD I T5WA            /OUTPUT CHARACTER
+          SZA CLA               /SKIP IF FREE
+          JMP I T5OUTS          /EXIT
+          TAD Z TTCHAR          /PICK UP CHARACTER
+          AND T5K11             /5 BITS ONLY
+          TAD T5K12             /140 FOR STOP CODE
+          CLL RAL               /CREATE START CODE
+          DCA I T5WA            /STORE CHARACTER IN TABLE
+          ISZ T5OUTS            /INDEX EXIT
+          JMP I T5OUTS          /EXIT
+T5SL,     0                     /-STARTING LINE NUMBER
+T5WA,     0                     /WORK AREA
+T5K11,    37                    /FOR 5 BIT CODE
+T5K12,    40                    /FOR STOP CODE
+
+/SKIP IF CHARACTER AVAILABLE AND RETURN WITH LINE NUMBER IN AC
+/CHAR AT TTCHAR.  OTHERWISE DO NOT SKIP
+/15US MIN., 48US MAX., 37.5US NORMAL IF READY
+T5SIR=JMS I Z T5SIN
+T5INS,    0
+	IOF
+	CLA CMA		/SET AC FOR TAD-1
+	TAD Z T5INFL	/INPUT FLAG COUNTER-1
+	SPA		/SOMETHING AVAILABLE
+	JMP T5INON		/EXIT
+          DCA Z T5INFL          /RESTORE FLAG COUNTER
+          ISZ T5CNT4            /END OF BUFFER?  START AT -N-1
+          JMP .+5               /GET CHARACTER
+          TAD Z T5NL            /-NUMBER OF LINES
+          DCA T5CNT4            /RESET COUNTER
+          TAD Z T5BFK           /BUFFER ADDRESS-1
+          DCA Z T5AX3           /RESET ADDRESS
+          TAD I Z T5AX3         /PICK UP CHARACTER
+          DCA Z TTCHAR          /STORE CHARACTER
+          TAD I Z T5AX3         /PICK UP LINE NO.
+          ISZ T5INS             /INDEX EXIT
+T5INON,	ION
+          JMP I T5INS           /EXIT
+T5CNT4,   0                     /-NUMBER OF LINES
+
+/INITIALIZATION ROUTINE
+/ENTER WITH NUMBER OF LINES IN AC
+/FORMAT   T5INIT
+/         1ST LINE NO.
+
+T5INIT=JMS I Z T5GO
+T5GOS,    0
+          AND T5K14             /377
+          DCA Z T5NL            /NO. OF LINES
+          TAD Z T5NL            /NO. OF LINES
+          AND T5K15             /7
+          SZA CLA               /MULTIPLE OF 8
+          TAD T5K16             /10
+          TAD Z T5NL            /NO. OF LINES
+          AND T5K17             /370
+          CIA                   /TWO'S COMP. NUMBER OF LINES
+          DCA Z T5NL            /-N, CONSTANT
+T5GO1,    TAD Z T5NL            /-N
+	DCA Z T5CNT3	/COUNTER
+          TAD T5K20             /T5IN-1
+          DCA Z T5AX1           /TO STORE TTI TABLE
+          TAD T5K21             /T5OBF-1
+          DCA Z T5AX2           /TO CLEAR OUTPUT AREA
+          TAD T5K37             /T8OBF2-1
+          DCA T5AX3             /TO CLEAR DOUBLE BUFFER
+          TAD Z T5NL            /-N
+          DCA T5CNT4            /FOR COUNTING
+T5GO2,    TAD T5K22             /TTI+INCR
+          DCA I Z T5AX1         /STORE TTI
+          DCA I Z T5AX1         /CLEAR STATUS WORD
+	TAD Z T5K6		/ASSEMBLY RESET WORD
+          DCA I Z T5AX1         /RESET ASSEMBLY WORD
+          DCA I Z T5AX2         /ZERO OUTPUT WORD
+          DCA I Z T5AX3         /CLEAR DOUBLE BUFFER
+	ISZ T5CNT4		/COUNTER
+          JMP T5GO2             /DO NEXT LINE
+          TAD T5K24             /JMP I Z T5K8
+          DCA I Z T5AX1         /STORE FINAL JUMP
+          TAD Z T5NL            /-N
+          RTR                   /-N/4
+          RAR                   /-N/8
+          AND T5K25             /17
+          TAD T5K26             /7760, MAKE NUMBER NEGATIVE
+          DCA I T5K27           /T5MNC
+          TAD I T5K27           /T5MNC
+          TAD I T5K27           /T5MNC -N/4
+          DCA I T5K38           /T5MNC2
+          STA                   /-1
+
+          DCA T5CNT4            /SET CNTR TO SKIP 1ST TIME
+          TAD Z T5BFK           /T5IBF-1
+	DCA Z T5AX2	/SET INPUT BUFFER POINTER
+          TAD T5K28             /-4
+          DCA Z T5CNT1          /MAJOR LOOP COUNTER
+          TAD Z T5K5            /-2
+          DCA Z T5CNT5          /OUTPUT COUNTER
+          TAD Z T5K3            /T5IN+1
+          DCA Z T5AX1           /SET TTI POINTER
+          TAD T5K7              /T5OBF
+          DCA Z T5OUTK          /SET OUTPUT BUFFER POINTER
+          STA                   /-1
+          TAD I T5GOS           /STARTING LINE NUMBER
+          DCA Z T5K9            /STARTING LINE NO-1
+          TAD Z T5K9            /STARTING LINE -1
+          CMA                   /MAKE NEGATIVE
+          DCA T5SL              /-STARTING LINE NUMBER
+          DCA Z T5INFL          /CLEAR INPUT FLAG COUNTER
+          STA                   /-1
+          DCA I T5K35           /T5LC, RESET INTERRUPT LEVEL COUNTER
+          ISZ T5GOS             /INDEX EXIT
+          TAD T5K35A            /-7
+          DCA Z T5CNT6          /SET SPECIAL 5-BIT COUNTER
+          TAD Z T5K9D           /T5COM
+          DCA Z T5K8            /TTI RETURN
+          TAD Z T5K9E           /NOP
+          DCA I T5K40           /T5COM3
+          JMP I T5GOS           /EXIT
+
+/CONSTANTS
+T5K14,    377                   /FOR ANDING
+T5K15,    7                     /FOR EVEN MULTIPLE OF 8
+T5K16,    10                    /FOR EVEN MULTIPLE OF 8
+T5K17,    370                   /FOR EVEN MULTIPLE OF 8
+T5K20,    T5IN-1                /FOR STORING TTI'S
+T5K21,    T5OBF-1               /FOR OUTPUT AREA
+T5K22,	TTI+1		/TTI
+T5K24,    JMP I Z T5K8          /FOR FINAL JUMP
+T5K25,    17                    /FOR -N/8
+T5K26,    7760                  /FOR MAKING NEGATIVE
+T5K27,    T5MNC                 /FOR -N/8
+T5K28,    -4                    /FOR MAJOR LOOP COUNTER
+T5K35,    T5LC                  /FOR INTERRUPT LEVEL COUNTER
+T5K35A,   -7                    /FOR 5-BIT COUNTER
+T5K37,    T5OBF2-1              /FOR DOUBLE BUFFER
+T5K38,    T5MNC2                /FOR -N/4
+T5K40,    T5COM3                /FOR SWITCH
+
+*U*!5!,A

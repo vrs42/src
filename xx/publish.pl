@@ -153,7 +153,7 @@ sub process {
   # BeginNow process the files and generate a table.
   while (<INPUT>) {
     next if /^#/;
-    die "Invalid Files.txt line: $_" unless /^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$/;
+    die "$d: Invalid Files.txt line: $_" unless /^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$/;
     $part = $1;
     $media = $2;
     $alias = $3;

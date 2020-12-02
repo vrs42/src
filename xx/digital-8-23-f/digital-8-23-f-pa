@@ -1,0 +1,125 @@
+
+/DIGITAL 8-23-F
+/DOUBLE PRECISION, SIGNED, 2'S COMPLEMENT
+/MULTIPLY ROUTINE WITH EAE.
+/CALLING SEQUENCE: JMS DMUL
+/  ADDRESS OF MULTIPLICAND (HIGH ORDER)
+/  ADDRESS OF MULTIPLIER (HIGH ORDER)
+/  RETURN WITH HIGH ORDER
+/  PRODUCT IN AC, NEXT HIGH
+/  TO LOW IN B, C, D
+/
+/PAGE 1
+
+DMUL,     0
+          CLA CLL
+          TAD REST            /7776
+          DCA SGN
+          TAD I DMUL
+          DCA ADDR            /ADDRESS OF MULTIPLICAND (HIGH)
+          TAD I ADDR
+          SPA                 /IS MULTIPLICAND NEGATIVE
+          CMA CML             /YES - 1'S COMPLEMENT HIGH ORDER
+          DCA CNDH
+          ISZ ADDR            /ADDRESS OF MULTIPLICAND (LOW)
+          TAD I ADDR
+          SZL                 /IS MULTIPLICAND NEGATIVE
+          ISZ SGN             /YES
+          SZL                 /IS MULTIPLICAND NEGATIVE
+          CML CMA IAC         /YES - 2'S COMPLEMENT LOW ORDER.
+          DCA CNDL
+          SZL                 /IS LOW ORDER MULTIPLICAND=0
+          ISZ CNDH            /YES - 2'S COMPLEMENT HIGH ORDER
+          CLL
+          ISZ DMUL
+          TAD I DMUL
+          DCA ADDR            /ADDRESS OF MULTIPLIER (HIGH)
+          TAD I ADDR
+          SPA                 /IS MULTIPLIER NEGATIVE.
+          CMA CML             /YES - 1'S COMPLEMENT HIGH ORDER
+          DCA PERH
+          ISZ DMUL            /RETURN ADDRESS
+          ISZ ADDR            /ADDRESS OF MULTIPLIER (LOW)
+          TAD I ADDR
+          SZL                 /IS MULTIPLIER NEGATIVE
+          ISZ SGN             /YES
+          SZL                 /IS MULTIPLIER NEGATIVE
+          CMA CML IAC         /YES - 2'S COMPLEMENT LOW ORDER
+          DCA PERL
+          SZL                 /IS LOW ORDER MULTIPLIER=0
+          ISZ PERH            /YES - 2'S COMPLEMENT HIGH ORDER.
+          CLL
+          TAD PERL            /LOW ORDER MULTIPLIER
+          MQL MUY
+CNDL,     0                   /LOW ORDER MULTIPLICAND
+          DCA C
+          MQA
+          DCA D
+          TAD CNDH            /HIGH ORDER MULTIPLICAND
+          MQL MUY
+
+/DIGITAL 8-23-F
+/PAGE 2
+PERL,     0                   /LOW ORDER MULTIPLIER
+          DCA B
+          MQA
+          TAD C
+          DCA C
+          RAL
+          TAD B
+          DCA B
+          TAD CNDL            /LOW ORDER MULTIPLICAND
+          MQL MUY
+PERH,     0                   /HIGH ORDER MULTIPLIER
+          DCA PERL
+          MQA
+          TAD C
+          DCA C
+          RAL
+          TAD PERL
+          TAD B
+          DCA B
+          RAL
+          DCA PERL
+          TAD PERH            /HIGH ORDER MULTIPLIER.
+          MQL MUY
+CNDH,     0                   /HIGH ORDER MULTIPLICAND
+          DCA ADDR
+          MQA
+          TAD B
+          DCA B
+          RAL
+          TAD PERL
+          TAD ADDR
+          ISZ SGN             /IS SIGN OF PRODUCT POSITIVE
+          JMP I DMUL          /YES -- EXIT.
+          DCA ADDR            /NO. 2'S COMPLEMENT PRODUCT
+          TAD D
+          CLL CMA IAC
+          DCA D
+          TAD C
+          CMA
+          SZL
+          CLL IAC
+          DCA C
+          TAD B
+          CMA
+          SZL
+          CLL IAC
+          DCA B
+          TAD ADDR
+          CMA
+          SZL
+          CLL IAC
+          JMP I DMUL          /EXIT
+REST,     7776
+SGN,      0
+ADDR,     0
+B,        0
+C,        0
+D,        0
+
+          $
+
+
+
