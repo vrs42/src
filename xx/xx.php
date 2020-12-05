@@ -3151,8 +3151,7 @@ dec-s8-ufpda-a-uc<br>
 <td>FLAP (FPP ASSEMBLER)</td>
 <td>
 ac-4767a / dec-s8-ufppa-a-d<br>
-ak-6768a / dec-s8-ufppa-a-pb<br>
-ak-6768a / dec-s8-ufppa-a-pb<br>
+ak-4768a / dec-s8-ufppa-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-s8-umtha>dec-s8-umtha</a></td>
@@ -4627,13 +4626,6 @@ maindec-08-dhdpa-b-pb<br>
 maindec-08-dhdpa-d-pb<br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhdr>maindec-08-dhdr</a></td>
-<td>DR8-ED EXERCISER</td>
-<td>
-ac-6233a / maindec-08-dhdrh-d<br>
-ak-6235a / maindec-08-dhdrh-pb<br>
-</td></tr>
-<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhdra>maindec-08-dhdra</a></td>
 <td>DR8-EA 12 Channel Interface</td>
 <td>
@@ -4642,9 +4634,10 @@ ak-6235a / maindec-08-dhdrh-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhdrh>maindec-08-dhdrh</a></td>
-<td>DR8-ED Exerciser (dhdrha?)</td>
+<td>DR8-ED EXERCISER</td>
 <td>
-maindec-08-dhdrh-a-pb<br>
+ac-6233a / maindec-08-dhdrh-a-d<br>
+ak-6235a / maindec-08-dhdrh-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhica>maindec-08-dhica</a></td>
@@ -5771,16 +5764,10 @@ maindec-12-d1ca-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1d>maindec-12-d1d</a></td>
-<td>PFP-12 Checkerboard</td>
+<td>PDP-12 Checkerboard</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1d/maindec-12-d1da-d.pdf>maindec-12-d1da-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1d/maindec-12-d1da-pb>maindec-12-d1da-pb</a><br>
-maindec-12-d1da-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1da>maindec-12-d1da</a></td>
-<td>PFP-12 Checkerboard</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1da/maindec-12-d1da-d-d.pdf>maindec-12-d1da-d-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d1e>maindec-12-d1e</a></td>
@@ -5827,16 +5814,10 @@ maindec-12-d2ba-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3d>maindec-12-d3d</a></td>
-<td>PDP-12 Tape Data Exerciser</td>
+<td>PDP-12 MAGtape Data Exerciser</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3d/maindec-12-d3db-d.pdf>maindec-12-d3db-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3d/maindec-12-d3db-pb>maindec-12-d3db-pb</a><br>
-maindec-12-d3db-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3db>maindec-12-d3db</a></td>
-<td>PDP-12 Tape Data Exerciser</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3db/maindec-12-d3db-d-d.pdf>maindec-12-d3db-d-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3e>maindec-12-d3e</a></td>
@@ -5850,26 +5831,14 @@ maindec-12-d3eb-d<br>
 <td>PDP-12 Tape Data Test</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3f/maindec-12-d3fb-pb>maindec-12-d3fb-pb</a><br>
-maindec-12-d3fb-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3fb>maindec-12-d3fb</a></td>
-<td>PDP-12 Tape Data Test</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3fb/maindec-12-d3fb-d-d.pdf>maindec-12-d3fb-d-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3f/maindec-12-d3fb-d.pdf>maindec-12-d3fb-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3g>maindec-12-d3g</a></td>
 <td>PDP-12 Tape Control Test part 2 of 2</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3g/maindec-12-d3ga-pb>maindec-12-d3ga-pb</a><br>
-maindec-12-d3ga-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3ga>maindec-12-d3ga</a></td>
-<td>PDP-12 Tape Control Test part 2 of 2</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3ga/maindec-12-d3ga-d-d.pdf>maindec-12-d3ga-d-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d3g/maindec-12-d3ga-d.pdf>maindec-12-d3ga-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d5b>maindec-12-d5b</a></td>
@@ -5906,13 +5875,7 @@ maindec-12-d5ca-pb<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6c/maindec-12-d6cb-pb>maindec-12-d6cb-pb</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6c/maindec-12-d6cc-pb>maindec-12-d6cc-pb</a><br>
-maindec-12-d6cc-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6cc>maindec-12-d6cc</a></td>
-<td>A to D Test</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6cc/maindec-12-d6cc-d-d.pdf>maindec-12-d6cc-d-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6c/maindec-12-d6cc-d.pdf>maindec-12-d6cc-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d6d>maindec-12-d6d</a></td>
@@ -5942,45 +5905,21 @@ maindec-12-d7gf-uo<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8a>maindec-12-d8a</a></td>
-<td>PDP-12 Relay Register Test</td>
+<td>DR12 Relay Register Test</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8a/maindec-12-d8ab-d.pdf>maindec-12-d8ab-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8a/maindec-12-d8ab-pb>maindec-12-d8ab-pb</a><br>
-maindec-12-d8ab-d<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8ab>maindec-12-d8ab</a></td>
-<td>PDP-12 Relay Register Test</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8ab/maindec-12-d8ab-d-d.pdf>maindec-12-d8ab-d-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c>maindec-12-d8c</a></td>
-<td>KW12A Clock Test (Move from wrong dir?)</td>
+<td>KW12A Clock Test</td>
 <td>
-maindec-12-d8cd-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c/maindec-12-d8cd-d.pdf>maindec-12-d8cd-d</a><br>
 maindec-12-d8cd-pb<br>
-maindec-12-d8cc-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c/maindec-12-d8cc-d.pdf>maindec-12-d8cc-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c/maindec-12-d8cc-pb>maindec-12-d8cc-pb</a><br>
-maindec-12-d8ca-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c/maindec-12-d8ca-d.pdf>maindec-12-d8ca-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8c/maindec-12-d8ca-pb>maindec-12-d8ca-pb</a><br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8ca>maindec-12-d8ca</a></td>
-<td>KW12 Clock Test for Units w/o ECO #55</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8ca/maindec-12-d8ca-d-d.pdf>maindec-12-d8ca-d-d</a><br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8cc>maindec-12-d8cc</a></td>
-<td>KW12A Clock Test</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8cc/maindec-12-d8cc-d-d.pdf>maindec-12-d8cc-d-d</a><br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8cd>maindec-12-d8cd</a></td>
-<td>KW12A Clock Test</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8cd/maindec-12-d8cd-d-d.pdf>maindec-12-d8cd-d-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d8d>maindec-12-d8d</a></td>
@@ -6047,16 +5986,10 @@ maindec-12-d9ba-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d9c>maindec-12-d9c</a></td>
-<td>PDP-12 Operating Procedures (Move from wrong dir?)</td>
+<td>PDP-12 Operating Procedures</td>
 <td>
-maindec-12-d9ca-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d9c/maindec-12-d9ca-d.pdf>maindec-12-d9ca-d</a><br>
 maindec-12-d9ca-pb<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d9ca>maindec-12-d9ca</a></td>
-<td>PDP-12 Operating Procedure</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d9ca/maindec-12-d9ca-d-d.pdf>maindec-12-d9ca-d-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dadca>maindec-12-dadca</a></td>
@@ -6128,7 +6061,7 @@ ak-9749b / maindec-12-donb-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dot>maindec-12-dot</a></td>
-<td>FPP-12 TRACE EPM 2B (vrs: swapped?)</td>
+<td>FPP-12 TRACE EPM 2B</td>
 <td>
 ac-9757a / maindec-12-dota-d<br>
 ak-9755a / maindec-12-dota-pb<br>
@@ -7160,7 +7093,7 @@ maindec-x8-dikac-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikad>maindec-x8-dikad</a></td>
-<td>DEC/X8 Module "DF32DS" DF32/DF32D DECDisk System Exerciser???</td>
+<td>DEC/X8 NOTFUN Non-functional IOT Test</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikad/maindec-x8-dikad-b-d.pdf>maindec-x8-dikad-b-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikad/maindec-x8-dikad-b-pb>maindec-x8-dikad-b-pb</a><br>
