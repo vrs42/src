@@ -12,6 +12,7 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
 # Each of these may be followed by a number, i.e. "-pb11".
 %exts = (
 # Official list of old media types, from the software price list.
+# Updated 12/04/20 from PDP-12 Software Components Catalog.
   "-aa", "DECTAPE LINC FORMAT ASCII",
   "-ab", "DECTAPE LINC FORMAT BINARY",
   "-ac", "DECTAPE LINC FORMAT COMBINED MODE",
@@ -20,6 +21,8 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
   "-co", "CARD DECK, OPTICAL",
   "-d",  "DOCUMENT",
   "-dn", "DOCUMENT CHANGE NOTICE",
+  "-f",  "FICHE",
+  "-fa", "FICHE, LISTING",
   "-ha", "DECPACK, ASCII",
   "-hb", "DECPACK, BINARY",
   "-hc", "DECPACK, COMBINED MODE",
@@ -39,22 +42,18 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
   "-ta", "CASSETTE, ASCII SOURCE",
   "-tb", "CASSETTE, BINARY",
   "-tc", "CASSETTE, COMBINED MODE",
+  "-ua", "DECTAPE, ASCII SOURCE",
   "-ub", "DECTAPE, BINARY",
   "-uc", "DECTAPE, COMBINED MODE",
-  "-uo", "DECTAPE, LINC FORMAT",
+  "-uo", "LINCTAPE",
+  "-ya", "FLOPPY, ASCII SOURCE",
+  "-yb", "FLOPPY, BINARY",
+  "-yc", "FLOPPY, COMBINED MODE",
 # Stuff added to deal with actual input.
 # These may indicate issues with the source material, or
 # may be types added later.
 # vrs: -dt confirmed
-# vrs: -fa confirmed
-# vrs: -ua confirmed
-# vrs: -y[abc] confirmed
   "-dt", "DECTAPE, DIAGNOSTIC",
-  "-fa", "MICROFICHE, ASCII SOURCE",
-  "-ua", "DECTAPE, ASCII SOURCE",
-  "-ya", "FLOPPY, ASCII SOURCE",
-  "-yb", "FLOPPY, BINARY",
-  "-yc", "FLOPPY, COMBINED MODE",
 );
 
 #
