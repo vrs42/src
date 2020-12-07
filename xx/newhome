@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+
+#
+# Look at each PDF available, try to figure out where it would go, 
+# and what it would take to get it there, unless there's already
+# a copy in the new directory.
+
+#
+# If youd have ~/BigList, try "find . -name '*.pdf' -print 2>/dev/null |".
+open(INPUT, "$ENV{'HOME'}/BigList") || die "~/BigList: $!";
+
+#foreach $pdf (<INPUT>) { # This needlessly makes a big list
+while (($pdf = <INPUT>)) {
+  next unless $pdf =~ /[.]pdf\r*$/i;
+  $pdf =~ s/\r//g; chop $pdf; # Lose newline
+  $dir = $pdf;
+  $pdf = '"' . $pdf . '"'; # Add double quotes
+
+  #
+  # Extract the new home from the filename.  Warn if we can't place it.
+  $dir =~ s:.*/::; # Lose the current directory.
+  $dir =~ y/A-Z/a-z/; # Monocase
+#warn "$dir\n";
+  if ($dir =~ m:((main)?dec[-/]..[-/][^-]+)(-?[a-z])-[d]+\d*:) {
+    # Found a DEC or MAINDEC part number.
+    $d = $1;
+    $v = $3;
+# elsif ($dir =~ /a.-..-(.*(-[a-z])?-\a+\d*)/) {
+#   # Found a DEC part number
+  } else {
+    # Not sure what this is.
+#   warn "$pdf\n";
+last if $pdf =~ /maindec-12-d9ca/i;
+    next;
+  }
+
+  #
+  #
+  $n = "$d/$d$v-d.pdf";
+  next if $done{$n};
+next if $pdf =~ /-d5156/;
+#next unless -d $d;
+  print "mkdir $d\n" unless -d $d;
+  print "cp $pdf $n\n" unless -f $n;
+  $done{$n} = 1;
+}

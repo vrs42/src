@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+# Make note of the files described in the Files.txt of each directory.
+open(INPUT, "cat */Files.txt |") || die "cat pipeline: $!";
+while (<INPUT>) {
+  die unless /.*\t.*\t(.*)\t/;
+  $files{"$1.pdf"} = 1;
+#warn "xspla1: $1.pdf\n" if /xspla/;
+}
+
+# Now check that all the PDF were mentioned.
+open(INPUT, "ls */*.pdf |") || die "ls pipeline: $!";
+while (<INPUT>) {
+  $pdf = $dir = $_;
+  $pdf =~ s/\r//g; chop $pdf;
+  $pdf =~ s:.*/::;
+#warn "xspla2: $pdf\n" if $pdf =~ /xspla/;
+  next if defined $files{$pdf};
+  warn "$dir";
+}
