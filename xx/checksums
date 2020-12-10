@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+#
+# Verify the format and checkum of every BIN format file.
+# The simplest way to do this is to run "bincmp" against itself.
+
+# A message like 
+#   <dir>/<file>: Checksum is MMMM, not NNNN
+# (printed twice) means it is BIN format, but the checksum is wrong.
+# Most other messages indicate it isn't in BIN format.  That is almost
+# always because extra junk has been imaged at the beginning or end.
+
+# Most common remedy is to run "dood" to create an octal dump, edit the
+# octal dump, then run "mktapes" to re-create the BIN file.  Beware
+# that mktapes doea ALL the .od files, including the ones for files
+# that should be converted to 7-bit ASCII with "2asc" afterward.
+
+foreach $i (<*/*-pb*>) {
+  next unless $i =~ /.*-pb\d*$/;
+  # HELP Loader is not in BIN format!
+  next if $i =~ /^dec-08-lha1/;
+  system "bincmp $i $i";
+}

@@ -2972,6 +2972,12 @@ dec-e8-t27a-pa<br>
 dec-e8-t28a-pa<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-e8-t29>dec-e8-t29</a></td>
+<td>Edusystem 50 PEACE 2</td>
+<td>
+dec-e8-t29a-pa<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-e8-t30>dec-e8-t30</a></td>
 <td>Edusystem 50 SNOOPY</td>
 <td>
@@ -3599,6 +3605,8 @@ dec-s8-ortda-b-la<br>
 <td>
 dec-s8-osaba-b-la<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-s8-osaba/dec-s8-osaba-b-pb>dec-s8-osaba-b-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-s8-osaba/dec-s8-osaba-b-pb1>dec-s8-osaba-b-pb1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-s8-osaba/dec-s8-osaba-b-pb2>dec-s8-osaba-b-pb2</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-s8-osc1a>dec-s8-osc1a</a></td>
@@ -4363,7 +4371,7 @@ digital-8-5-s-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-s>digital-8-8-s</a></td>
 <td>MACRO-8 Assembler</td>
 <td>
-digital-8-8-sC-pb<br>
+digital-8-8-s-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/digital-8-8-u>digital-8-8-u</a></td>
