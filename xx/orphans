@@ -4,17 +4,44 @@
 open(INPUT, "cat */Files.txt |") || die "cat pipeline: $!";
 while (<INPUT>) {
   die unless /.*\t.*\t(.*)\t/;
-  $files{"$1.pdf"} = 1;
+  $f = $1;
+  $f .= ".pdf" if $f =~ /-d\d*$/;
+  $f .= ".pdf" if $f =~ /-dn\d*$/;
+  $f .= ".pdf" if $f =~ /-la\d*$/;
+  $f .= ".pdf" if $f =~ /^aa-/;
+  $files{"$f"} = 1;
 #warn "xspla1: $1.pdf\n" if /xspla/;
 }
 
 # Now check that all the PDF were mentioned.
-open(INPUT, "ls */*.pdf |") || die "ls pipeline: $!";
+open(INPUT, "ls -d */* |") || die "ls pipeline: $!";
 while (<INPUT>) {
-  $pdf = $dir = $_;
-  $pdf =~ s/\r//g; chop $pdf;
-  $pdf =~ s:.*/::;
-#warn "xspla2: $pdf\n" if $pdf =~ /xspla/;
-  next if defined $files{$pdf};
-  warn "$dir";
+  $f = $dir = $_;
+  $f =~ s/\r//g; chop $f;
+  next if -d $f;
+  $f =~ s:.*/::;
+  next if defined $files{$f};
+  next if $f =~ /[.]\d$/;
+  next if $f =~ /[.]bin$/;
+  next if $f =~ /[.]bn$/;
+  next if $f =~ /[.]dsk$/;
+  next if $f =~ /[.]doc$/;
+  next if $f =~ /[.]htm$/;
+  next if $f =~ /[.]jpg$/;
+  next if $f =~ /[.]lbl$/;
+  next if $f =~ /[.]lst$/;
+  next if $f =~ /[.]od$/;
+  next if $f =~ /[.]old$/;
+  next if $f =~ /[.]org$/;
+  next if $f =~ /[.]pa$/i;
+  next if $f =~ /[.]pal$/;
+  next if $f =~ /[.]pt$/;
+  next if $f =~ /[.]sym$/;
+  next if $f =~ /[.]syms$/;
+  next if $f =~ /[.]txt$/;
+  next if $f =~ /[.]xml$/;
+  next if $f =~ /[.]zip$/;
+  next if $f =~ /-sv$/;
+#warn "xspla2: $f\n" if $f =~ /xspla/;
+  print "$dir";
 }
