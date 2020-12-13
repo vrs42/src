@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+#
+# Get a list the directories, then complain if they look fishy.
+%known = (
+  "dec-8e-abasa", "dec-8e-aba5a",
+);
+
+%seen = ();
+foreach $d (<*/.>) {
+  $d =~ s:/[.]$::;
+  $t = $d;
+  $t =~ y/oisb/0158/;
+  if (defined($seen{$t})) {
+    next if $known{$d} eq $seen{$t};
+    warn "$d collides with $seen{$t}\n" if defined $seen{$t};
+  }
+  $seen{$t} = $d;
+}
+
+#
+# Also, complain if a directory appears with and without dashed
+# version numbers.
+foreach $d (sort keys %seen) {
+  next if $seen{$d} =~ /^maindec-08-dhta/;
+  next unless $d =~ /^(.*)([a-z])$/;
+  warn "$seen{$1} looks like $seen{$d}\n" if defined $seen{$1};
+}
+
