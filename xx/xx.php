@@ -106,12 +106,6 @@ a-08-qhicb-a-pb<br>
 a-08-qhlaa-g-pb<br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/a-x8-qiqab>a-x8-qiqab</a></td>
-<td>DEC/X8 APT-8 System</td>
-<td>
-a-x8-qiqab-a-pb<br>
-</td></tr>
-<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-00-bzz>dec-00-bzz</a></td>
 <td>Classifying and Documenting</td>
 <td>
@@ -5389,30 +5383,31 @@ ak-6255a / maindec-08-dhkad-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkaf>maindec-08-dhkaf</a></td>
-<td>PDP-8E INSTRUCTION TEST PART 1</td>
+<td>PDP-8E Instruction Test Part 1 (replaces 8e-d0ab)</td>
 <td>
 ac-6257a / maindec-08-dhkaf-a-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkaf/maindec-08-dhkaf-a-pb>ak-6259a / maindec-08-dhkaf-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkag>maindec-08-dhkag</a></td>
-<td>PDP-8E INSTRUCTION TEST PART 2</td>
+<td>PDP-8E Instruction Test Part 2 (obsoletes 8e-d08b)</td>
 <td>
 ac-6261a / maindec-08-dhkag-a-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkag/maindec-08-dhkag-a-pb>ak-6263a / maindec-08-dhkag-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkea>maindec-08-dhkea</a></td>
-<td>MEMORY EXERCISER</td>
+<td>EAE Memory Exerciser (replaces maindec-8e-dora)</td>
 <td>
 ac-6265b / maindec-08-dhkea-b-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkea/maindec-08-dhkea-b-pb>ak-6267b / maindec-08-dhkea-b-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkea/maindec-08-dhkea-a-d.pdf>ac-6265a / maindec-08-dhkea-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkea/maindec-08-dhkea-a-pb>ak-6267a / maindec-08-dhkea-a-pb</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkea/maindec-08-dhkea-e-pb>ak-6267e / maindec-08-dhkea-e-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkeb>maindec-08-dhkeb</a></td>
-<td>KE8-E EAE INSTRUCTION TEST 1</td>
+<td>KE8-E EAE Instruction Test 1 (replaces 8e-d0lb)</td>
 <td>
 ac-6269b / maindec-08-dhkeb-b-d<br>
 ak-6271b / maindec-08-dhkeb-b-pb<br>
@@ -5420,7 +5415,7 @@ maindec-08-dhkeb-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkec>maindec-08-dhkec</a></td>
-<td>KE8E (EAE) Instruction Test 2</td>
+<td>KE8-E EAE Instruction Test 2 (replaces 8e-d0mb)</td>
 <td>
 maindec-08-dhkec-a-pb<br>
 </td></tr>
@@ -5436,12 +5431,6 @@ ac-6277b / maindec-08-dhkga-b-d<br>
 <td>Double Buffered Async Interface Diagnostic</td>
 <td>
 maindec-08-dhkic-c-pb<br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkl>maindec-08-dhkl</a></td>
-<td>PDP-8/E Async Data Control</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkl/maindec-08-dhkld-pb>maindec-08-dhkld-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkla>maindec-08-dhkla</a></td>
@@ -5471,16 +5460,10 @@ maindec-08-dhklc-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkld>maindec-08-dhkld</a></td>
-<td>8E TELETYPE & KL8 ASYNCH CONTROL TEST</td>
+<td>8E Teletype & KL8 Asynch Control Test (formerly 8e-d2ac)</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkld/maindec-08-dhkld-a-d.pdf>ac-6294a / maindec-08-dhkld-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkld/maindec-08-dhkld-a-pb>ak-6296a / maindec-08-dhkld-a-pb</a><br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkm>maindec-08-dhkm</a></td>
-<td>PDP8E EXTENDED MEM. DATA & CHECKERBOARD</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkm/maindec-08-dhkma-d-pb>ak-6300d / maindec-08-dhkma-d-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma>maindec-08-dhkma</a></td>
@@ -5489,10 +5472,10 @@ maindec-08-dhklc-c-pb<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-d-d.pdf>ac-6298d / maindec-08-dhkma-d-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-c-d.pdf>ac-6298c / maindec-08-dhkma-c-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-a-d.pdf>ac-6298c / maindec-08-dhkma-a-d</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-d-pb>maindec-08-dhkma-d-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-c-pb>maindec-08-dhkma-c-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-b-pb>maindec-08-dhkma-b-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-a-pb>maindec-08-dhkma-a-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-d-pb>ak-6300d / maindec-08-dhkma-d-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-c-pb>ak-6300c / maindec-08-dhkma-c-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-b-pb>ak-6300b / maindec-08-dhkma-b-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkma/maindec-08-dhkma-a-pb>ak-6300a / maindec-08-dhkma-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhkmc>maindec-08-dhkmc</a></td>
@@ -5552,6 +5535,7 @@ maindec-08-dhlsa-c-pb<br>
 <td>
 ac-6328b / maindec-08-dhmca-b-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhmca/maindec-08-dhmca-b-pb>ak-6330b / maindec-08-dhmca-b-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhmca/maindec-08-dhmca-a-d.pdf>ac-6328a / maindec-08-dhmca-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhmca/maindec-08-dhmca-a-pb>ak-6330a / maindec-08-dhmca-a-pb</a><br>
 </td></tr>
 <tr>
@@ -5618,7 +5602,7 @@ maindec-08-dhpba-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhpca>maindec-08-dhpca</a></td>
-<td>HIGH SPEED READER/PUNCH TESTS</td>
+<td>High Speed Reader/PUnch Test (replaces 8e-d2ca)</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhpca/maindec-08-dhpca-a-d.pdf>ac-6368a / maindec-08-dhpca-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhpca/maindec-08-dhpca-a-pb>ak-6371a / maindec-08-dhpca-a-pb</a><br>
@@ -5716,11 +5700,11 @@ ak-6403c / maindec-08-dhtab-c-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda>maindec-08-dhtda</a></td>
 <td>TD8E DECtape Diagnostic</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-d-pb>ak-6408d / maindec-08-dhtda-d-pb</a><br>
 ac-6405b / maindec-08-dhtda-b-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-b-pb>ak-6408b / maindec-08-dhtda-b-pb</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-a-d.pdf>ac-6405a / maindec-08-dhtda-a-d</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-d-pb>maindec-08-dhtda-d-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-b-pb>maindec-08-dhtda-b-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-a-pb>maindec-08-dhtda-a-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-a-pb>ak-6408a / maindec-08-dhtda-a-pb</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-a-pb1>maindec-08-dhtda-a-pb1</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtda/maindec-08-dhtda-a-pb2>maindec-08-dhtda-a-pb2</a><br>
 </td></tr>
@@ -5744,13 +5728,12 @@ ac-6414b / maindec-08-dhtmb-b-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmc>maindec-08-dhtmc</a></td>
-<td>TM8-E DRIVE FUNCTION TIMER</td>
+<td>TM8-E Drive Function Timer</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmc/maindec-08-dhtmc-a-d.pdf>ac-6418a / maindec-08-dhtmc-a-d</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmc/maindec-08-dhtmc-a-pb>ak-6444a / maindec-08-dhtmc-a-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmc/maindec-08-dhtmc-a-pb>ak-6444a / maindec-08-dhtmc-a-pb</a><br>
-ac-6442b / maindec-08-dhtmc-b-d<br>
-ak-6444b / maindec-08-dhtmc-b-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmc/maindec-08-dhtmc-a-pb>ak-6420a / maindec-08-dhtmc-a-pb</a><br>
+ac-6418b / maindec-08-dhtmc-b-d<br>
+ak-6420b / maindec-08-dhtmc-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmd>maindec-08-dhtmd</a></td>
@@ -5771,17 +5754,11 @@ ak-6428b / maindec-08-dhtme-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmf>maindec-08-dhtmf</a></td>
-<td>TM8-E RANDOM EXERCISER</td>
+<td>TM8-E Random Exerciser</td>
 <td>
 ac-6430c / maindec-08-dhtmf-c-d<br>
 ak-6432c / maindec-08-dhtmf-c-pb<br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmf/maindec-08-dhtmf-b-pb>maindec-08-dhtmf-b-pb</a><br>
-</td></tr>
-<tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmk>maindec-08-dhtmk</a></td>
-<td>TM8E Drive Function Timer</td>
-<td>
-maindec-08-dhtmk-a-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtmf/maindec-08-dhtmf-b-pb>ak-6432b / maindec-08-dhtmf-b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtsa>maindec-08-dhtsa</a></td>
@@ -5801,7 +5778,8 @@ ak-6440b / maindec-08-dhtsb-b-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtsc>maindec-08-dhtsc</a></td>
 <td>TM8E/TS03 9 Track Data Reliability Test</td>
 <td>
-maindec-08-dhtsc-b-pb<br>
+ac-6442b / maindec-08-dhtsc-b-d<br>
+ak-6444b / maindec-08-dhtsc-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhtsd>maindec-08-dhtsd</a></td>
@@ -5832,12 +5810,6 @@ ak-6456a / maindec-08-dhtsf-a-pb<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvca/maindec-08-dhvca-a-pb>ak-6460a / maindec-08-dhvca-a-pb</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvt>maindec-08-dhvt</a></td>
-<td>VT50 TERMINAL ACCEPTANCE TEST</td>
-<td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvt/maindec-08-dhvtc-d-pb>ak-6472d / maindec-08-dhvtc-d-pb</a><br>
-</td></tr>
-<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvta>maindec-08-dhvta</a></td>
 <td>VT8-E DISPLAY TEST 1</td>
 <td>
@@ -5856,6 +5828,7 @@ ak-6468a / maindec-08-dhvtb-a-pb<br>
 <td>VT50 TERMINAL ACCEPTANCE TEST</td>
 <td>
 ac-6470d / maindec-08-dhvtc-d-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvtc/maindec-08-dhvtc-d-pb>ak-6472d / maindec-08-dhvtc-d-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dhvtd>maindec-08-dhvtd</a></td>
@@ -5915,7 +5888,7 @@ ak-6509c / maindec-08-didfa-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dikaa>maindec-08-dikaa</a></td>
-<td>Random TAD Test</td>
+<td>Random TAD Test (replaces 08-d0e)</td>
 <td>
 maindec-08-dikaa-b-pb<br>
 </td></tr>
@@ -6014,7 +5987,7 @@ ak-6565a / maindec-08-dilva-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-dipaa>maindec-08-dipaa</a></td>
-<td>PA60A/PA63/PA67A.PA68F TYPSETTING CONFIG TESTS</td>
+<td>PA60A/PA63/PA67A.PA68F TYPESETTING CONFIG TESTS</td>
 <td>
 ac-6567b / maindec-08-dipaa-b-d<br>
 ak-6569b / maindec-08-dipaa-b-pb<br>
@@ -7754,7 +7727,7 @@ maindec-x8-ddtca-a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhada>maindec-x8-dhada</a></td>
-<td>DEC/X8 ADRSTT</td>
+<td>DEC/X8 ADRSTT (replaces x8-dhada)</td>
 <td>
 maindec-x8-dhada-a-pb<br>
 </td></tr>
@@ -7824,13 +7797,13 @@ maindec-x8-dhtma-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhvca>maindec-x8-dhvca</a></td>
-<td>DEC/X8 VT8-E Display</td>
+<td>DEC/X8 VCAD8E VT8-E Display</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhvca/maindec-x8-dhvca-a-pb>maindec-x8-dhvca-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhvta>maindec-x8-dhvta</a></td>
-<td>DEC/X8 VT8-E Display Exerciser</td>
+<td>DEC/X8 VT8E Display Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhvta/maindec-x8-dhvta-a-pb>maindec-x8-dhvta-a-pb</a><br>
 </td></tr>
@@ -7923,14 +7896,14 @@ maindec-x8-dikae-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla>maindec-x8-dikla</a></td>
-<td>DEC/X8 KL8, PT08 TTY Exerciser</td>
+<td>DEC/X8 MULTTY KL8, PT08 TTY Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla/maindec-x8-dikla-a-d.pdf>maindec-x8-dikla-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla/maindec-x8-dikla-a-pb>maindec-x8-dikla-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklb>maindec-x8-diklb</a></td>
-<td>DEC/X8 KL8E/F/J Exerciser</td>
+<td>DEC/X8 TTYLUP KL8E/F/J Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklb/maindec-x8-diklb-b-d.pdf>maindec-x8-diklb-b-d</a><br>
 </td></tr>
@@ -7955,7 +7928,7 @@ maindec-x8-dilpa-a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dipaa>maindec-x8-dipaa</a></td>
-<td>DEC/X8 Typesetting Exerciser</td>
+<td>DEC/X8 TYPSET Typesetting Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dipaa/maindec-x8-dipaa-a-pb>maindec-x8-dipaa-a-pb</a><br>
 </td></tr>
@@ -8047,7 +8020,7 @@ maindec-x8-ditcb-a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-djfpa>maindec-x8-djfpa</a></td>
-<td>DEC/X8 Module "FPP8-A" FPP8-A Exerciser</td>
+<td>DEC/X8 Module FPP8A FPP8-A Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-djfpa/maindec-x8-djfpa-a-d.pdf>maindec-x8-djfpa-a-d</a><br>
 </td></tr>
@@ -8056,6 +8029,12 @@ maindec-x8-ditcb-a-d<br>
 <td>DEC/X8 FLOPPY (RX8E+RX01)</td>
 <td>
 maindec-x8-djrxa-f-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-qiqab>maindec-x8-qiqab</a></td>
+<td>DEC/X8 APT-8 System</td>
+<td>
+maindec-x8-qiqab-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-0690>xx-0690</a></td>
@@ -8134,14 +8113,14 @@ ak-6583e / xx-08-dirxa-e-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dirxb>xx-08-dirxb</a></td>
-<td>AIRXBF0 RX01/02 PERFORMANCE EXERCISER</td>
+<td>AIRXBF0 RX01/02 Performance Exerciser (replaces 08-dirxb)</td>
 <td>
 ac-6585f / xx-08-dirxb-f-d<br>
 ak-6587f / xx-08-dirxb-f-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-djkta>xx-08-djkta</a></td>
-<td>AJKTAB0 KT8-A MEMORY MANAGEMENT OPTION</td>
+<td>AJKTAB0 KT8-A Memory Management Option (replaces 08-djkta)</td>
 <td>
 ac-e505b / xx-08-djkta-b-d<br>
 ak-e506b / xx-08-djkta-b-pb<br>
@@ -8204,128 +8183,128 @@ ak-c178b / xx-08-dxada-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxcda>xx-08-dxcda</a></td>
-<td>AXCDAB0 DEC/X8 MOD CDP8</td>
+<td>AXCDAB0 DEC/X8 MOD CDP8 (replaces x8-dicda dhcda?)</td>
 <td>
 ac-c217b / xx-08-dxcda-b-d<br>
 ak-c219b / xx-08-dxcda-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxcra>xx-08-dxcra</a></td>
-<td>AXCRAB0 DEC/X8 MOD CARD 8E</td>
+<td>AXCRAB0 DEC/X8 MOD CARD8E (replaces x8-dhcra)</td>
 <td>
 ac-c180b / xx-08-dxcra-b-d<br>
 ak-c182b / xx-08-dxcra-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxdca>xx-08-dxdca</a></td>
-<td>AXDCAB0 DEC/X8 MOD DC02</td>
+<td>AXDCAB0 DEC/X8 MOD DC02 (replaces x8-didca)</td>
 <td>
 ac-c220b / xx-08-dxdca-b-d<br>
 ak-c222b / xx-08-dxdca-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxdcb>xx-08-dxdcb</a></td>
-<td>AXDCBB0 DEC/X8 MOD DC08A</td>
+<td>AXDCBB0 DEC/X8 MOD DC08A (replaces x8-didcb)</td>
 <td>
 ac-c223b / xx-08-dxdcb-b-d<br>
 ak-c225b / xx-08-dxdcb-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxdfa>xx-08-dxdfa</a></td>
-<td>AXDFAC0 DEC/X8 MOD DF32DS</td>
+<td>AXDFAC0 DEC/X8 MOD DF32DS (replaces x8-didfa)</td>
 <td>
 ac-c226c / xx-08-dxdfa-c-d<br>
 ak-c228c / xx-08-dxdfa-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxdka>xx-08-dxdka</a></td>
-<td>AXDKAE0 DEC/X8 MOD TIMERA</td>
+<td>AXDKAE0 DEC/X8 MOD TIMERA (replaces x8-didka)</td>
 <td>
 ac-c229e / xx-08-dxdka-e-d<br>
 ak-c231e / xx-08-dxdka-e-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxdpa>xx-08-dxdpa</a></td>
-<td>AXDPAA0 DP78 DATA AND REGISTER TEST</td>
+<td>AXDPAB0 DEC/X8 MOD DP8E (replaces x8-dhdpa)</td>
 <td>
-ac-e629a / xx-08-dxdpa-a-d<br>
-ak-e630a / xx-08-dxdpa-a-pb<br>
 ac-c184c / xx-08-dxdpa-b-d<br>
 ak-c183c / xx-08-dxdpa-b-pb<br>
+ac-e629a / xx-08-dxdpa-a-d<br>
+ak-e630a / xx-08-dxdpa-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxfpa>xx-08-dxfpa</a></td>
-<td>AXFPAB0 DEC/X8 MOD FPP8A</td>
+<td>AXFPAB0 DEC/X8 MOD FPP8A (replaces x8-djfpa)</td>
 <td>
 ac-c308b / xx-08-dxfpa-b-d<br>
 ak-c310b / xx-08-dxfpa-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxfpb>xx-08-dxfpb</a></td>
-<td>AXFPBB0 DEC/X8 MOD FPP12</td>
+<td>AXFPBB0 DEC/X8 MOD FPP12 (replaces x8-difpa)</td>
 <td>
 ac-c232b / xx-08-dxfpb-b-d<br>
 ak-c234b / xx-08-dxfpb-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxica>xx-08-dxica</a></td>
-<td>AXICAB0 DEC/X8 MOD ICSX8</td>
+<td>AXICAB0 DEC/X8 MOD ICSX8 (replaces x8-dhica)</td>
 <td>
 ac-c186b / xx-08-dxica-b-d<br>
 ak-c188b / xx-08-dxica-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkaa>xx-08-dxkaa</a></td>
-<td>AXKAAB0 DEC/X8 MOD MRI08A</td>
+<td>AXKAAB0 DEC/X8 MOD MRI08A (replaces x8-dikaa)</td>
 <td>
 ac-c235b / xx-08-dxkaa-b-d<br>
 ak-c237b / xx-08-dxkaa-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkab>xx-08-dxkab</a></td>
-<td>AXKABB0 DEC/X8 MOD RANMRI</td>
+<td>AXKABB0 DEC/X8 MOD RANMRI (replaces x8-dikab)</td>
 <td>
 ac-c238b / xx-08-dxkab-b-d<br>
 ak-c240b / xx-08-dxkab-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkac>xx-08-dxkac</a></td>
-<td>AXKACC0 DEC/X8 MOD OPRATE</td>
+<td>AXKACC0 DEC/X8 MOD OPRATE (replaces x8-dikac)</td>
 <td>
 ac-c241c / xx-08-dxkac-c-d<br>
 ak-c243c / xx-08-dxkac-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkad>xx-08-dxkad</a></td>
-<td>AXKADC0 DEC/X8 MOD NOTFUN</td>
+<td>AXKADC0 DEC/X8 MOD NOTFUN (replaces x8-dikad)</td>
 <td>
 ac-c244c / xx-08-dxkad-c-d<br>
 ak-c246c / xx-08-dxkad-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkea>xx-08-dxkea</a></td>
-<td>AXKEAC0 DEC/X8 MOD EAEALL</td>
+<td>AXKEAC0 DEC/X8 MOD EAEALL (replaces x8-dikea)</td>
 <td>
 ac-c247c / xx-08-dxkea-c-d<br>
 ak-c249c / xx-08-dxkea-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxked>xx-08-dxked</a></td>
-<td>AXKEDB0 DEC/X8 MOD EAEDP</td>
+<td>AXKEDB0 DEC/X8 MOD EAEDP (replaces x8-dhkea)</td>
 <td>
 ac-c189b / xx-08-dxked-b-d<br>
 ak-c191b / xx-08-dxked-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkla>xx-08-dxkla</a></td>
-<td>AXKLAB0 DEC/X8 MOD MULTTY</td>
+<td>AXKLAB0 DEC/X8 MOD MULTTY (replaces x8-dikla)</td>
 <td>
 ac-c250b / xx-08-dxkla-b-d<br>
 ak-c252b / xx-08-dxkla-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxklb>xx-08-dxklb</a></td>
-<td>AXKLBC0 DEC/X8 MOD TTYLUP</td>
+<td>AXKLBC0 DEC/X8 MOD TTYLUP (replaces x8-diklb)</td>
 <td>
 ac-c253c / xx-08-dxklb-c-d<br>
 ak-c255c / xx-08-dxklb-c-pb<br>
@@ -8339,7 +8318,7 @@ ak-c258b / xx-08-dxklc-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxkld>xx-08-dxkld</a></td>
-<td>AXKLDB0 DEC/X8 MOD MSLULP</td>
+<td>AXKLDB0 DEC/X8 MOD MSLULP (replaces x8-dikld)</td>
 <td>
 ac-c260b / xx-08-dxkld-b-d<br>
 ak-c262b / xx-08-dxkld-b-pb<br>
@@ -8353,14 +8332,14 @@ ak-c694b / xx-08-dxlaa-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxlda>xx-08-dxlda</a></td>
-<td>AXLDAB0 DEC/X8 MOD LPD8</td>
+<td>AXLDAB0 DEC/X8 MOD LPD8 (replaces x8-dilda)</td>
 <td>
 ac-c263b / xx-08-dxlda-b-d<br>
 ak-c265b / xx-08-dxlda-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxlpa>xx-08-dxlpa</a></td>
-<td>AXLPAC0 DEC/X8 MOD PRNTR</td>
+<td>AXLPAC0 DEC/X8 MOD PRNTR (replaces x8-dilpa)</td>
 <td>
 ac-c267c / xx-08-dxlpa-c-d<br>
 ak-c269c / xx-08-dxlpa-c-pb<br>
@@ -8374,24 +8353,31 @@ ak-c195c / xx-08-dxlqa-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxpaa>xx-08-dxpaa</a></td>
-<td>AXPAAB0 DEC/X8 MOD TYPESET</td>
+<td>AXPAAB0 DEC/X8 MOD TYPSET (replaces x8-dipaa)</td>
 <td>
 ac-c270b / xx-08-dxpaa-b-d<br>
 ak-c272b / xx-08-dxpaa-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxpca>xx-08-dxpca</a></td>
-<td>AXPCAB0 DEC/X8 MOD HSRHSP</td>
+<td>AXPCAB0 DEC/X8 MOD HSRHSP (replaces x8-dipca)</td>
 <td>
 ac-c273b / xx-08-dxpca-b-d<br>
 ak-c275b / xx-08-dxpca-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxqab>xx-08-dxqab</a></td>
-<td>AXQABE0 DEC/X8 USERS GUIDE</td>
+<td>AXQABE0 DEC/X8 USERS GUIDE (replaces x8-diqab)</td>
 <td>
 ac-c276e / xx-08-dxqab-e-d<br>
 ak-c278e / xx-08-dxqab-e-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxqad>xx-08-dxqad</a></td>
+<td>AXQADE0 DEC/X8 Detailed Description (replaces x8-diqad)</td>
+<td>
+ac-c282e / xx-08-dxqab-e-d<br>
+ah-c283e / xx-08-dxqab-e-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxqaf>xx-08-dxqaf</a></td>
@@ -8400,22 +8386,29 @@ ak-c278e / xx-08-dxqab-e-pb<br>
 ac-c290n / xx-08-dxqaf-n-d<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxqqb>xx-08-dxqqb</a></td>
+<td>AXQQAB0 DEC/X8 APT-8 System (replaces x8-qiqab)</td>
+<td>
+ac-c612b / xx-08-dxqqb-b-d<br>
+ak-c613b / xx-08-dxqqb-b-pb<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxrfa>xx-08-dxrfa</a></td>
-<td>AXRFAB0 DEC/X8 MOD RF08DS</td>
+<td>AXRFAB0 DEC/X8 MOD RF08DS (replaces x8-dirfa)</td>
 <td>
 ac-c293b / xx-08-dxrfa-b-d<br>
 ak-c295b / xx-08-dxrfa-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxrka>xx-08-dxrka</a></td>
-<td>AXRKAB0 DEC/X8 MOD RK8DS</td>
+<td>AXRKAB0 DEC/X8 MOD RK8DS (replaces x8-dirka)</td>
 <td>
 ac-c296b / xx-08-dxrka-b-d<br>
 ak-c298b / xx-08-dxrka-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxrkb>xx-08-dxrkb</a></td>
-<td>AXRKBC0 DEC/X8 MOD RK8EDS</td>
+<td>AXRKBC0 DEC/X8 MOD RK8EDS (replaces x8-dhrka)</td>
 <td>
 ac-c196c / xx-08-dxrkb-c-d<br>
 ak-c198c / xx-08-dxrkb-c-pb<br>
@@ -8429,7 +8422,7 @@ ak-c678b / xx-08-dxrla-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxrxb>xx-08-dxrxb</a></td>
-<td>AXRXBC0 DEC/X8 MOD FLOPPY</td>
+<td>AXRXBC0 DEC/X8 MOD FLOPPY (replaces x8-dhrxa)</td>
 <td>
 ac-c199c / xx-08-dxrxb-c-d<br>
 ak-c201c / xx-08-dxrxb-c-pb<br>
@@ -8443,63 +8436,63 @@ ak-e591a / xx-08-dxrxc-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtaa>xx-08-dxtaa</a></td>
-<td>AXTAAC0 DEC/X8 MOD TA8ECS</td>
+<td>AXTAAC0 DEC/X8 MOD TA8ECS (replaces x8-dhtaa)</td>
 <td>
 ac-c202c / xx-08-dxtaa-c-d<br>
 ak-c204c / xx-08-dxtaa-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtc>xx-08-dxtc</a></td>
-<td>AXTCBD0 DEC/X8 MOD TC58MT</td>
+<td>AXTCBD0 DEC/X8 MOD TC58MT (replaces x8-ditcb)</td>
 <td>
 ak-c304d / xx-08-dxtcb-d<br>
 ak-c304d / xx-08-dxtcb-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtca>xx-08-dxtca</a></td>
-<td>AXTCAC0 DEC/X8 MOD TC01DT</td>
+<td>AXTCAC0 DEC/X8 MOD TC01DT (replaces x8-ditca)</td>
 <td>
 ac-c299c / xx-08-dxtca-c-d<br>
 ak-c301c / xx-08-dxtca-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtcc>xx-08-dxtcc</a></td>
-<td>AXTCCB0 DEC/X8 MOD TC12LT</td>
+<td>AXTCCB0 DEC/X8 MOD TC12LT (replaces x8-ddtca)</td>
 <td>
 ac-c173b / xx-08-dxtcc-b-d<br>
 ak-c175b / xx-08-dxtcc-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtda>xx-08-dxtda</a></td>
-<td>AXTDAC0 DEC/X8 MOD TD8EDT</td>
+<td>AXTDAC0 DEC/X8 MOD TD8EDT (replaces x8-dhtda)</td>
 <td>
 ac-c205c / xx-08-dxtda-c-d<br>
 ak-c207c / xx-08-dxtda-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxtma>xx-08-dxtma</a></td>
-<td>AXTMAC0 DEC/X8 MOD TM8EMT</td>
+<td>AXTMAC0 DEC/X8 MOD TM8EMT (replaces x8-dhtma)</td>
 <td>
 ac-c208c / xx-08-dxtma-c-d<br>
 ak-c210c / xx-08-dxtma-c-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxvca>xx-08-dxvca</a></td>
-<td>AXVCAB0 DEC/X8 MOD VCAD8E</td>
+<td>AXVCAB0 DEC/X8 MOD VCAD8E (replaces x8-dhvca)</td>
 <td>
 ac-c211b / xx-08-dxvca-b-d<br>
 ak-c213b / xx-08-dxvca-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxvta>xx-08-dxvta</a></td>
-<td>AXVTAB0 DEC/X8 MOD VT8E</td>
+<td>AXVTAB0 DEC/X8 MOD VT8E (replaces x8-dhvta)</td>
 <td>
 ac-c214b / xx-08-dxvta-b-d<br>
 ak-c216b / xx-08-dxvta-b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/xx-08-dxxya>xx-08-dxxya</a></td>
-<td>AXXYAB0 DEC/X8 MOD PLOTTER</td>
+<td>AXXYAB0 DEC/X8 MOD PLOTTER (replaces x8-dixya)</td>
 <td>
 ac-c305b / xx-08-dxxya-b-d<br>
 ak-c307b / xx-08-dxxya-b-pb<br>
