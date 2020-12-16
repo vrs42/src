@@ -1974,6 +1974,24 @@ dec-12-zw8a-d<br>
 dec-12-zw9a-d<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-asz>dec-14-asz</a></td>
+<td>PAL-14 (V3)</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-asz/dec-14-aszb-pb>dec-14-aszb-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-edz>dec-14-edz</a></td>
+<td>SIM-14</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-edz/dec-14-edzc-pb>dec-14-edzc-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-eiz>dec-14-eiz</a></td>
+<td>SET-14</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-eiz/dec-14-eiza-pb>dec-14-eiza-pb</a><br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-ggz>dec-14-ggz</a></td>
 <td>PDP-14 Users Manual</td>
 <td>
@@ -1989,8 +2007,9 @@ dec-12-zw9a-d<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hgz>dec-14-hgz</a></td>
 <td>PDP-14 Maintenance Manual</td>
 <td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hgz/dec-14-hgza-d.pdf>dec-14-hgza-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hgz/dec-14-hgzb-d.pdf>dec-14-hgzb-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hgz/dec-14-hgza-d1.pdf>dec-14-hgza-d1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hgz/dec-14-hgza-d2.pdf>dec-14-hgza-d2</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-hsmaa>dec-14-hsmaa</a></td>
@@ -2005,10 +2024,17 @@ dec-12-zw9a-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-isuma/dec-14-isuma-b-d.pdf>dec-14-isuma-b-d</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-kzz>dec-14-kzz</a></td>
+<td>BOOL-14</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-kzz/dec-14-kzze-pb>dec-14-kzze-pb</a><br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-lzp>dec-14-lzp</a></td>
 <td>LOAD-14</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-lzp/dec-14-lzpb-d.pdf>dec-14-lzpb-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-lzp/dec-14-lzpb-pb>dec-14-lzpb-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-14-mwz>dec-14-mwz</a></td>
@@ -3951,7 +3977,8 @@ dec-t8-mrfc-d<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-t8-pzf>dec-t8-pzf</a></td>
 <td>EDUSystem 50 COPY</td>
 <td>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-t8-pzf/dec-t8-pzfb-ps>dec-t8-pzfb-ps</a><br>
+dec-t8-pzfb-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-t8-pzf/dec-t8-pzfb-pb>dec-t8-pzfb-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-t8-yrz>dec-t8-yrz</a></td>
@@ -6312,7 +6339,7 @@ maindec-08-dkrxa-a-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-lba>maindec-08-lba</a></td>
 <td>BINary Loader</td>
 <td>
-maindec-08-lbaa-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-lba/maindec-08-lbaa-pm>maindec-08-lbaa-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d0a>maindec-12-d0a</a></td>
@@ -6370,14 +6397,14 @@ maindec-12-d0ka-pb<br>
 <td>FPP-12 TRACE</td>
 <td>
 ac-9739c / maindec-12-d0lc-d<br>
-ak-9741c / maindec-12-d0lc-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d0l/maindec-12-d0lc-pb>ak-9741c / maindec-12-d0lc-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d0m>maindec-12-d0m</a></td>
 <td>FPP-12 Instruction Test 2A</td>
 <td>
 ac-9743c / maindec-12-d0mc-d<br>
-ak-9745c / maindec-12-d0mc-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d0m/maindec-12-d0mc-pb>ak-9745c / maindec-12-d0mc-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d0n>maindec-12-d0n</a></td>
@@ -6604,6 +6631,7 @@ maindec-12-d7ah-uo<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d7c/maindec-12-d7cd-d.pdf>maindec-12-d7cd-d</a><br>
 maindec-12-d7cd-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d7c/maindec-12-d7cb-pb>maindec-12-d7cb-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-d7g>maindec-12-d7g</a></td>
@@ -6738,7 +6766,7 @@ maindec-12-daexa-a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpa>maindec-12-dafpa</a></td>
-<td>FPP-12 EXERCISER</td>
+<td>FPP-12 EXERCISER (replaces 12-d0qa)</td>
 <td>
 ac-9910b / maindec-12-dafpa-b-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpa/maindec-12-dafpa-b-pb>ak-9912b / maindec-12-dafpa-b-pb</a><br>
@@ -6747,14 +6775,14 @@ ac-9910a / maindec-12-dafpa-a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpb>maindec-12-dafpb</a></td>
-<td>FPP-12 INSTRUCTION TEST 2C</td>
+<td>FPP-12 INSTRUCTION TEST 2C (replaces 12-d0ob)</td>
 <td>
 ac-9914a / maindec-12-dafpb-a-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpb/maindec-12-dafpb-a-pb>ak-9916a / maindec-12-dafpb-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpc>maindec-12-dafpc</a></td>
-<td>FPP-12 ADDRESS TEST</td>
+<td>FPP-12 ADDRESS TEST (replaces 12-d0pc)</td>
 <td>
 ac-9918a / maindec-12-dafpc-a-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-12-dafpc/maindec-12-dafpc-a-pb>ak-9920a / maindec-12-dafpc-a-pb</a><br>
@@ -6809,18 +6837,21 @@ ak-a822a / maindec-12-dkvta-a-pb<br>
 <td>VER-14</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d1a/maindec-14-d1ab-d.pdf>maindec-14-d1ab-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d1a/maindec-14-d1ab-pb>maindec-14-d1ab-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7a>maindec-14-d7a</a></td>
 <td>TEST-14</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7a/maindec-14-d7ab-d.pdf>maindec-14-d7ab-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7a/maindec-14-d7ab-pb>maindec-14-d7ab-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7l>maindec-14-d7l</a></td>
 <td>TEST-14L</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7l/maindec-14-d7la-d.pdf>maindec-14-d7la-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d7l/maindec-14-d7la-pb>maindec-14-d7la-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-14-d8a>maindec-14-d8a</a></td>

@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+# Rename some diagnostics.
+
+# Here is where to look for .bn, .dg, and .sv files.
+$dhome="$ENV{'HOME'}/pdp8/Images/diag-games-kermit.0";
+
+open(INPUT, "diag.names") || die "diag.names: $!";
+while (<INPUT>) {
+  next if /^#/; # Comment
+  y/A-Z/a-z/; # Lower case
+  die $_ unless /^(\S+)\t(\S*)\t/;
+  next unless $2;
+  $product{$1} = $2;
+}
+
+foreach $os8 (sort keys %product) {
+  $product = $product{$os8};
+  # Now, concoct a suitable new name
+  $new = $os8;
+  $new =~ s/^$product//;
+  $new =~ s/^8//;
+  $new =~ s/-//;
+  $new = "maindec-$product-$new";
+  $ver = '';
+  $ver = $1 if $new =~ s/([a-z])$//;
+  $os8 =~ s/-//;
+  $ext = undef;
+  $ext = ".dg" if -f "$dhome/$os8.dg";
+  $ext = ".sv" if -f "$dhome/$os8.sv";
+  $ext = ".bn" if -f "$dhome/$os8.bn";
+  next unless defined $ext;
+  next if -f "$new/$new-$ver-pb";
+  print "mkdir $new\n" unless -d $new;
+  print "cp $dhome/$os8$ext $new/$new-$ver.sv\n";
+  $count++;
+}
+warn "$count files found\n";
+exit 0;
