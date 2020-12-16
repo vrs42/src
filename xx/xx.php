@@ -6861,46 +6861,79 @@ ak-a822a / maindec-12-dkvta-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-1>maindec-801-1</a></td>
-<td>PDP-8 INSTRUCTION TEST PART 1</td>
+<td>PDP-8 Instruction Test Part 1</td>
 <td>
-ac-b187a / maindec-801-1-d<br>
-ak-b189a / maindec-801-1-pm<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-1/maindec-801-1-d.pdf>ac-b187a / maindec-801-1-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-1/maindec-801-1-pm>ak-b189a / maindec-801-1-pm</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3>maindec-801-3</a></td>
-<td>Instruction Test, part 3A (EAE Type 182)</td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2a>maindec-801-2a</a></td>
+<td>PDP-8 Instruction Test, Part 2A</td>
 <td>
-maindec-801-3a-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2a/maindec-801-2a-d.pdf>maindec-801-2a-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2a/maindec-801-2a-pb>maindec-801-2a-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2b>maindec-801-2b</a></td>
+<td>PDP-8 Instruction Test - Part 2B</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2b/maindec-801-2b-pb>maindec-801-2b-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2c>maindec-801-2c</a></td>
+<td>JMS and JMP Test</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-2c/maindec-801-2c-pb>maindec-801-2c-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3a>maindec-801-3a</a></td>
+<td>PDP-8 Instruction Test, part 3A (EAE Type 182)</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3a/maindec-801-3a-d.pdf>maindec-801-3a-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-802>maindec-802</a></td>
+<td>PDP-8 Memory Checkerboard</td>
+<td>
+maindec-802-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-802/maindec-802-pm1>maindec-802-pm1</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-802/maindec-802-pm2>maindec-802-pm2</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-803>maindec-803</a></td>
+<td>PDP-8 Memory Address Test</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-803/maindec-803-pm>maindec-803-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-810>maindec-810</a></td>
 <td>PDP-8 Teletype Reader Test</td>
 <td>
-maindec-810-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-810/maindec-810-pm>maindec-810-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-811>maindec-811</a></td>
 <td>PDP-8 High Speed Reader Test</td>
 <td>
-maindec-811-pb<br>
+maindec-811-pm<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-812>maindec-812</a></td>
 <td>TTY Punch Test</td>
 <td>
-maindec-812-pm<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-812/maindec-812-pm>maindec-812-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-814>maindec-814</a></td>
 <td>PDP-8 Teleprinter Test</td>
 <td>
-maindec-814-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-814/maindec-814-pm>maindec-814-pm</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-817>maindec-817</a></td>
 <td>PDP-8 High Speed Punch Test</td>
 <td>
-maindec-817-pb<br>
+maindec-817-pm<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-820-1>maindec-820-1</a></td>
@@ -6918,27 +6951,41 @@ maindec-820-2-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-825>maindec-825</a></td>
 <td>680 Static Test</td>
 <td>
-maindec-825-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-825/maindec-825-d.pdf>maindec-825-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-825/maindec-825-pb>maindec-825-pb</a><br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826>maindec-826</a></td>
-<td>680 Character Exerciser</td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826a>maindec-826a</a></td>
+<td>680 8-Bit Character Exerciser</td>
 <td>
-maindec-826a-pb<br>
-maindec-826b-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826a/maindec-826a-d.pdf>maindec-826a-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826a/maindec-826a-pb>maindec-826a-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826b>maindec-826b</a></td>
+<td>680 5-Bit Character Exerciser</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826b/maindec-826b-d.pdf>maindec-826b-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-826b/maindec-826b-pb>maindec-826b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-827>maindec-827</a></td>
 <td>580 System Compiler and Utility Routines</td>
 <td>
-maindec-827-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-827/maindec-827-pb>maindec-827-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-828>maindec-828</a></td>
 <td>LT08 TELEPRINTER TEST</td>
 <td>
 ac-b787a / maindec-828-d<br>
-ak-b789a / maindec-828-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-828/maindec-828-pb>ak-b789a / maindec-828-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-829>maindec-829</a></td>
+<td>Memory Power On/Off Test</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-829/maindec-829-pb>maindec-829-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-831>maindec-831</a></td>
@@ -6974,7 +7021,8 @@ maindec-835-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839>maindec-839</a></td>
 <td>Parity Option Test</td>
 <td>
-maindec-839-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839/maindec-839-d.pdf>maindec-839-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839/maindec-839-pb>maindec-839-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-844>maindec-844</a></td>
@@ -6987,7 +7035,7 @@ ak-b792a / maindec-844-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-845>maindec-845</a></td>
 <td>PPD-8 A/D Converter</td>
 <td>
-maindec-845-d<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-845/maindec-845-d.pdf>maindec-845-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-89-d1b1>maindec-89-d1b1</a></td>
