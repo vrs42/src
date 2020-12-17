@@ -4669,7 +4669,7 @@ maindec-08-d0ba-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-d1a>maindec-08-d1a</a></td>
-<td>MEMORY POWER ON/OFF TEST</td>
+<td>Memory Power On/Off Test (replaces maindec-829)</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-d1a/maindec-08-d1ac-d.pdf>ac-5822c / maindec-08-d1ac-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-d1a/maindec-08-d1ac-pb>ak-5824c / maindec-08-d1ac-pb</a><br>
@@ -6887,9 +6887,15 @@ ak-a822a / maindec-12-dkvta-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3a>maindec-801-3a</a></td>
-<td>PDP-8 Instruction Test, part 3A (EAE Type 182)</td>
+<td>PDP-8 Instruction Test (EAE) Part 3A</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3a/maindec-801-3a-d.pdf>maindec-801-3a-d</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-801-3b>maindec-801-3b</a></td>
+<td>PDP-8 Instruction Test (EAE) Part 3B</td>
+<td>
+maindec-801-3b-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-802>maindec-802</a></td>
@@ -6985,13 +6991,20 @@ ac-b787a / maindec-828-d<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-829>maindec-829</a></td>
 <td>Memory Power On/Off Test</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-829/maindec-829-d.pdf>maindec-829-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-829/maindec-829-pb>maindec-829-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-830>maindec-830</a></td>
+<td>Type 30G Symbol Generator Exerciser</td>
+<td>
+maindec-830-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-831>maindec-831</a></td>
 <td>DECtape Maintenance Package</td>
 <td>
-maindec-831-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-831/maindec-831-pb>maindec-831-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-832>maindec-832</a></td>
@@ -7023,6 +7036,12 @@ maindec-835-pb<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839/maindec-839-d.pdf>maindec-839-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-839/maindec-839-pb>maindec-839-pb</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-843>maindec-843</a></td>
+<td>Type 30 N, G Display Exerciser</td>
+<td>
+maindec-843-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-844>maindec-844</a></td>
