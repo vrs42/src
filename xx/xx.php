@@ -7517,8 +7517,8 @@ maindec-8e-xbina-a-pb<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01c-d.pdf>ac-b911c / maindec-8i-d01c-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01c-pb>ak-b913c / maindec-8i-d01c-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01b-d.pdf>maindec-8i-d01b-d</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01b-pb>maindec-8i-d01b-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01b-d.pdf>ac-b911b / maindec-8i-d01b-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d01/maindec-8i-d01b-pb>ak-b913c / maindec-8i-d01b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d02>maindec-8i-d02</a></td>
@@ -7583,11 +7583,11 @@ ac-b931a / maindec-8i-d4ca-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d6a>maindec-8i-d6a</a></td>
-<td>AX08 DIAGNOSTIC</td>
+<td>AX08 Diagnostic</td>
 <td>
 ac-b938c / maindec-8i-d6ac-d<br>
-ak-b940c / maindec-8i-d6ac-pb<br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d6a/maindec-8i-d6ab-d.pdf>maindec-8i-d6ab-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d6a/maindec-8i-d6ac-pb>ak-b940c / maindec-8i-d6ac-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d6a/maindec-8i-d6ab-d.pdf>ac-b938b / maindec-8i-d6ab-d</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d6c>maindec-8i-d6c</a></td>
@@ -7602,8 +7602,8 @@ ak-b940c / maindec-8i-d6ac-pb<br>
 <td>
 ac-b953e / maindec-8i-d8ae-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8i-d8a/maindec-8i-d8ae-pb>ak-b956e / maindec-8i-d8ae-pb</a><br>
-maindec-8i-d8ad-d<br>
-maindec-8i-d8ad-pb<br>
+ac-b953d / maindec-8i-d8ad-d<br>
+ak-b956d / maindec-8i-d8ad-pb<br>
 ac-b949c / maindec-8i-d8ac-d<br>
 ak-b952c / maindec-8i-d8ac-pb<br>
 </td></tr>
@@ -7642,12 +7642,12 @@ ak-b979a / maindec-8i-d8fa-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a>maindec-8l-d0a</a></td>
-<td>PDP-8L MEMORY PROTECT TEST</td>
+<td>PDP-8L Memory Protect Test</td>
 <td>
 ac-b986b / maindec-8l-d0ab-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a/maindec-8l-d0ab-pb>ak-b989b / maindec-8l-d0ab-pb</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a/maindec-8l-d0aa-d.pdf>maindec-8l-d0aa-d</a><br>
-<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a/maindec-8l-d0aa-pb>maindec-8l-d0aa-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a/maindec-8l-d0aa-d.pdf>ac-b986a / maindec-8l-d0aa-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d0a/maindec-8l-d0aa-pb>ak-b989a / maindec-8l-d0aa-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d1g>maindec-8l-d1g</a></td>
