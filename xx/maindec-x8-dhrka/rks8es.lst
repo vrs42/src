@@ -1,0 +1,989 @@
+   1               
+   2               /MAINDEC-X8-DHRK*-*-L  "DEC/X8"  RKS8ES
+   3               
+   4               /RKS8E DISK SYSTEM MODULE FOR DEC/X8
+   5               
+   6               /COPYRIGHT 1972, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.
+   7               
+   8               /THIS MODULE OPERATIONAL ON PDP-8,8/I,8/L,8/E,8/M AND PDP-12 WITH AN RKS8E DISK CONTROL.
+   9               
+  10                       /PRG:
+  11               
+  12               
+  13                       /BUILDER INSTRUCTIOUS:
+  14               
+  15                       /1.PRIORITY:  NOT CRITICAL, BUT SHOULD BE ASSIGNED NEAR LEVEL 0
+  16                       /TO PROVIDE MAXIMUM DATA BREAK INTERACTION.
+  17               
+  18                       /2.JOB SLOT:  4 PAGES REQUIRED, SLOT JX1 OR JX2.
+  19               
+  20               
+  21                       /INITIALIZER INSTRUCTIONS:
+  22               
+  23               
+  24               /CODE   DEFINED                 RESPONSE                                PRESET
+  25               
+  26               /A:     LOWEST DISK TO USE      0-7                                     0
+  27               /B:     HIGHEST DISKTO USE      0-7                                     0
+  28               /C:     TYPE OF DATA            0=RANDOM; 1  NNNN=CONSTANT              RANDOM
+  29               /D:     ADDRESSING              0=RANDOM; 1  NNNN  NNNN=CONSTANT*       RANDOM
+  30               /                               *NOTE: THE MAX ADDRESS ACCEPTED BY THIS
+  31               /                               MODULE IS 010DDD  4536 WHERE (DDD) IS
+  32               /                               THE DISK NUMBER.
+  33               /E:     LENGTH OF TRANSFER      0=RANDOM; 1  NNNN=CONSTANT              RANDOM
+  34               /                               WHERE NNNN MAY BE1 TO 1000.
+  35               /F:     BUFFER ASSIGNMENT       0=RANDOM; 1  NNNN=CONSTANT              RANDOM
+  36               
+  37               
+  38               
+  39               /SPECIAL USER MODIFICATIONS VIA RELATIVE "^O" FACILITY.
+  40               
+  41                       /1."REPORT" MAY BECHANGED FROM 3777 TO XXXX WHERE ANY
+  42                       /  CLEAR BITS INHIBIT ANERROR REPORT FOR THAT CONDITION.
+  43               
+  44                       /2."PARITY" MAY BE CHANGED FROM3767 TO 3777 TO INHIBIT
+  45                       /  DATA CHECKINGAFTER A CRC ERROR.
+  46               
+  47               
+  48               /REPORT SYMBOL DEFINITIONS:
+  49               
+  50                       /1.REFER TO MODULE TABLE IN THIS LISTING FOR DESCRIPTION
+  51                       /  OF CNTR, SA:-SG:, AND DA:-DC:
+  52               
+  53                       /2."CODE" DEFINITIONS:
+  54               
+  55                               /CODE   DEFINED
+  56                               /0002   READ
+  57                               /0004   WRITE
+  58                               /001X   FALSE DATA ERROR (BAD CHECKSUM BUT
+  59                               /       DATA LOOKED GOOD ON WORD BY WORD CHECK.)
+  60                               /0012   THIS TYPE OF ERROR MAY BE REPORTED AFTER
+  61                               /       A CRC ERROR AND INDICATES THE FOLLOWING:
+  62                               /       1. THE CRC ERROR STOPPED THE TRANSFER PRIOR TO
+  63                               /       COMPLETION AND THEREBY CAUSED A SOFTWARE
+  64                               /       SUMCHECK ERROR; 2. THE DATA THAT WAS READ IN
+  65                               /       WAS GOOD.
+  66               
+  67               
+  68               
+  69                       /RKS8E STANDARDS
+  70               
+  71                       /DEVICE CODE: 74, 75
+  72               
+  73               /RKS8E IOT DEFINITIONS
+  74               
+  75               DSKP=6741       /PC+1->PC IF TD OR ER
+  76               DCLR=6742       /AC=0000        /0->AC; 0->SR
+  77                               /AC=0001        /0->AC; 0->CONTROL
+  78                               /AC=0002        /0->AC; RECALIBRATE SELECTED DRIVE
+  79               DLAG=6743       /AC->DAR; GO; 0->AC
+  80               DLCA=6744       /AC->CA; 0->AC
+  81               DRST=6745       /SR->AC
+  82               DLDC=6746       /AC->CM; 0->AC
+  83               DMAN=6747       /AC BIT         /FUNCTION
+  84                               /0              /ENTER MAINTENANCE
+  85                               /1              /ENABLE SHIFT TO LOWER BUFFER
+  86                               /2              /NOT USED IN THIS MODULE
+  87                               /3              /SHIFT CMTO LOWER BUFFER
+  88                               /4              /SHIFT SUR/SEC TO LOWER BUFFER
+  89                               /5              /NOT USED IN THIS MODULE
+  90                               /6              /NOT USED IN THIS MODULE
+  91                               /7              /0->AC; LOWER BUFFER TO AC
+  92                               /8-11           /NOT USED IN THIS MODLULE
+  93               DCWC=6752
+  94               DLWC=6753
+  95               DRWC=6755
+  96               
+  97               
+  98               /MODULE TABLE
+  99               
+ 100               
+ 101                       *200
+ 102               
+ 103 000200  0000  JOB,    0                               /JOB NUMBER
+ 104 000201  2213  TEXT1,  TEXT    "RKS8ES"                /DEVICE NAME
+     000202  2370  
+     000203  0523  
+     000204  0000  
+ 105 000205  0410          TEXT    "DHRK*-*"               /MODULE DESIGNATOR
+     000206  2213  
+     000207  5255  
+     000210  5200  
+ 106 000211  0000  HOMEDF, 0                               /DF=IF
+ 107 000212  7402          HLT/CDF
+ 108 000213  5611          JMP I   HOMEDF
+ 109 000214  6202  INTACK, CIF     00                      /ACKNOWLEDGE INTERRUPT.
+ 110 000215  4426          JMS I   IHRETP
+ 111 000216  7777          -1                              /PRIORITY
+ 112 000217  7777  KILL,   -1                              /COMMAND TO KILL JOB.
+ 113 000220  7777  KILLED, -1                              /MODULE SETS TO -1 WHEN JOB KILLED.
+ 114 000221  0000  CNTR,   0                               /NUMBER OF EXERCISER LOOP PASSES.
+ 115 000222  0000  ERROR,  0                               /ERROR CALL.
+ 116 000223  3234          DCA     .+11
+ 117 000224  7604          LAS
+ 118 000225  0073          AND Z   K4
+ 119 000226  7440          SZA
+ 120 000227  3217          DCA     KILL
+ 121 000230  4211          JMS     HOMEDF
+ 122 000231  6002          IOF
+ 123 000232  6202          CIF     00
+ 124 000233  4461          JMS I   ERRP
+ 125 000234  0000          0
+ 126 000235  5622          JMP I   ERROR
+ 127 000236  0000  CODE,   0                               /ERROR CODE.
+ 128               
+ 129 000237  7771          -7                      /STATUS WORD TALLY
+ 130 000240  0000  ERRSA,  0                       /STATUS REGISTER
+ 131 000241  0000  ERRSB,  0                       /BUFFER DESIGNATOR
+ 132 000242  0000  ERRSC,  0                       /INITIAL SOFTWAREWORDCOUNT
+ 133 000243  0000  ERRSD,  0                       /FINAL SOFTWARE WORDCOUNT
+ 134 000244  0000  ERRSE,  0                       /INITIAL CA
+ 135 000245  0000  ERRSF,  0                       /INITIAL CMAND TRK0
+ 136 000246  0000  ERRSG,  0                       /INITIAL DAR (TRK/SUR/SEC)
+ 137 000247  7775          -3                              /DATA ERROR ENTRY TALLY.
+ 138 000250  0000  ERRDA,  0                               /BUFFER ADDRESS
+ 139 000251  0000  ERRDB,  0                               /GOOD DATA
+ 140 000252  0000  ERRDC,  0                               /BAD DATA
+ 141               
+ 142               /END OF MODULE TABLE
+ 143               
+ 144               /INTERRUPT SERVICE - IMMEDIATE ONLY
+ 145               
+ 146 000253  0000  INT,    0                       /MONITOR JMS HERE
+ 147 000254  2274          ISZ     RENTRY          /EXPECTED INTERRUPT?
+ 148 000255  5266          JMP     INT1            /NO
+ 149 000256  6745  DC74A,  DRST                    /READ STATUS
+ 150 000257  4211          JMS     HOMEDF          /NO. DF=IF
+ 151 000260  3240          DCA     ERRSA           /SAVE STATUS
+ 152 000261  6755  DC75B,  DRWC                    /READ THEWORD COUNT
+ 153 000262  3243          DCA     ERRSD           /SAVEIT INERRSD
+ 154 000263  6742  DC74B,  DCLR                    /CLEAR STATUS
+ 155 000264  1377          TAD     (DEFSRV         /SET DEFERREDSERVICE
+ 156 000265  5214          JMP     INTACK          /ACKNOWLEDGE INTERRUPT
+ 157 000266  6214  INT1,   RDF                     /UNEXPECTED INTERRUPT.
+ 158 000267  1020          TAD Z   KCIFDF
+ 159 000270  3272          DCA     .+2
+ 160 000271  3274          DCA     RENTRY
+ 161 000272  7402          HLT
+ 162 000273  5653          JMP I   INT             /EXIT TO MONITOR CHAIN
+ 163 000274  0000  RENTRY, 0
+ 164               SECDAR=ERRDA
+ 165               AGAIN=ERRDC
+ 166               
+ 167               
+ 168               /ROUTINE TO SET UP RKS8E TO READ OR WRITE DATA
+ 169               
+ 170                       /CALL MUST BE:
+ 171               /1.     SET UP ERRSB,ERRSC,ERRSE,AT LEAST BITS 5,9-11 OF ERRSF,ERRSG
+ 172               /2.     DF=IF
+ 173               /3.     AC=2 FOR READ; AC=4 FOR WRITE
+ 174               /4.     JMS I (GO
+ 175               /5.     CM FOR READ OR WRITE DATA WITH INT ENA
+ 176               /6.     ERROR RETURNHERE
+ 177               /7.     GOOD RETURNHERE
+ 178               
+ 179 000275  0000  GO,     0
+ 180 000276  3236          DCA     CODE            /SAVE ERROR CODE INCASE
+ 181 000277  1217          TAD     KILL            /KILLCHECK
+ 182 000300  7450          SNA
+ 183 000301  5305          JMP     .+4
+ 184 000302  3220          DCA     KILLED
+ 185 000303  4776          JMS I   (RELEAS
+ 186 000304  5004          SERVEX
+ 187 000305  1245          TAD     ERRSF           /KEEP ONLY DISK AND TRK0 IN INIT CM
+ 188 000306  0775          AND     K107
+ 189 000307  3245          DCA     ERRSF
+ 190 000310  1242          TAD     ERRSC           /MAKE FINAL WC=INIT WC
+ 191 000311  3243          DCA     ERRSD
+ 192 000312  1245          TAD     ERRSF           /ADD TRK0 AND DISK
+ 193 000313  1675          TAD I   GO              /ADD READ OR WRITE DATA+ENA
+ 194 000314  2275          ISZ     GO              /MOVE TO BAD EXIT
+ 195 000315  3245          DCA     ERRSF
+ 196 000316  1241          TAD     ERRSB           /ADD FIELD BITS
+ 197 000317  0105          AND Z   K70
+ 198 000320  1245          TAD     ERRSF
+ 199 000321  3245          DCA     ERRSF           /SAVE GOOD INIT CM
+ 200 000322  7240          CLA CMA                 /ALLOW ONE INTERRUPT
+ 201 000323  6002          IOF
+ 202 000324  3274          DCA     RENTRY
+ 203 000325  1242          TAD     ERRSC           /LOAD WC
+ 204 000326  6753  DC75A,  DLWC
+ 205 000327  1244          TAD     ERRSE           /LOAD CA
+ 206 000330  6744  DC74F,  DLCA
+ 207 000331  1245          TAD     ERRSF           /LOAD CMAND CLEAR STATUS
+ 208 000332  6746  DC74G,  DLDC
+ 209 000333  1246          TAD     ERRSG           /LOADDAR AND GO.
+ 210 000334  6743  DC74H,  DLAG
+ 211 000335  5004          SERVEX                  /OUT
+ 212 000336  5675  GORET,  JMP I   GO              /OUT
+ 213 000337  0000  DATCON, 0
+ 214 000340  1251          TAD     ERRDB
+ 215 000341  5737          JMP I   DATCON
+ 216               /END OF PAGE
+ 217               *.
+ 218               
+ 219 000375  0725          *400
+     000376  0527  
+     000377  0517  
+ 220               
+ 221               
+ 222               /RANDOM NUMBER GENERATOR
+ 223               
+ 224 000400  0000  RANDOM, 0
+ 225 000401  2234          ISZ     RAN1
+ 226 000402  7000          NOP
+ 227 000403  1235          TAD     RAN2
+ 228 000404  1240          TAD     K1111A
+ 229 000405  7104          CLL RAL
+ 230 000406  7420          SNL
+ 231 000407  7001          IAC
+ 232 000410  3235          DCA     RAN2
+ 233 000411  1234          TAD     RAN1
+ 234 000412  1235          TAD     RAN2
+ 235 000413  5600          JMP I   RANDOM
+ 236 000414  0000  SAVRAN, 0                       /PRESET
+ 237 000415  6201          CDF     00
+ 238 000416  1466          TAD I Z K0
+ 239 000417  3235          DCA     RAN2
+ 240 000420  4777          JMS I   (HOMEDF
+ 241 000421  1234          TAD     RAN1
+ 242 000422  3236          DCA     SAV1
+ 243 000423  1235          TAD     RAN2
+ 244 000424  3237          DCA     SAV2
+ 245 000425  5614          JMP I   SAVRAN
+ 246 000426  0000  RESRAN, 0                       /RESTORE
+ 247 000427  1236          TAD     SAV1
+ 248 000430  3234          DCA     RAN1
+ 249 000431  1237          TAD     SAV2
+ 250 000432  3235          DCA     RAN2
+ 251 000433  5626          JMP I   RESRAN
+ 252 000434  0000  RAN1,   0
+ 253 000435  0000  RAN2,   0
+ 254 000436  0000  SAV1,   0
+ 255 000437  0000  SAV2,   0
+ 256 000440  1111  K1111A, 1111
+ 257               
+ 258 000441  0000  DATCHK, 0                               /CHECK DATA.
+ 259 000442  1776          TAD I   (ERRSD                  /GET FINAL WC.
+ 260 000443  4775          JMS I   (SUMCHK                 /SUMCHECK.
+ 261 000444  7041          CIA
+ 262 000445  1774          TAD I   (SUMSAV                 /GOOD?
+ 263 000446  7650          SNA CLA
+ 264 000447  5641          JMP I   DATCHK                  /YES. OUT.
+ 265 000450  4226          JMS     RESRAN                  /NO. RESTORE DATA GENERATOR.
+ 266 000451  1776          TAD I   (ERRSD                  /PRESET TO CHECK DATA.
+ 267 000452  4302          JMS     DATSET
+ 268 000453  3260          DCA     .+5                     /SAVE CDF TO BUFFER FIELD.
+ 269 000454  1773          TAD I   (DATGEV                 /MOVE DATA GENERATOR POINTER TO THIS
+ 270 000455  3302          DCA     DATSET                  /PAGE
+ 271 000456  4702          JMS I   DATSET                  /GENERATE 1 WORD.
+ 272 000457  3772          DCA I   (ERRDB                  /SAVE IN GOOD.
+ 273 000460  7402          HLT/CDF                         /DF TO BUFFER FIELD.
+ 274 000461  1417  AUA,    TAD I   AUTO                    /GET WORD IN BUFFER.
+ 275 000462  4777          JMS I   (HOMEDF                 /DF=IF
+ 276 000463  3771          DCA I   (ERRDC                  /SAVE IN BAD.
+ 277 000464  1017  AUB,    TAD     AUTO                    /GET ADDR AND SAVE.
+ 278 000465  3770          DCA I   (ERRDA
+ 279 000466  1771          TAD I   (ERRDC                  /GOOD=BAD?
+ 280 000467  7041          CIA
+ 281 000470  1772          TAD I   (ERRDB
+ 282 000471  7440          SZA
+ 283 000472  4767          JMS I   (ERROR                  /NO. DATA ERROR (AC NOT 0)
+ 284 000473  2766          ISZ I   (BUFTAL                 /DONE?
+ 285 000474  5256          JMP     .-16                    /NO.
+ 286 000475  1765          TAD I   (CODE                   /YES. SET CODE=001X
+ 287 000476  1076          TAD Z   K10
+ 288 000477  3765          DCA I   (CODE
+ 289 000500  4767          JMS I   (ERROR                  /CLOSE ERROR ROUTINE.
+ 290 000501  5641          JMP I   DATCHK                  /OUT.
+ 291 000502  0000  DATSET, 0                               /SET UP FOR DATA GENERATE OR CHECK.
+ 292 000503  7041          CIA                             /COMPUTE LENGTH TO FILL OR CHECK.
+ 293 000504  1764          TAD I   (ERRSC
+ 294 000505  7450          SNA
+ 295 000506  5641          JMP I   DATCHK
+ 296 000507  3766          DCA I   (BUFTAL                 /SAVEIT.
+ 297 000510  7240          CLA CMA
+ 298 000511  1763          TAD I   (ERRSE                  /PUT CA IN AUTO INDEX.
+ 299 000512  3017  AUC,    DCA     AUTO
+ 300 000513  1762          TAD I   (ERRSB                  /COMPUTE CDF TOBUFFER FIELD.
+ 301 000514  0105          AND Z   K70
+ 302 000515  1064          TAD Z   KCDF
+ 303 000516  5702          JMP I   DATSET                  /EXIT WITH IT IN AC.
+ 304               
+ 305               /DEFERRED SERVICE ENTRY
+ 306               
+ 307 000517  7200  DEFSRV, CLA
+ 308 000520  1761          TAD I   (ERRSA          /ERROR REPORT?
+ 309 000521  0326          AND     REPORT
+ 310 000522  7640          SZA CLA
+ 311 000523  4767          JMS I   (ERROR          /YES. STATUS ERROR REPORT.
+ 312 000524  7150          CLL CMA RAR             /CHECK FOR ERROR RECOVERY
+ 313 000525  5760          JMP I   (GOTER          /DO IT.
+ 314 000526  3777  REPORT, 3777
+ 315               
+ 316 000527  0000  RELEAS, 0                       /RELEASE BUFFER
+ 317 000530  1762          TAD I   (ERRSB          /DESIGINAC
+ 318 000531  6002          IOF                     /MONITOR CALL
+ 319 000532  6202          CIF     00
+ 320 000533  4457          RLBUFF
+ 321 000534  5727          JMP I   RELEAS          /EXIT WITH ION
+ 322               *.
+ 323 000560  0747         *600
+     000561  0240  
+     000562  0241  
+     000563  0244  
+     000564  0242  
+     000565  0236  
+     000566  0720  
+     000567  0222  
+     000570  0250  
+     000571  0252  
+     000572  0251  
+     000573  0761  
+     000574  0721  
+     000575  0733  
+     000576  0243  
+     000577  0211  
+ 324               
+ 325               
+ 326               /RUNNER
+ 327               
+ 328 000600  3777  RUN,    DCA I   (ERRSB          /CLEAR BUFFER DESIG
+ 329 000601  3776          DCA I   (CNTR           /0-> PASS COUNTER
+ 330               
+ 331               /START OFEXERCISER LOOP
+ 332               
+ 333 000602  7604  EXER,   LAS                     /CHANGE DISKADDRESS?
+ 334 000603  7010          RAR
+ 335 000604  7630          SZL CLA
+ 336 000605  5236          JMP     LGTGEN          /NO
+ 337 000606  4762  EXERA,  JMS I   ADRGEV          /YES. GET DSKAND TRK
+ 338 000607  0075          AND Z   K7
+ 339 000610  3775          DCA I   (ERRSF
+ 340 000611  1775          TAD I   (ERRSF          />OR=LOW?
+ 341 000612  1327          TAD     LODSK
+ 342 000613  7710          SPA CLA
+ 343 000614  5206          JMP     EXERA           /NO. REGENERATE
+ 344 000615  1775          TAD I   (ERRSF          /YES. <OR=HIGH?
+ 345 000616  1330          TAD     HIDSK
+ 346 000617  7740          SMA SZA CLA
+ 347 000620  5206          JMP     EXERA           /NO. REGENERATE
+ 348 000621  4762  EXERB,  JMS I   ADRGEV          /YES. GENERATE TRK/SUR/SEC
+ 349 000622  3774          DCA I   (ERRSG
+ 350 000623  4762          JMS I   ADRGEV          /GEN RANDON NUMBER; -# MEANS SET CYL 0
+ 351 000624  7700          SMA CLA                 /TRK0 TO BE SET?   +# MEANS CLEAR CYL0
+ 352 000625  5236          JMP     LGTGEN          /NO. TRK 0 IS ALREADY 0; WHATEVER IN DAR IS OK
+ 353 000626  7120          STL                     /YES; CHECK THE DAR; START WITH LINK SET
+ 354 000627  1774          TAD I   (ERRSG          /CHECK TRK/SUR/SEC<4537. NOTE LINK IS ALREADY SET.
+ 355 000630  1331          TAD     M4537A
+ 356 000631  7620          SNL CLA
+ 357 000632  5221          JMP     EXERB           /OUT OF LIMITS. REGENERATE
+ 358 000633  1107          TAD Z   K100            /DAR IN LIMITS; NOW SET BIT 5 IN ERRSF
+ 359 000634  1775          TAD I   (ERRSF)
+ 360 000635  3775          DCA I   (ERRSF)
+ 361 000636  4757  LGTGEN, JMS I   LGTGEV          /GENERATE TRANSFER LENGTH, 7000-7777
+ 362 000637  0324          AND     K777
+ 363 000640  1304          TAD     K7000A
+ 364 000641  3773          DCA I   (ERRSC          /SAVEININIT SOFT WC
+ 365 000642  4760  BUFGEN, JMS I   BUFGEV          /GET A BUFFER
+ 366 000643  1777          TAD I   (ERRSB          /MAKE INIT CA
+ 367 000644  0131          AND Z   K7600
+ 368 000645  3772          DCA I   (ERRSE
+ 369 000646  4771  DATGEN, JMS I   (SAVRAN         /PRESET RANDOM
+ 370 000647  4770          JMS I   (DATSET         /FILL BUFFER
+ 371 000650  3251          DCA     .+1
+ 372 000651  7402          HLT/CDF
+ 373 000652  4761          JMS I   DATGEV
+ 374 000653  3417  AUD,   DCA I   AUTO
+ 375 000654  2320          ISZ     BUFTAL
+ 376 000655  5252          JMP     .-3
+ 377 000656  4767          JMS I   (HOMEDF         /SUMCHECK
+ 378 000657  4333          JMS     SUMCHK
+ 379 000660  3321          DCA     SUMSAV          /SAVE SUM
+ 380 000661  1141          TAD Z   M3              /SET FOR 3 REREADS IF CRC ERROR
+ 381 000662  3322          DCA     PARTAL
+ 382 000663  1073          TAD Z   K4              /CODE 4 FOR WRITE
+ 383 000664  4766          JMS I   (GO
+ 384 000665  4400          4400    /WRITE DATA INT ENA
+ 385 000666  5202          JMP     EXER            /STATUS ERROR
+ 386 000667  4770  DSKRD,  JMS I   (DATSET         /OK. CLEAR BUFFER
+ 387 000670  3271          DCA     .+1
+ 388 000671  7402          HLT/CDF
+ 389 000672  3417  AUE,    DCA I   AUTO
+ 390 000673  2320          ISZ     BUFTAL
+ 391 000674  5272          JMP     .-2
+ 392 000675  4767          JMS I   (HOMEDF
+ 393 000676  7126          STL RTL                 /2 FOR READ
+ 394 000677  4766          JMS I   (GO             /READ
+ 395 000700  0400          0400    /READ DATA INT ENA
+ 396 000701  5306          JMP     DKRK            /STATUS ERROR
+ 397 000702  4765          JMS I   (DATCHK         /OK. CHECKDATA
+ 398 000703  2776  DSKOUT, ISZ I   (CNTR           /+1->CNTR
+ 399 000704  7000  K7000A, 7000                    /NOP
+ 400 000705  5202          JMP     EXER            /LOOP
+ 401 000706  1764  DKRK,   TAD I   (ERRSA
+ 402 000707  0323          AND     PARITY
+ 403 000710  7650          SNA CLA
+ 404 000711  4765          JMS I   (DATCHK         /CRC ERROR. CHECK DATA.
+ 405 000712  1764          TAD I   (ERRSA          /CRC ERROR?
+ 406 000713  0326          AND     K3767A
+ 407 000714  7650          SNA CLA
+ 408 000715  2322          ISZ     PARTAL          /YES. 3 REREADS?
+ 409 000716  5267          JMP     DSKRD           /NO. 1 MORE.
+ 410 000717  5303          JMP     DSKOUT          /YES. OUT
+ 411 000720  0000  BUFTAL, 0
+ 412 000721  0000  SUMSAV, 0
+ 413 000722  0000  PARTAL, 0
+ 414 000723  3767  PARITY, 3767
+ 415 000724  0777  K777,   0777
+ 416 000725  0107  K107,   0107
+ 417 000726  3767  K3767A, 3767
+ 418 000727  0000  LODSK,  0                       /LOW DISK SELECT =(TYPED INVALUE)
+ 419 000730  0000  HIDSK,  0                       /HIGH DISK SELECT =(TYPED INVALUE)
+ 420 000731  3241  M4537A, -4537
+ 421 000732  0600  K600A,  600
+ 422 000733  0000  SUMCHK,        0                               /SUM CHECK BUFFER
+ 423 000734  4770          JMS I   (DATSET
+ 424 000735  3336          DCA     .+1
+ 425 000736  7402          HLT/CDF
+ 426 000737  7100          CLL
+ 427 000740  1417  AUF,    TAD I   AUTO
+ 428 000741  7430          SZL
+ 429 000742  7001          IAC
+ 430 000743  2320          ISZ     BUFTAL
+ 431 000744  5337          JMP     .-5
+ 432 000745  4767          JMS I   (HOMEDF
+ 433 000746  5733          JMP I   SUMCHK
+ 434               
+ 435               
+ 436 000747  0764  GOTER,  AND I   (ERRSA          /ERROR?
+ 437 000750  7650          SNA CLA
+ 438 000751  2766          ISZ I   (GO             /NO. MAKE GOODEXIT
+ 439 000752  7001          IAC
+ 440 000753  6742  DC74E,  DCLR                    /CLEAR CONTROL
+ 441 000754  5763          JMP I   (GORET
+ 442 000755  0000  ADRCON, 0
+ 443 000756  5236          JMP     LGTGEN
+ 444               /END OF PAGE
+ 445               
+ 446               *.
+ 447               
+ 448               
+ 449               /NOTE:  THESE LOC'S ARE SPECIFIED BELOW THE *. SO THAT THE ADDRESSES
+ 450               /INDICATED ARE MODIFIED PROPERLY BY THE DEC-X8 LOADER.
+ 451               
+ 452 000757  0400  LGTGEV, RANDOM  /LGTCON
+ 453 000760  1011  BUFGEV, BUFRAN  /BUFCON
+ 454 000761  0400  DATGEV, RANDOM  /DATCON
+ 455 000762  0400  ADRGEV, RANDOM  /ADRCON
+ 456               
+ 457 000763  0336  *1000
+     000764  0240  
+     000765  0441  
+     000766  0275  
+     000767  0211  
+     000770  0502  
+     000771  0414  
+     000772  0244  
+     000773  0242  
+     000774  0246  
+     000775  0245  
+     000776  0221  
+     000777  0241  
+ 458               
+ 459               /ROUTINE TO ASSIGN AND HOLD A SPECIFIED BUFFER WHICH MUST BE
+ 460               /LEGALLY SPECIFIED IN CONBUF (STANDARD BUFFER DESIGNATOR)
+ 461               
+ 462 001000  0000  BUFCON, 0
+ 463 001001  1777          TAD     ERRSB           /GET CURRENTBUFFER WORD.
+ 464 001002  7041          CIA
+ 465 001003  1210          TAD     CONBUF
+ 466 001004  7650          SNA CLA                 /SPECIFIED BUFFER ASSIGNED?
+ 467 001005  5600          JMP I   BUFCON          /YES. EXIT.
+ 468 001006  4211          JMS     BUFRAN          /NO. GET NEW BUFFER.
+ 469 001007  5201          JMP     BUFCON+1        /CHECK IT
+ 470 001010  0000  CONBUF, 0                       /MUST CONTAIN LEGAL BUFFER DESIGNATOR.
+ 471               
+ 472               /ROUTINE TO ASSIGN A BUFFER OBSERVING SR 10.
+ 473               
+ 474               LTRCOD=.
+ 475 001011  0000  BUFRAN, 0
+ 476 001012  7604          LAS                     /PUT SR 10 (NOT) IN LINK.
+ 477 001013  7012          RTR
+ 478 001014  7220          CLA CML
+ 479 001015  1777          TAD     ERRSB           /BUFFER WORD IN AC.
+ 480 001016  7460          SNL SZA
+ 481 001017  5225          JMP     .+6             /EXIT IF AC NON ZERO AND LINK SET.
+ 482 001020  7640          SZA CLA
+ 483 001021  4776          JMS     RELEAS          /RELEASE BUFFER IF AC NON ZERO.
+ 484 001022  6002          IOF                     /ASSIGNA BUFFER
+ 485 001023  6202          CIF     00
+ 486 001024  4460          ASBUFF
+ 487 001025  3777          DCA     ERRSB           /SAVE BUFFER DESIGNATOR.
+ 488 001026  5611          JMP I   BUFRAN          /EXIT.
+ 489               
+ 490 001027  0000  LGTCON, 0
+ 491 001030  1775          TAD I   (ERRSC
+ 492 001031  5627          JMP I   LGTCON
+ 493               
+ 494               /INITIALIZER
+ 495                                                       /"INIT" IS INITIALIZING ADDRESS.
+ 496 001032  4444  INIT,   MESAGE
+ 497 001033  0201          TEXT1
+ 498 001034  1117  INITLP, TAD Z   K301                    /SET CODE TO "A"
+ 499 001035  3211          DCA     LTRCOD
+ 500 001036  4304          JMS     INISR1                  /GET LOW DISK.
+ 501 001037  3774          DCA     LODSK                   /SAVE IN BITS 4-5 NEGATED
+ 502 001040  4304          JMS     INISR1                  /SAME FOR HIGH DISK.
+ 503 001041  3773          DCA     HIDSK
+ 504 001042  4310          JMS     INISR2                  /TYPE OF DATA.
+ 505 001043  5247          JMP     .+4                     /RANDOM
+ 506 001044  3772          DCA I   (ERRDB                  /CONSTANT-SAVE IN GOOD DATA.
+ 507 001045  1371          TAD     (DATCON                 /PRESET POINTERS.
+ 508 001046  7410          SKP
+ 509 001047  1370          TAD     (RANDOM
+ 510 001050  3767          DCA I   (DATGEV
+ 511 001051  4310          JMS     INISR2                  /TYPE OF ADDRESSING:
+ 512 001052  5262          JMP     .+10                    /RANDOM
+ 513 001053  3766          DCA I   (ERRSF                  /CONSTANT-SAVE EMA PART.
+ 514 001054  4455          SPACE2                          /2 SPACES
+ 515 001055  4443          FOROCT                          /GET DMA PART.
+ 516 001056  5234          JMP     INITLP
+ 517 001057  3765          DCA I   (ERRSG                  /SAVE IT.
+ 518 001060  1364          TAD     (ADRCON                 /PRESET POINTERS
+ 519 001061  7410          SKP
+ 520 001062  1370          TAD     (RANDOM
+ 521 001063  3763          DCA I   (ADRGEV
+ 522 001064  4310          JMS     INISR2                  /LENGTH OF TRANSFER:
+ 523 001065  5272          JMP     .+5                     /RANDOM
+ 524 001066  7041          CIA                             /CONSTANT-NEGATE AND SAVE
+ 525               
+ 526 001067  3775          DCA I   (ERRSC                  /AS INITIAL WC.
+ 527 001070  1362          TAD     (LGTCON                 /PRESET POINTERS.
+ 528 001071  7410          SKP
+ 529 001072  1370          TAD     (RANDOM
+ 530 001073  3761          DCA I   (LGTGEV
+ 531 001074  4310          JMS     INISR2                  /BUFFER ASSIGNMENT:
+ 532 001075  5301          JMP     .+4                     /RANDOM
+ 533 001076  3210          DCA     CONBUF                  /CONSTANT-SAVE IN HOLDER.
+ 534 001077  1360          TAD     (BUFCON                 /PRESET POINTERS.
+ 535 001100  7410          SKP
+ 536 001101  1357          TAD     (BUFRAN
+ 537 001102  3756          DCA I   (BUFGEV
+ 538 001103  5020          INITEX                          /OUT.
+ 539               
+ 540 001104  0000  INISR1, 0                               /SERVICE1.
+ 541 001105  4321          JMS     INISR3                  /DO SERVICE 3.
+ 542 001106  7041          CIA                             /NEGATE
+ 543 001107  5704          JMP I   INISR1                  /OUT.
+ 544               
+ 545 001110  0000  INISR2, 0                               /SERVICE 2
+ 546 001111  4321          JMS     INISR3                  /DO SERVICE 3.
+ 547 001112  7650          SNA CLA
+ 548 001113  5710          JMP I   INISR2                  /0=RANDOM OUT
+ 549 001114  2310          ISZ     INISR2                  /NOT 0 IS CONSTANT.
+ 550 001115  4455          SPACE2                          /2 SPACES.
+ 551 001116  4443          FOROCT                          /GET 4 OCTAL NUMBERS
+ 552 001117  5234          JMP     INITLP                  /ERROR.
+ 553 001120  5710          JMP I   INISR2                  /OUT
+ 554               
+ 555 001121  0000  INISR3, 0                               /SERVICE 3.
+ 556 001122  4454          CRLF                            /CARRIAGE RET-LINE FEED.
+ 557 001123  1211          TAD     LTRCOD                  /GET LETTER CODE.
+ 558 001124  4450          TYPE                            /PRINT IT
+ 559 001125  4455          SPACE2                          /2 SPACES
+ 560 001126  4442          ONEOCT                          /GET ONE OCTAL NUMBER.
+ 561 001127  5234          JMP     INITLP                  /ERROR.
+ 562 001130  0075          AND Z   K7                      /MAKE <OR=7 ARBITRARILY.
+ 563 001131  2211          ISZ     LTRCOD                  /UPDATE LETTER CODE.
+ 564 001132  5721          JMP I   INISR3                  /OUT.
+ 565               
+ 566               /END
+ 567               /
+ 568               
+ 569               
+ 570               /DEC/X8 EXTERNAL SYMBOL TABLE  "EXTSYM
+ 571               /FOR USE IN ASSEMBLINGDEC/X8 SOFTWARE MODULES.
+ 572               
+ 573               /COPYRIGHT 1972, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.
+ 574               /       XLIST
+ 575               /MAINDEC-X8-DIQAC
+ 576               
+ 577               ASBUFP=0060
+ 578               AUTO=0017
+ 579               CRLFP=0054
+ 580               ERRP=0061
+ 581               EXINIT=0020
+ 582               EXSERV=0004
+ 583               EXTMEM=0161
+ 584               FOROCP=0043
+ 585               IHRETP=0026
+ 586               IOFMSP=0056
+ 587               
+ 588               K0=0066
+ 589               K10=0076
+ 590               K100=0107
+ 591               K11=0077
+ 592               K116=0071
+ 593               K13=0100
+ 594               K17=0101
+ 595               K177=0130
+ 596               K20=0102
+ 597               K200=0110
+ 598               K2000=0122
+ 599               K212=0111
+ 600               K215=0112
+ 601               K240=0113
+ 602               K260=0114
+ 603               K272=0115
+ 604               K277=0116
+ 605               K3=0072
+ 606               K30=0103
+ 607               K301=0117
+ 608               K32=0067
+ 609               K323=0120
+ 610               K4=0073
+ 611               K40=0104
+ 612               K400=0121
+ 613               K5=0074
+ 614               K540=0124
+ 615               K5200=0123
+ 616               K5402=0003
+ 617               K64=0070
+ 618               K7=0075
+ 619               K70=0105
+ 620               K7510=0125
+ 621               K7520=0126
+ 622               K7540=0127
+ 623               K7600=0131
+ 624               K77=0106
+ 625               K7735=0132
+ 626               K7740=0133
+ 627               K7750=0134
+ 628               K7760=0135
+ 629               K7771=0136
+ 630               K7773=0137
+ 631               K7774=0140
+ 632               K7775=0141
+ 633               KCDF=0064
+ 634               KCIF=0005
+ 635               KCIFDF=0020
+ 636               KIOF=0004
+ 637               LISNP=0040
+ 638               
+ 639               M20=0135
+ 640               M200=0131
+ 641               M240=0127
+ 642               M260=0126
+ 643               M270=0125
+ 644               M3=0141
+ 645               M30=0134
+ 646               M4=0140
+ 647               M40=0133
+ 648               M43=0132
+ 649               M5=0137
+ 650               M7=0136
+ 651               
+ 652               MESAGP=0044
+ 653               MUL26P=0065
+ 654               ONEOCP=0042
+ 655               PRNT1P=0051
+ 656               PRNT2P=0052
+ 657               PRNT4P=0053
+ 658               RLBUFP=0057
+ 659               SPACEP=0055
+ 660               TWOOCP=0041
+ 661               TYPEP=0050
+ 662               
+ 663               /D E F I N E D  C A L L S:
+ 664               
+ 665               MESAGE=JMS I MESAGP
+ 666               CRLF=JMS I CRLFP
+ 667               TYPE=JMS I TYPEP
+ 668               LISN=JMS I LISNP
+ 669               ONEOCT=JMS I ONEOCP
+ 670               TWOOCT=JMS I TWOOCP
+ 671               FOROCT=JMS I FOROCP
+ 672               PRNT1=JMS I PRNT1P
+ 673               PRNT2=JMS I PRNT2P
+ 674               PRNT4=JMS I PRNT4P
+ 675               SPACE2=JMS I SPACEP
+ 676               ASBUFF=JMS I ASBUFP
+ 677               RLBUFF=JMS I RLBUFP
+ 678               INITEX=JMP EXINIT
+ 679               SERVEX=JMP EXSERV
+ 680               
+ 681               /       XLIST
+ 682               
+ 683               /END OF PAGE AND END OF PROGRAMCODE
+ 684               
+ 685               EOP4=.
+ 686 001033  0201  *INIT+1;TEXT1
+ 687               *EOP4
+ 688               
+ 689               
+ 690               
+ 691 001156  0760  FIELD   1               /LOADER CALL
+     001157  1011  
+     001160  1000  
+     001161  0757  
+     001162  1027  
+     001163  0762  
+     001164  0755  
+     001165  0246  
+     001166  0245  
+     001167  0761  
+     001170  0400  
+     001171  0337  
+     001172  0251  
+     001173  0730  
+     001174  0727  
+     001175  0242  
+     001176  0527  
+     001177  0241  
+ 692               
+ 693                       *1200
+ 694               
+ 695 011200  1032  INIT;RUN;INT
+     011201  0600  
+     011202  0253  
+ 696               
+ 697 011203  6741  DSKP;0;1;HLT;HLT;HLT
+     011204  0000  
+     011205  0001  
+     011206  7402  
+     011207  7402  
+     011210  7402  
+ 698               
+ 699 011211  7772  -6;AUA;AUB;AUC;AUD;AUE;AUF
+     011212  0461  
+     011213  0464  
+     011214  0512  
+     011215  0653  
+     011216  0672  
+     011217  0740  
+ 700               
+ 701               
+ 702 011220  7776  -2
+ 703               
+ 704 011221  0740  0740;-7;DC74A;DC74B;DC74E;DC74F;DC74G;DC74H;1
+     011222  7771  
+     011223  0256  
+     011224  0263  
+     011225  0753  
+     011226  0330  
+     011227  0332  
+     011230  0334  
+     011231  0001  
+ 705 011232  0750  0750;-2;DC75A;DC75B
+     011233  7776  
+     011234  0326  
+     011235  0261  
+ 706               
+ 707 011236  0000  0
+ 708               
+ 709 011237  0000  0
+ 710               
+ 711               $$$$$$$$$$$
+
+ADRCON  0755
+ADRGEV  0762
+AGAIN   0252 unreferenced
+ASBUFF  4460
+ASBUFP  0060
+AUA     0461
+AUB     0464
+AUC     0512
+AUD     0653
+AUE     0672
+AUF     0740
+AUTO    0017
+BUFCON  1000
+BUFGEN  0642 unreferenced
+BUFGEV  0760
+BUFRAN  1011
+BUFTAL  0720
+CNTR    0221
+CODE    0236
+CONBUF  1010
+CRLF    4454
+CRLFP   0054
+DATCHK  0441
+DATCON  0337
+DATGEN  0646 unreferenced
+DATGEV  0761
+DATSET  0502
+DC74A   0256
+DC74B   0263
+DC74E   0753
+DC74F   0330
+DC74G   0332
+DC74H   0334
+DC75A   0326
+DC75B   0261
+DCLR    6742
+DCWC    6752 unreferenced
+DEFSRV  0517
+DKRK    0706
+DLAG    6743
+DLCA    6744
+DLDC    6746
+DLWC    6753
+DMAN    6747 unreferenced
+DRST    6745
+DRWC    6755
+DSKOUT  0703
+DSKP    6741
+DSKRD   0667
+EOP4    1133
+ERRDA   0250
+ERRDB   0251
+ERRDC   0252
+ERROR   0222
+ERRP    0061
+ERRSA   0240
+ERRSB   0241
+ERRSC   0242
+ERRSD   0243
+ERRSE   0244
+ERRSF   0245
+ERRSG   0246
+EXER    0602
+EXERA   0606
+EXERB   0621
+EXINIT  0020
+EXSERV  0004
+EXTMEM  0161 unreferenced
+FOROCP  0043
+FOROCT  4443
+GO      0275
+GORET   0336
+GOTER   0747
+HIDSK   0730
+HOMEDF  0211
+IHRETP  0026
+INISR1  1104
+INISR2  1110
+INISR3  1121
+INIT    1032
+INITEX  5020
+INITLP  1034
+INT     0253
+INT1    0266
+INTACK  0214
+IOFMSP  0056 unreferenced
+JOB     0200 unreferenced
+K0      0066
+K10     0076
+K100    0107
+K107    0725
+K11     0077 unreferenced
+K1111A  0440
+K116    0071 unreferenced
+K13     0100 unreferenced
+K17     0101 unreferenced
+K177    0130 unreferenced
+K20     0102 unreferenced
+K200    0110 unreferenced
+K2000   0122 unreferenced
+K212    0111 unreferenced
+K215    0112 unreferenced
+K240    0113 unreferenced
+K260    0114 unreferenced
+K272    0115 unreferenced
+K277    0116 unreferenced
+K3      0072 unreferenced
+K30     0103 unreferenced
+K301    0117
+K32     0067 unreferenced
+K323    0120 unreferenced
+K3767A  0726
+K4      0073
+K40     0104 unreferenced
+K400    0121 unreferenced
+K5      0074 unreferenced
+K5200   0123 unreferenced
+K540    0124 unreferenced
+K5402   0003 unreferenced
+K600A   0732 unreferenced
+K64     0070 unreferenced
+K7      0075
+K70     0105
+K7000A  0704
+K7510   0125 unreferenced
+K7520   0126 unreferenced
+K7540   0127 unreferenced
+K7600   0131
+K77     0106 unreferenced
+K7735   0132 unreferenced
+K7740   0133 unreferenced
+K7750   0134 unreferenced
+K7760   0135 unreferenced
+K777    0724
+K7771   0136 unreferenced
+K7773   0137 unreferenced
+K7774   0140 unreferenced
+K7775   0141 unreferenced
+KCDF    0064
+KCIF    0005 unreferenced
+KCIFDF  0020
+KILL    0217
+KILLED  0220
+KIOF    0004 unreferenced
+LGTCON  1027
+LGTGEN  0636
+LGTGEV  0757
+LISN    4440 unreferenced
+LISNP   0040
+LODSK   0727
+LTRCOD  1011
+M20     0135 unreferenced
+M200    0131 unreferenced
+M240    0127 unreferenced
+M260    0126 unreferenced
+M270    0125 unreferenced
+M3      0141
+M30     0134 unreferenced
+M4      0140 unreferenced
+M40     0133 unreferenced
+M43     0132 unreferenced
+M4537A  0731
+M5      0137 unreferenced
+M7      0136 unreferenced
+MESAGE  4444
+MESAGP  0044
+MUL26P  0065 unreferenced
+ONEOCP  0042
+ONEOCT  4442
+PARITY  0723
+PARTAL  0722
+PRNT1   4451 unreferenced
+PRNT1P  0051
+PRNT2   4452 unreferenced
+PRNT2P  0052
+PRNT4   4453 unreferenced
+PRNT4P  0053
+RAN1    0434
+RAN2    0435
+RANDOM  0400
+RELEAS  0527
+RENTRY  0274
+REPORT  0526
+RESRAN  0426
+RLBUFF  4457
+RLBUFP  0057
+RUN     0600
+SAV1    0436
+SAV2    0437
+SAVRAN  0414
+SECDAR  0250 unreferenced
+SERVEX  5004
+SPACE2  4455
+SPACEP  0055
+SUMCHK  0733
+SUMSAV  0721
+TEXT1   0201
+TWOOCP  0041
+TWOOCT  4441 unreferenced
+TYPE    4450
+TYPEP   0050

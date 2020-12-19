@@ -5224,7 +5224,7 @@ ak-6163a / maindec-08-ddbma-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-debma>maindec-08-debma</a></td>
-<td>BM8/L EXTENDED MEMORY CONTROL TEST</td>
+<td>BM8/L Extended Memory Control Test</td>
 <td>
 ac-6165a / maindec-08-debma-a-d<br>
 ak-6167a / maindec-08-debma-a-pb<br>
@@ -7664,6 +7664,12 @@ ac-b994a / maindec-8l-d1ha-d<br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d1h/maindec-8l-d1ha-pb>ak-b999a / maindec-8l-d1ha-pb</a><br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d1j>maindec-8l-d1j</a></td>
+<td>BM8-L Extended Memory Control Test</td>
+<td>
+maindec-8l-d1ja-pb<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-d5a>maindec-8l-d5a</a></td>
 <td>PDP-8L Memory Parity IOT Test</td>
 <td>
@@ -7671,16 +7677,28 @@ maindec-8l-d5aa-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8l-debma>maindec-8l-debma</a></td>
-<td>VROBEL</td>
+<td>BM8/L Extended Memory Control Test</td>
 <td>
+maindec-8l-debma-a-d<br>
 maindec-8l-debma-a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d01>maindec-8s-d01</a></td>
-<td>PDP-8S INSTRUCTION TEST</td>
+<td>PDP-8S Instruction Test 1</td>
 <td>
+ac-c004b / maindec-8s-d01b-d<br>
+ak-c006b / maindec-8s-d01b-pb<br>
 ac-c004a / maindec-8s-d01a-d<br>
 ak-c006a / maindec-8s-d01a-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d02>maindec-8s-d02</a></td>
+<td>PDP-8S Instruction Test 2</td>
+<td>
+maindec-8s-d02b-d<br>
+maindec-8s-d02b-pb<br>
+maindec-8s-d02a-d<br>
+maindec-8s-d02a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d03>maindec-8s-d03</a></td>
@@ -7702,8 +7720,8 @@ ak-c012a / maindec-8s-d04a-pb<br>
 <td>
 ac-c013b / maindec-8s-d05b-d<br>
 ak-c015b / maindec-8s-d05b-pb<br>
-maindec-8s-d05a-d<br>
-maindec-8s-d05a-pb<br>
+ac-c013a / maindec-8s-d05a-d<br>
+ak-c015a / maindec-8s-d05a-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d06>maindec-8s-d06</a></td>
@@ -7737,10 +7755,32 @@ ac-c028a / maindec-8s-d15a-d<br>
 ak-c030a / maindec-8s-d15a-pb<br>
 </td></tr>
 <tr>
-<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d1l>maindec-8s-d1l</a></td>
-<td>PDP-8S Memory Address Test</td>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d23>maindec-8s-d23</a></td>
+<td>High Speed Reader Test </td>
 <td>
-maindec-8s-d1la-pb<br>
+maindec-8s-d23b-d<br>
+maindec-8s-d23b-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d5b>maindec-8s-d5b</a></td>
+<td>DF32 Diskless Logic Test</td>
+<td>
+maindec-8s-d5bb-d<br>
+maindec-8s-d5bb-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d6a>maindec-8s-d6a</a></td>
+<td>CALCOMP Plotter Test</td>
+<td>
+maindec-8s-d6aa-d<br>
+maindec-8s-d6aa-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d8a>maindec-8s-d8a</a></td>
+<td>KW08 Test</td>
+<td>
+maindec-8s-d8aa-d<br>
+maindec-8s-d8aa-pb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-8s-d8b>maindec-8s-d8b</a></td>
@@ -7796,6 +7836,12 @@ maindec-x8-dhada-a-pb<br>
 maindec-x8-dhcra-a-pb<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhdpa>maindec-x8-dhdpa</a></td>
+<td>DECX8 DP8E MODEM TEST MODULE</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhdpa/maindec-x8-dhdpa-a-pb>maindec-x8-dhdpa-a-pb</a><br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhica>maindec-x8-dhica</a></td>
 <td>DEC/X8 ICSX8 (ICS-8)</td>
 <td>
@@ -7837,14 +7883,14 @@ maindec-x8-dhrxa-b-pb<br>
 <td>DEC/X8 TA8-E Cassette System</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtaa/maindec-x8-dhtaa-a-pb>maindec-x8-dhtaa-a-pb</a><br>
-maindec-x8-dhtaa-b-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtaa/maindec-x8-dhtaa-b-pb>maindec-x8-dhtaa-b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtda>maindec-x8-dhtda</a></td>
 <td>DEC/X8 DECtape System</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtda/maindec-x8-dhtda-a-pb>maindec-x8-dhtda-a-pb</a><br>
-maindec-x8-dhtda-b-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtda/maindec-x8-dhtda-b-pb>maindec-x8-dhtda-b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dhtma>maindec-x8-dhtma</a></td>
@@ -7869,7 +7915,7 @@ maindec-x8-dhtma-b-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dicda>maindec-x8-dicda</a></td>
 <td>DEC/X8 COM8</td>
 <td>
-maindec-x8-dicda-a-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dicda/maindec-x8-dicda-a-pb>maindec-x8-dicda-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-didca>maindec-x8-didca</a></td>
@@ -7896,6 +7942,7 @@ maindec-x8-didfa-b-d<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-didka>maindec-x8-didka</a></td>
 <td>DEC/X8 TIMERA Real Time Clock Tests</td>
 <td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-didka/maindec-x8-didka-d-pb>maindec-x8-didka-d-pb</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-didka/maindec-x8-didka-c-pb>maindec-x8-didka-c-pb</a><br>
 maindec-x8-didka-a-d<br>
 </td></tr>
@@ -7958,24 +8005,33 @@ maindec-x8-dikae-a-pb<br>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla/maindec-x8-dikla-a-d.pdf>maindec-x8-dikla-a-d</a><br>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla/maindec-x8-dikla-a-pb>maindec-x8-dikla-a-pb</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikla/maindec-x8-dikla-b-pb>maindec-x8-dikla-b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklb>maindec-x8-diklb</a></td>
 <td>DEC/X8 TTYLUP KL8E/F/J Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklb/maindec-x8-diklb-b-d.pdf>maindec-x8-diklb-b-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklb/maindec-x8-diklb-b-pb>maindec-x8-diklb-b-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklc>maindec-x8-diklc</a></td>
 <td>DEC/X8 KL8A Exerciser</td>
 <td>
 <a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklc/maindec-x8-diklc-a-d.pdf>maindec-x8-diklc-a-d</a><br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diklc/maindec-x8-diklc-a-pb>maindec-x8-diklc-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dikld>maindec-x8-dikld</a></td>
 <td>DEC/X8 MSLULP (KL8A)</td>
 <td>
 maindec-x8-dikld-a-pb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dilda>maindec-x8-dilda</a></td>
+<td>DECX8 LPD8 Control Interface Test</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dilda/maindec-x8-dilda-a-pb>maindec-x8-dilda-a-pb</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-dilpa>maindec-x8-dilpa</a></td>
@@ -8029,6 +8085,7 @@ maindec-x8-diqad-c-pb<br>
 <td>DEC/X8 DECTAPE (TC08/TC01+TU55/TU56)</td>
 <td>
 maindec-x8-diqae-l-pb<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diqae/maindec-x8-diqae-h-ub>maindec-x8-diqae-h-ub</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-x8-diqaf>maindec-x8-diqaf</a></td>

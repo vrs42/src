@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+# Rename some diagnostics.
+
+# Here is where to look for .bn, .dg, and .sv files.
+$dhome="$ENV{'HOME'}/pdp8/Images/diag-games-kermit.0";
+$dhome="$ENV{'HOME'}/pdp8/src/xx/maindec-x8-diqae/maindec-x8-diqae-h-ub.0";
+
+open(INPUT, "../diag.names") || die "diag.names: $!";
+while (<INPUT>) {
+  next if /^#/; # Comment
+  y/A-Z/a-z/; # Lower case
+  die $_ unless /^(\S+)\t(\S*)\t(\S*)\t/;
+  next unless $2;
+  $product{$1} = $2;
+  $alt{$1} = $3;
+}
+
+$count = 0;
+foreach $os8 (sort keys %product) {
+  $product = $product{$os8};
+  $alt = $alt{$os8};
+  # Now, concoct a suitable new name
+  $new = $os8;
+  $new =~ s/^$product//;
+  $new =~ s/^8//;
+  $new =~ s/-//;
+  $new = "maindec-$product-$new";
+  $ver = '';
+  $ver = $1 if $new =~ s/([a-z])$//;
+  $os8 =~ s/-//;
+  $ext = undef;
+  $ext = ".dg" if -f "$dhome/$os8.dg";
+  $ext = ".sv" if -f "$dhome/$os8.sv";
+  $ext = ".bn" if -f "$dhome/$os8.bn";
+  if (($product eq 'x8') && -f "$dhome/$alt.bn") {
+#warn "$dhome/$os8 not found\n" unless defined $ext;
+#warn "sustituting $dhome/$alt for $os8\n" unless defined $ext;
+    $ext = ".bn";
+    $os8 = $alt;
+  }
+  next unless defined $ext;
+#warn "already have $alt ../$new/$new-$ver-pb\n" if -f "../$new/$new-$ver-pb";
+  next if -f "../$new/$new-$ver-pb";
+  print "mkdir ../$new\n" unless -d "../$new";
+  print "cp $dhome/$os8$ext ../$new/$new-$ver$ext\n";
+  $count++;
+}
+warn "$count files found\n";
+exit 0;
