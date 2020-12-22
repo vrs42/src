@@ -172,6 +172,7 @@ sub process {
     $f .= ".pdf" if $f =~ /-d\d*$/;
     $f .= ".pdf" if $f =~ /-dn\d*$/;
     $f .= ".pdf" if $f =~ /-la\d*$/;
+    $f .= ".pdf" if $f =~ /-ta\d*$/;
     # Output a link if the file exists, otherwise just a name.
     $part = "$media-$part / " if $part;
     if (-f $f) {
