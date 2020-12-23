@@ -170,31 +170,31 @@ aa-d759b / aa-d759b-d<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4528>ak-4528</a></td>
 <td>OS/8 F4 F4.SV</td>
 <td>
-ak-4528d / ak-4528d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4528/ak-4528d-ps>ak-4528d / ak-4528d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4529>ak-4529</a></td>
 <td>OS/8 F4 PASS2.SV</td>
 <td>
-ak-4529d / ak-4529d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4529/ak-4529d-ps>ak-4529d / ak-4529d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4530>ak-4530</a></td>
 <td>OS/8 F4 PASS2O.SV</td>
 <td>
-ak-4530d / ak-4530d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4530/ak-4530d-ps>ak-4530d / ak-4530d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4531>ak-4531</a></td>
 <td>OS/8 F4 PASS3.SV</td>
 <td>
-ak-4531d / ak-4531d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4531/ak-4531d-ps>ak-4531d / ak-4531d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4555>ak-4555</a></td>
 <td>OS/8 F4 LIBRA.SV</td>
 <td>
-ak-4555d / ak-4555d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4555/ak-4555d-ps>ak-4555d / ak-4555d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4556>ak-4556</a></td>
@@ -296,19 +296,19 @@ ak-4571d / ak-4571d-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4575>ak-4575</a></td>
 <td>OS/8 F4 LOAD.SV</td>
 <td>
-ak-4575d / ak-4575d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4575/ak-4575d-ps>ak-4575d / ak-4575d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4590>ak-4590</a></td>
 <td>OS/8 F4 RALPH.SV</td>
 <td>
-ak-4590d / ak-4590d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4590/ak-4590d-ps>ak-4590d / ak-4590d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4591>ak-4591</a></td>
 <td>OS/8 F4 FRTS.SV</td>
 <td>
-ak-4591d / ak-4591d-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4591/ak-4591d-ps>ak-4591d / ak-4591d-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4651>ak-4651</a></td>
@@ -368,61 +368,61 @@ ak-4660c / ak-4660c-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4661>ak-4661</a></td>
 <td>OS/8 V3D BIN CREF</td>
 <td>
-ak-4661c / ak-4661c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4661/ak-4661c-ps>ak-4661c / ak-4661c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4662>ak-4662</a></td>
 <td>OS/8 V3D BIN EDIT</td>
 <td>
-ak-4662c / ak-4662c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4662/ak-4662c-ps>ak-4662c / ak-4662c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4663>ak-4663</a></td>
 <td>OS/8 V3D BIN PAL8</td>
 <td>
-ak-4663c / ak-4663c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4663/ak-4663c-ps>ak-4663c / ak-4663c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4664>ak-4664</a></td>
 <td>OS/8 V3D BIN PIP</td>
 <td>
-ak-4664c / ak-4664c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4664/ak-4664c-ps>ak-4664c / ak-4664c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4665>ak-4665</a></td>
 <td>OS/8 V3D BIN MCPIP</td>
 <td>
-ak-4665c / ak-4665c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4665/ak-4665c-ps>ak-4665c / ak-4665c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4666>ak-4666</a></td>
 <td>OS/8 V3D BIN BITMAP</td>
 <td>
-ak-4666c / ak-4666c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4666/ak-4666c-ps>ak-4666c / ak-4666c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4667>ak-4667</a></td>
 <td>OS/8 V3D BIN EPIC</td>
 <td>
-ak-4667c / ak-4667c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4667/ak-4667c-ps>ak-4667c / ak-4667c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4668>ak-4668</a></td>
 <td>OS/8 V3D BIN SRCCOM</td>
 <td>
-ak-4668c / ak-4668c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4668/ak-4668c-ps>ak-4668c / ak-4668c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4669>ak-4669</a></td>
 <td>OS/8 V3D BIN CCL</td>
 <td>
-ak-4669c / ak-4669c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4669/ak-4669c-ps>ak-4669c / ak-4669c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4670>ak-4670</a></td>
 <td>OS/8 V3D BIN FOTP</td>
 <td>
-ak-4670c / ak-4670c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4670/ak-4670c-ps>ak-4670c / ak-4670c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4671>ak-4671</a></td>
@@ -434,43 +434,43 @@ ak-4671c / ak-4671c-pb<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4672>ak-4672</a></td>
 <td>OS/8 V3D BIN RESORC</td>
 <td>
-ak-4672c / ak-4672c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4672/ak-4672c-ps>ak-4672c / ak-4672c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4673>ak-4673</a></td>
 <td>OS/8 V3D BIN DIRECT</td>
 <td>
-ak-4673c / ak-4673c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4673/ak-4673c-ps>ak-4673c / ak-4673c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4674>ak-4674</a></td>
 <td>OS/8 V3D BIN PIP10</td>
 <td>
-ak-4674c / ak-4674c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4674/ak-4674c-ps>ak-4674c / ak-4674c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4675>ak-4675</a></td>
 <td>OS/8 V3D BIN CAMP</td>
 <td>
-ak-4675c / ak-4675c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4675/ak-4675c-ps>ak-4675c / ak-4675c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4676>ak-4676</a></td>
 <td>OS/8 V3D BIN BOOT</td>
 <td>
-ak-4676c / ak-4676c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4676/ak-4676c-ps>ak-4676c / ak-4676c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4677>ak-4677</a></td>
 <td>OS/8 V3D BIN RXCOPY</td>
 <td>
-ak-4677c / ak-4677c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4677/ak-4677c-ps>ak-4677c / ak-4677c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4678>ak-4678</a></td>
 <td>OS/8 V3D BIN BUILD</td>
 <td>
-ak-4678c / ak-4678c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4678/ak-4678c-ps>ak-4678c / ak-4678c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4679>ak-4679</a></td>
@@ -488,31 +488,31 @@ ak-4680c / ak-4680c-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4681>ak-4681</a></td>
 <td>OS/8 V3D BIN FORT</td>
 <td>
-ak-4681c / ak-4681c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4681/ak-4681c-ps>ak-4681c / ak-4681c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4682>ak-4682</a></td>
 <td>OS/8 V3D BIN SABR</td>
 <td>
-ak-4682c / ak-4682c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4682/ak-4682c-ps>ak-4682c / ak-4682c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4683>ak-4683</a></td>
 <td>OS/8 V3D BIN LOADER</td>
 <td>
-ak-4683c / ak-4683c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4683/ak-4683c-ps>ak-4683c / ak-4683c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4684>ak-4684</a></td>
 <td>OS/8 V3D BIN LIBSET</td>
 <td>
-ak-4684c / ak-4684c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4684/ak-4684c-ps>ak-4684c / ak-4684c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4747>ak-4747</a></td>
 <td>OS/8 V3D EXT BIN RESEQ</td>
 <td>
-ak-4747c / ak-4747c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4747/ak-4747c-ps>ak-4747c / ak-4747c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4748>ak-4748</a></td>
@@ -524,43 +524,43 @@ ak-4748c / ak-4748c-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4749>ak-4749</a></td>
 <td>OS/8 V3D EXT BIN BASIC COMPILER</td>
 <td>
-ak-4749c / ak-4749c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4749/ak-4749c-ps>ak-4749c / ak-4749c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4750>ak-4750</a></td>
 <td>OS/8 V3D EXT BIN BASIC LOADER</td>
 <td>
-ak-4750c / ak-4750c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4750/ak-4750c-ps>ak-4750c / ak-4750c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4751>ak-4751</a></td>
 <td>OS/8 V3D EXT BIN BRTS</td>
 <td>
-ak-4751c / ak-4751c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4751/ak-4751c-ps>ak-4751c / ak-4751c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4752>ak-4752</a></td>
 <td>OS/8 V3D EXT BIN EABRTS</td>
 <td>
-ak-4752c / ak-4752c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4752/ak-4752c-ps>ak-4752c / ak-4752c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4753>ak-4753</a></td>
 <td>OS/8 V3D EXT BIN BASIC.UF</td>
 <td>
-ak-4753c / ak-4753c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4753/ak-4753c-ps>ak-4753c / ak-4753c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4754>ak-4754</a></td>
 <td>OS/8 V3D EXT BIN BATCH</td>
 <td>
-ak-4754c / ak-4754c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4754/ak-4754c-ps>ak-4754c / ak-4754c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4755>ak-4755</a></td>
 <td>OS/8 V3D EXT BIN TECO</td>
 <td>
-ak-4755c / ak-4755c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4755/ak-4755c-ps>ak-4755c / ak-4755c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4756>ak-4756</a></td>
@@ -572,37 +572,37 @@ ak-4756c / ak-4756c-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4757>ak-4757</a></td>
 <td>OS/8 V3D EXT BIN GENIOX.RL</td>
 <td>
-ak-4757c / ak-4757c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4757/ak-4757c-ps>ak-4757c / ak-4757c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5588>ak-5588</a></td>
 <td>OS/8 V3D EXT BIN GENIOX.SB</td>
 <td>
-ak-5588c / ak-5588c-pa<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5588/ak-5588c-pa>ak-5588c / ak-5588c-pa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5589>ak-5589</a></td>
 <td>OS/8 V3D EXT BIN FUTIL</td>
 <td>
-ak-5589c / ak-5589c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5589/ak-5589c-ps>ak-5589c / ak-5589c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5590>ak-5590</a></td>
 <td>OS/8 V3D EXT BIN BASIC.AF</td>
 <td>
-ak-5590c / ak-5590c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5590/ak-5590c-ps>ak-5590c / ak-5590c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5591>ak-5591</a></td>
 <td>OS/8 V3D EXT BIN BASIC.FF</td>
 <td>
-ak-5591c / ak-5591c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5591/ak-5591c-ps>ak-5591c / ak-5591c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5592>ak-5592</a></td>
 <td>OS/8 V3D EXT BIN BASIC.SF</td>
 <td>
-ak-5592c / ak-5592c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5592/ak-5592c-ps>ak-5592c / ak-5592c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5594>ak-5594</a></td>
@@ -620,49 +620,49 @@ ak-5598c / ak-5598c-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5599>ak-5599</a></td>
 <td>OS/8 V3D BIN ABSLDR</td>
 <td>
-ak-5599c / ak-5599c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5599/ak-5599c-ps>ak-5599c / ak-5599c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5601>ak-5601</a></td>
 <td>OS/8 V3D BIN SET</td>
 <td>
-ak-5601c / ak-5601c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5601/ak-5601c-ps>ak-5601c / ak-5601c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5602>ak-5602</a></td>
 <td>OS/8 V3D BIN DTCOPY</td>
 <td>
-ak-5602c / ak-5602c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5602/ak-5602c-ps>ak-5602c / ak-5602c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5603>ak-5603</a></td>
 <td>OS/8 V3D BIN TDCOPY</td>
 <td>
-ak-5603c / ak-5603c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5603/ak-5603c-ps>ak-5603c / ak-5603c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5604>ak-5604</a></td>
 <td>OS/8 V3D BIN DTFRMT</td>
 <td>
-ak-5604c / ak-5604c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5604/ak-5604c-ps>ak-5604c / ak-5604c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5605>ak-5605</a></td>
 <td>OS/8 V3D BIN TDFRMT</td>
 <td>
-ak-5605c / ak-5605c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5605/ak-5605c-ps>ak-5605c / ak-5605c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5606>ak-5606</a></td>
 <td>OS/8 V3D BIN HELP</td>
 <td>
-ak-5606c / ak-5606c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5606/ak-5606c-ps>ak-5606c / ak-5606c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5607>ak-5607</a></td>
 <td>OS/8 V3D BIN RKLFMT</td>
 <td>
-ak-5607c / ak-5607c-ps<br>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-5607/ak-5607c-ps>ak-5607c / ak-5607c-ps</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4691>al-4691</a></td>
