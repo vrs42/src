@@ -180,7 +180,7 @@ ak-4529d / ak-4529d-ps<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4530>ak-4530</a></td>
-<td>OS/8 F4 PASS20.SV</td>
+<td>OS/8 F4 PASS2O.SV</td>
 <td>
 ak-4530d / ak-4530d-ps<br>
 </td></tr>
@@ -398,7 +398,7 @@ ak-4665c / ak-4665c-ps<br>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4666>ak-4666</a></td>
 <td>OS/8 V3D BIN BITMAP</td>
 <td>
-ak-4666c / xx-4666c-ps<br>
+ak-4666c / ak-4666c-ps<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/ak-4667>ak-4667</a></td>
@@ -663,6 +663,48 @@ ak-5606c / ak-5606c-ps<br>
 <td>OS/8 V3D BIN RKLFMT</td>
 <td>
 ak-5607c / ak-5607c-ps<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4691>al-4691</a></td>
+<td>OS/8 V3D Source (DT) #1</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4691/al-4691c-sa>al-4691c / al-4691c-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4692>al-4692</a></td>
+<td>OS/8 V3D Source (DT) #2</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4692/al-4692c-sa>al-4692c / al-4692c-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4693>al-4693</a></td>
+<td>OS/8 V3D Source (DT) #3</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4693/al-4693d-sa>al-4693c / al-4693d-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4694>al-4694</a></td>
+<td>OS/8 V3D Source (DT) #4</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4694/al-4694c-sa>al-4694c / al-4694c-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4695>al-4695</a></td>
+<td>OS/8 V3D Source (DT) #5</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4695/al-4695c-sa>al-4695c / al-4695c-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4696>al-4696</a></td>
+<td>OS/8 V3D Source (DT) #6</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4696/al-4696c-sa>al-4696c / al-4696c-sa</a><br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4697>al-4697</a></td>
+<td>OS/8 V3D Source (DT) #7</td>
+<td>
+<a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/al-4697/al-4697c-sa>al-4697c / al-4697c-sa</a><br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/dec-00-bzz>dec-00-bzz</a></td>
