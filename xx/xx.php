@@ -9254,11 +9254,13 @@ as-d923a / as-d923a-ya<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf026>qf026</a></td>
-<td>05/8 DEV EXT Binary (DT)</td>
+<td>OS/8 DEV EXT Binary (DT)</td>
 <td>
 al-h525a / al-h525a-uc<br>
-an-h526a / al-h526a-hb<br>
-an-h529a / al-h529a-ha<br>
+an-h526a / an-h526a-hb<br>
+an-h529a / an-h529a-ha<br>
+as-h587a / as-h587a-yb<br>
+as-h588a / as-h588a-yb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf310>qf310</a></td>
@@ -9288,6 +9290,8 @@ as-d909b / as-d909b-yb<br>
 as-5265f / as-5265f-yb<br>
 as-c875d / as-c875d-yb<br>
 as-d577b / as-d577b-yb<br>
+as-h546a / as-h546a-yb<br>
+as-h547a / as-h547a-yb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qfaxx>qfaxx</a></td>
@@ -9307,6 +9311,19 @@ aa-h550a / aa-h550a-ta<br>
 aa-h551a / aa-h551a-ta<br>
 aa-h552a / aa-h552a-ta<br>
 aa-h553a / aa-h553a-ta<br>
+as-h638a / aa-h638a-ta<br>
+as-h639a / aa-h639a-ta<br>
+as-h640a / aa-h640a-ta<br>
+as-h641a / aa-h641a-ta<br>
+as-h642a / aa-h642a-ta<br>
+as-h643a / aa-h643a-ta<br>
+as-h644a / aa-h644a-ta<br>
+as-h645a / aa-h645a-ta<br>
+as-h646a / aa-h646a-ta<br>
+as-h647a / aa-h647a-ta<br>
+as-h648a / aa-h648a-ta<br>
+as-h649a / aa-h649a-ta<br>
+as-h650a / aa-h650a-ta<br>
 </td></tr>
 </table>
 </FIELDSET>
