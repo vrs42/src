@@ -7062,6 +7062,12 @@ ac-c682a / maindec-08-djrlg-a-d<br>
 ak-c684a / maindec-08-djrlg-a-pb<br>
 </td></tr>
 <tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-djrlz>maindec-08-djrlz</a></td>
+<td>AJRLZD0 RL01 Diagnostic Disk (RL01)</td>
+<td>
+ax-e806d / ax-e806d-hc<br>
+</td></tr>
+<tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-djrxa>maindec-08-djrxa</a></td>
 <td>CL/8 Floppy Media #1</td>
 <td>
@@ -7116,6 +7122,15 @@ as-a873c / maindec-08-djrxg-c-pb<br>
 <td>AJRXHF0 WS202 Floppy Tests</td>
 <td>
 as-e113f / maindec-08-djrxh-f-yb<br>
+</td></tr>
+<tr>
+<td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-djrxi>maindec-08-djrxi</a></td>
+<td>AJRXIB0 DEC 88 Diagnostic Binary #1 (RX02)</td>
+<td>
+ba-f246b / ba-f246b-yb<br>
+ba-f286b / ba-f286b-yb<br>
+ba-f246a / ba-f246a-yb<br>
+ba-f286a / ba-f286a-yb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/maindec-08-djvka>maindec-08-djvka</a></td>
@@ -9160,6 +9175,7 @@ as-5585c / as-5585c-ya<br>
 as-4765c / as-4765c-ta<br>
 ar-4758c / ar-4758c-ta<br>
 ar-5593c / ar-5593c-ta<br>
+av-d530a / ar-d530a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf008>qf008</a></td>
@@ -9251,6 +9267,7 @@ as-d920a / as-d920a-ya<br>
 as-d921a / as-d921a-ya<br>
 as-d922a / as-d922a-ya<br>
 as-d923a / as-d923a-ya<br>
+av-5582a / av-5582a-d<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf026>qf026</a></td>
@@ -9258,16 +9275,22 @@ as-d923a / as-d923a-ya<br>
 <td>
 al-h525a / al-h525a-uc<br>
 an-h526a / an-h526a-hb<br>
+ax-h527a / ax-h527a-hb<br>
+ba-h528a / ba-h528a-yb<br>
 an-h529a / an-h529a-ha<br>
+ax-h530a / ax-h530a-hb<br>
 as-h587a / as-h587a-yb<br>
 as-h588a / as-h588a-yb<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf310>qf310</a></td>
-<td>COS-310 RK05</td>
+<td>COS-310 Operating System (RK05)</td>
 <td>
 an-0708e / an-0708e-hc<br>
 as-0714e / as-0714e-yc<br>
+av-d757a / av-d757a-d<br>
+ax-h806e / ax-h806e-hc<br>
+ba-h239e / ba-h239e-yc<br>
 </td></tr>
 <tr>
 <td><a href=http://svn.so-much-stuff.com/svn/trunk/pdp8/src/xx/qf311>qf311</a></td>
@@ -9299,14 +9322,19 @@ as-h547a / as-h547a-yb<br>
 <td>
 aa-h446a / aa-h446a-ta<br>
 as-h447a / as-h447a-ya<br>
+ba-h448a / ba-h448a-ya<br>
 aa-h450a / aa-h450-ta<br>
 as-h451a / as-h451a-ya<br>
+ba-h452a / ba-h452a-ya<br>
 aa-h454a / aa-h454a-ta<br>
 as-h455a / as-h455a-ya<br>
+ba-h456a / ba-h456a-ya<br>
 aa-h458a / aa-h458a-ta<br>
 as-h459a / as-h459a-ya<br>
+ba-h460a / ba-h460a-ya<br>
 aa-h462a / aa-h462a-ta<br>
 as-h463a / as-h463a-ya<br>
+ba-h464a / ba-h464a-ya<br>
 aa-h550a / aa-h550a-ta<br>
 aa-h551a / aa-h551a-ta<br>
 aa-h552a / aa-h552a-ta<br>

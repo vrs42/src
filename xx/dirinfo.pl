@@ -67,7 +67,7 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
   "ad", "dn",	# Documentation Update
   "ae", "dn",	# SPD (Software Product Description)
   "af", "dn",	# Change/Patch Orders
-  "ah", "la",	# Microfiche
+  "ah", "la",	# Microfiche (documents)
 # "aj", "?c",	# RP04
   "ak", "pb",	# Paper Tape
   "al", "uc",	# DECTape/LINCTape
@@ -77,7 +77,7 @@ $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
   "ar", "tc",	# Cassette
   "as", "yc",	# Floppy
   "at", "cb",	# Card Deck
-# "av", "?c",	# Miscellaneous
+# "av", "?c",	# Miscellaneous (documents)
   "ax", "hc",	# RL01
 # "aw", "?c",	# RP06
   "ba", "yc",	# RX02
