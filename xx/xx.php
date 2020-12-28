@@ -7,6 +7,10 @@
 This is an archive of the DEC software titles.  DECUS software titles
 can be found <a href=/pdp8/software/decus.php>here</a>.
 <P>
+If this is your first visit to this page, you may want to expand some of
+these topics:
+<details><summary>Part Numbering</summary>
+<P>
 Since the files are organized by DEC part number, a
 word about part numbers is probably in order.  A DEC part number
 might look like any of these:
@@ -75,6 +79,72 @@ from these documents:
 <DD>8 deco depo diagchanges
 <DD>diag index
 </DL>
+</details>
+<details><summary>File Formats</summary>
+<P>
+In general, old-school part numbering is used, and an old-school suffix is
+often used instead of the (now useless) licensing suffix.  Most of these
+suffixes specify a media type, possibly a file format, then possibly a
+sequence number if there is more than one such item needed.  For example, 
+"-pm1" signifies that it's a paper tape image, in RIM format, and that it
+is the first of two or more such tapes (or tape segments).
+<P>
+For Media types,
+<table>
+<tr><td>a</td><td>LINCtape</td></tr>
+<tr><td>c</td><td>Card Deck</td></tr>
+<tr><td>d</td><td>Document</td></tr>
+<tr><td>f</td><td>Fiche</td></tr>
+<tr><td>h</td><td>DECpack (RK05/RL01)</td></tr>
+<tr><td>l</td><td>Listing</td></tr>
+<tr><td>m</td><td>Magtape</td></tr>
+<tr><td>p</td><td>Paper tape</td></tr>
+<tr><td>t</td><td>Cassette tape</td></tr>
+<tr><td>u</td><td>DECtape</td></tr>
+<tr><td>y</td><td>Floppy</td></tr>
+<table>
+<P>
+For file formats,
+<table>
+<tr><td>a</td><td>ASCII</td></tr>
+<tr><td>b</td><td>Binary (BIN for Papertape)</td></tr>
+<tr><td>c</td><td>ASCII and Binary, mixed</td></tr>
+<tr><td>l</td><td>Load Module</td></tr>
+<tr><td>m</td><td>RIM</td></tr>
+<tr><td>n</td><td>Change Notice</td></tr>
+<tr><td>o</td><td>LINCtape (Bootstrap for Papertape)</td></tr>
+<tr><td>r</td><td>Relocatable</td></tr>
+<tr><td>s</td><td>save format (EPIC)</td></tr>
+<tr><td>t</td><td>no format (Diagnostic for DECtape)</td></tr>
+</table>
+<P>
+Yes, I know that LINCtapes are sometimes considered oddly formatted DECtape,
+and sometimes as a media type of their own.
+</details>
+<details><summary>Credits</summary>
+<P>
+In addition to my own collection of media, *many* other collectors have
+contributed to what is presented here.  In most cases, I have shamelessly
+duplicated their stuff, in an attempt to be as complete a resource as I 
+can manage.
+<P>
+Here is a partial list of resources I have mined, in no particular order:
+<DL>
+<DD><a href=www.bitsavers.org>www.bitsavers.org</a>
+<DD><a href=ftp.dbit.com>ftp.dbit.com</a>
+<DD><a href=www.ibiblio.org>www.ibiblio.org</a>
+<DD><a href=ftp.update.uu.se>ftp.update.uu.se</a>
+<DD><a href=pdp12.org>pdp12.org</a>
+<DD><a href=pdp8.hachti.de>pdp8.hachti.de</a>
+<DD><a href=pdp8.org>pdp8.org</a>
+<DD><a href=www.pdp8.net>www.pdp8.net</a>
+<DD><a href=www.pdp8online.net>www.pdp8online.net</a>
+<DD><a href=www.vandermark.ch>www.vandermark.ch</a>
+</DL>
+<P>
+My thanks to these folks and others, for making this material available!
+</details>
+<P>
 <P>
 If a filename is a link, the file is currently available here by clicking
 that link..  Otherwise, the file is still named, but not clickable.
