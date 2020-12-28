@@ -150,7 +150,7 @@ sub process {
   local($first) = 1;
 
   open(INPUT, "$d/Files.txt") || die "$d/Files.txt: $!";
-  # BeginNow process the files and generate a table.
+  # Now process the files and generate a table.
   while (<INPUT>) {
     next if /^#/;
     die "$d: Invalid Files.txt line: $_" unless /^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$/;
@@ -159,14 +159,26 @@ sub process {
     $alias = $3;
     $desc = $4;
     if ($first) {
+      if (-f "$d/Group.txt") {
+        open(GROUP,, "$d/Group.txt") || die "$d/Group.txt: $!";
+        $group = <GROUP>;
+        $group =~ s/\r*//; chop $group;
+      } else {
+        $group = $desc;
+      }
       print "<tr>\n";
       $f = $d; $l = &link; $links--;
-      print "<td><a href=$l>$d</a></td>\n";
-#     print "<td>$media</td>\n";
-      print "<td>$desc</td>\n";
-      print "<td>\n";
+      print "<td>$group<br><a href=$l>$d</a></td>\n";
+      print "<td><table>\n";
       $first = 0;
+      # This is down here because the tags have to be within a
+      # table row, else they refer to the start of the table!
+      if ($tag ne $ntag) {
+        print "<a name='$ntag'></a>\n";
+        $tag = $ntag;
+      }
     }
+    $desc = "" if $desc eq $group;
     # BUGBUG: Convert $alias to file name, if needed.
     $f = "$d/$alias";
     $f .= ".pdf" if $f =~ /-d\d*$/;
@@ -175,15 +187,16 @@ sub process {
     $f .= ".pdf" if $f =~ /-ta\d*$/;
     # Output a link if the file exists, otherwise just a name.
     $part = "$media-$part / " if $part;
+    $desc =~ s/^$group//;
     if (-f $f) {
       $l = &link;
-      print "<a href=$l>$part$alias</a><br>\n";
+      print "<tr><td><a href=$l>$part$alias</td><td>$desc</a></td></tr>\n";
     } else {
-      print "$part$alias<br>\n";
+      print "<tr><td>$part$alias</td><td>$desc</td></tr>\n";
     }
     $files++;
   }
-  print "</td></tr>\n";
+  print "</table></td></tr>\n";
   $dirs++;
 }
 
@@ -209,6 +222,48 @@ while (<INPUT>) {
 close(INPUT);
 
 #
+# Create an index of interesting paragraphs.
+print "<div style=padding-left:23px>\n";
+print "<a href=#dec-00>dec-00</a>\n";
+print "<a href=#dec-08>dec-08</a>\n";
+print "<a href=#dec-12>dec-12</a>\n";
+print "<a href=#dec-14>dec-14</a>\n";
+print "<a href=#dec-16>dec-16</a>\n";
+print "<a href=#dec-8e>dec-8e</a>\n";
+print "<a href=#dec-8i>dec-8i</a>\n";
+print "<a href=#dec-8l>dec-8l</a>\n";
+print "<a href=#dec-cp>dec-cp</a>\n";
+print "<a href=#dec-cr>dec-cr</a>\n";
+print "<a href=#dec-d8>dec-d8</a>\n";
+print "<a href=#dec-e8>dec-e8</a>\n";
+print "<a href=#dec-fs>dec-fs</a>\n";
+print "<a href=#dec-in>dec-in</a>\n";
+print "<a href=#dec-l8>dec-l8</a>\n";
+print "<a href=#dec-lb>dec-lb</a>\n";
+print "<a href=#dec-p8>dec-p8</a>\n";
+print "<a href=#dec-s8>dec-s8</a>\n";
+print "<a href=#dec-t8>dec-t8</a>\n";
+print "<a href=#maindec-00>maindec-00</a>\n";
+print "<a href=#maindec-08>maindec-08</a>\n";
+print "<a href=#maindec-12>maindec-12</a>\n";
+print "<a href=#maindec-14>maindec-14</a>\n";
+print "<a href=#maindec-89>maindec-89</a>\n";
+print "<a href=#maindec-8e>maindec-8e</a>\n";
+print "<a href=#maindec-8i>maindec-8i</a>\n";
+print "<a href=#maindec-8l>maindec-8l</a>\n";
+print "<a href=#maindec-8s>maindec-8s</a>\n";
+print "<a href=#maindec-t8>maindec-t8</a>\n";
+print "<a href=#maindec-x8>maindec-x8</a>\n";
+print "<a href=#maindec-801>maindec-8xx</a>\n";
+print "<a href=#digital-5>digital</a>\n";
+print "<a href=#qf>qf</a>\n";
+print "</div><br>\n";
+
+#
+# Now start a scrolling region.
+print "<div style='overflow-y: auto; height:75%; border:thick green ridge'>\n";
+
+#
 # Begin creating a table of directories and files.
 print "<table width=100% border=1>\n";
 #print "<col width=50%>\n<col width=50%>\n";
@@ -216,14 +271,23 @@ print "<table width=100% border=1>\n";
 # Process all subdirectories of ".".
 opendir(DOT, ".") || die ".: $!";
 @dirs = sort (readdir(DOT));
+$tag = "";
 foreach $d (@dirs) {
   next if $d =~ /^[.]/;
   next unless -d $d;
+  $ntag = $d;
+  $ntag =~ s/^([^-]+-[^-]+)-.*$/\1/;
+  $ntag =~ s/^(qf).*$/\1/;
+#warn "$d: $ntag $tag\n";
   &process($d);
 }
 print "</table>\n";
-print "</FIELDSET>\n";
+print "</div>\n";
 print STDERR "$files files in $dirs directories ($links linked)\n";
+
+#
+# Now end the scrolling region.
+print "</div>\n";
 
 $tail = <<'EOM';
 <?php include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/footer.php'; ?>
