@@ -284,7 +284,11 @@ foreach $d (@dirs) {
 }
 print "</table>\n";
 print "</div>\n";
-print STDERR "$files files in $dirs directories ($links linked)\n";
+$ratio = 100.0 * $links / $files;
+printf "<P>$links of $files files linked (%.1f%%), in $dirs directories\n",
+       $ratio;
+printf STDERR "$links of $files files linked (%.1f%%), in $dirs directories\n",
+              $ratio;
 
 #
 # Now end the scrolling region.

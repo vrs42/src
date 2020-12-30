@@ -89,7 +89,7 @@ sequence number if there is more than one such item needed.  For example,
 "-pm1" signifies that it's a paper tape image, in RIM format, and that it
 is the first of two or more such tapes (or tape segments).
 <P>
-For Media types,
+For Media types:
 <table>
 <tr><td>a</td><td>LINCtape</td></tr>
 <tr><td>c</td><td>Card Deck</td></tr>
@@ -104,7 +104,8 @@ For Media types,
 <tr><td>y</td><td>Floppy</td></tr>
 <table>
 <P>
-For file formats,
+For file formats, the files should be compatible with SIMH or similar
+simulators, and any available PDF viewer.  The codes are:
 <table>
 <tr><td>a</td><td>ASCII</td></tr>
 <tr><td>b</td><td>Binary (BIN for Papertape)</td></tr>
@@ -147,7 +148,7 @@ My thanks to these folks and others, for making this material available!
 <P>
 <P>
 If a filename is a link, the file is currently available here by clicking
-that link..  Otherwise, the file is still named, but not clickable.
+that link.  Otherwise, the file is still named, but not clickable.
 (If it's not named here, it's either not listed in any of the software
 catalogs above, or it has a media type I haven't decided how to deal with
 yet.  It is also possible that it's something that should be in the list,
@@ -7822,5 +7823,6 @@ are some navigation shortcuts as well:
 </table></td></tr>
 </table>
 </div>
+<P>1226 of 2718 files linked (45.1%), in 1211 directories
 </div>
 <?php include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/footer.php'; ?>
