@@ -3,7 +3,7 @@
 # BUGBUG: digital-8-\d+-[fsu] part numbers don't include a version number!
 # (They should be handled differently when computing directory names.)
 
-$dir = "xx";
+$dir = "dec";
 $DIR = $dir; $DIR =~ y/a-z/A-Z/;
 $SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
 
@@ -217,6 +217,7 @@ sub locate {
 # Output a description of what's going on.
 open(INPUT, 'DESCRIPTION') || return;
 while (<INPUT>) {
+  s/\$SVNURL/$SVNURL/g;
   print $_;
 }
 close(INPUT);
