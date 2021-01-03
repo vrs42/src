@@ -1,0 +1,278 @@
+   1               
+   2               /SELF STARTING BINARY LOADER
+   3               
+   4               /NOVEMBER 1971                          SM
+   5               
+   6               /COPYRIGHT 1971  DIGITAL EQUIPMENT CORPORATION
+   7               /       MAYNARD, MASSACHUSETTS 01754
+   8               
+   9               CAF=6007
+  10               RIMS2=7767
+  11               RIMR1=7761
+  12               COUNT=7776
+  13               *200    /VRS
+  14               *7600
+  15 007600  4331  END,    JMS ASSEMB      /PUT CHECKSUM TOGETHER
+  16               *.
+  17 007601  7041          CIA
+  18               *.
+  19 007602  1352          TAD CKSUM       /GET TOTAL
+  20               *.
+  21 007603  7440          SZA             /GOOD LOAD?
+  22               *.
+  23 007604  7402  M376,   HLT             /NO--HALT AND DISPLAY DISCREPANCY
+  24               *.
+  25 007605  2353          ISZ SWITCH      /WAS LAST DATA AN ORIGIN?
+  26               *.
+  27 007606  5204          JMP .-2         /NO--DO NOT START EXECUTION
+  28               *.
+  29 007607  6007          CAF             /YES--RESTORE MACHINE STATE TO START
+  30               *.
+  31 007610  1253          TAD FLD
+  32               *.
+  33 007611  7001          IAC
+  34               *.
+  35 007612  3213          DCA .+1         /SET INSTRUCTION FIELD TO LAST LOADED FIELD
+  36               *.
+  37 007613  7402          HLT
+  38               *.
+  39 007614  5747          JMP I ORIGIN    /**EXIT TO LOADED PROGRAM**
+  40               *.
+  41 007615  6032  BEGIN,  KCC
+  42               *.
+  43 007616  6014          RFC 
+  44               *.
+  45 007617  6214          RDF
+  46               *.
+  47 007620  1340          TAD CDF0        /SET FIELD FROM SWITCHES
+  48               *.
+  49 007621  3354          DCA FLD2
+  50               *.
+  51 007622  1341          TAD MASK
+  52               *.
+  53 007623  3273          DCA LEAD        /SET UP TO IGNORE BLANK TAPE & LEADER/TRAILER
+  54               *.
+  55 007624  4260          JMS FETCH       /GET FIRST CHARACTER
+  56               *.
+  57 007625  5224          JMP .-1         /IGNORE UNTIL FIRST REAL DATA
+  58               *.
+  59 007626  1342          TAD LT          /CHARACTER IS ORIGIN OR DATA
+  60               
+  61               *.
+  62 007627  3273          DCA LEAD        /NO LONGER IGNORE BLANK TAPE
+  63               *.
+  64 007630  3352  LOAD,   DCA CKSUM
+  65               *.
+  66 007631  1354          TAD FLD2        /GET SAVED CDF
+  67               *.
+  68 007632  3253          DCA FLD         /INSERT WHERE IT WILL BE EXECUTED
+  69               *.
+  70 007633  1346          TAD CHAR
+  71               *.
+  72 007634  3350          DCA WORD1       /STORE FIRST HALF
+  73               *.
+  74 007635  4305          JMS READ        /GET SECOND HALF
+  75               *.
+  76 007636  3351          DCA WORD2       /STORE IT
+  77               *.
+  78 007637  4260          JMS FETCH       /IS NEXT WORD LEADER/TRAILER?
+  79               *.
+  80 007640  5200          JMP END         /YES--THIS IS THE CHECKSUM
+  81               *.
+  82 007641  4331          JMS ASSEMB      /NO--PUT WORD TOGETHER
+  83               *.
+  84 007642  7420  RESTOR, SNL             /IS IT AN ORIGIN?
+  85               *.
+  86 007643  5253          JMP FLD         /NO
+  87               *.
+  88 007644  3347          DCA ORIGIN      /YES--RESET ORIGIN
+  89               *.
+  90 007645  7040          CMA
+  91               *.
+  92 007646  3353  SUM,    DCA SWITCH      /RESET ORIGIN SWITCH
+  93               *.
+  94 007647  1350          TAD WORD1
+  95               *.
+  96 007650  1351          TAD WORD2
+  97               *.
+  98 007651  1352          TAD CKSUM       /UPDATE CHECKSUM
+  99               *.
+ 100 007652  5230          JMP LOAD
+ 101               *.
+ 102 007653  7402  FLD,    HLT             /SHOULD CONTAIN CDF N0
+ 103               *.
+ 104 007654  3747          DCA I ORIGIN    /LOAD DATA
+ 105               *.
+ 106 007655  2347          ISZ ORIGIN
+ 107               *.
+ 108 007656  0177  C177,   177
+ 109               *.
+ 110 007657  5246          JMP SUM
+ 111               
+ 112               
+ 113               /SUBROUTINE TO FETCH A CHARACTER FROM INPUT TAPE
+ 114               /RETURNS TO CALL+1 IF LEADER/TRAILER
+ 115               /RETURNS TO CALL+2 IF DATA OR ORIGIN
+ 116               /HANDLES FIELD SETTINGS AND RUBOUTS
+ 117               
+ 118               *.
+ 119 007660  0000  FETCH,  0
+ 120               *.
+ 121 007661  3331          DCA ASSEMB      /RESET RUBOUT SWITCH
+ 122               *.
+ 123 007662  4305          JMS READ        /FETCH A CHARACTER
+ 124               *.
+ 125 007663  1204          TAD M376
+ 126               *.
+ 127 007664  7740  M40,    SMA SZA CLA     /IS IT A RUBOUT?
+ 128               *.
+ 129 007665  2331          ISZ ASSEMB      /YES--WAS SWITCH -1?
+ 130               *.
+ 131 007666  1331          TAD ASSEMB
+ 132               *.
+ 133 007667  7010          RAR             /NO--
+ 134               *.
+ 135 007670  7630          SZL CLA         /IS RUBOUT SWITCH SET?
+ 136               *.
+ 137 007671  5262          JMP FETCH+2     /YES--IGNORE CHARACTER
+ 138               *.
+ 139 007672  1346          TAD CHAR        /CHARACTER IS GOOD DATA
+ 140               *.
+ 141 007673  7402  LEAD,   HLT             /WILL BE TAD M200 OR AND C177
+ 142               *.
+ 143 007674  7650          SNA CLA         /IS IT LEADER/TRAILER?
+ 144               *.
+ 145 007675  5660          JMP I FETCH     /YES--RETURN--
+ 146               *.
+ 147 007676  1346          TAD CHAR
+ 148               *.
+ 149 007677  1300          TAD M300
+ 150               *.
+ 151 007700  7500  M300,   SMA             /IS IT A FIELD SETTING?
+ 152               *.
+ 153 007701  5325          JMP FSET        /YES--HANDLE IT
+ 154               *.
+ 155 007702  2260          ISZ FETCH       /NO--ORIGIN OR DATA
+ 156               *.
+ 157 007703  7600  M200,   7600            /CLA
+ 158               *.
+ 159 007704  5660          JMP I FETCH     /--RETURN--
+ 160               
+ 161               /INPUT ROUTINE
+ 162               /SET BY INITIALIZATION CODE FOR EITHER ASR33 OR HIGH SPEED READER
+ 163               /ENTER WITH AC=0
+ 164               /EXIT WITH CHARACTER IN AC AND IN CHAR
+ 165               
+ 166               *.
+ 167 007705  0000  READ,   0
+ 168               *.
+ 169 007706  3376          DCA COUNT       /PREPARE TO TIME OUT
+ 170               *.
+ 171 007707  2376          ISZ COUNT       /IF OUT OF TAPE
+ 172               *.
+ 173 007710  5320          JMP WAIT
+ 174               *.
+ 175 007711  6036  NOTAPE, KRB             /OR RCC=6016
+ 176               *.
+ 177 007712  6031  TAPE,   KSF             /OR RSF=6011
+ 178               *.
+ 179 007713  5307          JMP .-4
+ 180               *.
+ 181 007714  6036  D07715, KRB             /OR RCC=6016
+ 182               *.
+ 183 007715  3346          DCA CHAR
+ 184               *.
+ 185 007716  1346          TAD CHAR
+ 186               *.
+ 187 007717  5705          JMP I READ      /--RETURN--
+ 188               *.
+ 189 007720  1264  WAIT,   TAD M40
+ 190               *.
+ 191 007721  3344          DCA INIT
+ 192               *.
+ 193 007722  2344          ISZ INIT
+ 194               *.
+ 195 007723  5322          JMP .-1
+ 196               *.
+ 197 007724  5312          JMP TAPE
+ 198               
+ 199               /HANDLER FOR FIELD SETTING
+ 200               /ENTERED FROM FETCH
+ 201               
+ 202               *.
+ 203 007725  0343  FSET,   AND C70         /MASK OUT ALL BUT FIELD NUMBER
+ 204               *.
+ 205 007726  1340          TAD CDF0        /GET REST OF CDF
+ 206               *.
+ 207 007727  3354          DCA FLD2        /SAVE FOR LATER
+ 208               *.
+ 209 007730  5262          JMP FETCH+2
+ 210               
+ 211               
+ 212               /SUBROUTINE TO ASSEMBLE TWO CHARACTERS INTO ONE WORD FOR STORAGE
+ 213               /ENTER WITH AC=0
+ 214               /EXIT WITH WORD IN AC
+ 215               
+ 216               *.
+ 217 007731  0000  ASSEMB, 0
+ 218               *.
+ 219 007732  1350          TAD WORD1
+ 220               *.
+ 221 007733  7106          CLL RTL 
+ 222               *.
+ 223 007734  7006          RTL 
+ 224               *.
+ 225 007735  7006          RTL 
+ 226               *.
+ 227 007736  1351          TAD WORD2
+ 228               *.
+ 229 007737  5731          JMP I ASSEMB    /--RETURN--
+ 230               /CONSTANTS
+ 231               *.
+ 232 007740  6201  CDF0,   CDF 0
+ 233               *.
+ 234 007741  0256  MASK,   AND C177
+ 235               *.
+ 236 007742  1303  LT,     TAD M200
+ 237               *.
+ 238 007743  0070  C70,    70              /EFFECTIVE NOP
+ 239               
+ 240               
+ 241               /INITIALIZATION CODE
+ 242               /USED ONCE ONLY--MAY BE OVERWRITTEN BY DATA BREAKS
+ 243               
+ 244               
+ 245               /TEMPORARY STORAGE LOCATIONS
+ 246               /MAY ALSO BE OVERWRITTEN BY DATA BREAKS
+ 247               
+ 248               *.
+ 249 007744  7200  INIT,   CLA
+ 250               *.
+ 251 007745  1361          TAD RIMR1
+ 252               *.
+ 253 007746  3311  CHAR,   DCA NOTAPE
+ 254               *.
+ 255 007747  1367  ORIGIN, TAD RIMS2
+ 256               *.
+ 257 007750  3312  WORD1,  DCA TAPE
+ 258               *.
+ 259 007751  1361  WORD2,  TAD RIMR1
+ 260               *.
+ 261 007752  3314  CKSUM,  DCA TAPE+2
+ 262               *.
+ 263 007753  1242  SWITCH, TAD RESTOR
+ 264               *.
+ 265 007754  3372  FLD2,   DCA 7772
+ 266               *.
+ 267 007755  5215          JMP BEGIN
+ 268               
+ 269               
+ 270               /STARTING ADDRESS FOR MANUAL START
+ 271               *7777
+ 272 007777  5215          JMP BEGIN
+ 273               
+ 274               /LOCATION TO OVERLAY RIM AND START LOADER
+ 275               *7772
+ 276 007772  5344          JMP INIT
+ 277               
+ 278               $
