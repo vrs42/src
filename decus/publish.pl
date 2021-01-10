@@ -21,7 +21,7 @@ $body = <<'EOM';
 <P>
 Here is my collection of things both DECUS and PDP-8.  The intent here is 
 to provide a home for the known surviving bits of the PDP-8 portions of 
-DECUS.  However, I haven't yet done anything with the BASIC8, LINC, or 
+DECUS.  However, I haven't yet done much with the BASIC8, LINC, or 
 PDP-12 DECUS stuff.
 <P>
 Part numbers have been altered slightly.  "5/8-1.1" becomes "5,8-1.1"
@@ -136,6 +136,8 @@ sub process {
   "focal8-1\\d\\d", "focal8-100",
   "focal8-2\\d\\d", "focal8-200",
   "focal8-3\\d\\d", "focal8-300",
+  "12-\\d{1,2}[^\\d]", "12-1",
+  "12-1\\d\\d", "12-100",
 );
 @patterns = (
   "[5,8]+-\\d{1,2}[^\\d]",
@@ -153,6 +155,8 @@ sub process {
   "focal8-1\\d\\d",
   "focal8-2\\d\\d",
   "focal8-3\\d\\d",
+  "12-\\d{1,2}[^\\d]",
+  "12-1\\d\\d",
 );
 
 #
@@ -179,6 +183,8 @@ print "<a href=#decus-focal8-1>focal8-1</a>\n";
 print "<a href=#decus-focal8-100>focal8-100</a>\n";
 print "<a href=#decus-focal8-200>focal8-200</a>\n";
 print "<a href=#decus-focal8-300>focal8-300</a>\n";
+print "<a href=#decus-12-1>12-1</a>\n";
+print "<a href=#decus-12-100>12-100</a>\n";
 print "</div>\n";
 print "<div>You can also scroll around, or you could try searching (i.e., 'disassembler').</div><p>\n";
 
