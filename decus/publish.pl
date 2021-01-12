@@ -132,6 +132,7 @@ sub process {
   "[5,8]+-8\\d\\d", "8-800",
   "[5,8]+-9\\d\\d", "8-900",
   "basic8-\\d{1,2}[^\\d]", "basic8-1",
+  "basic8-1\\d\\d", "basic8-100",
   "focal8-\\d{1,2}[^\\d]", "focal8-1",
   "focal8-1\\d\\d", "focal8-100",
   "focal8-2\\d\\d", "focal8-200",
@@ -151,6 +152,7 @@ sub process {
   "[5,8]+-8\\d\\d",
   "[5,8]+-9\\d\\d",
   "basic8-\\d{1,2}[^\\d]",
+  "basic8-1\\d\\d",
   "focal8-\\d{1,2}[^\\d]",
   "focal8-1\\d\\d",
   "focal8-2\\d\\d",
@@ -179,6 +181,7 @@ print "<a href=#decus-8-700>8-700</a>\n";
 print "<a href=#decus-8-800>8-800</a>\n";
 print "<a href=#decus-8-900>8-900</a><br>\n";
 print "<a href=#decus-basic8-1>basic8</a>\n";
+print "<a href=#decus-basic8-100>basic8-100</a>\n";
 print "<a href=#decus-focal8-1>focal8-1</a>\n";
 print "<a href=#decus-focal8-100>focal8-100</a>\n";
 print "<a href=#decus-focal8-200>focal8-200</a>\n";
@@ -191,7 +194,7 @@ print "<div>You can also scroll around, or you could try searching (i.e., 'disas
 #
 # Walk the directory tree, looking for files.
 # Emit the big scrollable table.
-print "<div style='overflow-y: auto; height:35%; border:thick green ridge'>\n";
+print "<div style='overflow-y: auto; height:50%; border:thick green ridge'>\n";
 print "<table width=100% border=1>\n";
 print "<col width=15%><col width=50%><col width=35%>\n";
 $root = `pwd`;
