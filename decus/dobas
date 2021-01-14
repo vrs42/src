@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+# The beauty of the August 1978 Catalog is that the text can generally
+# be assumed to be enclosed in a <div> started by a section header, and
+# terminated by the start of the next such header.
+$catalog = "August 1978";
+$catalog = "June 1979";
+
+%sections = (
+  "Abstract", 1,
+  "Author", 1,
+  "Format", 1,
+  "Limitations", 1,
+  "Media Price Code", 1,
+  "Memory Required", 1,
+  "Memory used", 1,
+  "Note", 1,
+  "Operating System", 1,
+  "Other Software Required", 1,
+  "Restrictions", 1,
+  "Revised by", 1,
+  "Routines include", 1,
+  "Size", 1,
+  "Source Language", 1,
+  "Special Hardware Required", 1,
+  "Submitted by", 1,
+);
+
+#open(INPUT, "basic8-78August78") || die "basic8-78August: $!";
+open(INPUT, "basic8-79June") || die "basic8-79June: $!";
+$decus = undef; # Don't know which part number yet
+foreach $line (<INPUT>) {
+  $line =~ s/\r//g;
+  if (!defined $decus) {
+    # This should be a title line.
+    if ($line =~ /^(.*) BASIC8-(\d+)$/) {
+      $title = $1;
+      $decus = "basic8-$2";
+      print "cat >decus-$decus.htm <<'HERE'\n";
+      print "<div style=width:50%>\n";
+      print "<table width=100%>\n";
+      print "<td>$title<td>BASIC8-$2\n";
+      print "</table><div>\n";
+    }
+    next;
+  }
+  if ($line =~ s/^([^:]+)://) {
+    # Does the colon indicate a section header?
+    if (defined $sections{$1}) {
+      # Yes.  Close the current <div>, then start the new one.
+      print "</div><div><I>$1</I>:$line";
+    } else {
+      # No, just copy the line out.
+      print "$1:$line";
+    }
+  } else {
+    if ($line =~ /^$/) {
+      # End of entry.  Close out the current <div>.
+      print "</div><div><I>Catalog</I>: $catalog</div>\n";
+      print "</div>\nHERE\n\n";
+      undef $decus;
+    } else {
+      # Just an ordinary test line, so copy it out.
+      print $line;
+    }
+  }
+}

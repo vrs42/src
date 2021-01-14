@@ -97,6 +97,7 @@ sub process {
       $desc =~ s:</td>::is;
       $partno =~ s:</td>::is;
       $partno =~ y/A-Z/a-z/;
+      $partno =~ s/^l/L/;
       close(INPUT) || die "$d/$d.htm";
     } else {
        $partno = $d;
@@ -139,6 +140,7 @@ sub process {
   "focal8-3\\d\\d", "focal8-300",
   "12-\\d{1,2}[^\\d]", "12-1",
   "12-1\\d\\d", "12-100",
+  "L-\\d{1,2}[^\\d]", "L-1",
 );
 @patterns = (
   "[5,8]+-\\d{1,2}[^\\d]",
@@ -159,6 +161,7 @@ sub process {
   "focal8-3\\d\\d",
   "12-\\d{1,2}[^\\d]",
   "12-1\\d\\d",
+  "L-\\d{1,2}[^\\d]",
 );
 
 #
@@ -188,6 +191,7 @@ print "<a href=#decus-focal8-200>focal8-200</a>\n";
 print "<a href=#decus-focal8-300>focal8-300</a>\n";
 print "<a href=#decus-12-1>12-1</a>\n";
 print "<a href=#decus-12-100>12-100</a>\n";
+print "<a href=#decus-L-1>L-1</a>\n";
 print "</div>\n";
 print "<div>You can also scroll around, or you could try searching (i.e., 'disassembler').</div><p>\n";
 
