@@ -1,0 +1,59 @@
+PR0=6206        / Execute SBC firmware function
+RMDRW=0001      / Read/Write RAM Disk device
+
+/ DTAPE is followed by:
+/       Buffer address (DIRBUF)
+/       Word Count (negated) (-400)
+/       Block Number (2)
+
+/ The "block numbers" here are for 128 word blocks, like those
+/ Edu25 Basic was written to use on DECtape.
+
+        FIELD 1
+*13200
+DTAPE,	0		/ Enter with ac=1 for read
+        SNA CLA
+        TAD C4000       / Set up for write
+        TAD C0010       / Buffers are in Field 1, unit 0
+        DCA RMDCNT      / Save for now
+	TAD CIFCDF	/ Save calling field for return
+	RDF
+	DCA DXIT
+
+DGR,	JMS DGET        / Get transfer address
+	DCA DCORE	/ ...and store it
+	JMS DGET        / Get -number of words
+        CIA             / Make it positive
+        CLL RAR         / Scale it
+        TAD RMDCNT      / Set up transfer size
+        DCA RMDCNT
+	JMS DGET	/ Get the block number
+	DCA RMDPAG	/ ...and store it
+
+        / Do the I/O operation
+        PR0
+        RMDRW           / Read/write RAM Disk Device
+RMDCNT, 0               / R/W bit, page count, buffer field, unit
+DCORE,  0               / Address of buffer
+RMDPAG, 0               / Starting block number
+        SZL             / Error?
+        JMP DTERR       / Yes, bail
+        JMP DXIT        / No, just return
+CIFCDF, CIF CDF
+C4000,  4000            / Write needs high bit set
+C0010,  0010            / Buffers in field 1, unit == 0
+
+DTERR,	HLT		/ Just crash, for now
+	JMP .-1
+
+DXIT=3245
+/DXIT,	HLT		/ Return to proper field
+/	JMP I DTAPE
+
+DGET=3247
+/DGET,	0		/ Pick up next argument
+/	TAD I DTAPE
+/	ISZ DTAPE
+/	JMP I DGET
+
+$

@@ -1,0 +1,59 @@
+   1            PR0=6206        / Execute SBC firmware function
+   2            RMDRW=0001      / Read/Write RAM Disk device
+   3            
+   4            / DTAPE is followed by:
+   5            /       Buffer address (DIRBUF)
+   6            /       Word Count (negated) (-400)
+   7            /       Block Number (2)
+   8            
+   9            / The "block numbers" here are for 128 word blocks, like those
+  10            / Edu25 Basic was written to use on DECtape.
+  11            
+  12                    FIELD 1
+  13            *13200
+  14 13200 0000 DTAPE,  0               / Enter with ac=1 for read
+  15 13201 7650         SNA CLA
+  16 13202 1232         TAD C4000       / Set up for write
+  17 13203 1233         TAD C0010       / Buffers are in Field 1, unit 0
+  18 13204 3223         DCA RMDCNT      / Save for now
+  19 13205 1231         TAD CIFCDF      / Save calling field for return
+  20 13206 6214         RDF
+  21 13207 3245         DCA DXIT
+  22            
+  23 13210 4247 DGR,    JMS DGET        / Get transfer address
+  24 13211 3224         DCA DCORE       / ...and store it
+  25 13212 4247         JMS DGET        / Get -number of words
+  26 13213 7041         CIA             / Make it positive
+  27 13214 7110         CLL RAR         / Scale it
+  28 13215 1223         TAD RMDCNT      / Set up transfer size
+  29 13216 3223         DCA RMDCNT
+  30 13217 4247         JMS DGET        / Get the block number
+  31 13220 3225         DCA RMDPAG      / ...and store it
+  32            
+  33                    / Do the I/O operation
+  34 13221 6206         PR0
+  35 13222 0001         RMDRW           / Read/write RAM Disk Device
+  36 13223 0000 RMDCNT, 0               / R/W bit, page count, buffer field, unit
+  37 13224 0000 DCORE,  0               / Address of buffer
+  38 13225 0000 RMDPAG, 0               / Starting block number
+  39 13226 7430         SZL             / Error?
+  40 13227 5234         JMP DTERR       / Yes, bail
+  41 13230 5245         JMP DXIT        / No, just return
+  42 13231 6203 CIFCDF, CIF CDF
+  43 13232 4000 C4000,  4000            / Write needs high bit set
+  44 13233 0010 C0010,  0010            / Buffers in field 1, unit == 0
+  45            
+  46 13234 7402 DTERR,  HLT             / Just crash, for now
+  47 13235 5234         JMP .-1
+  48            
+  49            DXIT=3245
+  50            /DXIT,  HLT             / Return to proper field
+  51            /       JMP I DTAPE
+  52            
+  53            DGET=3247
+  54            /DGET,  0               / Pick up next argument
+  55            /       TAD I DTAPE
+  56            /       ISZ DTAPE
+  57            /       JMP I DGET
+  58            
+  59            $
