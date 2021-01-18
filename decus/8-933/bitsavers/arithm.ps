@@ -1,0 +1,47 @@
+PROGRAM ARITHMETIK(INPUT, OUTPUT);
+    VAR W: REAL;
+
+FUNCTION ZIFFER(Z: CHAR): BOOLEAN;
+   BEGIN ZIFFER := ("0"<=Z) AND (Z<="9") END;
+
+FUNCTION AUSDRUCK: REAL;
+VAR Z: CHAR;
+    FUNCTION FAKTOR: REAL;
+    VAR W: INTEGER;
+        BEGIN
+        READ(Z);   WRITE(Z);
+        IF ZIFFER(Z)
+           THEN BEGIN W := 0;
+                REPEAT W := 10*W + ORD(Z) - ORD("0");
+                       READ(Z);   WRITE(Z)
+                UNTIL NOT (ZIFFER(Z));
+                FAKTOR := W
+                END
+           ELSE IF Z = "("
+                   THEN BEGIN FAKTOR := AUSDRUCK;
+                        READ(Z);   WRITE(Z)
+                        END
+        END;
+
+    FUNCTION TERM: REAL;
+        VAR W: REAL;
+        BEGIN W := FAKTOR;
+        WHILE (Z="*") OR (Z="/") DO
+              IF Z = "*" THEN W := W*FAKTOR
+                         ELSE W := W/FAKTOR;
+        TERM := W
+        END;
+
+    BEGIN
+    W := TERM;
+    WHILE (Z="+") OR (Z="-") DO
+          IF Z = "+" THEN W := W + TERM
+                     ELSE W := W - TERM;
+    AUSDRUCK := W
+    END;
+
+BEGIN
+REPEAT WRITE(" ");WRITELN(AUSDRUCK:7:3);
+       READLN
+UNTIL EOF
+END.

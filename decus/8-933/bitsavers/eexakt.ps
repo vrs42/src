@@ -1,0 +1,51 @@
+PROGRAM EEEEEEEEEEEEEE(INPUT,OUTPUT);
+
+  CONST BASE=1000000;
+
+  VAR   N,I,FIRST,LAST,NUMBEROFDIGITS,
+        CARRY,DIGIT,POWER: INTEGER;
+        A,S: ARRAY[1..501] OF INTEGER;
+
+BEGIN  READ(NUMBEROFDIGITS);
+    FIRST := 1;  LAST := NUMBEROFDIGITS DIV 6  +  1;
+    N := 2;
+    A[1] := 500000;  S[1] := 500000;
+    FOR I := 2 TO LAST DO
+        BEGIN  A[I] := 0;  S[I] := 0  END;
+
+    REPEAT  N := N + 1;
+        CARRY := 0;
+        FOR I := FIRST TO LAST DO
+            BEGIN
+                DIGIT := CARRY*BASE + A[I];
+                A[I]  := DIGIT DIV N;
+                CARRY := DIGIT MOD N
+            END;
+        IF A[FIRST] = 0 THEN FIRST := FIRST + 1;
+
+        CARRY := 0;
+        I := LAST;
+        WHILE (FIRST<=I) OR (CARRY<>0) DO
+            BEGIN
+                DIGIT := S[I] + A[I] + CARRY;  CARRY := 0;
+                IF DIGIT >= BASE THEN BEGIN
+                                          DIGIT := DIGIT - BASE;
+                                          CARRY := 1
+                                      END;
+                S[I] := DIGIT;
+                I := I - 1
+            END
+    UNTIL FIRST>LAST;
+
+    WRITE("E = 2.");
+    FOR I := 1 TO LAST DO
+        BEGIN
+            DIGIT := S[I];  POWER := BASE;
+            REPEAT  POWER := POWER DIV 10;
+                    WRITE(DIGIT DIV POWER :1);
+                    DIGIT := DIGIT MOD POWER
+            UNTIL POWER=1;
+            IF I MOD 12 = 0 THEN BEGIN WRITELN; WRITE(" ":6) END
+        END;
+    WRITELN
+END.

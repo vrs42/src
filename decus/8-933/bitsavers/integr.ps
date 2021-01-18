@@ -1,0 +1,50 @@
+
+PROGRAM INTEGRATION(INPUT,OUTPUT);
+
+    VAR ANFANG,ENDE,FLAECHE: REAL;
+
+
+(************* HIER INTEGRAND DEFINIEREN **************)
+    FUNCTION F(X: REAL): REAL;
+        BEGIN
+            F := SIN(X)
+        END;
+(******************************************************)
+
+
+
+    FUNCTION INTEGRAL(A,B: REAL): REAL;
+
+        CONST   EPSILON = 1E-8;
+        VAR     N,J: INTEGER;
+                DELTA, MITTE, EINF, ZWEIF, VIERF: REAL;
+                SIMPSON, LETZTWERT: REAL;
+
+    BEGIN
+        N := 1;  DELTA := B-A;  MITTE := A+DELTA/2;
+        EINF  := F(A) + F(B);
+        ZWEIF := 0;
+        VIERF := F(MITTE);
+        SIMPSON := (EINF + 4*VIERF) * DELTA/6;
+
+        REPEAT
+            LETZTWERT := SIMPSON;
+            N := 2*N; DELTA := DELTA/2; MITTE := A + DELTA/2;
+            ZWEIF := ZWEIF + VIERF;
+            VIERF := 0;
+            FOR J := 0 TO N-1 DO VIERF := VIERF + F(MITTE+J*DELTA);
+            SIMPSON := (EINF + 2*ZWEIF + 4*VIERF) * DELTA/6
+        UNTIL  ABS(SIMPSON-LETZTWERT)<ABS(SIMPSON)*EPSILON;
+
+        INTEGRAL := SIMPSON
+    END (* INTEGRAL *);
+
+
+BEGIN
+    WRITELN("B E S T I M M T E S   I N T E G R A L");
+    WRITELN;
+    WRITE("INTERVALLGRENZEN");  READ(ANFANG,ENDE);
+    FLAECHE := INTEGRAL(ANFANG,ENDE);
+    WRITELN;
+    WRITELN("WERT DES INTEGRALS: ", FLAECHE :18:10)
+END.

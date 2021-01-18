@@ -1,0 +1,232 @@
+PROGRAM PLOTDODEKAEDER(INPUT,OUTPUT);
+
+CONST UP="H"; DOWN="I";
+
+TYPE  PUNKT = RECORD X,Y,Z: REAL; SICHTBAR: BOOLEAN END;
+
+VAR   BILD: INTEGER;
+      ALFA, BETA, GAMMA, OX, OZ,
+      AXX, AXY, AXZ, AYX, AYY, AYZ, AZX, AZY, AZZ: REAL;
+      DODEKA:  ARRAY[1..20] OF PUNKT;
+      FLAECHE: ARRAY[1..12,1..5] OF INTEGER;
+      WEG:     ARRAY[1..40] OF INTEGER;
+
+      PENXPOS,PENYPOS: INTEGER;
+
+(********** P L O T T E R  PROZEDUREN **********)
+
+PROCEDURE PEN(I:CHAR);
+    BEGIN WRITE(I) END;
+
+PROCEDURE SEND(IX,IY: INTEGER);
+    BEGIN
+      IF IX>=0  THEN WRITE( IX:1,"@")
+                ELSE WRITE(-IX:1,"P");
+      IF IY>=0  THEN WRITE( IY:1,"A")
+                ELSE WRITE(-IY:1,"Q")
+    END;
+
+PROCEDURE MOVE(X,Y: REAL);
+    BEGIN
+      PENXPOS:=ROUND(X); PENYPOS:=ROUND(Y);
+      WRITE("H");
+      SEND(PENXPOS,PENYPOS);
+      WRITELN("K")
+    END;
+
+PROCEDURE LINE(X,Y: REAL);
+  VAR DX,DY: INTEGER;
+    BEGIN
+      DX:=ROUND(X)-PENXPOS;
+      DY:=ROUND(Y)-PENYPOS;
+      SEND(DX,DY); WRITELN("J");
+      PENXPOS:=PENXPOS+DX; PENYPOS:=PENYPOS+DY
+    END;
+
+PROCEDURE DOTS(X,Y: REAL);
+  CONST DIST=30.0;
+  VAR   U,V,DX,DY,L,SX,SY: REAL;
+    BEGIN
+      U:=PENXPOS;  V:=PENYPOS;
+      DX:=X-U;     DY:=Y-V;
+      L:=SQRT(DX*DX + DY*DY);
+      IF L>0 THEN
+        BEGIN  SX:=DX/L*DIST;  SY:=DY/L*DIST;
+          WHILE L>DIST DO
+            BEGIN U:=U+SX;  V:=V+SY;
+                  L:=L-DIST;
+                  MOVE(U,V); PEN(DOWN)
+            END;
+          MOVE(X,Y); PEN(DOWN)
+        END
+    END;
+
+PROCEDURE BLATTWECHSEL;
+    BEGIN PEN(UP); WRITELN(" ":384) END;
+
+(***********************************************)
+
+
+PROCEDURE ROTATIONSMATRIX;
+  CONST RAD=1.745329252E-2;
+  VAR   SINA,COSA,SINB,COSB,SINC,COSC: REAL;
+
+    BEGIN
+        SINA := SIN(ALFA*RAD);  COSA := COS(ALFA*RAD);
+        SINB := SIN(BETA*RAD);  COSB := COS(BETA*RAD);
+        SINC := SIN(GAMMA*RAD); COSC := COS(GAMMA*RAD);
+
+        AXX := COSB*COSC;
+        AXY := COSB*SINC;
+        AXZ := -SINB;
+
+        AYX := SINA*SINB*COSC - COSA*SINC;
+        AYY := SINA*SINB*SINC + COSA*COSC;
+        AYZ := SINA*COSB;
+
+        AZX := COSA*SINB*COSC + SINA*SINC;
+        AZY := COSA*SINB*SINC - SINA*COSC;
+        AZZ := COSA*COSB;
+    END (* ROTATIONSMATRIX *);
+
+
+PROCEDURE DODEKABESCHREIBUNG;
+  CONST A=250.0;  PI5=0.6283185308;
+  VAR   RI,RA,D,H,Z5,F,G: REAL;
+      I: INTEGER;
+    BEGIN  Z5 := 2*SQRT(5);
+        RI := 2*A/SQRT(10-Z5);
+        RA := A*SQRT(Z5/5+1);
+        H  := A/4*SQRT(10+2.2*Z5);
+        D  := A/4*SQRT(2-0.2*Z5);
+
+        FOR I := 0 TO 4 DO
+            BEGIN  F := 2*PI5*I;  G := F + PI5;
+                DODEKA[I+1].X := RI*COS(F); DODEKA[I+1].Z := -H;
+                DODEKA[I+1].Y := RI*SIN(F);
+                DODEKA[I+6].X := RA*COS(F); DODEKA[I+6].Z := -D;
+                DODEKA[I+6].Y := RA*SIN(F);
+                DODEKA[I+11].X:= RA*COS(G); DODEKA[I+11].Z:=  D;
+                DODEKA[I+11].Y:= RA*SIN(G);
+                DODEKA[I+16].X:= RI*COS(G); DODEKA[I+16].Z:=  H;
+                DODEKA[I+16].Y:= RI*SIN(G)
+            END;
+
+        FLAECHE[ 1,1] := 1;  FLAECHE[ 1,2] := 2;  FLAECHE[ 1,3] := 3;
+        FLAECHE[ 1,4] := 4;  FLAECHE[ 1,5] := 5;
+
+        FLAECHE[ 2,1] := 11; FLAECHE[ 2,2] := 7;  FLAECHE[ 2,3] := 2;
+        FLAECHE[ 2,4] := 1;  FLAECHE[ 2,5] := 6;
+
+        FLAECHE[ 3,1] := 12; FLAECHE[ 3,2] := 8;  FLAECHE[ 3,3] := 3;
+        FLAECHE[ 3,4] := 2;  FLAECHE[ 3,5] := 7;
+
+        FLAECHE[ 4,1] := 13; FLAECHE[ 4,2] := 9;  FLAECHE[ 4,3] := 4;
+        FLAECHE[ 4,4] := 3;  FLAECHE[ 4,5] := 8;
+
+        FLAECHE[ 5,1] := 14; FLAECHE[ 5,2] := 10; FLAECHE[ 5,3] := 5;
+        FLAECHE[ 5,4] := 4;  FLAECHE[ 5,5] := 9;
+
+        FLAECHE[ 6,1] := 15; FLAECHE[ 6,2] := 6;  FLAECHE[ 6,3] := 1;
+        FLAECHE[ 6,4] := 5;  FLAECHE[ 6,5] := 10;
+
+        FLAECHE[ 7,1] := 6;  FLAECHE[ 7,2] := 11; FLAECHE[ 7,3] := 16;
+        FLAECHE[ 7,4] := 20; FLAECHE[ 7,5] := 15;
+
+        FLAECHE[ 8,1] := 7;  FLAECHE[ 8,2] := 12; FLAECHE[ 8,3] := 17;
+        FLAECHE[ 8,4] := 16; FLAECHE[ 8,5] := 11;
+
+        FLAECHE[ 9,1] := 8;  FLAECHE[ 9,2] := 13; FLAECHE[ 9,3] := 18;
+        FLAECHE[ 9,4] := 17; FLAECHE[ 9,5] := 12;
+
+        FLAECHE[10,1] := 9;  FLAECHE[10,2] := 14; FLAECHE[10,3] := 19;
+        FLAECHE[10,4] := 18; FLAECHE[10,5] := 13;
+
+        FLAECHE[11,1] := 10; FLAECHE[11,2] := 15; FLAECHE[11,3] := 20;
+        FLAECHE[11,4] := 19; FLAECHE[11,5] := 14;
+
+        FLAECHE[12,1] := 16; FLAECHE[12,2] := 17; FLAECHE[12,3] := 18;
+        FLAECHE[12,4] := 19; FLAECHE[12,5] := 20;
+
+
+        WEG[1] := 1;  WEG[2] := 2;  WEG[3] := 3;  WEG[4] := 4;
+        WEG[5] := 5;  WEG[6] := 1;  WEG[7] := 6;  WEG[8] := 11;
+        WEG[9] := 7;  WEG[10]:= 12; WEG[11]:= 8;  WEG[12]:= 13;
+        WEG[13]:= 9;  WEG[14]:= 14; WEG[15]:= 10; WEG[16]:= 15;
+        WEG[17]:= 20; WEG[18]:= 19; WEG[19]:= 18; WEG[20]:= 17;
+        WEG[21]:= 16; WEG[22]:= 20; WEG[23]:= 15; WEG[24]:= 6;
+        WEG[25]:= 16; WEG[26]:= 11; WEG[27]:= 7;  WEG[28]:= 2;
+        WEG[29]:= 3;  WEG[30]:= 8;  WEG[31]:= 12; WEG[32]:= 17;
+        WEG[33]:= 18; WEG[34]:= 13; WEG[35]:= 9;  WEG[36]:= 4;
+        WEG[37]:= 5;  WEG[38]:= 10; WEG[39]:= 14; WEG[40]:= 19
+
+        (* WEGE ZU 1, 23, 25, ... , 39 SIND KEINE KANTEN! *)
+    END (* DODEKABESCHREIBUNG *);
+
+PROCEDURE DREHUNG;
+  VAR ECKE: INTEGER;
+      X0,Y0,Z0: REAL;
+    BEGIN
+        FOR ECKE := 1 TO 20 DO
+            BEGIN
+                X0 := DODEKA[ECKE].X;
+                Y0 := DODEKA[ECKE].Y;
+                Z0 := DODEKA[ECKE].Z;
+
+                DODEKA[ECKE].X := AXX*X0 + AXY*Y0 + AXZ*Z0;
+                DODEKA[ECKE].Y := AYX*X0 + AYY*Y0 + AYZ*Z0;
+                DODEKA[ECKE].Z := AZX*X0 + AZY*Y0 + AZZ*Z0
+            END
+    END (* DREHUNG *);
+
+
+PROCEDURE ANSICHT;
+  VAR ECKE,N,I: INTEGER;
+    BEGIN
+        FOR ECKE := 1 TO 20 DO DODEKA[ECKE].SICHTBAR := FALSE;
+        FOR N := 1 TO 12 DO
+             IF DODEKA[ FLAECHE[N,1] ].Y +
+                DODEKA[ FLAECHE[N,2] ].Y +
+                DODEKA[ FLAECHE[N,3] ].Y +
+                DODEKA[ FLAECHE[N,4] ].Y +
+                DODEKA[ FLAECHE[N,5] ].Y  >  0
+                THEN FOR I := 1 TO 5 DO
+                        DODEKA[ FLAECHE[N,I] ].SICHTBAR := TRUE
+    END (* ANSICHT *);
+
+
+PROCEDURE ZEICHNUNG;
+  VAR VON, NACH: PUNKT;
+      I: INTEGER;
+    BEGIN
+        FOR I := 1 TO 40 DO
+            BEGIN
+                VON := NACH;
+                NACH := DODEKA[ WEG[I] ];
+                IF (I=1) OR (I>22) AND ODD(I)
+                    THEN BEGIN MOVE(OX-NACH.X,OZ+NACH.Z);PEN(DOWN) END
+                    ELSE IF VON.SICHTBAR AND NACH.SICHTBAR
+                            THEN LINE(OX-NACH.X,OZ+NACH.Z)
+                            ELSE DOTS(OX-NACH.X,OZ+NACH.Z)
+            END
+    END (* ZEICHNUNG *);
+
+
+
+
+BEGIN
+    WHILE NOT EOF DO
+        BEGIN READ(ALFA,BETA,GAMMA);
+            ROTATIONSMATRIX;
+            DODEKABESCHREIBUNG;
+            FOR BILD := 0 TO 11 DO
+                BEGIN
+                    OX :=  600 + 800*(BILD MOD 4);
+                    OZ := 2200 - 800*(BILD DIV 4);
+                    DREHUNG;
+                    ANSICHT;
+                    ZEICHNUNG
+                END;
+                BLATTWECHSEL
+        END
+END.

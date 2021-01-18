@@ -1,0 +1,52 @@
+PROGRAM ROESSELSPRUNG(OUTPUT);
+
+CONST N = 5; NSQ = 25;
+
+VAR   I,J: INTEGER;
+      FELD: ARRAY[1..N,1..N] OF INTEGER;
+      A,B: ARRAY[1..8] OF INTEGER;
+      ERFOLGREICH: BOOLEAN;
+
+
+PROCEDURE VERSUCH(I: INTEGER; X,Y: INTEGER);
+   VAR K,U,V: INTEGER;
+BEGIN K := 0;
+   REPEAT K:= K+1;
+      U := X + A[K]; V := Y + B[K];
+      IF (1<=U) AND (U<=N) AND (1<=V) AND (V<=N) THEN IF FELD[U,V]=0 THEN
+        BEGIN
+           FELD[U,V] := I;
+           IF I < NSQ THEN
+                        BEGIN
+                           VERSUCH(I+1,U,V);
+                           IF NOT ERFOLGREICH THEN FELD[U,V] := 0
+                        END
+                      ELSE ERFOLGREICH := TRUE
+        END
+   UNTIL ERFOLGREICH OR (K=8)
+END (* VERSUCH *);
+
+BEGIN
+   A[1] :=  2; B[1] :=  1;
+   A[2] :=  1; B[2] :=  2;
+   A[3] := -1; B[3] :=  2;
+   A[4] := -2; B[4] :=  1;
+   A[5] := -2; B[5] := -1;
+   A[6] := -1; B[6] := -2;
+   A[7] :=  1; B[7] := -2;
+   A[8] :=  2; B[8] := -1;
+
+   ERFOLGREICH := FALSE;
+   FOR I := 1 TO N DO FOR J := 1 TO N DO FELD[I,J] := 0;
+
+   FELD[1,1] := 1; VERSUCH(2,1,1);
+
+   WRITELN("WEG DES SPRINGERS:"); WRITELN;
+   IF ERFOLGREICH THEN
+                     FOR I := 1 TO N DO
+                        BEGIN
+                           FOR J := 1 TO N DO WRITE( FELD[I,J] :5);
+                           WRITELN
+                        END
+                  ELSE WRITELN("KEINE LOESUNG!")
+END.

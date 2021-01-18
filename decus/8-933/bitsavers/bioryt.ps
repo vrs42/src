@@ -1,0 +1,118 @@
+PROGRAM BIORHYTHMUS(INPUT,OUTPUT);
+
+   CONST AMP=30;
+         ZWEIPI=6.283185308;
+
+   TYPE  DATUM=RECORD  TAG,MONAT,JAHR: INTEGER  END;
+
+   VAR   GEB,VON,BIS,HEUTE: DATUM;
+         ALTER,LIMIT: INTEGER;
+         ZEILE: ARRAY[-AMP..+AMP] OF CHAR;
+
+
+   PROCEDURE LIESDATUM(VAR X: DATUM);
+            (* EINGABEFORMAT:  JJ-MM-TT *)
+      VAR C: CHAR;
+      BEGIN
+         READ(X.JAHR,C,X.MONAT,C,X.TAG)
+      END (* LIESDATUM *);
+
+
+   PROCEDURE DRUCKEDATUM(X: DATUM);
+
+      PROCEDURE WRITE00(N: INTEGER);
+         BEGIN WRITE(N DIV 10 :1, N MOD 10 :1) END;
+
+      BEGIN
+         WRITE00(X.JAHR); WRITE("-");
+         WRITE00(X.MONAT);WRITE("-");
+         WRITE00(X.TAG)
+      END (* DRUCKEDATUM *);
+
+
+   FUNCTION TAGESANZAHL(X: DATUM): INTEGER;
+      VAR F,G: INTEGER;
+      BEGIN
+         IF X.MONAT>2
+            THEN BEGIN G:=1900 + X.JAHR;     F:=X.MONAT + 1  END
+            ELSE BEGIN G:=1900 + X.JAHR - 1; F:=X.MONAT + 13 END;
+         TAGESANZAHL:=TRUNC(365.25*G) + TRUNC(30.6*F) + X.TAG - 621049
+      END (* TAGESANZAHL *);
+
+
+   PROCEDURE NAECHSTERTAG(VAR X: DATUM);
+
+      FUNCTION MONATSTAGE(X: DATUM): INTEGER;
+         BEGIN
+             CASE X.MONAT OF
+                1,3,5,7,8,10,12: MONATSTAGE:=31;
+                4,6,9,11:        MONATSTAGE:=30;
+                2:      IF X.JAHR MOD 4 = 0 THEN MONATSTAGE:=29
+                                            ELSE MONATSTAGE:=28
+             END
+         END (* MONATSTAGE *);
+
+      BEGIN
+         X.TAG := X.TAG + 1;
+         IF X.TAG>MONATSTAGE(X)
+            THEN BEGIN  X.MONAT := X.MONAT + 1;
+                        X.TAG := 1;
+                        IF X.MONAT>12
+                           THEN BEGIN X.JAHR := X.JAHR +1;
+                                      X.MONAT := 1
+                                END
+                 END
+      END (* NAECHSTERTAG *);
+
+
+   PROCEDURE LOESCHEZEILE;
+      VAR I: INTEGER;
+      BEGIN
+         FOR I := -AMP TO AMP DO ZEILE[I] := " "
+      END (* LOESCHEZEILE *);
+
+
+   PROCEDURE DRUCKEZEILE;
+      VAR I: INTEGER;
+      BEGIN
+         WRITE("-" :4);
+         FOR I := -AMP TO AMP DO WRITE( ZEILE[I] );
+         WRITELN("-")
+      END (* DRUCKEZEILE *);
+
+
+   PROCEDURE KOPFLEISTE;
+      VAR I: INTEGER;
+      BEGIN
+        WRITELN; WRITELN;
+        WRITELN("JJ-MM-TT   -1", "0":AMP, "1":AMP);
+        WRITE("^":13);
+        FOR I:=1 TO AMP-1 DO WRITE(".");
+        WRITE("^");
+        FOR I:=1 TO AMP-1 DO WRITE(".");
+        WRITELN("^")
+      END (* KOPFLEISTE *);
+
+
+
+
+BEGIN  (* H A U P T P R O G R A M M *)
+
+   WRITE("GEBURTSDATUM"); LIESDATUM(GEB);
+   WRITE("BIORHYTHMEN VON"); LIESDATUM(VON);
+   WRITE("            BIS"); LIESDATUM(BIS);
+   HEUTE := VON;
+   ALTER := TAGESANZAHL(HEUTE) - TAGESANZAHL(GEB);
+   LIMIT := TAGESANZAHL( BIS ) - TAGESANZAHL(GEB);
+   KOPFLEISTE;
+   REPEAT
+      LOESCHEZEILE;
+      ZEILE[ ROUND(AMP*SIN(ALTER*ZWEIPI/23)) ] := "P";
+      ZEILE[ ROUND(AMP*SIN(ALTER*ZWEIPI/28)) ] := "S";
+      ZEILE[ ROUND(AMP*SIN(ALTER*ZWEIPI/33)) ] := "I";
+      DRUCKEDATUM(HEUTE);
+      DRUCKEZEILE;
+      NAECHSTERTAG(HEUTE);
+      ALTER := ALTER + 1
+   UNTIL ALTER>LIMIT
+END.

@@ -1,0 +1,51 @@
+PROGRAM INTEGRATION(INPUT,OUTPUT);
+
+    VAR ANFANG,ENDE,FLAECHE: REAL;
+
+
+(*************** HIER INTEGRAND DEFINIEREN ******************)
+    FUNCTION F(X: REAL): REAL;
+        BEGIN
+            F := SIN(X)
+        END;
+(************************************************************)
+
+
+
+    FUNCTION INTEGRAL(A,B: REAL): REAL;
+
+        CONST   EPSILON = 1E-8;
+        VAR     K,N,I,J: INTEGER;
+                DELTA,SUMME,LETZTWERT: REAL;
+                ROMBERG: ARRAY[0..12] OF REAL;
+
+    BEGIN
+        K := 0;  N := 1;  DELTA := B-A;
+        ROMBERG[0] := ( F(A) + F(B) )*DELTA/2;
+
+        REPEAT
+            LETZTWERT := ROMBERG[0];
+            K := K+1;  N := 2*N;  DELTA := DELTA/2;
+            SUMME := 0;
+            FOR J := 1 TO N DIV 2 DO
+                SUMME := SUMME + F(A + (2*J-1)*DELTA);
+            ROMBERG[K] := ROMBERG[K-1]/2 + SUMME*DELTA;
+            I := 1;
+            FOR J := K-1 DOWNTO 0 DO
+                BEGIN   I := 4*I;
+                    ROMBERG[J] := (I*ROMBERG[J+1] - ROMBERG[J])/(I-1)
+                END
+        UNTIL ABS(ROMBERG[0]-LETZTWERT)<ABS(ROMBERG[0]*EPSILON);
+
+        INTEGRAL := ROMBERG[0]
+    END (* INTEGRAL *);
+
+
+BEGIN
+    WRITELN("B E S T I M M T E S   I N T E G R A L");
+    WRITELN;
+    WRITE("INTERVALLGRENZEN: ");  READ(ANFANG,ENDE);
+    FLAECHE := INTEGRAL(ANFANG,ENDE);
+    WRITELN;
+    WRITELN("WERT DES INTEGRALS: ", FLAECHE :20:10)
+END.

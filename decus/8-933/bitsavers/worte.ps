@@ -1,0 +1,48 @@
+ PROGRAM WORTE(INPUT, OUTPUT);
+ CONST N = 101;    M = 11;
+ TYPE ALFA = ARRAY[1..10] OF CHAR;
+ VAR I,J,K: INTEGER;
+     Z: CHAR;
+     WORT: ALFA;
+     A: ARRAY[1..N] OF ALFA;
+     H: ARRAY[1..N] OF INTEGER;
+
+  FUNCTION EQUAL(VAR X,Y: ALFA): BOOLEAN;
+      VAR K: INTEGER;
+      BEGIN K:=0;
+      REPEAT K:=K+1 UNTIL (X[K]<>Y[K]) OR (K=10);
+      EQUAL := (X[K]=Y[K]) AND (K=10)
+      END;
+
+ FUNCTION INDEX(X:ALFA): INTEGER;
+     VAR I,Q,Z: INTEGER;
+     BEGIN Z:= 0;
+     FOR I := 1 TO 10 DO Z := Z + ORD(X[I]);
+     I := Z MOD N + 1;   Q := Z MOD M + 1;
+     WHILE NOT EQUAL(A[I],X) AND (H[I] <> 0) DO I := (I+Q) MOD N + 1;
+     INDEX := I
+     END;
+
+ BEGIN
+ FOR I := 1 TO N DO H[I] := 0;
+ REPEAT FOR J:=1 TO 10 DO WORT[J]:=" ";  J := 0;
+        REPEAT READ(Z);
+        UNTIL (Z>="A") AND (Z<="Z") OR EOLN;
+        IF NOT EOLN
+           THEN BEGIN
+                REPEAT J := J+1; IF J<=10 THEN WORT[J] := Z;
+                       READ(Z)
+                UNTIL NOT ((Z>="A") AND (Z<="Z"));
+                I := INDEX(WORT);
+                A[I] := WORT;   H[I] := H[I] + 1
+                END
+ UNTIL EOF;
+ J := 0;
+ FOR I := 1 TO N DO
+     IF H[I] <> 0
+        THEN BEGIN FOR K:=1 TO 10 DO WRITE(A[I,K]);
+               WRITE(H[I]:3," ":5);
+             J := J+1;
+             IF J >=4 THEN BEGIN J := 0;  WRITELN END
+             END
+ END.

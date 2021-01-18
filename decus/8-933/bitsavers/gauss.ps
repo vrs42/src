@@ -1,0 +1,39 @@
+PROGRAM GAUSS (INPUT, OUTPUT);
+
+VAR I, J, K, L, M, N: INTEGER;
+    Q: REAL;
+    A: ARRAY[1..9, 1..10] OF REAL;
+    X: ARRAY[1..9] OF REAL;
+
+BEGIN  (*EINLESEN DER KOEFFIZIENTEN UND DER RECHTEN SEITEN*)
+READ(N); WRITELN("N =",N:2);
+FOR I := 1 TO N DO
+    BEGIN
+    FOR J := 1 TO N+1 DO BEGIN READ(A[I,J]); WRITE(A[I,J]:8:2) END;
+    WRITELN
+    END;
+FOR I := 1 TO N-1 DO
+    BEGIN  (*AUFSUCHEN DES  GROESSTEN KOEFFIZIENTEN A[I,J]*)
+    M := I;
+    FOR K:=I+1 TO N DO
+        IF ABS(A[K,I]) > ABS(A[M,I]) THEN M := K;
+    IF M <> I THEN (*ZEILENTAUSCH*)
+                   FOR J := I TO N+1 DO
+                       BEGIN
+                       Q := A[I,J];   A[I,J] := A[M,J];   A[M,J] :=Q
+                       END;
+                   (* ELIMINATION DER X[I] AUS D. K-TEN GLEICHUNG *)
+                   FOR K:= I+1 TO N DO
+                       BEGIN  Q:=A[K,I]/A[I,I];
+                       FOR J:=I+1 TO N+1 DO A[K,J]:=A[K,J]-A[I,J]*Q
+                       END;
+    END;
+FOR I := N DOWNTO 1 DO  (* BERECHNUNG VON X[I]*)
+    BEGIN Q := A[I,N+1];
+    FOR J := I+1 TO N DO Q := Q - A[I,J]*X[J];
+    X[I] := Q/A[I,I]
+    END;
+ WRITELN;
+FOR I := 1 TO N DO  (*AUSGABE VON X[I] *)
+    WRITELN("X",I:1, " = ", X[I]:8:2)
+END.

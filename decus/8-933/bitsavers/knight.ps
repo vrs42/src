@@ -1,0 +1,46 @@
+PROGRAM KNIGHTSTOUR(OUTPUT);
+
+CONST N = 5; NSQ = 25;
+
+VAR   I,J: INTEGER;
+      Q: BOOLEAN;
+      A,B: ARRAY[1..8] OF INTEGER;
+      H: ARRAY[1..N,1..N] OF INTEGER;
+
+PROCEDURE TRY(I: INTEGER; X,Y: INTEGER; VAR Q: BOOLEAN);
+   VAR K,U,V: INTEGER; Q1: BOOLEAN;
+BEGIN K := 0;
+   REPEAT K:= K+1; Q1 := FALSE;
+      U := X + A[K]; V := Y + B[K];
+      IF (1<=U) AND (U<=N) AND (1<=V) AND (V<=N) THEN
+        IF H[U,V] = 0 THEN
+        BEGIN H[U,V] := I;
+           IF I < NSQ THEN
+              BEGIN TRY(I+1,U,V,Q1);
+                IF NOT Q1 THEN H[U,V] := 0
+              END ELSE Q1 := TRUE
+        END
+   UNTIL Q1 OR (K=8);
+   Q := Q1
+END (* TRY *);
+
+BEGIN
+   A[1] :=  2; B[1] :=  1;
+   A[2] :=  1; B[2] :=  2;
+   A[3] := -1; B[3] :=  2;
+   A[4] := -2; B[4] :=  1;
+   A[5] := -2; B[5] := -1;
+   A[6] := -1; B[6] := -2;
+   A[7] :=  1; B[7] := -2;
+   A[8] :=  1; B[8] := -1;
+
+   FOR I := 1 TO N DO
+      FOR J := 1 TO N DO H[I,J] := 0;
+   H[1,1] := 1; TRY(2,1,1,Q);
+   IF Q THEN
+      FOR I := 1 TO N DO
+      BEGIN FOR J := 1 TO N DO WRITE( H[I,J] :5);
+         WRITELN
+      END
+   ELSE WRITELN("KEINE LOESUNG!")
+END.

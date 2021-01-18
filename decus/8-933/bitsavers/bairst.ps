@@ -1,0 +1,87 @@
+PROGRAM BAIRSTOW(INPUT,OUTPUT);
+
+  CONST NMAX=20;  EPSILON=1E-8;
+
+  TYPE  KOMPLEX = RECORD  RE,IM: REAL  END;
+
+  VAR   N,NR,I: INTEGER;
+        A: ARRAY[0..NMAX] OF REAL;
+        B,C: ARRAY[-1..NMAX] OF REAL;
+        P,Q,PDELTA,QDELTA,DISKR: REAL;
+
+  PROCEDURE DRUCKELOESUNG(X: KOMPLEX);
+    BEGIN
+        NR := NR + 1;
+        WRITE("X", NR:1, "=":2, X.RE :11:5);
+        IF X.IM<>0 THEN
+            BEGIN IF X.IM>0 THEN WRITE("+":2)
+                            ELSE WRITE("-":2);
+                WRITE(ABS(X.IM):11:5, " * J")
+            END;
+        WRITELN
+    END (* DRUCKELOESUNG *);
+
+
+  PROCEDURE QUADRATFAKTOR(P,Q: REAL);
+    VAR D: REAL;
+        X: KOMPLEX;
+    BEGIN
+        D := P*P/4 - Q;
+        IF D>=0 THEN
+            BEGIN X.RE := -P/2 + SQRT(D);  X.IM := 0;
+                DRUCKELOESUNG(X);
+                  X.RE := -P/2 - SQRT(D);
+                DRUCKELOESUNG(X)
+            END ELSE
+            BEGIN X.RE := -P/2;  X.IM := SQRT(-D);
+                DRUCKELOESUNG(X);
+                  X.IM := -X.IM;
+                DRUCKELOESUNG(X)
+            END
+    END (* QUADRATFAKTOR *);
+
+
+  PROCEDURE LINEARFAKTOR(Q: REAL);
+    VAR X: KOMPLEX;
+    BEGIN X.RE := -Q;  X.IM := 0;
+        DRUCKELOESUNG(X)
+    END (* LINEARFAKTOR *);
+
+
+BEGIN READ(N);
+    WRITELN;
+    WRITELN("P O L Y N O M", N:3, ". GRADES:");
+    FOR I := 0 TO N DO
+        BEGIN READ(A[I]);
+            WRITELN(A[I]:8:2, "  X^", N-I :1)
+        END;
+    WRITELN;
+    IF A[0]<>1 THEN BEGIN Q := A[0];
+                        A[0] := 1;
+                        FOR I := 1 TO N DO A[I] := A[I]/Q;
+                    END;
+
+    NR := 0;
+
+    WHILE N>2 DO
+        BEGIN  P := -1;  Q := 1;
+            REPEAT
+                B[-1] := 0;  B[0] := 1;
+                C[-1] := 0;  C[0] := 1;
+                FOR I := 1 TO N DO
+                    BEGIN
+                        B[I] := A[I] - P*B[I-1] - Q*B[I-2];
+                        C[I] := B[I] - P*C[I-1] - Q*C[I-2]
+                    END;
+                DISKR := SQR(C[N-2]) - (C[N-1]-B[N-1])*C[N-3];
+                PDELTA:= (B[N-1]*C[N-2]-B[N]*C[N-3])/DISKR;
+                QDELTA:= (C[N-2]*B[N]-(C[N-1]-B[N-1])*B[N-1])/DISKR;
+                P := P + PDELTA;  Q := Q + QDELTA
+            UNTIL ABS(PDELTA)+ABS(QDELTA) < EPSILON;
+            QUADRATFAKTOR(P,Q);
+            N := N-2;
+            FOR I := 1 TO N DO A[I] := B[I];
+        END;
+    IF N=2 THEN QUADRATFAKTOR(A[1],A[2])
+           ELSE LINEARFAKTOR(A[1])
+END.

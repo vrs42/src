@@ -1,0 +1,66 @@
+PROGRAM PLOTTERTEST(OUTPUT);
+
+CONST UP="H"; DOWN="I";
+      C=100.0; P=0.125; RHO=0.0174532925;
+      X0=950.0; Y0=1300.0;
+
+VAR   X,Y,R,PHI: REAL;
+      GRAD: INTEGER;
+
+      PENXPOS,PENYPOS: INTEGER;
+
+(********** P L O T T E R  PROZEDUREN **********)
+
+PROCEDURE PEN(I:CHAR);
+    BEGIN WRITE(I) END;
+
+PROCEDURE SEND(IX,IY: INTEGER);
+    BEGIN
+      IF IX>=0  THEN WRITE( IX:1,"@")
+                ELSE WRITE(-IX:1,"P");
+      IF IY>=0  THEN WRITE( IY:1,"A")
+                ELSE WRITE(-IY:1,"Q")
+    END;
+
+PROCEDURE MOVE(X,Y: REAL);
+    BEGIN
+      PENXPOS:=ROUND(X); PENYPOS:=ROUND(Y);
+      WRITE("H");
+      SEND(PENXPOS,PENYPOS);
+      WRITELN("K")
+    END;
+
+PROCEDURE LINE(X,Y: REAL);
+  VAR DX,DY: INTEGER;
+    BEGIN
+      DX:=ROUND(X)-PENXPOS;
+      DY:=ROUND(Y)-PENYPOS;
+      SEND(DX,DY); WRITELN("J");
+      PENXPOS:=PENXPOS+DX; PENYPOS:=PENYPOS+DY
+    END;
+
+PROCEDURE SYSIZE(R,G: INTEGER);
+    BEGIN
+      WRITE("C", CHR(G+16*(R+2)))
+    END;
+
+(***********************************************)
+
+BEGIN
+    MOVE(200,2600);
+    SYSIZE(0,6);
+    WRITELN("BPLOTTER-PROGRAMMIERUNG IN PASCAL-S");
+    MOVE(X0,Y0);
+    PEN(DOWN);
+    MOVE(X0+C,Y0);
+    PEN(DOWN);
+    FOR GRAD := 1 TO 180 DO
+        BEGIN
+           PHI := 5*GRAD*RHO;
+           R := C*EXP(P*PHI);
+           X := R*COS(PHI);
+           Y := R*SIN(PHI);
+           LINE(X0+X,Y0+Y)
+        END;
+    PEN(UP)
+END.

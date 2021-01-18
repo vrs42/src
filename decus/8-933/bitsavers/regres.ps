@@ -1,0 +1,73 @@
+PROGRAM AUSGLEICHSPOLYNOM(INPUT,OUTPUT);
+
+  CONST NMAX=15;  NRMAX=16;
+
+  VAR   M,      (* ANZAHL DER PUNKTE *)
+        N,      (* GRAD DES POLYNOMS *)
+        NR,     (*   NR = N + 1      *)
+        I,J,K: INTEGER;
+        X,Y,U,V,W: REAL;
+        A: ARRAY[0..NRMAX,0..NRMAX] OF REAL;
+        P,C: ARRAY[0..NMAX] OF REAL;
+
+BEGIN READ(M,N);  NR := N + 1;
+    WRITELN;
+    WRITELN("A U S G L E I C H S P O L Y N O M");
+    WRITELN;
+(*
+  LOESCHEN DER GLEICHUNGSMATRIX
+*)
+    FOR I := 0 TO N DO
+        FOR J := I TO NR DO A[I,J] := 0;
+(*
+  EINLESEN DER PUNKTE, ANGABEPROTOKOLL.
+  BERECHNUNG DER KOEFF. DER NORMALGLEICHUNGEN UND
+  BELEGUNG DER RECHTEN OBEREN DREIECKSMATRIX
+  A[I,J]    ( 0<=I<=N,  I<=J<=N ),
+  RECHTE SEITEN IN  A[I,N+1].
+*)
+    FOR K := 1 TO M  (* FUER ALLE PUNKTE *)  DO
+        BEGIN
+            READ(X,Y);  WRITELN("P",K:2,X:8:2,"  ,",Y:8:2);
+            U := 1;
+            FOR I := 0 TO N DO
+                BEGIN V := U;
+                    FOR J := I TO N DO
+                        BEGIN
+                            A[I,J] := A[I,J] + U*V;
+                            V := V*X
+                        END;
+                    A[I,NR] := A[I,NR] + U*Y;
+                    U := U*X
+                END
+        END;
+(*
+  BERECHNUNG DER LINKEN UNTEREN DREIECKSMATRIX
+  NACH   C H O L E S K Y   UND SPEICHERUNG IN
+  A[I,J]    ( 0<=I<=N,  0<=J<I ).
+  P[I] ENTHALTEN DIE ELEMENTE A[I,I] DER HAUPTDIAGONALE,
+  TRANSFORMIERTE RECHTE SEITEN IN  A[N+1,I].
+*)
+    FOR I := 0 TO N DO
+        FOR J := I TO NR DO
+            BEGIN W := A[I,J];
+                FOR K := I-1 DOWNTO 0 DO W := W - A[J,K]*A[I,K];
+                IF I=J  THEN P[I] := 1/SQRT(W)
+                        ELSE A[J,I] := W*P[I]
+            END;
+(*
+  LOESUNG DES GESTAFFELTEN GLEICHUNGSSYSTEMS
+  LIEFERT DIE KOEFFIZIENTEN DES AUSGLEICHSPOLYNOMS
+*)
+    FOR I := N DOWNTO 0 DO
+        BEGIN W := A[NR,I];
+            FOR J := N DOWNTO I+1 DO W := W - C[J]*A[J,I];
+            C[I] := W*P[I]
+        END;
+(*
+  AUSGABE DER KOEFFIZIENTEN
+*)
+    WRITELN;
+    WRITELN("DIE KOEFFIZIENTEN SIND:");
+    FOR I := 0 TO N DO  WRITELN("C",I:1," =",C[I])
+END.

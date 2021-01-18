@@ -1,0 +1,153 @@
+PROGRAM PIIIIIIIIIIII(INPUT,OUTPUT);
+
+
+(*)
+(   BERECHNUNG DER ZAHL  PI  AUF BIS ZU 1000 KOMMASTELLEN GENAU
+(   AUS
+(
+(           PI = 20 * ARCTAN(1/7)  +  8 * ARCTAN(3/79)
+(
+(
+(   UEBER DIE REIHENENTWICKLUNG
+(
+(
+(                 T             2     T^2       2   4     T^2
+(   ARCTAN(T) = ----- * ( 1  +  - * (-----)  +  - * - * (-----)^2  +
+(               1+T^2           3    1+T^2      3   5    1+T^2
+(
+(
+(                2   4   6     T^2
+(             +  - * - * - * (-----)^3  +  .......  )
+(                3   5   7    1+T^2
+(
+(*)
+
+
+  CONST BASE (* OF ARITHMETIC *) = 100000  (* DON'T CHANGE *);
+
+
+  TYPE  LONGNUMBER = ARRAY[0..205] OF INTEGER;
+
+
+  VAR   NUMBEROFDIGITS, N, I, AFIRST, BFIRST, LAST,
+        CARRY, DIGIT, POWER, AMUL, BMUL, ADIV, BDIV: INTEGER;
+
+        A, B, PI: LONGNUMBER;
+
+
+BEGIN
+    READ(NUMBEROFDIGITS);
+    AFIRST := 0;  BFIRST := 1;  LAST := NUMBEROFDIGITS DIV 5 + 4;
+
+    (*)
+    (   AUFSTELLEN DER ANFANGSGLIEDER BEIDER REIHEN
+    (   UND DES ANFANGSWERTES DER SUMME:
+    (*)
+
+    N := 0;
+     A[0] := 2;  A[1] := 80000 (* OF 2.80000 *);
+     B[0] := 0;  B[1] := 30336 (* OF 0.30336 *);
+    PI[0] := 3; PI[1] := 10336 (* OF 3.10336 *);
+    FOR I := 2 TO LAST DO
+        BEGIN A[I] := 0;  B[I] := 0;  PI[I] := 0 END;
+    A[LAST+1] := BASE  (* GUARD *);
+    B[LAST+1] := BASE  (* GUARD *);
+
+
+    REPEAT N := N + 1;
+
+        (*)
+        (   BERECHNUNG DES N-TEN GLIEDES DER ERSTEN REIHE:
+        (
+        (           A <=== A * AMUL / ADIV
+        (
+        (*)
+
+        AMUL := N;
+        I := LAST+1;  CARRY := 0;
+        WHILE (AFIRST<I) OR (CARRY<>0) DO
+          BEGIN
+            I := I - 1;
+            DIGIT := AMUL*A[I] + CARRY;
+            A[I]  := DIGIT MOD BASE;
+            CARRY := DIGIT DIV BASE
+          END;
+        AFIRST := I;
+
+        ADIV := (N+N + 1)*25;
+        CARRY := 0;
+        FOR I := AFIRST TO LAST DO
+          BEGIN
+            DIGIT := CARRY*BASE + A[I];
+            A[I]  := DIGIT DIV ADIV;
+            CARRY := DIGIT MOD ADIV
+          END;
+        WHILE A[AFIRST]=0 DO AFIRST := AFIRST + 1;
+
+
+        (*)
+        (   BERECHNUNG DES N-TEN GLIEDES DER ZWEITEN REIHE:
+        (
+        (           B <=== B * BMUL / BDIV
+        (
+        (*)
+
+        BMUL := 288*N  (* INCLUDES DIVISION BY 100000 *);
+        I := LAST;  CARRY := (BMUL*B[LAST]) DIV BASE;
+        WHILE (BFIRST<I) OR (CARRY<>0) DO
+          BEGIN
+            I := I - 1;
+            DIGIT := BMUL*B[I] + CARRY;
+            B[I+1]:= DIGIT MOD BASE;
+            CARRY := DIGIT DIV BASE
+          END;
+        B[I] := 0;  BFIRST := I+1;
+
+        BDIV := N+N + 1;
+        CARRY := 0;
+        FOR I := BFIRST TO LAST DO
+          BEGIN
+            DIGIT := CARRY*BASE + B[I];
+            B[I]  := DIGIT DIV BDIV;
+            CARRY := DIGIT MOD BDIV
+          END;
+        IF B[BFIRST]=0 THEN BFIRST := BFIRST + 1;
+
+        (*)
+        (   AUFSUMMIERUNG ZUR ZAHL PI:
+        (
+        (          PI <=== PI + A + B
+        (
+        (*)
+
+        I := LAST;  CARRY := 0;
+        WHILE (AFIRST<=I) OR (CARRY<>0) DO
+          BEGIN
+            DIGIT := PI[I] + A[I] + B[I] + CARRY;  CARRY := 0;
+            WHILE DIGIT>=BASE DO BEGIN
+                                   DIGIT := DIGIT - BASE;
+                                   CARRY := CARRY + 1
+                                END;
+            PI[I] := DIGIT;
+            I := I - 1
+          END
+
+    UNTIL AFIRST>LAST;
+
+
+    (*)
+    (   AUSGABE:
+    (*)
+
+    WRITELN; WRITE("PI = 3.":10);
+    FOR I := 1 TO LAST-4 DO
+      BEGIN
+        DIGIT := PI[I];  POWER := BASE;
+        REPEAT POWER := POWER DIV 10;
+            WRITE(DIGIT DIV POWER :1);
+            DIGIT := DIGIT MOD POWER
+        UNTIL POWER=1;
+        IF I MOD 10 = 0 THEN BEGIN WRITELN; WRITE(" ":10) END
+      END;
+    WRITELN
+END.

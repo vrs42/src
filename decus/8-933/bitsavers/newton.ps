@@ -1,0 +1,48 @@
+PROGRAM NEWTON(INPUT,OUTPUT);
+
+  CONST NMAX=25;
+
+  VAR   N,I,J: INTEGER;
+        X,Y,C: ARRAY[0..NMAX] OF REAL;
+        A: ARRAY[-1..NMAX] OF REAL;
+
+BEGIN
+    READ(N); N := N-1;
+    WRITELN;
+    WRITELN("I N T E R P O L A T I O N S P O L Y N O M   (NEWTON)");
+    WRITELN("          C0 + C1*X + C2*X^2 + .... + CN*X^N");
+    WRITELN;
+
+(***** EINGABE DER STUETZSTELLEN *****)
+
+    WRITELN("GEGEBENE PUNKTE:");
+    FOR I := 0 TO N DO
+        BEGIN   READ(X[I],Y[I]);
+                WRITELN("P",I:1,X[I]:8:2,"  ,",Y[I]:8:2)
+        END;
+
+(***** BERECHNUNG DER DIVIDIERTEN DIFFERENZEN *****)
+
+    FOR I := 1 TO N DO
+        FOR J := N DOWNTO I DO  Y[J] := (Y[J-1]-Y[J])/(X[J-I]-X[J]);
+
+(***** KOMPOSITION DER KOEFFIZIENTEN *****)
+
+    A[-1] := 0;
+    FOR I := 0 TO N DO
+        BEGIN
+            A[I] := 1;  C[I] := Y[I];
+            FOR J := I-1 DOWNTO 0 DO
+                BEGIN
+                    A[J] := A[J-1] - A[J]*X[I-1];
+                    C[J] := C[ J ] + A[J]*Y[ I ]
+                END
+        END;
+
+(***** AUSGABE DER KOEFFIZIENTEN *****)
+
+    WRITELN;
+    WRITELN("DIE KOEFFIZIENTEN SIND:");
+    FOR I := 0 TO N DO  WRITELN("C",I:1," =",C[I]:15:8)
+
+END.

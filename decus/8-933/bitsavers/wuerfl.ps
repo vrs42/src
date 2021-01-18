@@ -1,0 +1,200 @@
+PROGRAM PLOTWUERFEL(INPUT,OUTPUT);
+
+CONST UP="H"; DOWN="I";
+
+TYPE  PUNKT = RECORD X,Y,Z: REAL; SICHTBAR: BOOLEAN END;
+
+VAR   BILD: INTEGER;
+      ALFA, BETA, GAMMA, OX, OZ,
+      AXX, AXY, AXZ, AYX, AYY, AYZ, AZX, AZY, AZZ: REAL;
+      WUERFEL: ARRAY["A".."H"] OF PUNKT;
+      FLAECHE: ARRAY[1..6,1..4] OF CHAR;
+      WEG:     ARRAY[1..16] OF CHAR;
+
+      PENXPOS,PENYPOS: INTEGER;
+
+(********** P L O T T E R  PROZEDUREN **********)
+
+PROCEDURE PEN(I:CHAR);
+    BEGIN WRITE(I) END;
+
+PROCEDURE SEND(IX,IY: INTEGER);
+    BEGIN
+      IF IX>=0  THEN WRITE( IX:1,"@")
+                ELSE WRITE(-IX:1,"P");
+      IF IY>=0  THEN WRITE( IY:1,"A")
+                ELSE WRITE(-IY:1,"Q")
+    END;
+
+PROCEDURE MOVE(X,Y: REAL);
+    BEGIN
+      PENXPOS:=ROUND(X); PENYPOS:=ROUND(Y);
+      WRITE("H");
+      SEND(PENXPOS,PENYPOS);
+      WRITELN("K")
+    END;
+
+PROCEDURE LINE(X,Y: REAL);
+  VAR DX,DY: INTEGER;
+    BEGIN
+      DX:=ROUND(X)-PENXPOS;
+      DY:=ROUND(Y)-PENYPOS;
+      SEND(DX,DY); WRITELN("J");
+      PENXPOS:=PENXPOS+DX; PENYPOS:=PENYPOS+DY
+    END;
+
+PROCEDURE DOTS(X,Y: REAL);
+  CONST DIST=30.0;
+  VAR   U,V,DX,DY,L,SX,SY: REAL;
+    BEGIN
+      U:=PENXPOS;  V:=PENYPOS;
+      DX:=X-U;     DY:=Y-V;
+      L:=SQRT(DX*DX + DY*DY);
+      IF L>0 THEN
+        BEGIN  SX:=DX/L*DIST;  SY:=DY/L*DIST;
+          WHILE L>DIST DO
+            BEGIN U:=U+SX;  V:=V+SY;
+                  L:=L-DIST;
+                  MOVE(U,V); PEN(DOWN)
+            END;
+          MOVE(X,Y); PEN(DOWN)
+        END
+    END;
+
+PROCEDURE BLATTWECHSEL;
+    BEGIN PEN(UP); WRITELN(" ":384) END;
+
+(***********************************************)
+
+
+PROCEDURE ROTATIONSMATRIX;
+  CONST RAD=1.745329252E-2;
+  VAR   SINA,COSA,SINB,COSB,SINC,COSC: REAL;
+
+    BEGIN
+        SINA := SIN(ALFA*RAD);  COSA := COS(ALFA*RAD);
+        SINB := SIN(BETA*RAD);  COSB := COS(BETA*RAD);
+        SINC := SIN(GAMMA*RAD); COSC := COS(GAMMA*RAD);
+
+        AXX := COSB*COSC;
+        AXY := COSB*SINC;
+        AXZ := -SINB;
+
+        AYX := SINA*SINB*COSC - COSA*SINC;
+        AYY := SINA*SINB*SINC + COSA*COSC;
+        AYZ := SINA*COSB;
+
+        AZX := COSA*SINB*COSC + SINA*SINC;
+        AZY := COSA*SINB*SINC - SINA*COSC;
+        AZZ := COSA*COSB;
+    END (* ROTATIONSMATRIX *);
+
+
+PROCEDURE WUERFELBESCHREIBUNG;
+  CONST H=250.0;
+  VAR   I: INTEGER;
+
+    BEGIN
+        FLAECHE[1,1] := "A";    FLAECHE[1,2] := "B";
+        FLAECHE[1,3] := "F";    FLAECHE[1,4] := "E";
+
+        FLAECHE[2,1] := "C";    FLAECHE[2,2] := "D";
+        FLAECHE[2,3] := "H";    FLAECHE[2,4] := "G";
+
+        FLAECHE[3,1] := "B";    FLAECHE[3,2] := "C";
+        FLAECHE[3,3] := "G";    FLAECHE[3,4] := "F";
+
+        FLAECHE[4,1] := "D";    FLAECHE[4,2] := "A";
+        FLAECHE[4,3] := "E";    FLAECHE[4,4] := "H";
+
+        FLAECHE[5,1] := "E";    FLAECHE[5,2] := "F";
+        FLAECHE[5,3] := "G";    FLAECHE[5,4] := "H";
+
+        FLAECHE[6,1] := "A";    FLAECHE[6,2] := "B";
+        FLAECHE[6,3] := "C";    FLAECHE[6,4] := "D";
+
+
+        FOR I := 1 TO 4 DO
+            BEGIN
+                WUERFEL[ FLAECHE[1,I] ].X := H;
+                WUERFEL[ FLAECHE[2,I] ].X := -H;
+                WUERFEL[ FLAECHE[3,I] ].Y := H;
+                WUERFEL[ FLAECHE[4,I] ].Y := -H;
+                WUERFEL[ FLAECHE[5,I] ].Z := H;
+                WUERFEL[ FLAECHE[6,I] ].Z := -H
+            END;
+
+
+        WEG[1] := "A";  WEG[2] := "B";  WEG[3] := "C";  WEG[4] := "D";
+        WEG[5] := "A";  WEG[6] := "E";  WEG[7] := "F";  WEG[8] := "G";
+        WEG[9] := "H";  WEG[10]:= "E";  WEG[11]:= "F";  WEG[12]:= "B";
+        WEG[13]:= "C";  WEG[14]:= "G";  WEG[15]:= "H";  WEG[16]:= "D"
+
+        (* WEGE ZU  1, 11, 13 U. 15 SIND KEINE KANTEN! *)
+    END (* WUERFELBESCHREIBUNG *);
+
+
+PROCEDURE DREHUNG;
+  VAR ECKE: CHAR;
+      X0,Y0,Z0: REAL;
+    BEGIN
+        FOR ECKE := "A" TO "H" DO
+            BEGIN
+                X0 := WUERFEL[ECKE].X;
+                Y0 := WUERFEL[ECKE].Y;
+                Z0 := WUERFEL[ECKE].Z;
+
+                WUERFEL[ECKE].X := AXX*X0 + AXY*Y0 + AXZ*Z0;
+                WUERFEL[ECKE].Y := AYX*X0 + AYY*Y0 + AYZ*Z0;
+                WUERFEL[ECKE].Z := AZX*X0 + AZY*Y0 + AZZ*Z0
+            END
+    END (* DREHUNG *);
+
+
+PROCEDURE ANSICHT;
+  VAR ECKE: CHAR;
+      N,I: INTEGER;
+    BEGIN
+        FOR ECKE := "A" TO "H" DO WUERFEL[ECKE].SICHTBAR := FALSE;
+        FOR N := 1 TO 6 DO
+            IF WUERFEL[ FLAECHE[N,1] ].Y + WUERFEL[ FLAECHE[N,3] ].Y > 0
+                THEN FOR I := 1 TO 4 DO
+                        WUERFEL[ FLAECHE[N,I] ].SICHTBAR := TRUE
+    END (* ANSICHT *);
+
+
+PROCEDURE ZEICHNUNG;
+  VAR VON, NACH: PUNKT;
+      I: INTEGER;
+    BEGIN
+        FOR I := 1 TO 16 DO
+            BEGIN
+                VON := NACH;
+                NACH := WUERFEL[ WEG[I] ];
+                IF (I=1) OR (I>10) AND ODD(I)
+                    THEN BEGIN MOVE(OX-NACH.X,OZ+NACH.Z);PEN(DOWN) END
+                    ELSE IF VON.SICHTBAR AND NACH.SICHTBAR
+                            THEN LINE(OX-NACH.X,OZ+NACH.Z)
+                            ELSE DOTS(OX-NACH.X,OZ+NACH.Z)
+            END
+    END (* ZEICHNUNG *);
+
+
+
+
+BEGIN
+    WHILE NOT EOF DO
+        BEGIN READ(ALFA,BETA,GAMMA);
+            ROTATIONSMATRIX;
+            WUERFELBESCHREIBUNG;
+            FOR BILD := 0 TO 11 DO
+                BEGIN
+                    OX :=  600 + 800*(BILD MOD 4);
+                    OZ := 2200 - 800*(BILD DIV 4);
+                    DREHUNG;
+                    ANSICHT;
+                    ZEICHNUNG
+                END;
+                BLATTWECHSEL
+        END
+END.

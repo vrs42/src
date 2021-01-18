@@ -1,0 +1,109 @@
+PROGRAM PLOTALLTREES(INPUT,OUTPUT);
+
+  VAR   N,TREE: INTEGER;
+        OX,OY: REAL;
+        X,Y: ARRAY[1..6] OF REAL;
+        U,V: ARRAY[1..6] OF INTEGER;
+
+      PENXPOS,PENYPOS: INTEGER;
+
+(********** P L O T T E R  PROZEDUREN **********)
+
+PROCEDURE PEN(I:CHAR);
+    BEGIN WRITE(I) END;
+
+PROCEDURE SEND(IX,IY: INTEGER);
+    BEGIN
+      IF IX>=0  THEN WRITE( IX:1,"@")
+                ELSE WRITE(-IX:1,"P");
+      IF IY>=0  THEN WRITE( IY:1,"A")
+                ELSE WRITE(-IY:1,"Q")
+    END;
+
+PROCEDURE MOVE(X,Y: REAL);
+    BEGIN
+      PENXPOS:=ROUND(X); PENYPOS:=ROUND(Y);
+      WRITE("H");
+      SEND(PENXPOS,PENYPOS);
+      WRITELN("K")
+    END;
+
+PROCEDURE LINE(X,Y: REAL);
+  VAR DX,DY: INTEGER;
+    BEGIN
+      DX:=ROUND(X)-PENXPOS;
+      DY:=ROUND(Y)-PENYPOS;
+      SEND(DX,DY); WRITELN("J");
+      PENXPOS:=PENXPOS+DX; PENYPOS:=PENYPOS+DY
+    END;
+
+PROCEDURE SYSIZE(R,G: INTEGER);
+    BEGIN
+      WRITE("C", CHR(G+16*(R+2)))
+    END;
+
+PROCEDURE BLATTWECHSEL;
+  BEGIN PEN("H"); WRITELN(" ":384); TREE := 0 END;
+(***********************************************)
+
+PROCEDURE INITPOINTS;
+  CONST R=150.0; RAD=0.0174533;
+  VAR   I: INTEGER;
+        P1W: ARRAY[3..6] OF REAL;
+BEGIN
+    P1W[3] := -30.0; P1W[4] := 45.0; P1W[5] := 18.0; P1W[6] := 60.0;
+    FOR I := 1 TO N DO
+        BEGIN
+            X[I] := R*COS( (I*360/N + P1W[N]) * RAD);
+            Y[I] := R*SIN( (I*360/N + P1W[N]) * RAD)
+        END
+END (* INITPOINTS *);
+
+
+PROCEDURE DECODE;
+  VAR   I,K: INTEGER;
+        Z: ARRAY[1..6] OF INTEGER;
+BEGIN
+    FOR I := 1 TO N DO Z[I] := 0;
+    FOR K := 1 TO N-1 DO Z[ V[K] ] := Z[ V[K] ] + 1;
+    FOR K := 1 TO N-1 DO
+        BEGIN I := 1; WHILE Z[I]<>0 DO I := I + 1;
+            U[K] := I;
+            Z[I] := -1  (* FORGET THIS VERTEX *);
+            Z[ V[K] ] := Z[ V[K] ] - 1
+        END
+END (* DECODE *);
+
+
+PROCEDURE PLOTTREE;
+  VAR   K: INTEGER;
+BEGIN
+    DECODE;
+    OX :=  200 + 400*(TREE MOD 9);
+    OY := 2600 - 400*(TREE DIV 9);
+    FOR K := 1 TO N-1 DO
+        BEGIN
+            MOVE(OX+X[ U[K] ], OY+Y[ U[K] ]); PEN("I");
+            LINE(OX+X[ V[K] ], OY+Y[ V[K] ])
+        END;
+    TREE := TREE + 1; IF TREE=63 THEN BLATTWECHSEL
+END (* PLOTTREE *);
+
+PROCEDURE COMBITREE(N,K: INTEGER);
+  VAR Z: INTEGER;
+BEGIN
+    IF K>0 THEN
+        BEGIN   FOR Z := 1 TO N DO
+                BEGIN V[K] := Z; COMBITREE(N,K-1) END
+        END ELSE PLOTTREE
+END (* COMBITREE *);
+
+
+
+BEGIN
+        READ(N);
+        INITPOINTS;
+        TREE := 0;
+        V[N-1] := N;  COMBITREE(N,N-2);
+        BLATTWECHSEL
+END.

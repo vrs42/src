@@ -1,0 +1,73 @@
+PROGRAM AUSGLEICHSPOLYNOM(INPUT,OUTPUT);
+
+  CONST NMAX=15;  NRMAX=16;  MMAX=50;
+
+  VAR   M,      (* ANZAHL DER PUNKTE *)
+        N,      (* GRAD DES POLYNOMS *)
+        NR,     (*   NR = N + 1      *)
+        I,J,K: INTEGER;
+        X,Y,U,W,S,SIGMA,BETA,SUM: REAL;
+        A: ARRAY[0..MMAX,0..NRMAX] OF REAL;
+        D,C: ARRAY[0..NMAX] OF REAL;
+
+BEGIN READ(M,N);  NR := N + 1;
+    WRITELN;
+    WRITELN("A U S G L E I C H S P O L Y N O M");
+    WRITELN;
+(*
+  EINLESEN DER PUNKTE, ANGABEPROTOKOLL.
+  BELEGUNG DER MATRIX A   (0<=I<M, 0<=J<=N) WIE FOLGT:
+  A[I,J] := X[I]^J,
+  RECHTE SEITEN  A[I,N+1] := Y[I].
+*)
+    FOR I := 0 TO M-1  (* FUER ALLE PUNKTE *)  DO
+        BEGIN
+            READ(X,Y);  WRITELN("P",I:2,X:8:2,"  ,",Y:8:2);
+            U := 1;
+            FOR J := 0 TO N DO
+                BEGIN
+                    A[I,J] := U;
+                    U := U*X
+                END;
+            A[I,NR] := Y
+        END;
+(*
+  REDUKTION DER GLEICHUNGSMATRIX AUF DREIECKSFORM
+  NACH   H O U S E H O L D E R ,  SPEICHERUNG IN
+  A[I,J]    ( 0<=I<=N,  I<=J<=N ),
+  D[J] ENTHALTEN DIE ELEMENTE A[J,J] DER HAUPTDIAGONALE.
+  TRANSFORMIERTE RECHTE SEITEN IN A[I,N+1].
+*)
+    FOR J := 0 TO N DO
+        BEGIN
+            SIGMA := 0;
+            FOR I := J TO M-1 DO SIGMA := SIGMA + SQR(A[I,J]);
+            IF A[J,J]<0 THEN S :=  SQRT(SIGMA)
+                        ELSE S := -SQRT(SIGMA);
+            D[J] := S;
+            BETA := 1/(S*A[J,J]-SIGMA);
+            A[J,J] := A[J,J]-S;
+            FOR K := J+1 TO NR DO
+                BEGIN
+                    SUM := 0;
+                    FOR I := J TO M-1 DO SUM := SUM + A[I,J]*A[I,K];
+                    SUM := BETA*SUM;
+                    FOR I := J TO M-1 DO A[I,K] := A[I,K] + A[I,J]*SUM
+                END
+        END;
+(*
+  LOESUNG DES GESTAFFELTEN GLEICHUNGSSYSTEMS
+  LIEFERT DIE KOEFFIZIENTEN DES AUSGLEICHSPOLYNOMS
+*)
+    FOR I := N DOWNTO 0 DO
+        BEGIN W := A[I,NR];
+            FOR J := N DOWNTO I+1 DO W := W - C[J]*A[I,J];
+            C[I] := W/D[I]
+        END;
+(*
+  AUSGABE DER KOEFFIZIENTEN
+*)
+    WRITELN;
+    WRITELN("DIE KOEFFIZIENTEN SIND:");
+    FOR I := 0 TO N DO  WRITELN("C",I:1," =",C[I])
+END.

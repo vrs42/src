@@ -1,0 +1,52 @@
+PROGRAM PLOTHILBERTKURVEN(INPUT,OUTPUT);
+
+  CONST H0=2560;
+
+  VAR   N,H,I: INTEGER;
+
+  PROCEDURE ANFANG;
+    BEGIN
+        WRITELN("H", H DIV 2 + 100 :1, "@", H DIV 2 + 100 :1, "AKI")
+    END (* ANFANG *);
+
+  PROCEDURE STRECKE(R: INTEGER);
+    BEGIN
+        CASE R MOD 4 OF
+          0: WRITELN(H:1,"A@J");
+          1: WRITELN(H:1,"@AJ");
+          2: WRITELN(H:1,"Q@J");
+          3: WRITELN(H:1,"PAJ")
+        END
+    END (* STRECKE *);
+
+  PROCEDURE SCHLUSS;
+    BEGIN
+        WRITELN("H", H0:1,"@AK");
+        FOR I := 1 TO 384 DO WRITE(" "); WRITELN
+    END (* SCHLUSS *);
+
+
+  PROCEDURE HILBERT(I,R,S: INTEGER);
+    BEGIN
+        IF I>0 THEN
+            BEGIN
+                HILBERT(I-1,R-S,-S);
+                    STRECKE(R-S);
+                HILBERT(I-1,R,S);
+                    STRECKE(R);
+                HILBERT(I-1,R,S);
+                    STRECKE(R+S);
+                HILBERT(I-1,R+S,-S)
+            END
+    END (* HILBERT *);
+
+
+BEGIN
+    WHILE NOT EOF DO
+        BEGIN READ(N);
+            H := H0;  FOR I := 1 TO N DO H := H DIV 2;
+            ANFANG;
+            HILBERT(N,1,1);
+            SCHLUSS
+        END
+END.

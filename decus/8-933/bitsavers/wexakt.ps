@@ -1,0 +1,140 @@
+PROGRAM WURZEL2EXAKT(INPUT,OUTPUT);
+
+
+(*)
+(   QUADRATWURZEL AUS 2  AUF BIS ZU 1000 STELLEN GENAU
+(   BERECHNET MITTELS DER
+(
+(   BINOMIALREIHE  SQRT(1+X) =
+(
+(            (1/2)         (1/2)                 (1/2)
+(   =  1  +  (   ) * X  +  (   ) * X^2  + ... +  (   ) * X^K  + ...
+(            ( 1 )         ( 2 )                 ( K )
+(
+(
+(   KONVERGENZBESCHLEUNIGUNG WIRD DURCH
+(
+(   SQRT(2)  =  10/7 * SQRT(2 * 49/100)  =  10/7 * SQRT(1 - 2/100)
+(
+(   ERREICHT, DAMIT IST  X = -0.02  UND ALLE GLIEDER
+(   DER REIHE (BIS AUF 1) SIND NEGATIV.
+(
+(   SOMIT ERGIBT SICH:
+(
+(       S Q R T ( 2 )  =  ( 1 - REIHENSUMME ) * 10 / 7
+(
+(*)
+
+CONST   BASE (*OF ARITHMETIC*) = 100000 (*DON'T CHANGE THIS!*);
+
+TYPE    LONGNUMBER = ARRAY[0..205] OF INTEGER;
+
+VAR     NUMBEROFDIGITS, FIRST, LAST, I, K, M, D,
+        DIGIT, CARRY, POWER: INTEGER;
+        A (*GLIED*),
+        S (*SUMME*): LONGNUMBER;
+
+
+BEGIN
+    READ(NUMBEROFDIGITS);
+    FIRST := 1;  LAST := NUMBEROFDIGITS DIV 5  +  4;
+
+(*)
+(   AUFSTELLEN DES ANFANGSGLIEDES DER REIHE ( = 0.01 )
+(   UND DES ANFANGSWERTES DER SUMME
+(*)
+
+    K := 1;
+    FOR I := 0 TO LAST DO
+        BEGIN  A[I] := 0;  S[I] := 0  END;
+    A[1] := 10000;  S[1] := 10000;
+    A[LAST+1] := BASE  (* GUARD *);
+
+
+REPEAT  K := K + 1;
+
+    (*)
+    (   REKURSIVE BERECHNUNG DES NAECHSTEN GLIEDES DER REIHE:
+    (
+    (         A  <===  A * (2*K - 3) / 100 / K
+    (
+    (*)
+
+    M := K+K - 3;
+    I := LAST+1;  CARRY := 0;
+    WHILE (FIRST<I) OR (CARRY<>0) DO
+      BEGIN
+        I := I - 1;
+        DIGIT  := M*A[I] + CARRY;
+        A[I]   := DIGIT MOD BASE;
+        CARRY  := DIGIT DIV BASE;
+      END;
+    FIRST := I;
+
+    D := 100*K;
+    CARRY := 0;
+    FOR I := FIRST TO LAST DO
+      BEGIN
+        DIGIT := CARRY*BASE + A[I];
+        A[I]  := DIGIT DIV D;
+        CARRY := DIGIT MOD D
+      END;
+
+    WHILE A[FIRST]=0 DO FIRST := FIRST + 1;
+
+    (*)
+    (   AUFSUMMIERUNG   SUMME  <===  SUMME + GLIED
+    (*)
+
+    I := LAST;  CARRY := 0;
+    WHILE (FIRST<=I) OR (CARRY<>0) DO
+      BEGIN
+        DIGIT := S[I] + A[I] + CARRY;  CARRY := 0;
+        IF DIGIT >= BASE THEN BEGIN
+                                DIGIT := DIGIT - BASE;
+                                CARRY := 1
+                              END;
+        S[I] := DIGIT;
+        I := I - 1
+      END
+
+UNTIL FIRST>LAST;
+
+(*)
+(   SUBTRAHIERE SUMME DER REIHE VON  1
+(*)
+
+    I := LAST;
+    WHILE S[I]=0 DO I := I-1;
+    S[I] := BASE - S[I];
+    FOR I := I-1 DOWNTO 1 DO S[I] := BASE-1 - S[I];
+    S[0] := 9;
+
+(*)
+(   DIVISION DURCH  7
+(*)
+
+    CARRY := 0;
+    FOR I := 0 TO LAST DO
+      BEGIN
+        DIGIT := CARRY*BASE + S[I];
+        S[I]  := DIGIT DIV 7;
+        CARRY := DIGIT MOD 7
+      END;
+
+(*)
+(   A U S G A B E :
+(*)
+
+    WRITELN; WRITE("SQRT(2) = 1.");
+    FOR I := 1 TO LAST-4 DO
+      BEGIN
+        DIGIT := S[I];  POWER := BASE;
+        REPEAT POWER := POWER DIV 10;
+            WRITE(DIGIT DIV POWER:1);
+            DIGIT := DIGIT MOD POWER
+        UNTIL POWER=1;
+        IF I MOD 10 = 0 THEN BEGIN WRITELN; WRITE(" ":12) END
+      END;
+    WRITELN
+END.

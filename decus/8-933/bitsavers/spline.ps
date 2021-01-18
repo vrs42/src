@@ -1,0 +1,73 @@
+PROGRAM SPLINEINTERPOLATION(INPUT,OUTPUT);
+
+  CONST NMAX=25;
+
+  VAR   N,I: INTEGER;
+        X,Y,Z,
+        LAMBDA,MY,DELTA,P,Q,U: ARRAY[0..NMAX] OF REAL;
+        S: REAL;
+        H,
+        A,B,C,D: ARRAY[1..NMAX] OF REAL;
+
+BEGIN READ(N);  N := N-1;
+    WRITELN;
+    WRITELN("S P L I N E - I N T E R P O L A T I O N");
+    WRITELN;
+(*
+  EINLESEN DER GEGEBENEN PUNKTE, BERECHNUNG DER
+  LAENGEN H[I] DER EINZELNEN INTERVALLE.
+*)
+    READ(X[0],Y[0]);
+    FOR I := 1 TO N DO
+        BEGIN READ(X[I],Y[I]);
+            H[I] := X[I] - X[I-1]
+        END;
+(*
+  BERECHNUNG DER KOEFF. LAMBDA[I], MY[I] SOWIE RECHTEN SEITEN DELTA[I]
+  DES GLEICHUNGSSYSTEMS ZUR BESTIMMUNG DER ZWEITEN ABLEITUNGEN
+  IN DEN GEGEBENEN PUNKTEN. (TRIDIAGONALMATRIX!)
+*)
+    LAMBDA[0] := 0;  MY[0] := 0;  DELTA[0] := 0;
+    FOR I := 1 TO N-1 DO
+        BEGIN S := H[I] + H[I+1];
+            LAMBDA[I] := H[I+1]/S;  MY[I] := 1 - LAMBDA[I];
+            DELTA[I] := ( (Y[I+1]-Y[I])/H[I+1] - (Y[I]-Y[I-1])/H[I] )*6/S
+        END;
+    LAMBDA[N] := 0;  MY[N] := 0;  DELTA[N] := 0;
+(*
+  BERECHNUNG DER ZWEITEN ABLEITUNGEN Z[I]
+*)
+    Q[0] := -LAMBDA[0]/2;  U[0] := DELTA[0]/2;
+    FOR I := 1 TO N DO
+        BEGIN
+            P[I] := MY[I]*Q[I-1] + 2;
+            Q[I] := -LAMBDA[I]/P[I];
+            U[I] := (DELTA[I] - MY[I]*U[I-1])/P[I]
+        END;
+    Z[N] := U[N];
+    FOR I := N-1 DOWNTO 0 DO Z[I] := Q[I]*Z[I+1] + U[I];
+(*
+  BERECHNUNG DER KOEFFIZIENTEN DER KUBISCHEN POLYNOME
+        A[I]*X^3 + B[I]*X^2 + C[I]*X + D[I]
+  FUER DIE EINZELNEN INTERVALLE.
+*)
+    FOR I := 1 TO N DO
+        BEGIN S := X[I] - X[I-1];
+            A[I] := (Z[I]-Z[I-1])/(6*S);
+            B[I] := (Z[I]-6*A[I]*X[I])/2;
+            C[I] := (Y[I]-Y[I-1])/S -
+                    A[I]*(SQR(X[I]) + X[I]*X[I-1] + SQR(X[I-1])) -
+                    B[I]*(X[I]+X[I-1]);
+            D[I] := Y[I] - ((A[I]*X[I]+B[I])*X[I]+C[I])*X[I]
+        END;
+(*
+  AUSGABE
+*)
+    WRITELN("P 0:", X[0] :8:2, Y[0] :8:2);
+    FOR I := 1 TO N DO
+        BEGIN
+            WRITELN(" ":5, A[I],B[I],C[I],D[I]);
+            WRITELN("P", I:2, ":", X[I] :8:2, Y[I] :8:2)
+        END;
+    WRITELN
+END.

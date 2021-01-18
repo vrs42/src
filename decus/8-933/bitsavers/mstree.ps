@@ -1,0 +1,63 @@
+PROGRAM MINIMALSPANNINGTREE(INPUT,OUTPUT);
+
+  CONST NMAX=100; BMAX=99  (* BMAX=NMAX-1 *);
+        INF=99E99       (* LARGE VALUE OF TYPE LENGTH *);
+        ZER=0.0         (*  ZERO VALUE OF TYPE LENGTH *);
+
+
+  TYPE  INDEX=INTEGER   (* 0..NMAX *);
+        LENGTH=REAL     (* RESULTTYPE OF FUNCTION 'DIST' *);
+
+
+  VAR   N,H,K,I,LCR,SUV: INDEX;
+
+        X,Y: ARRAY[1..NMAX] OF REAL;
+                        (* POINT I DESCRIBED BY X[I],Y[I] *)
+        FROM,INTO: ARRAY[1..BMAX] OF INDEX;
+                        (* BRANCH K DESCRIBED BY FROM[K],INTO[K] *)
+        UVL: ARRAY[1..BMAX] OF LENGTH;
+                        (* UVL[K] CONTAINS LENGTH OF BRANCH K *)
+        MIN,LEN,SUM,L: LENGTH;
+
+
+  FUNCTION DIST(P,Q: INDEX): LENGTH;
+    BEGIN DIST := SQRT( SQR(X[P]-X[Q]) + SQR(Y[P]-Y[Q]) )  END;
+
+
+
+BEGIN
+  READ(N); WRITELN("THE",N:5,"  GIVEN POINTS ARE:");
+  FOR K := 1 TO N DO
+    BEGIN READ(X[K],Y[K]);
+          WRITELN(K:3,"    (",X[K]:10:2,",",Y[K]:10:2,")":3)
+    END;
+  WRITELN;
+
+  FOR K := 1 TO N-1 DO
+    BEGIN FROM[K] := 0;  INTO[K] := K;  UVL[K] := INF  END;
+  LCR := N;
+  FOR K := 1 TO N-1 DO
+    BEGIN SUV := 0;  MIN := INF;
+        FOR H := K TO N-1 DO
+          BEGIN LEN := DIST(LCR,INTO[H]);
+                IF LEN<UVL[H] THEN BEGIN UVL[H] := LEN;
+                                         FROM[H] := LCR
+                                   END
+                              ELSE LEN := UVL[H];
+                IF LEN<MIN THEN BEGIN MIN := LEN; SUV := H END
+          END;
+        I := FROM[K]; FROM[K] := FROM[SUV]; FROM[SUV] := I;
+        I := INTO[K]; INTO[K] := INTO[SUV]; INTO[SUV] := I;
+        L :=  UVL[K];  UVL[K] :=  UVL[SUV];  UVL[SUV] := L;
+        LCR := INTO[K]
+    END;
+
+  WRITELN("THE MINIMAL SPANNING TREE IS:");
+  SUM := ZER;
+  FOR K := 1 TO N-1 DO
+    BEGIN SUM := SUM + UVL[K];
+          WRITELN(FROM[K]:5,"-":5,INTO[K]:5,UVL[K]:12:2)
+    END;
+  WRITELN(" ":15,"------------");
+  WRITELN("TOTAL LENGTH:  ",SUM:12:2)
+END.
