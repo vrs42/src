@@ -1,0 +1,238 @@
+   1               /CHANGES TO FLOATING POINT OUTPUT ROUTINE
+   2               /TO ALLOW OPTIONAL FIXED POINT OUTPUT
+   3               /IF (62)=0, OUTPUT FLOATING
+   4               /OTHERWISE C(62) = NUMBER OF DIGITS
+   5               /C(AC) = NUMBER OF DECIMAL PLACES
+   6               /C(15) LOST DURING EXECUTION
+   7               
+   8               
+   9               *7200
+  10               
+  11 007200  0000  FOUT,     0
+  12 007201  3775            DCA I SCAD /SAVE C(AC)
+  13 007202  1045            TAD HORDER
+  14 007203  7710            SPA CLA
+  15 007204  1330            TAD SMINUS
+  16 007205  1327            TAD SPLUS
+  17 007206  4344            JMS ASCOUT /PRINT "+" OR "-"
+  18 007207  1376            TAD BFRST
+  19 007210  3015            DCA 15     /INITIALIZE AUTO-INDEX
+  20 007211  5234            JMP 7234   /CONVERT MANTISSA AND BUFFER THE DIGITS
+  21               
+  22 007212  1324  RETN,     TAD BEXP
+  23 007213  3044            DCA 44     /STORE DECIMAL EXPONENT
+  24 007214  4777            JMS I FXAD /GO TO OUTPUT THE NUMBER
+  25 007215  5223            JMP CRLF   /FIXED POINT RETURN
+  26 007216  1343            TAD CHE    /FLOATING POINT RETURN
+  27 007217  4344            JMS ASCOUT /PRINT "E"
+  28 007220  7000          NOP
+  29 007221  7000          NOP
+  30 007222  4737            JMS I EXPT /GO TO OUTPUT EXPONENT
+  31 007223  1055  CRLF,     TAD SWIT1
+  32 007224  7650            SNA CLA    /PRINT CR-LF?
+  33 007225  5600            JMP I FOUT /NO, EXIT
+  34 007226  1341            TAD CARRTN /YES
+  35 007227  4344            JMS ASCOUT
+  36 007230  1342            TAD LNFEED
+  37 007231  4344            JMS ASCOUT
+  38 007232  5600            JMP I FOUT /EXIT
+  39               
+  40               
+  41               *7375
+  42               
+  43 007375  4767  SCAD,     SAC
+  44 007376  4770  BFRST,    BUFFER-1
+  45 007377  4600  FXAD,     FIX
+  46               
+  47               
+  48               *7301
+  49               
+  50 007301  3415            DCA I 15
+  51               
+  52               
+  53               *7305
+  54               
+  55 007305  3415            DCA I 15
+  56               
+  57               
+  58               *7310
+  59               
+  60 007310  5212            JMP RETN
+  61               
+  62               
+  63               
+  64               
+  65               HORDER=45
+  66               SMINUS=7330
+  67               SPLUS=7327
+  68               BEXP=7324
+  69               CHE=7343
+  70               EXPT=7337
+  71               ASCOUT=7344
+  72               SWIT1=55
+  73               CARRTN=7341
+  74               LNFEED=7342
+  75               
+  76               
+  77               
+  78               
+  79               
+  80               
+  81               
+  82               
+  83               
+  84               
+  85               /IN THE COMMENTS BELOW:-
+  86               /   F = NUMBER OF DIGITS TO BE OUTPUT
+  87               /   D = NUMBER OF DECIMAL PLACES
+  88               /   E = DECIMAL EXPONENT
+  89               /   P = NUMBER OF PLACES REMAINING TO BE
+  90               /       PRINTED BEFORE DECIMAL POINT
+  91               
+  92               
+  93               *4600
+  94               
+  95 004600  0000  FIX,      0
+  96 004601  1062            TAD 62
+  97 004602  7450            SNA        /FLOATING OUTPUT?
+  98 004603  5225            JMP R6     /YES, ROUND OFF TO 6 PLACES
+  99 004604  7041            CIA
+ 100 004605  1367            TAD SAC
+ 101 004606  7510            SPA        /   F-D > 0 ?
+ 102 004607  5214            JMP .+5    /YES
+ 103 004610  7240            CLA CMA
+ 104 004611  1062            TAD 62
+ 105 004612  3367            DCA SAC    /MAKE D = F-1
+ 106 004613  7040            CMA
+ 107 004614  1044            TAD 44
+ 108 004615  7500            SMA        /   F-D > E ?
+ 109 004616  7200            CLA        /NO, ROUND OFF TO F PLACES
+ 110 004617  1062            TAD 62     /YES
+ 111 004620  7510            SPA        /   D+E < 0 ?
+ 112 004621  5250            JMP PRNT-1 /YES, NO ROUNDING NEEDED, GO TO PRINT
+ 113 004622  1356            TAD M6     /NO, ROUND TO D+E PLACES,
+ 114 004623  7500            SMA        /TO A MAXIMUM OF 6 PLACES
+ 115 004624  7200            CLA
+ 116 004625  1354  R6,       TAD K7
+ 117 004626  3366            DCA TEMP   /SAVE NUMBER+1 OF PLACES TO ROUND TO
+ 118 004627  1360            TAD BUFST
+ 119 004630  1366            TAD TEMP   /SET UP BUFFER ADDRESS AT WHICH
+ 120 004631  3370            DCA PLCE   /ROUNDING OFF SHOULD START
+ 121 004632  1366            TAD TEMP
+ 122 004633  7041            CIA        /SET UP COUNT OF MAXIMUM NUMBER
+ 123 004634  3366            DCA TEMP   /OF CARRIES ALLOWABLE
+ 124 004635  1353            TAD K4
+ 125 004636  2770  RET,      ISZ I PLCE /ADD 1 TO DIGIT AT CURRENT POSITION
+ 126 004637  1770            TAD I PLCE
+ 127 004640  1357            TAD M10
+ 128 004641  7710            SPA CLA    /CARRY REQUIRED?
+ 129 004642  5251            JMP PRNT   /NO, GO TO OUTPUT
+ 130 004643  3770            DCA I PLCE /YES, MAKE CURRENT DIGIT A ZERO
+ 131 004644  2366            ISZ TEMP   /BEGINNING OF BUFFER REACHED?
+ 132 004645  5313            JMP DECR   /NO, DECREMENT BUFFER ADDRESS AND REPEAT
+ 133               
+ 134               
+ 135               
+ 136               
+ 137               
+ 138               
+ 139               
+ 140 004646  2770            ISZ I PLCE /YES, SET MANTISSA TO 0.1
+ 141 004647  2044            ISZ 44     /COMPENSATE BY INCREMENTING EXPONENT
+ 142 004650  7200            CLA
+ 143 004651  1360  PRNT,     TAD BUFST
+ 144 004652  3015            DCA 15     /SET AUTO-INDEX REGISTER
+ 145 004653  1062            TAD 62
+ 146 004654  7450            SNA        /   F = 0 ?
+ 147 004655  5342            JMP FLOP   /YES, OUTPUT AS FLOATING NUMBER
+ 148 004656  7041            CIA        /NO,
+ 149 004657  3370            DCA FCOUNT /SET UP COUNT TO PRINT F PLACES
+ 150 004660  1370            TAD FCOUNT
+ 151 004661  1044            TAD 44
+ 152 004662  7540            SMA SZA    /   E > F ?
+ 153 004663  5317            JMP XXX    /YES, PRINT X'S
+ 154 004664  1367            TAD SAC
+ 155 004665  7500            SMA        /   E < F-D ?
+ 156 004666  7200            CLA        /NO, TAKE P = E
+ 157 004667  7041            CIA        /YES, TAKE P = F-D
+ 158 004670  1044            TAD 44
+ 159 004671  7041            CIA
+ 160 004672  3366            DCA TEMP   /SET UP MINUS P
+ 161 004673  1363            TAD M7
+ 162 004674  3367            DCA SCOUNT /SET COUNT OF MAX. NO. OF SIG. FIGS.
+ 163 004675  1044  BACK,     TAD 44
+ 164 004676  1366            TAD TEMP
+ 165 004677  7650            SNA CLA    /   P = E ?
+ 166 004700  5330            JMP DIG    /YES, PRINT DIGIT
+ 167 004701  1366            TAD TEMP   /NO,
+ 168 004702  7001            IAC
+ 169 004703  7710            SPA CLA    /   P > 1 ?
+ 170 004704  1362            TAD SPACE  /YES, TAKE SPACE; OTHERWISE ZERO
+ 171 004705  4323  IN,       JMS OUT    /PRINT CHARACTER
+ 172 004706  2366            ISZ TEMP   /P CHARACTERS PRINTED?
+ 173 004707  5275            JMP BACK   /NO
+ 174 004710  1364            TAD POINT  /YES,
+ 175 004711  4761            JMS I OPUT /PRINT DECIMAL POINT
+ 176 004712  5275            JMP BACK
+ 177               
+ 178 004713  7040  DECR,     CMA
+ 179 004714  1370            TAD PLCE
+ 180 004715  3370            DCA PLCE
+ 181 004716  5236            JMP RET
+ 182               
+ 183               
+ 184               
+ 185               
+ 186               
+ 187               
+ 188 004717  7200  XXX,      CLA
+ 189 004720  1365            TAD CHX
+ 190 004721  4323            JMS OUT    /PRINT "X"
+ 191 004722  5320            JMP .-2    /AND REPEAT
+ 192               
+ 193 004723  0000  OUT,      0
+ 194 004724  4761            JMS I OPUT /PRINT CHARACTER
+ 195 004725  2370            ISZ FCOUNT /F CHARACTERS PRINTED?
+ 196 004726  5723            JMP I OUT  /NO, RETURN
+ 197 004727  5600            JMP I FIX  /YES, NUMBER FINISHED
+ 198               
+ 199 004730  7040  DIG,      CMA
+ 200 004731  1044            TAD 44     /REDUCE E BY 1
+ 201 004732  3044            DCA 44
+ 202 004733  2367            ISZ SCOUNT /6 SIG. FIGS. PRINTED?
+ 203 004734  5340            JMP .+4    /NO
+ 204 004735  7040            CMA        /YES,
+ 205 004736  3367            DCA SCOUNT /RESET COUNT TO -1
+ 206 004737  5305            JMP IN     /AND LEAVE C(AC) = 0
+ 207 004740  1415            TAD I 15   /TAKE NEXT DIGIT FROM BUFFER
+ 208 004741  5305            JMP IN
+ 209               
+ 210 004742  1356  FLOP,     TAD M6     /SET COUNT TO PRINT
+ 211 004743  3370            DCA FCOUNT /6 DIGITS AFTER DECIMAL POINT
+ 212 004744  4761            JMS I OPUT /PRINT "0"
+ 213 004745  1364            TAD POINT
+ 214 004746  4761            JMS I OPUT /PRINT "."
+ 215 004747  2200            ISZ FIX    /INCREMENT RETURN ADDRESS
+ 216 004750  1415            TAD I 15   /TAKE NEXT DIGIT FROM BUFFER
+ 217 004751  4323            JMS OUT    /PRINT IT
+ 218 004752  5350            JMP .-2    /AND REPEAT
+ 219               
+ 220 004753  0004  K4,       4
+ 221 004754  0007  K7,       7
+ 222 004755  7775  M3,       -3
+ 223 004756  7772  M6,       -6
+ 224 004757  7766  M10,      -12
+ 225 004760  4770  BUFST,    BUFFER-1
+ 226 004761  7352  OPUT,     7352
+ 227 004762  7760  SPACE,    240-260
+ 228 004763  7771  M7,       -7
+ 229 004764  7776  POINT,    256-260
+ 230 004765  0050  CHX,      330-260
+ 231 004766  0000  TEMP,     0
+ 232               SAC,
+ 233 004767  0000  SCOUNT,   0
+ 234               PLCE,
+ 235 004770  0000  FCOUNT,   0
+ 236               BUFFER,
+ 237               
+ 238               $

@@ -1,0 +1,238 @@
+/CHANGES TO FLOATING POINT OUTPUT ROUTINE
+/TO ALLOW OPTIONAL FIXED POINT OUTPUT
+/IF (62)=0, OUTPUT FLOATING
+/OTHERWISE C(62) = NUMBER OF DIGITS
+/C(AC) = NUMBER OF DECIMAL PLACES
+/C(15) LOST DURING EXECUTION
+
+
+*7200
+
+FOUT,     0
+          DCA I SCAD /SAVE C(AC)
+          TAD HORDER
+          SPA CLA
+          TAD SMINUS
+          TAD SPLUS
+          JMS ASCOUT /PRINT "+" OR "-"
+          TAD BFRST
+          DCA 15     /INITIALIZE AUTO-INDEX
+          JMP 7234   /CONVERT MANTISSA AND BUFFER THE DIGITS
+
+RETN,     TAD BEXP
+          DCA 44     /STORE DECIMAL EXPONENT
+          JMS I FXAD /GO TO OUTPUT THE NUMBER
+          JMP CRLF   /FIXED POINT RETURN
+          TAD CHE    /FLOATING POINT RETURN
+          JMS ASCOUT /PRINT "E"
+	NOP
+	NOP
+          JMS I EXPT /GO TO OUTPUT EXPONENT
+CRLF,     TAD SWIT1
+          SNA CLA    /PRINT CR-LF?
+          JMP I FOUT /NO, EXIT
+          TAD CARRTN /YES
+          JMS ASCOUT
+          TAD LNFEED
+          JMS ASCOUT
+          JMP I FOUT /EXIT
+
+
+*7375
+
+SCAD,     SAC
+BFRST,    BUFFER-1
+FXAD,     FIX
+
+
+*7301
+
+          DCA I 15
+
+
+*7305
+
+          DCA I 15
+
+
+*7310
+
+          JMP RETN
+
+
+
+
+HORDER=45
+SMINUS=7330
+SPLUS=7327
+BEXP=7324
+CHE=7343
+EXPT=7337
+ASCOUT=7344
+SWIT1=55
+CARRTN=7341
+LNFEED=7342
+
+
+
+
+
+
+
+
+
+
+/IN THE COMMENTS BELOW:-
+/   F = NUMBER OF DIGITS TO BE OUTPUT
+/   D = NUMBER OF DECIMAL PLACES
+/   E = DECIMAL EXPONENT
+/   P = NUMBER OF PLACES REMAINING TO BE
+/       PRINTED BEFORE DECIMAL POINT
+
+
+*4600
+
+FIX,      0
+          TAD 62
+          SNA        /FLOATING OUTPUT?
+          JMP R6     /YES, ROUND OFF TO 6 PLACES
+          CIA
+          TAD SAC
+          SPA        /   F-D > 0 ?
+          JMP .+5    /YES
+          CLA CMA
+          TAD 62
+          DCA SAC    /MAKE D = F-1
+          CMA
+          TAD 44
+          SMA        /   F-D > E ?
+          CLA        /NO, ROUND OFF TO F PLACES
+          TAD 62     /YES
+          SPA        /   D+E < 0 ?
+          JMP PRNT-1 /YES, NO ROUNDING NEEDED, GO TO PRINT
+          TAD M6     /NO, ROUND TO D+E PLACES,
+          SMA        /TO A MAXIMUM OF 6 PLACES
+          CLA
+R6,       TAD K7
+          DCA TEMP   /SAVE NUMBER+1 OF PLACES TO ROUND TO
+          TAD BUFST
+          TAD TEMP   /SET UP BUFFER ADDRESS AT WHICH
+          DCA PLCE   /ROUNDING OFF SHOULD START
+          TAD TEMP
+          CIA        /SET UP COUNT OF MAXIMUM NUMBER
+          DCA TEMP   /OF CARRIES ALLOWABLE
+          TAD K4
+RET,      ISZ I PLCE /ADD 1 TO DIGIT AT CURRENT POSITION
+          TAD I PLCE
+          TAD M10
+          SPA CLA    /CARRY REQUIRED?
+          JMP PRNT   /NO, GO TO OUTPUT
+          DCA I PLCE /YES, MAKE CURRENT DIGIT A ZERO
+          ISZ TEMP   /BEGINNING OF BUFFER REACHED?
+          JMP DECR   /NO, DECREMENT BUFFER ADDRESS AND REPEAT
+
+
+
+
+
+
+
+          ISZ I PLCE /YES, SET MANTISSA TO 0.1
+          ISZ 44     /COMPENSATE BY INCREMENTING EXPONENT
+          CLA
+PRNT,     TAD BUFST
+          DCA 15     /SET AUTO-INDEX REGISTER
+          TAD 62
+          SNA        /   F = 0 ?
+          JMP FLOP   /YES, OUTPUT AS FLOATING NUMBER
+          CIA        /NO,
+          DCA FCOUNT /SET UP COUNT TO PRINT F PLACES
+          TAD FCOUNT
+          TAD 44
+          SMA SZA    /   E > F ?
+          JMP XXX    /YES, PRINT X'S
+          TAD SAC
+          SMA        /   E < F-D ?
+          CLA        /NO, TAKE P = E
+          CIA        /YES, TAKE P = F-D
+          TAD 44
+          CIA
+          DCA TEMP   /SET UP MINUS P
+          TAD M7
+          DCA SCOUNT /SET COUNT OF MAX. NO. OF SIG. FIGS.
+BACK,     TAD 44
+          TAD TEMP
+          SNA CLA    /   P = E ?
+          JMP DIG    /YES, PRINT DIGIT
+          TAD TEMP   /NO,
+          IAC
+          SPA CLA    /   P > 1 ?
+          TAD SPACE  /YES, TAKE SPACE; OTHERWISE ZERO
+IN,       JMS OUT    /PRINT CHARACTER
+          ISZ TEMP   /P CHARACTERS PRINTED?
+          JMP BACK   /NO
+          TAD POINT  /YES,
+          JMS I OPUT /PRINT DECIMAL POINT
+          JMP BACK
+
+DECR,     CMA
+          TAD PLCE
+          DCA PLCE
+          JMP RET
+
+
+
+
+
+
+XXX,      CLA
+          TAD CHX
+          JMS OUT    /PRINT "X"
+          JMP .-2    /AND REPEAT
+
+OUT,      0
+          JMS I OPUT /PRINT CHARACTER
+          ISZ FCOUNT /F CHARACTERS PRINTED?
+          JMP I OUT  /NO, RETURN
+          JMP I FIX  /YES, NUMBER FINISHED
+
+DIG,      CMA
+          TAD 44     /REDUCE E BY 1
+          DCA 44
+          ISZ SCOUNT /6 SIG. FIGS. PRINTED?
+          JMP .+4    /NO
+          CMA        /YES,
+          DCA SCOUNT /RESET COUNT TO -1
+          JMP IN     /AND LEAVE C(AC) = 0
+          TAD I 15   /TAKE NEXT DIGIT FROM BUFFER
+          JMP IN
+
+FLOP,     TAD M6     /SET COUNT TO PRINT
+          DCA FCOUNT /6 DIGITS AFTER DECIMAL POINT
+          JMS I OPUT /PRINT "0"
+          TAD POINT
+          JMS I OPUT /PRINT "."
+          ISZ FIX    /INCREMENT RETURN ADDRESS
+          TAD I 15   /TAKE NEXT DIGIT FROM BUFFER
+          JMS OUT    /PRINT IT
+          JMP .-2    /AND REPEAT
+
+K4,       4
+K7,       7
+M3,       -3
+M6,       -6
+M10,      -12
+BUFST,    BUFFER-1
+OPUT,     7352
+SPACE,    240-260
+M7,       -7
+POINT,    256-260
+CHX,      330-260
+TEMP,     0
+SAC,
+SCOUNT,   0
+PLCE,
+FCOUNT,   0
+BUFFER,
+
+$
