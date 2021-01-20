@@ -1,0 +1,334 @@
+
+/PDP-8 DECTAPE SUBROUTINES - SEARCH
+/"DISM" MUST BE DEFINED AS AN EFFECTIVE JUMP TO THE DISMIS ROUTINE
+/  VIA PAGE ZERO
+/"AUTO" MUST BE DEFINED AS SOME AUTO INDEX REGISTER
+/"MCOM" MUST BE THE ADDRESS TAG OF THE REGISTER INDIRECTLY REFERENCED
+/ BY A JMP INSTR. WHEN THE INTERRUPT ROUTINE FINDS THE DT FLAG SET
+/ WHEN THE INTERRUPT ROUTINE FINDS THE ERROR FLAG SET, AN
+/ EFFECTIVE JUMP TO "MERR" MUST BE EXECUTED
+/EXAMPLE:
+/         MMSC
+/         SKP
+/         JMP I ERCO /RESPONSE TO DECTAPE ERROR FLAG
+/         MMSF
+/         SKP
+/         JMP I MCOM /RESPONSE TO DECTAPE MT FLAG
+/         .....
+/         .....
+/         .....
+/MCOM,    0
+/ERCO,    MERR
+/SCAT,    TAD
+/         RAR                   /RESTORE LINK
+/         TAD                   /RESTORE C(AC)
+/         ION
+/         JMP I Z 0  /RETURN TO MAIN PROG
+/DISM=JMP I Z .
+/         SCAT
+/AUTO=10
+/SEARCH ROUTINE FORMAT:
+/         TAD B                 /WHERE B=BLOCK NUMBER
+/         JMS I X               /WHERE X IS A REGISTER CONTAINING LVSF,
+/                               /LVSR OR LVST
+/         E                     /WHERE E=ERROR RETURN ADDRESS
+/         C                     /WHERE C=COMPLETION RETURN ADDRESS
+/         ZZ00                  /WHERE ZZ=UNIT NUMBER (OCTAL)
+/         MULTIPROGRAM RETURN
+/SEARCH AND LEAVE TAPE MOVING IN SEARCH REVERSE MODE
+LVSR,     0
+          DCA BLKN
+          TAD LVSR
+          DCA LVSF
+          JMP LVSF+3
+
+/SEARCH AND LEAVE TAPE STOPPED IN SEARCH FORWARD MODE
+LVST,     0
+          DCA BLKN
+          TAD LVST
+          DCA LVSF
+          CMA
+          DCA LVST
+          JMP LVSF+2
+
+/SEARCH AND LEAVE TAPE MOVING IN SEARCH FORWARD MODE
+LVSF,     0
+          DCA BLKN
+          IAC
+          DCA BACO
+          CMA
+          TAD BACO
+          DCA FOCO
+          IOF
+          TCF
+          KCC
+          TAD CN9    /DATA
+          DCA I MIN3 /MCOM
+          TAD CN1    /TEMN
+          MMML
+          DCA DONE
+          TAD CN2    /31
+          DCA DIRC
+          TAD BLKN
+          SNA
+          JMP FERR+1 /FORMAT ERROR
+          CIA
+          DCA BLKN
+          TAD CN3    /7770
+          DCA DRC    /CHANGE OF DIRECTION COUNTER
+          TAD I LVSF /PICK UP ERROR RETURN ADDRESS
+          DCA LVSR
+          ISZ LVSF
+          TAD I LVSF /PICK UP COMPLETION RETURN ADDRESS
+          DCA BACK
+          ISZ LVSF
+          TAD I LVSF /PICK UP UNIT NUMBER
+          DCA UNIT
+          ISZ LVSF
+          TAD LVSF   /PICK UP MULTI PROGRAM RETURN ADDRESS
+DINT,     DCA Z 0    /SET UP FOR INITIAL DISMIS
+
+TURN,     ISZ DRC
+          SKP
+          JMP FERR   /BLOCK CANNOT BE FOUND
+          TAD CN6    /-21
+          TAD DIRC
+          SNA CLA
+          JMP MREV
+          TAD CN7    /21
+          DCA DIRC
+          TAD TURN+1 /SKP
+          DCA SCH2
+          TAD SNLC   /SNL CLA
+          DCA SCH2+2
+          TAD BLKN
+          TAD FOCO
+          DCA DISB
+          TAD UNIT
+          MMLS
+          JMS I MIN0 /WAIT
+MOUT,     TAD DIRC
+          MMMF
+          JMS I MIN0 /WAIT
+          DISM
+DATA,     MMCF
+          CLA CLL
+          TAD TEMN
+          TAD DISB
+          SZA        /BLOCK FOUND
+          JMP SCH2
+          TAD TEMN
+          TAD BLKN
+          SZA CLA    /OBJECT BLOCK FOUND
+          JMP TURN
+          CMA
+          DCA DONE
+          ISZ LVST
+          JMP I BACK /LEAVE TAPE MOVING
+          MMLM       /STOP TAPE
+          JMS I MIN0 /WAIT
+          JMP I BACK
+SCH2,     SMA CLA    /OR SKP (WHEN IN FORWARD DIRECTION)
+          DISM
+          SZL CLA    /OR SNL CLA (WHEN IN FORWARD DIRECTION)
+          DISM
+          JMP TURN   /REVERSE THE TAPE DIRECTION
+MREV,     TAD CN2    /31
+          DCA DIRC
+          TAD SMAC   /SMA CLA
+          DCA SCH2
+          TAD SZLC   /SZL CLA
+          DCA SCH2+2
+          TAD BLKN
+          TAD BACO
+          DCA DISB
+          JMP MOUT
+ERGO,     JMP I LVSR /GO TO USER'S ERROR ROUTINE
+
+/CONSTANTS
+CN1,      TEMN
+CN2,      31
+CN3,      7770
+CN6,      7757       /-21
+CN7,      21
+CN9,      DATA
+SMAC,     SMA CLA
+SZLC,     SZL CLA
+SNLC,     SNL CLA
+/INTERCOMMUNICATIONS REGISTERS
+MIN0,     WAIT
+MIN3,     MCOM
+/VARIABLES
+BLKN,     0
+BACO,     0
+FOCO,     0
+DIRC,     0
+DRC,      0
+BACK,     0
+UNIT,     0
+DISB,     0
+DONE,     0
+TEMN,     0
+
+*LVSR+176
+/FORMAT AND NOT FOUND ERRORS
+FERR,     IAC        /"NOT FOUND" ENTRY
+          IAC        /"FORMAT ERROR" ENTRY
+
+/PDP-8 DECTAPE SUBROUTINES - READ AND WRITE
+/FORMAT:
+/         JMS I Y    /WHERE Y=REGISTER CONTAINING MRDS, R128, MWRD, W128
+/         S          /WHERE S=STARTING CORE ADDRESS
+/         E          /WERE E=ERROR RETURN ADDRESS
+/         ZZ00       /WHERE ZZ=UNIT NUMBER (OCTAL)
+/         N          /WHERE N=NUMBER OF CONSECUTIVE BLOCKS
+/         B          /WHERE B=INITIAL BLOCK NUMBER
+/         MULTI-PROGRAM RETURN
+
+/ERROR HANDLING ROUTINE
+          JMP OOPS
+MERR,     MMRS
+          AND CN13   /1000
+          SZA CLA
+          JMP MENZ
+          TAD I MIN5 /MCOM
+          CIA
+          TAD CN20   /DROR
+          SNA CLA
+          TAD ERCN
+          TAD CN22   /3
+OOPS,     DCA HOOP
+          MMRS
+          DCA MRSA   /SAVE STATUS
+          TAD HOOP
+          MMLM       /STOP TAPE
+          JMS WAIT
+          JMP I MIN7 /ERGO
+MENZ,     JMS WAIT
+          JMP I MIN6 /TURN
+
+/WRITE SUBROUTINE (TO WRITE ON 129 WORD BLOCKS)
+W128,     0
+          CLA
+          TAD W128
+          DCA MRDS
+          TAD CN23   /MRD2
+          JMP MWRS+5
+/GENERAL WRITE SUBROUTINE
+MWRS,     0
+          CLA
+          TAD MWRS
+          DCA MRDS
+          TAD CN18   /PASS
+          DCA CHK1+2
+          TAD CN10   /TAD PASS+3 (6754)
+          DCA PASS+2
+          JMP MRD1
+/READ SUBROUTINE (TO READ 128 WORDS FROM A 129 WORD BLOCK)
+R128,     0
+          CLA
+          TAD R128
+          DCA MRDS
+          TAD CN23   /MRD2
+          JMP MRDS+3
+
+/READ SUBROUTINE (TO READ ANY LENGTH BLOCK
+MRDS,     0
+          CLA
+          TAD CN18   /PASS
+          DCA CHK1+2
+          TAD CN12   /TAD DROR+3 (6772)
+          DCA PASS+2
+          SKP
+MRD1,     IAC
+          IAC
+          DCA ERCN
+          TAD I MRDS
+          DCA HERE   /SAVE STARTING CORE ADDRESS
+          TAD MRDS
+          JMP CHK    /GO FIND BLOCK
+MRD2,     TAD HERE   /ENTRY AFTER SEARCH FOR 128 WORD READ AND WRITE
+          TAD CN15   /200
+          DCA R128
+          TAD I R128 /SAVE 129TH CORE WORD
+          DCA MWRS
+PASS,     TAD HERE   /ENTRY AFTER SEARCH FOR GENERAL READ AND WRITE
+          MMML
+          TAD        /DROR+3 (2, READ) OR PASS+3 (4, WRITE)
+          MMLF
+          TAD CN20   /DROR
+          DCA I MIN5 /MCOM
+          DCA I MIN4 /DONE
+          DISM
+DROR,     MMSC       /RETURNS HERE AFTER READING OR WRITING DONE
+          SKP CLA
+          JMP MERR
+          MMCF
+          TAD CHK1+2
+          CIA
+          TAD CN23   /MRD2
+          SZA CLA
+          JMP EXNT-2
+          TAD MWRS
+          DCA I R128 /RESTORE 129TH CORE WORD
+          TAD R128
+          MMML
+          TAD R128
+          TAD CN15   /200
+          DCA R128
+          TAD I R128
+          DCA MWRS
+          ISZ HOOP
+          DISM
+EXNT,     MMLM
+          JMS WAIT
+          CMA
+          JMP DROR-2
+
+/ROUTINE TO EXTRACT ARGUMENTS AND INSTITUTE BLOCK SEARCH
+CHK,      DCA Z AUTO /SET UP AUTO INDEX REG
+          TAD I Z AUTO          /PICK UP ERROR ROUTINE ADDRESS
+          DCA CHK1+1
+          TAD I Z AUTO          /PICK UP UNIT SELECTION
+          DCA CHK1+3
+          TAD I Z AUTO          /PICK UP NUMBER OF BLOCKS
+          CIA
+          DCA HOOP
+          TAD I Z AUTO          /PICK UP INITIAL BLOCK NUMBER
+CHK1,     JMS I MIN8 /LVSF
+          0
+          0
+          0
+          JMP I Z AUTO          /MULTI-PROGRAM WITH MAIN PROGRAM
+/ ROUTINE TO CLEAR MT FLAG AFTER LOAD COMMANDS
+WAIT,     0
+          MMSF
+          JMP .-1
+          MMCF
+          JMP I WAIT
+
+/VARIABLES
+ERCN,     0
+HERE,     0
+HOOP,     0
+MRSA,     0
+/CONSTANTS
+CN10,     TAD PASS+3
+CN12,     TAD DROR+3
+CN13,     1000
+CN15,     200
+CN18,     PASS
+CN20,     DROR
+CN22,     3
+CN23,     MRD2
+/INTERCOMMUNICATION REGISTERS
+MIN4,     DONE
+MIN5,     MCOM
+MIN6,     TURN
+MIN7,     ERGO
+MIN8,     LVSF
+
+*MERR+200
+
+PAUSE
+}
