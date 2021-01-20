@@ -1,0 +1,84 @@
+   1               
+   2               /PROGRAM BIO A-08-01
+   3               /ADDITION OF NEW SUBROUTINES TO 4 WORD F.P. PACKAGE
+   4               /FREAD,FSPA,FSZA,FNOP,FJMP,FNEG,FHLT
+   5               /FCLA MAY BE SIMULATED BY SETTING FCLA=2044
+   6               /
+   7               *5760
+   8 005760  5324           FPREAD                   /FREAD=10
+   9 005761  5333           FPSPA                    /FSPA=11
+  10 005762  5340           FPSZA                    /FSZA=12
+  11 005763  5770           EXIT6                    /FNOP=13
+  12 005764  5770           EXIT6
+  13 005765  5345           FPJMP                    /FJMP=15
+  14 005766  6261           6261                     /FNEG=16
+  15 005767  5372           FPHLT                    /FHLT=17
+  16               EXIT6=5770
+  17               /
+  18               /
+  19               *5324
+  20 005324  0000  FPREAD,  0                        /SUBROUTINE TO READ FIRST
+  21 005325  4405           JMS I 5                  /VALID F.P. NUMBER
+  22 005326  7300           CLA CLL
+  23 005327  1061           TAD 61
+  24 005330  7650           SNA CLA
+  25 005331  5325           JMP .-4
+  26 005332  5724           JMP I FPREAD
+  27               /
+  28               /
+  29 005333  0000  FPSPA,   0                        /SUBROUTINE TO SIMULATE SPA N.
+  30 005334  1045           TAD 45                   /I.E. JUMP N INSTRUCTIONS
+  31 005335  7700           SMA CLA                  /IF F.P. ACC. POSITIVE.
+  32 005336  4345           JMS FPJMP                /N DEFINED IN F.P. JUMP
+  33 005337  5733           JMP I FPSPA
+  34               /
+  35               /
+  36 005340  0000  FPSZA,   0                        /SUBROUTINE TO SIMULATE SZA N.
+  37 005341  1045           TAD 45                   /I.E. JUMP N INSTRUCTIONS
+  38 005342  7650           SNA CLA                  /IF F.P. ACC.=0.
+  39 005343  4345           JMS FPJMP                /N DEFINED IN F.P. JUMP
+  40 005344  5740           JMP I FPSZA
+  41               /
+  42               /
+  43 005345  0000  FPJMP,   0                        /SUBROUTINE TO SIMULATE JMP N
+  44 005346  1771           TAD I INST               /WHERE N=M*20(OCTAL) AND
+  45 005347  0367           AND MASK1                /M IS THE NUMBER OF INSTR.
+  46 005350  7650           SNA CLA                  /TO BE JUMPED. IF BIT 3=0
+  47 005351  7040           CMA                      /JUMP FORWARDS, IF BIT 3=1
+  48 005352  3015           DCA 15                   /JUMP BACKWARDS.
+  49 005353  1771           TAD I INST               /CONTENTS OF LOC. 15 LOST
+  50 005354  7112           CLL RTR
+  51 005355  7012           RTR
+  52 005356  0366           AND MASK
+  53 005357  2015           ISZ 15
+  54 005360  7041           CIA
+  55 005361  1765           TAD I RETADD
+  56 005362  1370           TAD MONE
+  57 005363  3765           DCA I RETADD
+  58 005364  5745           JMP I FPJMP
+  59 005365  5661  RETADD,  5661
+  60 005366  0017  MASK,    17
+  61 005367  0400  MASK1,   400
+  62 005370  7777  MONE,    -1
+  63 005371  5657  INST,    5657
+  64               /
+  65               /
+  66 005372  0000  FPHLT,   0                        /SUBROUTINE TO SIMULATE A HALT
+  67 005373  7040           CMA                      /WITH ADDR. OF HALT DISPLAYED
+  68 005374  1765           TAD I RETADD             /IN ACC.
+  69 005375  7402           HLT
+  70 005376  7300           CLA CLL
+  71 005377  5772           JMP I FPHLT
+  72               $
+
+EXIT6   5770
+FPHLT   5372
+FPJMP   5345
+FPREAD  5324
+FPSPA   5333
+FPSZA   5340
+INST    5371
+MASK    5366
+MASK1   5367
+MONE    5370
+RETADD  5365
