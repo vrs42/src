@@ -1,0 +1,600 @@
+
+
+
+
+/HENRY BURKHARDT III  -  DEC
+/PDP-5/8 UPDATE
+/SYSTEMS LIBRARY TAPE
+/PAGE 1
+/BLOCKS 17,20,21,22,23,24,25
+*6000
+BEG,      JMS I LND             /TYPE CR-LF
+          TAD TBC1
+          JMS I PRNT            /PRINT FIRST LINE
+          JMS I GSCI            /GO GET NAME
+          JMP BEG               /ERROR - RETYPE LINE
+          JMS I LND             /TYPE CR-LF
+          TAD TBC2
+          JMS I PRNT            /TYPE SECOND LINE
+          JMS I GCTO            /GET STARTING ADDRESS
+          JMP BEG
+          DCA I SADR            /STORE STARTING ADDRESS
+NO,       JMS I LND             /TYPE CR-LF
+          TAD TBC3
+          JMS I PRNT            /PRINT THIRD LINE
+          TAD ACON
+          DCA LIST
+          CMA
+          DCA I ASWT            /SET SEQUENCE TEST
+          DCA I UPR             /SET FOR 0 IN SEQUENCE
+          TAD MIN2              /SET DOUBLE PACKING SWITCH
+          DCA SWT2              /INDICATE BYTES FOR
+YES,      KCC                   /SINGLE ARGUMENTS
+          JMS I RD1             /GET FIRST CHARACTER
+          TAD M240
+          SNA
+          JMP YES               /IT WAS A SPACE - IGNORE IT
+          TAD MCR
+          SNA
+          JMP YES               /IT WAS CR - IGNORE
+          TAD MLF
+          SNA
+          JMP YES               /IT WAS LF - IGNORE
+          TAD MLFT
+          SNA
+          JMP ACPT              /IT WAS LEFT ANGLE BRACKET - OK
+          IAC
+          SZA CLA
+          JMP BEG
+          DCA I LIST            /SEMI-COLON
+          JMS I LND             /GO LOAD
+          JMP I XXY1
+XXY1,     6200
+
+
+
+
+
+
+/PAGE 2
+ACPT,     JMS I GCTO            /GET ARGUMENT
+          JMP BEG
+          AND PAGE              /SAVE PAGE BITS
+          DCA LEFT
+          TAD LEFT
+          JMS I SEQ             /IS IT IN SEQUENCE
+          TAD I HD              /GET TERMINATING CHARACTER
+          TAD MRGT              /IS IT RIGHT-ANGLE BRACKET
+          SNA
+          JMP SNGL              /YES - SINGLE ARGUMENT
+          TAD MCMA              /IS IT A COMMA?
+          SZA CLA               /IT MEANS STRING
+          JMP BEG
+          JMS I GCTO            /GET SECOND PART OF STRING
+          JMP BEG
+          AND PAGE
+          DCA I LIST            /SAVE PAGE BITS
+          TAD I LIST            /IS IT IN SEQUENCE?
+          JMS I SEQ
+          TAD I HD              /OK - WAS TERMINATOR LEFT
+          TAD MRGT              /ANGLE BRACKET?
+          SZA CLA
+          JMP BEG
+          TAD LEFT              /YES PACK THE TWO NUMBERS
+          CLL CML               /FOR THE DIRECTORY
+          RAR                   /AND PUSH DOWN ON LIST
+          CLL CML
+          RAR
+          TAD PFIX
+          DCA LEFT
+          TAD I LIST
+          CLL RTL
+          RTL
+          RTL
+          IAC
+          TAD LEFT              /BITS 0-1 INDICATE STRING
+          DCA I LIST            /PUSH DOWN
+          ISZ LIST
+          JMP YES-2             /RESET SWITCH
+
+
+
+
+
+
+/PAGE 3
+SNGL,     ISZ SWT2              /SINGLE ARGUMENT INPUT
+          JMP FST1              /FIRST SINGLE ARG OR
+          CLA CMA               /PRECEDED BY STRING
+          TAD LIST              /CAN BE PACKED
+          DCA LIST              /POP-UP LIST
+          TAD LEFT
+          CLL RTL
+          RTL
+          RTL
+          IAC
+          TAD I LIST
+          DCA I LIST
+          ISZ LIST              /PUSH DOWN ON LIST
+          JMP YES-2             /OK - GET NEXT - RESET SWITCH
+FST1,     TAD LEFT              /SINGLE ARGUMENT
+          CLL RTR               /PACKED IN LEFT PART
+          TAD PFIX              /OF WORD
+          DCA I LIST
+          ISZ LIST              /PUSH - DOWN
+          JMP YES               /GET NEXT-DON'T RESET
+
+
+
+
+
+
+/PAGE 4
+LND,      LEND
+PRNT,     PNT
+GSCI,     GASC
+GCTO,     GOCT
+RD1,      RD
+SEQ,      SEQN
+HD,       HLD1
+ASWT,     SSWT
+UPR,      UPPR
+SADR,     SA
+TBC1,     TAB1
+TBC2,     TAB2
+TBC3,     TAB3
+ACON,     DTAB
+MIN2,     -2
+M240,     0-240
+MCR,      240-215
+MLF,      215-212
+MLFT,     212-274
+MRGT,     0-276
+MCMA,     276-254
+PAGE,     7600
+PFIX,     0040
+LIST,     0
+LEFT,     0
+SWT2,     0
+
+
+
+
+
+
+
+/THIS SECTION IS ENTERED WHEN
+/THE OPERATOR HAS CORRECTLY ENTERED
+/THE NECESSARY PARAMETERS
+/THE CONDENSED DIRECTORY CODE IS
+/BROKEN DOWN INTO TWO LISTS
+/WHICH ARE USED IN THE ACTUAL
+/CREATION OF THE NEW FILE
+/PAGE 5
+*6200
+          TAD DCON
+          DCA ADS2
+          TAD PCON
+          DCA PUSH
+          DCA I BSZE
+          TAD DCON
+          IAC
+          DCA CMPT
+          TAD I CMPT
+          SNA CLA
+          JMP I ILNP
+TRY,      ISZ ADS2
+          TAD I ADS2
+          SZA
+          JMP XXX+1
+          TAD PUSH
+          JMP I XXX
+XXX,      CONT
+          JMS I ROT             /ROTATE 7 LEFT
+          RAL                   /8 LEFT = 5 RIGHT
+          AND MSKR
+          DCA LOW               /LEFT HAND BITS 2-6
+          TAD I ADS2
+          AND MSKR
+          DCA HIGH              /RIGHT HAND BITS 7-11
+          TAD I ADS2
+          RAL                   /TEST OPCODE
+          SZL CLA
+          JMP SRES              /BIT 0=1, IE A STRING
+          CMA
+          TAD LOW
+          JMS CMPT              /SET UP ON LIST
+          TAD HIGH              /IS RIGHT-HALF SIGNIFICANT
+          SNA CLA
+          JMP TRY
+          CMA
+          TAD HIGH
+          JMS CMPT
+          JMP TRY
+
+
+
+
+
+
+/PAGE 6
+CMPT,     0
+          JMS I ROT  /CONVERT TO PAGE ADDRESS
+          DCA I PUSH /PC JAMMING MUST TAKE PLACE
+          TAD I PUSH /PUSH THIS VALUE ONTO LIST
+          JMS I OVRQ /IS IT >5777
+          JMP OUT    /YES:SPECIAL LIST SETUP
+          ISZ PUSH   /NO
+          CLA CMA
+          DCA I PUSH /ONE BLOCK
+          ISZ PUSH
+          ISZ I BSZE /COUNT NUMBER OF BLOCKS
+          JMP I CMPT /EXIT
+OUT,      JMS GTRG   /GET ARGUMENT
+          ISZ I BSZE /SINGLE WORD IS AT ADDRESS>6000
+          TAD I BSZE /BLOCK NUMBER OF OVERFLOW
+          DCA I LOW  /PUT ON SPECIAL LIST
+          JMP I CMPT
+SRES,     CLA CMA
+          TAD LOW
+          JMS I ROT
+          DCA I PUSH
+          TAD I PUSH
+          JMS I OVRQ /IS IT > 6000
+          JMP OUT1   /YES: SO IS WHOLE STRING
+          ISZ PUSH
+          CLA CMA
+          TAD HIGH
+          JMS I ROT
+          JMS I OVRQ
+          JMP PVER   /STRINGS OVERLAP
+          TAD HIGH
+          CMA
+          TAD LOW    /OK
+          DCA I PUSH /NUMBER OF BLOCKS
+          TAD I PUSH
+          CMA IAC
+          TAD I BSZE
+          DCA I BSZE /UPDATE TOTAL NUMBER OF BLOCKS
+          ISZ PUSH
+          JMP TRY
+
+
+
+
+
+
+/PAGE 7
+OUT1,     TAD HIGH              /ENTER HERE IF ENTIRE SERIES
+          CMA                   /WILL BE IN UPPER CORE
+          TAD LOW               /IE IF 6000<ADDRESSES<7577
+          DCA HIGH
+          JMS GTRG
+          ISZ I BSZE
+          TAD I BSZE
+          DCA I LOW
+          ISZ LOW
+          ISZ HIGH
+          JMP .-5
+          JMP TRY
+GTRG,     0                     /FIND POSITION ON
+          TAD MSZE              /SPECIAL TABLE
+          TAD I PUSH
+          JMS I ROT
+          CLL RAR
+          TAD TBLN              /PUT ITS ADDRESS
+          DCA LOW               /IN THE REGISTER 'LOW'
+          JMP I GTRG
+PVER,     TAD PUSH
+          JMS I OVR
+          DCA PUSH
+          JMP TRY
+DCON,     DTAB-1
+PCON,     DLST
+BSZE,     SIZE
+TBLN,     OVTB
+OVR,      POVR
+OVRQ,     QOVR
+ROT,      ROTR
+MSKR,     0037
+MSZE,     2000
+ADS2,     0
+PUSH,     0
+HIGH,     0
+LOW,      0
+ILNP,     BEG
+
+
+
+
+
+
+
+/THIS PAGE CONTAINS SUBROUTINES
+/CALLED BY THE PREVIOUS TWO
+/PAGES:  THE CONTENTS OF ADDRESSES 6000-6577
+/ARE DESTROYED DURING DIRECTORY UPDATING
+/PAGE 8
+*6400
+ROTR,     0                     /ROTATE LEFT 7 PLACES
+          CLL RTL
+          RTL
+          RTL
+          RAL
+          JMP I ROTR
+QOVR,     0                     /IF C(AC)> 6000 OR IF
+          CLL CMA               /C(AC)= 6000 RETURN
+          TAD SN                /TO CALL+1,OTHERWISE
+          SZL CLA               /RETURN TO CALL+2
+          ISZ QOVR
+          JMP I QOVR
+SN,       6000
+SEQN,     0                    /TEST SEQUENCING
+          DCA QOVR
+          TAD QOVR
+          SNA
+          JMP ZTST              /IF ZERO, SEE IF IT IS FIRST
+          CLL CMA IAC
+          TAD UPPR
+          SNA SZL CLA           /IS THIS > LAST?
+          JMP I NSIR /NO
+          TAD QOVR
+          DCA UPPR              /UPDATE LAST
+          DCA SSWT
+          TAD UPPR              /IS THIS > 7577?
+          TAD CAR
+          SZL CLA
+          JMP I NSIR            /YES: ILLEGAL
+          JMP I SEQN            /NO : OK
+ZTST,     ISZ SSWT
+          JMP I NSIR            /NO : THE FIRST 0
+          JMP I SEQN
+NSIR,     BEG
+SSWT,     0
+UPPR,     0
+
+
+
+
+
+
+/PAGE 9
+POVR,     0                     /ENTER HERE WHEN
+          DCA SEQN              /STRING PARTIALLY OVERLAPS
+          DCA I SEQN            /UPPER AREA
+          TAD I LOWP
+          JMS ROTR
+          JMS QOVR
+          JMP .+4
+          ISZ I SEQN
+          ISZ I LOWP
+          JMP .-6
+          CLA IAC
+          TAD I SEQN
+          TAD I BLZE
+          DCA I BLZE
+          TAD I SEQN
+          CMA
+          DCA I SEQN
+          TAD I HGHP
+          CMA IAC
+          TAD I LOWP
+          DCA ROTR
+          TAD CTB1
+          DCA QOVR
+          ISZ I BLZE
+          TAD I BLZE
+          DCA I QOVR
+          ISZ QOVR
+          ISZ ROTR
+          JMP .-5
+          CLA IAC
+          TAD SEQN
+          JMP I POVR
+LOWP,     LOW
+HGHP,     HIGH
+BLZE,     SIZE
+CTB1,     OVTB
+
+
+
+
+
+
+
+/PAGE 10
+TAB1,     2022       /PRINT TABLES
+          1707
+          2201
+          1540
+          1601
+          1505
+          4040
+          4072
+          0000
+TAB2,     2301
+          4050
+          1703
+          2401
+          1451
+          4040
+          4040
+          4072
+          0000
+TAB3,     2001
+          0705
+          4014
+          1703
+          0124
+          1117
+          1623
+          4072
+          0000
+LEND,     0          /TYPE CARRIAGE RETURN AND LINEFEED
+          CLA
+          TAD CAR
+          JMS I TPE
+          TAD MI3
+          JMS I TPE
+          CLA
+          JMP I LEND
+CAR,      0215
+MI3,      0-3
+TPE,      TYPE
+RD,       0          /READ ONE CHARACTER
+          KSF
+          JMP .-1
+          KRB
+          JMS I TPE
+          JMP I RD
+
+
+
+
+
+
+/PAGE 11
+*6600
+GOCT,     0                     /THIS ROUTINE ACCEPTS OCTAL
+          KCC                   /CHARACTERS AND PACKS THEM TO
+          DCA WORD              /A 12-BIT BINARY WORD
+          JMS I READ            /IT RETURNS TO CALL+2 IF NO
+          DCA HLD1              /ERROR ; TO CALL+1 IF ERROR
+          TAD HLD1              /A RUBOUT INDICATES AN ERROR
+          TAD TST3              /OR NO OCTAL INPUT
+          SMA                   /MEANS AN ERROR
+          JMP EXT1+4            /CONVERSION TERMINATES ON THE
+          TAD TST4              /FIRST NON-OCTAL CHARACTER
+          SPA
+          JMP EXT1+4
+          DCA HLD1
+          TAD WORD
+          CLL RAL
+          CLL RAL
+          CLL RAL
+          TAD HLD1
+          DCA WORD
+          JMP GOCT+3
+EXT1,     TAD HLD1
+          TAD TST9
+          SZA CLA
+          JMP I GOCT
+          CLA
+          TAD HLD1
+          TAD TST5
+          SZA CLA
+          ISZ GOCT
+          TAD WORD
+          JMP I GOCT
+TST3,     0-270
+TST4,     270-260
+TST5,     0-377
+
+
+
+
+
+
+/PAGE 12
+GASC,     0                     /THIS ROUTINE ACCEPTS SIX
+          KCC                   /ASCII CHARACTERS AND
+          TAD NAME              /PACKS THEM INTO 3-12BIT
+          DCA ADR1              /WORDS
+          DCA I NAME            /IT ALSO HAS AN ERROR
+          DCA I NAME+1          /RETURN AT CALL+1
+          DCA I NAME+2          /COMPLETION AT CALL+2
+          TAD GASC
+          DCA GOCT
+          TAD M3
+          DCA WORD
+GSC1,     TAD M2
+          DCA CNT1
+          JMS I READ
+          DCA HLD1
+          TAD HLD1
+          TAD TST1
+          SPA
+          JMP EXT2
+          TAD TST2
+          SMA CLA
+          JMP EXT2
+          ISZ CNT1
+          JMP FRST
+          TAD HLD1
+          AND TST6
+          TAD I ADR1
+          DCA I ADR1
+          ISZ ADR1
+          ISZ WORD
+          JMP GSC1
+          JMS I READ
+          DCA HLD1
+EXT2,     CLA
+          DCA WORD
+          JMP EXT1
+FRST,     TAD HLD1
+          AND TST6
+          CLL RTL
+          RTL
+          RTL
+          DCA I ADR1
+          JMP GSC1+2
+TST1,     0-241
+TST2,     241-333
+TST6,     0077
+TST9,     0-215
+
+
+
+
+
+/PAGE 13
+PNT,      0                     /THIS ROUTINE IS ENTERED
+          DCA HLD1              /WITH THE STARTING ADDRESS
+          TAD I HLD1            /OF A LIST OF PACKED ASCII
+          SNA                   /CHARACTERS - IT CONVERTS
+          JMP I PNT             /AND TYPES UNTIL A ZERO
+          DCA WORD              /IS FOUND IN THE STRING
+          TAD WORD
+          RTR
+          RTR
+          RTR
+          JMS GPNT
+          TAD WORD
+          JMS GPNT
+          ISZ HLD1
+          JMP PNT+2
+GPNT,     0                     /THIS ROUTINE CONVERTS
+          AND TST6
+          TAD TST7
+          SPA
+          TAD C100
+          TAD C240
+          JMS TYPE
+          CLA
+          JMP I GPNT
+TST7,     0-40
+C100,     0100
+C240,     0240
+M2,       0-2
+M3,       0-3
+READ,     RD                    /READ ONE CHARACTER
+TYPE,     0                     /TYPE THE CHARACTER IN
+          TLS                   /THE AC
+          TSF
+          JMP .-1
+          JMP I TYPE
+TEST,     0
+WORD,     0
+HLD1,     0
+CNT1,     0
+ADR1,     0
+NAME,     CHAR                  /POINTERS TO AREA WHERE
+          CHAR+1                /ASCII NAME IS TO BE
+          CHAR+2                /ASSEMBLED
+
+PAUSE
+
+
+
+

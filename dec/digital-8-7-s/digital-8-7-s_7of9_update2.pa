@@ -1,0 +1,416 @@
+
+
+
+
+/UPDATE PART II
+/THIS SECTION UPDATES THE DIRECTORY AND DETERMINES
+/IF IT WILL OVERFLOW - LOADS THAT PART OF THE
+/PROGRAM THAT IS IN CORE, IE ADDRESSES < 6000
+/IT ALSO DETERMINES WHETHER OR NOT REGISTER 0 IS AFFECTED
+/PAGE 14
+*7000
+          JMP I ZZZ             /START PROGRAM RUNNING
+ZZZ,      BEG
+CONT,     CLL CML CMA IAC
+          TAD PSHC
+          RAR
+          DCA I TSZE            /-NUMBER OF BLOCKS IN
+          TAD LST2              /INITIAL WRITING MODE
+          CMA IAC               /GET DIREC
+          TAD I LST1
+          IAC                   /C(AC) = SIZE OF NEW DIRECTORY
+          DCA LST1              /ENTRY
+          JMS I MGET            /GET THE DIRECTORY
+          7767                  /BLOCK NUMBER 11
+          7775                  /3 BLOCKS
+          TAD I NEXT            /RETURN HERE WITH TAPE STOPPED
+          TAD LST1              /THIS IS NEXT FREE ADDRESS
+          TAD MAX               /WILL THIS ENTRY OVERFLOW
+          SMA CLA               /THE DIRECTORY
+          JMP ERRR              /YES IT WILL - TYPE MESSAGE
+          TAD I BDIR            /NO IT WON'T TRANSFER NEW
+          DCA I BHRE            /DIRECTORY ENTRY, GET NEXT
+          TAD I BHRE            /FREE BLOCK NUMBER AND UPDATE
+          TAD SIZE              /FILE SIZE AND THEN
+          DCA I BDIR            /UPDATE NEXT FREE ADDRESS
+          TAD M5                /WRITE IT ALL BACK ONTO
+          DCA CNT6              /THE DIRECTORY
+          TAD LST2
+          DCA CNT7
+          TAD I NEXT
+          DCA LST1
+          CLA CMA
+          TAD I DSZE
+          DCA I DSZE
+
+
+
+
+/PAGE 15
+          TAD I CNT7
+          DCA I LST1
+          ISZ CNT7
+          ISZ LST1
+          ISZ CNT6
+          JMP .-5
+          TAD I CNT7
+          SNA
+          JMP .+5
+          DCA I LST1
+          ISZ CNT7
+          ISZ LST1
+          JMP .-6
+          DCA I LST1
+          IAC
+          TAD LST1
+          DCA I NEXT            /DIRECTORY ENTRY TRANSFERRED
+          TAD NEXT              /SEARCH THE DIRECTORY FOR
+          IAC                   /THIS NAME-IF IT IS
+          DCA CNT6              /FOUND--OPERATOR ERROR
+          TAD I DSZE
+          DCA CNT7
+XGO,      TAD MMI3
+          DCA NEXT
+          TAD LST2
+          DCA LST1
+XTRY,     TAD I LST1           /ARE THESE EQUAL
+          CMA IAC
+          TAD I CNT6
+          SZA CLA             /NO - RESET POINTERS
+          JMP STHS            /YES
+          ISZ LST1
+          ISZ CNT6
+          ISZ NEXT            /IS IT THE THIRD?
+          JMP XTRY            /NO
+          TAD TCN5            /YES - ALREADY ON FILE
+          JMP ERRR+1
+STHS,     ISZ CNT6
+          ISZ NEXT
+          JMP .-2
+          ISZ CNT6
+          ISZ CNT6
+          TAD I CNT6
+          ISZ CNT6
+          SZA CLA
+          JMP .-3
+          ISZ CNT7
+          JMP XGO
+          JMP I EXXT
+
+
+
+
+/PAGE 16
+MMI3,     0-3
+TCN5,     TAB5
+MGET,     GET
+TSZE,     TZE
+LST2,     DTAB-5
+LST1,     LIST
+NEXT,     6003                  /NEXT DIRECTORY LOCATION
+BDIR,     6002                  /NEXT FREE TAPE BLOCK
+DSZE,     6001                  /NUMBER OF PROGRAMS IN FILE
+MAX,      1201                  /-UPPER DIRCTORY SIZE
+SIZE,     0                     /NUMBER OF BLOCKS FOR NEW FILE
+M5,       0-5                   /NUMBER FO FIXED TRANSFERS
+CNT6,     0                     /TEMPORARY STORAGE
+CNT7,     0
+BHRE,     BHR1                  /BLOCK ADDRESS OF NEW PROGRAM
+TBC4,     TAB4
+ERRR,     TAD TBC4
+          JMS I MER1
+          JMP I MER2
+MER1,     PNT
+MER2,     LOAD
+EXXT,     7200
+PSHC,     DLST
+
+
+
+
+
+/PAGE 17
+*7200
+          JMS PUT    /WRITE BLOCKS 11,12,13
+          7767       /IE. NEW DIRECTORY
+          7775
+          TAD I BH1
+          CMA IAC
+          DCA I BK
+          TAD RETN
+          DCA I SPT
+          CMA
+          DCA PUT
+          TAD DST
+          DCA GET
+          TAD TZE
+          SNA CLA
+          JMP XYZ
+SCAT,     TAD I GET  /LOAD PROGRAM FROM LOW CORE
+          DCA I AD   /TAPE CONTINUES MOVING
+          ISZ GET    /WITH ARGUMENTS BEING SUPPLIED
+          TAD I GET
+          DCA I BZ
+          ISZ GET
+          ISZ PUT
+          JMP I TGO+1
+          JMP I TGO
+RET,      ISZ TZE    /RETURN HERE AFTER EACH SEGMENT
+          JMP SCAT   /MORE TO GO
+          TAD D200
+          DTXA
+          JMP XYZ
+
+
+
+
+
+/PAGE 18
+RETN,     RET
+TGO,      SENTER
+          MENTER
+D200,     200
+TZE,      0
+BH1,      BHR1
+DST,      DLST
+XYZ,      JMS GET
+          7777                  /BLOCK NUMBER 1
+          7774                  /4 BLOCKS
+          JMS I DO
+          JMS GET
+          7773                  /BLOCK NUMBER 5
+          7775                  /3 BLOCKS
+          JMS I DO
+LOAD,     JMS GET
+          7777                  /BLOCK NUMBER 1
+          7770                  /8 BLOCKS
+          HLT                   /SYSTEM ERROR
+
+
+
+
+
+
+/PAGE 19
+GET,      0
+          TAD GET       /SUBROUTINE TO READ
+          DCA PUT
+          TAD TWO
+          JMP .+3
+PUT,      0           /SUBROUTINE TO WRITE
+          TAD FOUR
+          DCA I FNC
+          TAD I PUT
+          DCA I BK
+          ISZ PUT
+          TAD I PUT
+          DCA I BZ
+          ISZ PUT
+          TAD RETR
+          DCA I SPT
+          TAD CORE
+          DCA I AD
+          JMP I XXY2
+XXY2,     SENTER
+XXXX,     TAD D200
+          DTXA
+
+          JMP I PUT
+RETR,     XXXX
+TWO,      30
+FOUR,     50
+FNC,      FUNCT        /POINTER TO FUNCTION IN BOOTSTRAP #2
+SPT,      MOVING       /POINTER TO RETURN IN B.S.#2
+AD,       ADDRS1       /POINTER TO CORE LOCATIONS
+BZ,       BLOCK1       /POINTER TO NUMBER OF BLOCKS
+BK,       BLK1         /POINTER TO BLOCK NUMBER
+CORE,     6000
+
+
+
+
+
+
+
+/PAGE 20
+TAB4,     0411
+          2205        /ERROR PRINT TABLES
+          0324
+          1722
+          3140
+          0625
+          1414
+          7240
+          0530
+          1124
+          0000
+TAB5,     2410
+          1123
+          4016
+          0115
+          0540
+          1123
+          4001
+          1422
+          0501
+          0431
+          4017
+          1640
+          0611
+          1405
+          0000
+DO,       STRE
+
+
+
+
+
+/PAGE 21
+*7400
+STRE,     0
+          ISZ SWT7
+          JMP XY1
+          TAD CN17
+          DCA CNT8
+          TAD MU4
+          DCA CNT9
+          DCA ZERO
+          TAD I CNT8
+          ISZ CNT8
+          SZA
+          JMS DOTH
+          ISZ ZERO
+          ISZ CNT9
+          JMP .-6
+          JMP I STRE
+XY1,      TAD MU3
+          JMP STRE+6
+DOTH,     0
+          TAD BHR1
+          CMA IAC
+          IAC
+          DCA I X1              /BLOCK NUMBER
+          TAD ZERO              /CONVERT TO PAGE ADDRESS
+          CLL RTL               /IE. MULTIPLY BY 0200
+          RTL
+          RTL
+          RAL
+          TAD FDG               /CORE ADDRESS
+          DCA I X2
+          CMA
+          DCA I X3              /1 BLOCK
+          TAD RET6
+          DCA I X4              /RETURN ADDRESS
+          TAD MWRT
+          DCA I XFN
+          JMP I X5
+
+
+
+
+
+
+
+/PAGE 22
+X17,      TAD D200A
+          DTXA
+
+          JMP I DOTH
+D200A,    200
+SWT7,     7777
+CN17,     OVTB
+MU4,      0-4
+MU3,      0-3
+MWRT,     50
+X1,       BLK1       /POINTERS TO BOOTSTRAP#2
+X2,       ADDRS1
+X3,       BLOCK1
+X4,       MOVING
+X5,       SENTER
+XFN,      FUNCT
+RET6,     X17
+FDG,      6000
+ZERO,     0
+CNT8,     0
+CNT9,     0
+
+
+
+
+/PAGE 23
+OVTB,     0          /THIS IS THE OVERFLOW LIST
+          0          /IE. FOR CORE LOCATIONS >6000 (<7577)
+          0
+          0
+          0
+          0
+          0
+DLST,     0         /THIS IS THE TABLE USED DURING
+          0          /WRITING OF PROGRAM SECTIONS FROM
+          0          /CORE LOCATIONS <6000
+          0          /FORMAT OF THIS TABLE IS:
+          0
+          0          /   CORE ADDRESS
+          0          /-NUMBER OF BLOCKS, ECT.
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+
+
+
+
+
+/PAGE 24
+CHAR,     0          /NEW DIRECTORY IS DEVELOPED HERE
+          0
+          0
+BHR1,     0
+SA,       0
+DTAB,     0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+$
+
+
+

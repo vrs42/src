@@ -1,0 +1,325 @@
+
+
+
+
+/HENRY BURKHARDT III - DEC
+/GETSYS - SYSTEMS LIBRARY
+/WILL CREATE SKELETON SYSTEM
+/ON SPECIFIED UNIT
+/RESTORATION BLOCK AND SKELETON DIRECTORY
+/FOUND ON BLOCKS 32,33,34,35 ARE ALSO READ IN
+/WHEN GETSYS IS LOADED
+/PAGE 1
+/BLOCKS 36,37,40
+*7000
+BEG,      KCC
+          JMS LND               /TYPE CR-LF
+          TAD CON1
+          JMS PRIN              /PRINT HEADER
+          JMS READ              /ACCEPT CHARACTER
+          TAD M271              /IS 0<CHAR<8?
+          SMA
+          JMP ERR               /NO
+          TAD C261
+          SPA
+          JMP ERR               /NO
+          IAC
+          CLL RTL
+          RTL
+          RTL
+          CLL RTL
+          RAL
+          DCA I UNIT
+          JMS READ              /TERMINATE ON CR
+          TAD MCR
+          SNA CLA               /IS IT CR?
+          JMP GO                /YES - OK
+ERR,      CLA
+          JMS LND
+          TAD CON2              /TYPE ERROR MESSAGE
+          JMS PRIN
+          JMP BEG               /TRY AGAIN
+GO,       JMS LND               /CHECK FOR POSSIBLE DT ERRORS
+          TAD I UNIT
+          TAD C21               /YES
+          DTCA DTXA             /SEARCH FORWARD
+          JMS WAET
+          JMP ERR1              /ERROR
+          TAD FOUR
+          DTXA
+
+
+
+
+
+
+
+/PAGE 2
+          JMS WAET
+          JMP ERR2              /WRITE WON'T SELECT
+          JMS STOP
+          JMP I XY1
+WAET,     0                     /WAIT LOOP
+          DTSF
+          JMP .-1
+          DTRB
+          SMA CLA
+          ISZ WAET
+          JMP I WAET
+ERR1,     TAD CON3
+          DCA READ
+          JMS STOP
+          TAD READ
+          JMS PRIN
+          JMP BEG
+ERR2,     TAD CON4
+          JMP ERR1+1
+C21,      0210
+D200,     0200
+XY1,      XXXX
+READ,     0                     /READ CHARACTER AND ECHO IT
+          KSF
+          JMP .-1
+          KRB
+          DCA TEMP
+          TAD TEMP
+          JMS TYPE
+          TAD TEMP              /EXIT WITH CHARACTER IN AC
+          JMP I READ
+TYPE,     0                     /TYPE CHARACTER IN THE AC
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I TYPE
+LND,      0                     /TYPE CR, LF
+          TAD CAR
+          JMS TYPE
+          TAD LF
+          JMS TYPE
+          JMP I LND
+CON1,     TAB1                  /INITIAL PRINT
+CON2,     TAB2                  /ERROR PRINT
+
+
+
+
+
+
+
+/PAGE 3
+CON3,     TAB3                  /SELECT ERROR MESSAGE
+CON4,     TAB4                  /WRITE WON'T SELECT
+CAR,      0215
+LF,       0212
+M271,     0-270
+C261,     270-261
+FOUR,     50
+MCR,      0-215
+TEMP,     0
+UNIT,     UNT
+PRIN,     0                     /TYPE CHARACTER STRING
+          DCA TEMP              /ENTER WITH ADDRESS IN AC
+          TAD I TEMP            /EXIT ON ZERO WORD
+          SNA
+          JMP I PRIN
+          RTR                   /PRINT RIGHT HALF OF WORD
+          RTR
+          RTR
+          JMS PRN2
+          TAD I TEMP            /PRINT LEFT HALF
+          JMS PRN2
+          ISZ TEMP
+          JMP PRIN+2
+PRN2,     0                     /CONVERT TO ASCII
+          AND BIT6
+          TAD M40
+          SPA
+          TAD C100
+          TAD C240
+          JMS TYPE
+          JMP I PRN2
+BIT6,     0077
+M40,      0-40
+C100,     0100
+C240,     0240
+CON9,     0
+
+STOP,     0
+          DTRA
+          AND D200
+          DTXA
+          JMP I STOP
+
+
+
+
+
+
+
+
+
+/THE SKELETON DIRECTORY WAS LOADED WITH GEESYS
+/IT IS WRITTEN ONTO THE NEW TAPE AND THEN 25 BLOCKS
+/ARE COPIED ONTO THE NEW TAPE-BUFFERED 5 AT A TIME
+/PAGE 4
+*7200
+XXXX,     JMS UNTX              //RITE ON SELECTED UNIT
+          7774                  /NUMBER OF BLOCKS IE.4
+          7770                  /-BLOCK #
+          TAD M5
+          DCA CNTRZ3,       JMS UNT8              /READ FROM UNIT 8
+          7773
+Z1,       7764
+          JMS UNTX              /WRITE ON SELECTED UNIT
+          7773
+Z2,       7764
+          ISZ CNTR
+          SKP
+          JMP EX1
+          TAD M5                /UPDATE BLOCK NUMBER BY FIVE
+          TAD Z1
+          DCA Z1
+          TAD M5
+          TAD Z2
+          DCA Z2
+          JMP Z3
+EXT,      TAD M8                /EXIT FROM GETSYS
+          DCA I SZE             /RESTORE MEMORY AND LOADERS
+          TAD ORG
+          DCA I AD1
+          TAD RD
+          DCA I FNC
+          DCA I UNIT00
+          CLA CMA
+          DCA I BLK
+          JMP I TAPE
+UNTX,     0                     /WRITE ON SELECTED UNIT
+          TAD UNT
+          DCA I UNIT00
+          TAD UNTX
+
+
+
+
+
+
+
+
+
+/PAGE 5
+          DCA UNT8
+          TAD WRT
+          JMP .+4
+UNT8,     0
+          DCA I UNIT00
+          TAD RD
+          DCA I FNC
+          TAD ORG
+          DCA I AD1
+          TAD I UNT8
+          DCA I SZE
+          ISZ UNT8
+          TAD I UNT8
+          DCA I BLK
+          ISZ UNT8
+          TAD RETN
+          DCA I STP1
+          TAD RET1
+          DCA I STPT
+          JMP I TAPE
+RETR,     JMP I UNT8
+UNIT00,   UNIT0
+ORG,      6000
+SYS,      0
+M5,       0-5
+CNTR,     0
+UNT,      0
+WRT,      50
+RD,       30
+FNC,      FUNCT
+AD1,      ADDRS1
+SZE,      BLOCK1
+BLK,      BLK1
+STPT,     MOVING
+STP1,     STOPPD
+TAPE,     SENTER
+RET1,     EXIT
+
+
+
+
+
+
+
+/PAGE 6
+RETN,     RETR
+M8,       0-10
+EX1,      JMS UNT8
+          -1
+          0
+          JMS UNTX
+          -1
+          0
+          JMP EXT
+
+TAB2,     7777                  /ERROR PRINT TABLE
+          7777
+          0000
+TAB3,     2410
+          1123
+          4025
+          1611
+
+
+
+
+
+
+
+/PAGE 7
+          2440
+          2711
+          1414
+          4016
+          1724
+          4023
+          0514
+          0503
+          2440
+          0000
+TAB4,     2722
+          1124
+          0540
+          2717
+          1647
+          2440
+          2305
+          1405
+          0324
+          0000
+TAB1,     2313                  /INITIAL PRINT TABLE
+          0514
+          0524
+          1716
+          4024
+          0120
+          0540
+          2711
+          1414
+          4002
+          0540
+          0322
+          0501
+          2405
+          0440
+          1716
+          4025
+          1611
+          2443
+          0000
+$
+
+
+
+

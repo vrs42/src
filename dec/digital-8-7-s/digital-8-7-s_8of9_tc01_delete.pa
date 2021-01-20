@@ -1,0 +1,494 @@
+
+
+
+/SYSTEM DELETE
+/HENRY BURKHARDT III - DEC
+/THIS PAGE CONTAINS PRINT
+/TABLES USED INITIALLY
+/THIS PAGE IS LOST DURING
+/DELETION
+/PAGE 1
+/BLOCKS 26,27,30,31
+*6600
+TAB1,     1601       /PRINT TABLES
+          1505
+          4017
+          0640
+          0611
+          1405
+          4024
+          1740
+          0205
+          4004
+          0514
+          0524
+          0504
+          7240
+          0000
+TAB3,     2410
+          0522
+          0540
+          1123
+          4016
+          1740
+          2325
+          0310
+          4006
+          1114
+          0540
+          2205
+          2425
+          2216
+          4024
+          1740
+          1116
+          0405
+          3040
+          0000
+TAB2,     7777
+          7777
+          0000
+
+
+
+
+
+
+/PAGE 2
+TAB4,     2410
+          1123
+          4011
+          2340
+          0140
+          2331
+          2324
+          0515
+          4020
+          2217
+          0722
+          0115
+          4022
+          0524
+          2522
+          1640
+          2417
+          4011
+          1604
+          0530
+          0000
+
+
+
+
+
+/PAGE 3
+*7000
+BEG,      KCC
+          JMS LND               /PRINT CR-LF
+          TAD TBC1
+          JMS PRIN              /PRINT MESSAGE
+          TAD ACN1
+          DCA ADR1              /SET POINTER
+          DCA NUMB
+          DCA CHAR
+          DCA CHAR+1
+          DCA CHAR+2
+          TAD MIN3
+          DCA CNT2
+GO,       TAD MIN2              /GO GET 6 CHARACTER NAME
+          DCA CNT1              /SAME ROUTINE AS IN "INDEX"
+          JMS INPT              /AND "UPDATE"
+          TAD TEMP
+          TAD TST1
+          SNA SPA CLA
+          JMP EXIT0
+          TAD TEMP
+          AND MASK
+          ISZ NUMB
+          ISZ CNT1
+          JMP FRST
+          TAD I ADR1
+          DCA I ADR1
+          ISZ ADR1
+          ISZ CNT2
+          JMP GO
+          JMP INPT
+EXIT0,    TAD NUMB
+          SNA CLA
+          JMP ERR
+          TAD TEMP
+          TAD TST2
+          SZA CLA
+          JMP ERR
+          JMS LND
+          JMP I STRT
+STRT,     ONGO
+FRST,     CLL RTL
+          RTL
+          RTL
+          DCA I ADR1
+          JMP GO+2
+
+
+
+
+
+
+/PAGE 4
+TST1,     0-240
+TST2,     0-215
+MASK,     0077
+MIN2,     0-2
+MIN3,     0-3
+CNT1,     0
+CNT2,     0
+ADR1,     0
+ACN1,     CHAR
+CHAR,     0
+          0
+          0
+NUMB,     0
+TEMP,     0
+INPT,     0                     /ROUTINE TO INPUT A
+          KSF
+          JMP .-1               /CHARACTER AND ECHO
+          KRB
+          DCA TEMP
+          TAD TEMP
+          TAD TST9
+          SNA CLA
+          JMP BEG
+          TAD TEMP
+          JMS TYPE
+          JMP I INPT
+
+
+
+/PAGE 5
+TYPE,     0                     /TYPE CHARACTER IN AC
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I TYPE
+LND,      0
+          TAD CAR
+          JMS TYPE
+          TAD LF
+          JMS TYPE
+          JMP I LND
+CAR,      0215
+LF,       0212
+TBC1,     TAB1
+TBC2,     TAB2
+PRIN,     0                     /PRINT ASCII STRING
+          DCA TEMP              /ENTER WITH ADDRESS OF
+          TAD I TEMP            /STRING IN AC - EXIT
+          SNA
+          JMP I PRIN            /ON ZERO ELEMENT
+          RTR
+          RTR
+          RTR
+          JMS PNT
+          TAD I TEMP
+          JMS PNT
+          ISZ TEMP
+          JMP PRIN+2
+
+
+
+
+/PAGE 6
+PNT,      0
+          AND MASK
+          TAD M40
+          SPA
+          TAD C100
+          TAD C240
+          JMS TYPE
+          JMP I PNT
+M40,      0-40
+C100,     0100
+C240,     0240
+ERR,      JMS LND
+          TAD TBC2
+          JMS PRIN
+          JMP BEG
+TST9,     0-377
+
+
+
+
+
+/PAGE 7
+*7200
+ONGO,     JMS I GET             /GET DIRECTORY
+          7767                  /BLOCK #11
+          7775                  /THREE BLOCKS
+          TAD DRC1              /SA OF DIRECTORY
+          DCA ADR2
+          CMA
+          TAD I DRC2            /NUMBER IN FILE
+          DCA CNT3              /NUMBER OF DIRECTORY ELEMENTS
+          DCA CNT4
+TRY1,     TAD MI3
+          DCA CNT5
+          TAD ACN3              /CHAR
+          DCA ADR3
+ISIT,     TAD I ADR2            /SEARCH DIRECTORY FOR
+          CMA IAC
+          TAD I ADR3            /THIS NAME
+          SZA CLA               /SAME SEARCH AS FOUND
+          JMP STOP              /IN "INDEX" AND "UPDATE"
+          ISZ ADR2
+          ISZ ADR3
+          ISZ CNT5
+          JMP ISIT
+          JMP GO1
+STOP,     ISZ ADR2              /NOT THIS ONE
+          ISZ CNT5
+          JMP .-2
+
+
+
+
+
+
+/PAGE 8
+          JMS FIND
+          ISZ CNT4
+          ISZ ADR2
+          ISZ CNT3
+          JMP TRY1              /TRY AGAIN
+          TAD TCN3              /NOT FOUND
+X1,       JMS I PNT1
+          JMP I LD
+PNT1,     PRIN
+LD,       LOAD
+TCN3,     TAB3
+ACN3,     CHAR
+GET,      MGET
+MI3,      0-3
+ADR2,     0
+ADR3,     0
+CNT3,     0
+CNT4,     0
+CNT5,     0
+FIND,     0                     /ROUTINE TO FIND START
+          ISZ ADR2              /OF NEXT ENTRY
+          ISZ ADR2
+          TAD I ADR2
+          SNA CLA
+          JMP I FIND
+          ISZ ADR2
+          JMP .-4
+
+
+
+
+
+/PAGE 9
+GO1,      TAD I ADR2
+          CMA IAC
+          DCA I BLK10/BLOCK # OF DELETED FILE
+          TAD ADR2
+          TAD M4
+          DCA I SA1  /ADDRESS OF DIRECTORY ENTRY
+          TAD CNT4
+          TAD M4
+          SPA SNA CLA
+          JMP ERR2   /A SYSTEM PROGRAM
+          ISZ I DRC2 /ONE LESS PROGRAM
+          ISZ CNT3   /IS IT THE LAST ONE?
+          SKP        /NO
+          JMP SPEC   /YES - TREAT SPECIALLY
+          JMS FIND
+          TAD ADR2
+          DCA I FA1
+          ISZ ADR2
+          ISZ ADR2
+          ISZ ADR2
+          ISZ ADR2
+          TAD I ADR2
+          CMA IAC
+          DCA I BLK20/BLOCK # OF NEXT
+          TAD I BLK10
+          CMA IAC
+          TAD I BLK20
+
+
+
+
+
+/PAGE 10
+          DCA CNT4
+          TAD I ADR2
+          TAD CNT4
+          DCA I ADR2
+SMPL,     JMS FIND
+          ISZ ADR2
+          ISZ ADR2              /CHANGE ALL BLOCK
+          ISZ ADR2              /NUMBERS
+          ISZ ADR2
+          TAD I ADR2
+          TAD CNT4
+          DCA I ADR2
+          ISZ CNT3
+          JMP SMPL
+          JMP I XGO
+SPEC,     TAD I BLK10
+          CMA IAC
+          DCA I DRC3
+          TAD I DRC6
+          DCA I FA1
+          TAD I SA1
+          IAC
+          DCA I DRC6
+          JMS I ZRO
+          JMS I PUT
+          7767
+          7775
+          JMP I LD
+ZRO,      ZERO
+PUT,      MPUT
+XGO,      TGO
+DRC1,     6004
+DRC2,     6001
+
+
+
+
+
+
+/PAGE 11
+DRC3,     6002
+DRC6,     6003
+TCN4,     TAB4
+M4,       0-4
+BLK10,    BK1
+BLK20,    BK2
+SA1,      SA
+FA1,      FA
+ERR2,     TAD TCN4
+          JMP X1
+
+
+
+
+
+
+
+/PAGE 12
+*7400
+TGO,      TAD I DRC4            /SLIDE DIRECTORY
+          CMA IAC               /DOWN INTO SPACE VACATED
+          TAD FA                /BY DELETED PROGRAM
+          SNA CLA
+          JMP XLD1
+          TAD I FA
+          DCA I SA
+          ISZ FA
+          ISZ SA
+          JMP TGO
+XLD1,     TAD SA
+          DCA I DRC4
+          JMS ZERO
+          TAD I DRC5
+          DCA FBL
+          TAD FBL
+          TAD I CNT
+          DCA I DRC5
+          JMS MPUT              /WRITE BACK DIRECTORY
+          7767
+          7775
+DLGO,     JMS MGET
+BK2,      0                     /THIS MOVES ALL PROGRAMS
+          7772
+          JMS MPUT
+BK1,      0
+          7772
+          TAD BK2
+
+
+
+
+
+
+
+/PAGE 13
+          TAD FBL
+          SPA CLA
+          JMP LOAD
+          TAD BK2
+          TAD M6
+          DCA BK2
+          TAD BK1
+          TAD M6
+          DCA BK1
+          JMP DLGO
+LOAD,     JMS MGET
+          7777
+          7770
+          HLT                   /SYSTEM ERROR
+DRC4,     6003
+DRC5,     6002
+CNT,      CNT4
+SA,       0
+FA,       0
+FBL,      0
+M6,       0-6
+MGET,     0                     /ROUTINE TO READ DT
+          TAD MGET
+          DCA MPUT
+          TAD RD
+          JMP .+3
+MPUT,     0                     /ROUTINE TO WRITE DT
+          TAD WRT
+          DCA I FNC
+          TAD I MPUT
+          DCA I BLCK
+          ISZ MPUT
+          TAD I MPUT
+          DCA I BSZE
+          ISZ MPUT
+          TAD CORE
+          DCA I SADR
+          TAD RE1
+          DCA I RET1
+          TAD RE2
+          DCA I RET2
+          JMP I TAPE
+
+
+
+
+
+
+
+/PAGE 14
+RETN,     JMP I MPUT
+FNC,      FUNCT
+BLCK,     BLK1
+BSZE,     BLOCK1
+SADR,     ADDRS1
+RET1,     MOVING
+RET2,     STOPPD
+RE1,      EXIT
+RE2,      RETN
+TAPE,     SENTER
+CORE,     6000
+RD,       30
+WRT,      50
+ZERO,     0          /ZERO LAST ENTRY
+          TAD SA
+          CMA IAC
+          TAD FA
+          SNA CLA
+          JMP I ZERO
+          DCA I SA
+          ISZ SA
+          JMP ZERO+1
+$
+
+
+

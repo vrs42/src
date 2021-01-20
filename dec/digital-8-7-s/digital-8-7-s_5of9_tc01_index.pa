@@ -1,0 +1,474 @@
+
+
+
+
+
+/PAGE 1
+/INDEX PROGRAM FOR PDP 5/8
+/DIRECTORY LOOKUP AND LOADING
+/CALLED BY BOOTSTRAPS #1 AND #2
+*7000
+/STORED ON BLOCKS 14,15,16
+BEGN,     KCC
+          JMS LEND   /TYPE CARRIAGE RETURN-LINE FEED
+          TAD ACN1
+          DCA ADR1
+          DCA NUMB   /SET TEST TO 0
+          DCA CHAR   /SET CHARACTERS TO 0
+          DCA CHAR+1
+          DCA CHAR+2
+          TAD MIN3   /SET FOR THREE 12-BIT WORDS
+          DCA CNT2
+GO,       TAD MIN2   /SET FOR TWO PARTS
+          DCA CNT1
+          JMS INPT   /GET CHARACTER
+          TAD TEMP
+          TAD TST1   /IS CHARACTER>240
+          SNA SPA CLA
+          JMP EXIT0  /NO-EXIT
+          TAD TEMP   /YES-TRIM IT
+          AND MASK
+          ISZ NUMB   /ADD 1 TO VALID CHARACTER COUNT
+          ISZ CNT1   /IS IT FIRST HALF
+          JMP FRST   /YES-PUT INTO LEFT PART
+          TAD I ADR1 /NO-GET LEFT PART
+          DCA I ADR1 /ADD TOGETHER AND PUT BACK
+          ISZ ADR1   /UPDATE TO HANDLE NEXT TWO
+          ISZ CNT2   /HAVE WE READ 6 CHARACTERS ?
+          JMP GO     /NO
+          JMS INPT   /YES  LOOK FOR TERMINATOR
+EXIT0,    TAD NUMB   /DID WE ACCEPT ANY CHARACTERS?
+          SNA CLA
+          JMP ERR    /NO - OPERATOR ERROR
+          TAD TEMP   /UES - WAS TERMINATOR A CR?
+          TAD TST2
+          SZA CLA
+          JMP ERR    /NO - OPERATOR ERROR
+          JMS LEND   /YES - START LOOKUP
+          JMP STRT
+
+
+
+
+
+
+
+
+
+
+/PAGE 2
+FRST,     CLL RTL    /TO PACK INTO LEFT
+          RTL        /PART OF WORD
+          RTL
+          DCA I ADR1
+          JMP GO+2
+TST1,     0-240
+TST2,     0-215
+MASK,     0077
+MIN2,     0-2
+MIN3,     0-3
+ACN1,     CHAR
+CNT1,     0
+CNT2,     0
+ADR1,     0
+NUMB,     0
+STRT,     TAD ACN2   /START TABLE SEARCH
+          DCA ADR2
+          DCA I ACC9  /SET TO ZERO
+          CMA
+          TAD I NMBR
+          DCA NUMB   /NUMBER OF NAMES IN DIRECTORY
+TRY1,     TAD MIN3   /TEST 3 12-BIT WORDS
+          DCA CNT1
+          TAD ACN1   /COMPARE WITH CHAR, CHAR+1, CHAR+2
+          DCA ADR1
+ISIT,     TAD I ADR2
+          CMA IAC
+          TAD I ADR1
+          SZA CLA    /ARE THESE EQUAL?
+          JMP STOP   /NO-STOP-RESET TABLE POINTER
+          ISZ ADR1   /UPDATE TEST
+          ISZ ADR2
+          ISZ CNT1   /WAS IT THE THIRD?
+          JMP ISIT   /NO-TRY AGAIN
+          TAD I ACC9
+          SNA CLA
+          JMP I INDX
+          TAD ADR2
+          JMP I CODE
+
+
+
+
+
+
+
+
+
+/PAGE 3
+STOP,     ISZ ADR2   /SET POINTER THROUGH AT LEAST
+          ISZ CNT1   /THE FIRST THREE ELEMENTS OF
+          JMP .-2    /DIRECTORY ENTRY
+          ISZ I ACC9
+          ISZ ADR2
+          ISZ ADR2
+          TAD I ADR2 /NUMBER OF ELEMENTS IN
+          ISZ ADR2
+          SZA CLA
+          JMP .-3
+          ISZ NUMB   /HAVE WE EXHAUSTED DIRECTORY?
+          JMP TRY1   /NO - TRY AGAIN
+ERR,      TAD QST    /YES - NAME NOT IN DIRECTORY
+          JMS TYPE
+          TAD QST    /0277
+          JMS TYPE
+          JMP BEGN
+INPT,     0          /ROUTINE TO INPUT A CHARACTER
+          KSF        /AND ECHO IT
+          JMP .-1
+          KRB
+          DCA TEMP
+          TAD TEMP
+          JMS TYPE   /ECHO IT
+          JMP I INPT
+TYPE,     0          /ROUTINE TO TYPE ONE CHARACTER
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I TYPE
+LEND,     0          /ROUTINE TO TYPE CARRIAGE RETURN, LINE FEED
+          TAD CAR    /0215
+          JMS TYPE
+          TAD LF     /0212
+          JMS TYPE
+          JMP I LEND
+
+
+
+
+
+
+
+
+/PAGE 4
+ACN2,     6204       /POINTER TO FIRST DIRECTORY ENTRY
+NMBR,     6201       /POINTER TO # OF DIRECTORY ENTRIES
+INDX,     NDX        /POINTER TO "INDEX"
+CODE,     CDE        /POINTER TO DECODING SUB-PROGRAM
+CAR,      0215
+LF,       0212
+QST,      0277
+ADR2,     0
+CHAR,     0
+          0
+          0
+TEMP,     0
+ACC9,     CNT9
+
+
+
+
+
+
+
+
+/PAGE 5
+*7200
+NDX,      TAD ADR5   /THIS SUB-PROGRAM PRINTS THE NAMES
+          DCA ADR3   /OF ALL PROGRAMS ON THE SYSTEM TAPE
+          TAD I MINN /IT IS CALLED BY THE SYMBOL "INDEX"
+          DCA CNT3   /NUMBER OF DIRECTORY ENTRIES
+NDX1,     JMS I LND
+          TAD M3
+          DCA CNT4   /3 12-BIT WORDS/ENTRY
+NDX2,     TAD I ADR3
+          JMS PAGE   /7 LEFT=6 RIGHT; IE GET LEFT
+          JMS PRIN   /PRINT LEFT HALF
+          TAD I ADR3 /PRINT RIGHT HALF
+          JMS PRIN
+          ISZ ADR3
+          ISZ CNT4   /DONE 3 YET?
+          JMP NDX2   /NO
+          ISZ CNT3   /DONE ENTIRE DIRECTORY?
+          JMP .+3    /NO
+          JMS I LND  /YES - RETURN
+          JMP I RETN
+          ISZ ADR3   /UPDATE DIRECTORY POINTER
+          ISZ ADR3   /TO NAME-ELEMENT OF NEXT
+          TAD I ADR3 /ENTRY
+          ISZ ADR3
+          SZA CLA
+          JMP .-3
+          JMP NDX1
+MINN,     6201       /POINTER TO NUMBER OF DIRECTORY ENTRIES
+LND,      LEND
+RETN,     BEGN
+M3,       0-3
+ADR5,     6213
+ADR3,     0
+CNT3,     0
+CNT4,     0
+
+
+
+
+
+
+
+
+/PAGE 6
+CDE,      DCA ADR3   /THIS SUBPROGRAM INTERPRETES ELEMENTS
+          TAD ACN3   /OF THE DIRECTORY ENTRIES AND DECODES
+          DCA ADR4   /THEM FOR "EXEC"
+          DCA I SIZE /NUMBER OF BLOCK SECTIONS ON EXPANDED
+          TAD I ADR3 /LIST
+          DCA I ADR4 /INITIAL BLOCK NUMBER OF CALLED
+          ISZ ADR3   /PROGRAM
+          ISZ ADR4
+          TAD I ADR3 /STARTING ADDRESS OF CALLED PROGRAM
+          DCA I ACN9
+CDE1,     ISZ ADR3
+          TAD I ADR3
+          SNA        /IS THIS THE END OF ENTRY?
+          JMP EXEC   /YES-GO AND EXECUTE
+          AND MSKL   /NO - BITS 2-6
+          CLL RAL
+          JMS PAGE
+          DCA CNT3   /SAVE LEFT BITS
+          TAD I ADR3
+          AND MSKR   /BITS 7-11
+          DCA CNT4   /SAVE RIGHT BITS
+          TAD I ADR3
+          RAL        /TEST BIT 0 IF=1, IT IS A STRING
+          SZL CLA    /IF NOT, DISCRETE PAGE(S)
+          JMP CDE2   /A STRING
+          JMS TRCD   /DECODE LEFT
+          TAD CNT4
+          DCA CNT3
+          JMS TRCD   /DECODE RIGHT
+          JMP CDE1   /GET NEXT ELEMENT
+TRCD,     0
+          TAD CNT3
+          SNA CLA
+          JMP CDE1   /NON-VALID SUB-ELEMENT, GET NEXT ELEMENT
+          CMA
+          TAD CNT3
+          JMS PAGE   /EXPAND TO PAGE ADDRESS
+          DCA I ADR4
+          TAD I ADR4
+          DCA I HIGH /UPDATE LARGEST
+          ISZ ADR4
+          CMA
+          DCA I ADR4 /PUT -1 ON LIST
+          ISZ ADR4
+          ISZ I SIZE /ADD 1 TO # OF BLOCK SECTIONS
+          JMP I TRCD
+
+
+
+
+
+
+
+
+
+/PAGE 7
+CDE2,     CMA
+          TAD CNT3
+          JMS PAGE   /STARTING PAGE ADDRESS
+          DCA I ADR4
+          ISZ ADR4
+          TAD CNT4
+          CMA
+          TAD CNT3
+          DCA I ADR4 /NUMBER OF CONSECUTIVE PAGES
+          ISZ ADR4
+          ISZ I SIZE /ADD 1 TO # OF BLOCK SECTIONS
+          CMA
+          TAD CNT4
+          JMS PAGE
+          DCA I HIGH /UPDATE LARGEST
+          JMP CDE1
+PAGE,     0
+          CLL RAL
+          RTL
+          RTL
+          RTL
+          JMP I PAGE
+ACN3,     OPLT
+SIZE,     SZE
+HIGH,     UPPR
+MSKL,     1740       /BITS 2-6
+MSKR,     0037       /BITS 7-11
+ADR4,     0
+PRIN,     0          /PRINT 6-BIT TRIMMED CODE
+          AND BIT6
+          SNA
+          JMP I PRIN /IF ZERO, FORGET IT
+          TAD M40
+          SPA
+          TAD C100
+          TAD C240
+          JMS I TPE
+          JMP I PRIN
+BIT6,     0077
+M40,      0-40
+C100,     0100
+C240,     0240
+TPE,      TYPE
+ACN9,     6176
+ACN,      6000
+ADS1,     ADDRS1
+
+
+
+
+
+/PAGE 8
+EXEC,     TAD ACN    /6000
+          DCA I ADS1
+          CMA
+          DCA I BSZ1 /1 BLOCK
+          TAD M10    /-10 IE. BLOCK #10 (OCTAL)
+          DCA I BK1
+          TAD ACN7   /TAPE+2
+          DCA I STPT
+          TAD WRT   
+          DCA I FN1
+          JMS TAPE
+          TAD RD     /0002
+          DCA I FN1
+          CMA
+          DCA I BK1  /BLOCK 1
+          TAD M6
+          DCA I BSZ1 /6 BLOCKS
+          JMS TAPE
+          CLA CLL
+          TAD UPPR   /HIGHEST PAGE USED
+          TAD UPCN
+          TAD UPCN
+          SZL CLA    /CAN WE RESTORE 7400-7577?
+          TAD UPCN   /NO
+          TAD CN12   /YES
+          DCA I ADS2
+          SNL
+          IAC
+          TAD M10    /-10 IE. BLOCK #10 (OCTAL)
+          DCA I BK2
+          TAD CNT9
+          CMA IAC
+          TAD K4
+          SMA CLA
+          JMP SPEC   /IT IS ONE OF THE SYSTEM PROGRAMS
+UPGO,     TAD ACN7
+          DCA I STP1
+          TAD OPLT
+          CMA IAC    /BLOCK NUMBER OF CALLED PROGRAM
+          DCA I BK1
+          TAD SZE
+          CMA IAC
+          DCA SZE
+          CMA
+          DCA OPLT
+          TAD ACN8
+          DCA UPPR
+
+
+
+
+
+
+
+/PAGE 9
+TGO,      TAD I UPPR
+          DCA I ADS9
+          ISZ UPPR
+          TAD I UPPR
+          DCA I BSZ1
+          ISZ UPPR
+          ISZ SZE
+          JMP .+3
+          CLA CMA
+          DCA I MOD2
+          JMS TAPE
+          ISZ OPLT
+          JMP TGO
+          ISZ TAPE+1
+          JMP TGO
+SPEC,     ISZ SZE    /DO NOT ALLOW MODE 2 TO BE
+          CMA        /ENTERED
+          TAD CNT9
+          SZA CLA
+          JMP .+5
+          CMA        /IT IS EXCAPE--CALL 8 BLOCKS
+          TAD OPLT+2
+          DCA OPLT+2
+          JMP UPGO
+          TAD RET1   /SPECIAL RETURN
+          DCA I STPT
+          JMP UPGO+2
+TAPE,     0
+          JMP I MOD1
+          JMP I TAPE
+
+
+
+
+
+
+
+
+/PAGE 10
+CNT9,     0
+ACN7,     TAPE+2
+ACN8,     OPLT+1
+M6,       0-6
+M10,      0-10
+CN12,     7400
+UPCN,     0200
+K4,       4
+WRT,      50
+RD,       30
+RET1,     7000       /RETURN FOR SYSTEM PROGRAMS
+MOD1,     SENTER
+          MENTER
+MOD2,     MDSWIT
+ADS9,     ADDRS1
+ADS2,     ADDRS2
+BSZ1,     BLOCK1
+BK1,      BLK1
+BK2,      BLK2
+FN1,      FUNCT
+STPT,     STOPPD
+STP1,     MOVING
+UPPR,     0
+SZE,      0
+OPLT,     0          /BLOCK NUMBER
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+          0
+$
+
+
+
+
