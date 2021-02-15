@@ -1,2 +1,6 @@
-os8disk: server.c
-	$(CC) $(CFLAGS) $< -o $@
+TOOLS	= ../tools
+
+all:	server
+
+clean:
+	rm -f server

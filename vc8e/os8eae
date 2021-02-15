@@ -1,0 +1,29 @@
+# Instructions:
+# Run 'pdp8' in this directory, and assuming socat and xterm are installed,
+# the server should start automatically and the system should boot.
+:starter
+SET ON
+ON OPENERR
+ON OPENERR GOTO telerr
+at ttix 2222;notelnet
+set ttox0 8b
+echo Starting socat...
+! socat PTY,echo=0,link=ttyPDP TCP:localhost:2222 &
+echo Waiting for socat...
+! sleep 2
+echo Starting SerialDisk server...
+! xterm -e "bash -c \"./SerialDisk/server/os8disk -1 diag-games-kermit.new\"" &
+! sleep 1
+echo Booting...
+load ./SerialDisk/bootloader/bootloader.bin
+set vc8 ena
+set cpu noeae
+set tti 7b
+go
+:byebye
+detach ttix
+quit
+:telerr
+echo TTIX has not released port. Retrying now...
+! sleep 2
+goto starter
