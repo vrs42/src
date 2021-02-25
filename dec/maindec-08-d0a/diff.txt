@@ -1,0 +1,181 @@
+*** maindec-801-3a-pa	2021-02-25 08:45:29.440000000 -0800
+--- maindec-08-d0aa-pa	2021-02-25 08:45:20.500000000 -0800
+***************
+*** 8,13 ****
+--- 8,20 ----
+  MQA=7501
+  LSR=7417
+  SHL=7413
++ SCL=7403
++ 
++ *0000
++ 	0
++ 	JMP .			/HANG IF WE GET HERE
++ 	.
++ 	.
+  
+  *0020
+  GEN,	0
+***************
+*** 120,125 ****
+--- 127,133 ----
+  LFTMQ,	0
+  K7764,	7764
+  XK400,	4000
++ SCLTST,	TSTSCL
+  
+  *0010
+  ACIND,	0
+***************
+*** 127,132 ****
+--- 135,141 ----
+  XACNMI,	0
+  XMQNMI,	0
+  *200
++ 	JMS I SCLTST		/TEST SCL AND SCA
+  MQLT,	JMP HSE			/HOUSE KEEPING
+  	JMS Z GEN
+  	STL CLA CMA		/SET LINK
+***************
+*** 361,367 ****
+  	AND Z GENX
+  	DCA Z ACP		/STORE AC PATTERN
+  	CLA CMA
+! 	DCA Z LXP		/STORE LINK TO A ONE
+  	CMA
+  	AND Z ACP		/LOAD AC
+  	MQL			/LOAD MQ FROM AC
+--- 370,377 ----
+  	AND Z GENX
+  	DCA Z ACP		/STORE AC PATTERN
+  	CLA CMA
+! /VRS	DCA Z LXP		/STORE LINK TO A ONE
+! 	DCA I LXP		/STORE LINK TO A ONE
+  	CMA
+  	AND Z ACP		/LOAD AC
+  	MQL			/LOAD MQ FROM AC
+***************
+*** 465,471 ****
+  	DCA Z BLXP
+  	JMP RL2
+  *1000
+! MQAT1,	JMP HSE3
+  	JMS GEN
+  	CLL CLA CMA		/CLEAR LINK
+  	AND Z GENX
+--- 475,482 ----
+  	DCA Z BLXP
+  	JMP RL2
+  *1000
+! //VRS MQAT1,	JMP HSE3
+! MQAT1,	JMS HSE3
+  	JMS GEN
+  	CLL CLA CMA		/CLEAR LINK
+  	AND Z GENX
+***************
+*** 1029,1035 ****
+  	DCA NTST
+  	JMS GENN
+  SCP14,	JMS I TXXX
+! 	JMP SCP14
+  T15,	JMS I KKKNU
+  	AND T14X+2
+  	DCA NTST
+--- 1040,1047 ----
+  	DCA NTST
+  	JMS GENN
+  SCP14,	JMS I TXXX
+! /VRS	JMP SCP14
+! 	JMP I SCP14
+  T15,	JMS I KKKNU
+  	AND T14X+2
+  	DCA NTST
+***************
+*** 2270,2275 ****
+--- 2282,2359 ----
+  	JMP NMTS3
+  
+  *5400
++ TSTSCL,	0
++ 	CLA 
++ 	SCL		/LOAD SC WITH 00
++ 	7737
++ 	SCA
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7776		/SC TO 01
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7775		/02
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7773		/04
++ 	SCA
++ 	TAD .-2
++ 	CMA
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7767		/10
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7757		/20
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7765		/12
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7752		/25
++ 	SCA
++ 	TAD .-2
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	0077		/00
++ 	SCA
++ 	SZA CLA 
++ 	HLT
++ 	SCL
++ 	7700		/37
++ 	SCA
++ 	TAD C7740
++ 	CMA 
++ 	SZA CLA 
++ 	HLT
++ 	ISZ SCLCNT	/4096 PASSES
++ 	JMP TSTSCL+1	/ANOTHER PASS
++ 	JMP I TSTSCL	/GOOD TO GO
++ SCLCNT,	0000
+  
+  E3A,	JMS Z CRLF
+  	CLA CMA
+***************
+*** 2281,2284 ****
+--- 2365,2369 ----
+  	JMP I .+1
+  
+  BIGL,	MQLT
++ C7740,	7740
+  $
