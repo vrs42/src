@@ -1,0 +1,88 @@
+   1                       /HELP PROGRAM
+   2                       /NOTE: RIM AND BIN LOADER MUST BE IN CORE
+   3                       /BEFORE USING THE SOURCE PROGRAM
+   4                       /TO GENERATE THE BOOTSTRAP LOADER.
+   5               *7400
+   6 007400  7300          CLA CLL
+   7 007401  6046          TLS
+   8 007402  1253          TAD KOUNT
+   9 007403  3254          DCA KOWNT
+  10 007404  1250          TAD BGIN
+  11 007405  3256          DCA START       /CONTAINS CONTENT OF FIRST
+  12 007406  1250          TAD BGIN        /ADDRESS TO BE PUNCHED
+  13 007407  3251          DCA COUNT       /CREATE SOME BLANK TAPE
+  14 007410  4242          JMS PUNCH
+  15 007411  2251          ISZ COUNT       /DONE PUNCHING BLANK TAPE?
+  16 007412  5210          JMP .-2         /NO
+  17 007413  1656  LOOP,   TAD I START
+  18 007414  4242          JMS PUNCH
+  19 007415  2256          ISZ START       /MODIFY ADDRESS IN START
+  20 007416  2254          ISZ KOWNT       /DONE WITH FIRST SECTION?
+  21 007417  5213          JMP LOOP        /NO, GO BACK
+  22 007420  1656  LOADER, TAD I START     /NOW START PUNCHING BINARY
+  23 007421  7012          RTR             /CONTENT ON 2 LINES OF OUTPUT
+  24 007422  7012          RTR
+  25 007423  7012          RTR
+  26 007424  0252          AND MASK        /SAVE LEFT HALF OF WORD
+  27 007425  4242          JMS PUNCH       /PUNCH IT
+  28 007426  1656          TAD I START
+  29 007427  0252          AND MASK
+  30 007430  4242          JMS PUNCH       /PUNCH THE RIGHT HALF
+  31 007431  2256          ISZ START       /MODIFY ADDRESS
+  32 007432  5220          JMP LOADER
+  33 007433  1250          TAD BGIN
+  34 007434  3251          DCA COUNT
+  35 007435  1255          TAD COD200
+  36 007436  4242          JMS PUNCH       /PUNCH CHANNEL 8
+  37 007437  2251          ISZ COUNT       /DONE?
+  38 007440  5235          JMP .-3         /NO
+  39 007441  7402          HLT
+  40 007442  0000  PUNCH,  0
+  41 007443  6041          TSF
+  42 007444  5243          JMP .-1
+  43 007445  6046          TLS
+  44 007446  7200          CLA
+  45 007447  5642          JMP I PUNCH
+  46 007450  7551  BGIN,   7551            /7551 IS USED AS S.A. AND AS A COUNTER
+  47 007451  0000  COUNT,  0
+  48 007452  0077  MASK,   77
+  49 007453  7751  KOUNT,  -27             /NO. OF INST. FROM 7751 TO 7577
+  50 007454  0000  KOWNT,  0
+  51 007455  0200  COD200, 200
+  52 007456  0000  START,  0
+  53               *7551
+  54 007551  0050          50              /5 (GETS PUT IN LOC. 7 AS 1ST INSTRUCTION
+  55 007552  0317          317             /KSF     OF NEW PROGRAM)
+  56 007553  0102          102             /JMP 10
+  57 007554  0367          367             /KRB
+  58 007555  0067          67              /RTL
+  59 007556  0067          67              /RTL
+  60 007557  0067          67              /RTL
+  61 007560  0051          51              /DCA 5
+  62 007561  0317          317             /KSF
+  63 007562  0172          172             /JMP 17
+  64 007563  0367          367             /KRB
+  65 007564  0054          54              /TAD 5
+  66 007565  0231          231             /DCA 23
+  67 007566  0075           75             /ISZ 7
+  68 007567  0106          106             /JMP 10
+  69 007570  0066           66             /JMP 6
+  70 007571  0102          102             /JMP 10 (TRANSFERS CONTROL TO NEW PRO)
+  71 007572  0034          34
+  72 007573  0007          07              /3407 IS DCA I 7
+  73 007574  0074          74
+  74 007575  0002          02              /7402 IS AN HLT
+  75 007576  0075          75
+  76 007577  0077          77              /7577 IS THE S.A. OF BIN LOADER-1
+  77               $
+
+BGIN    7450
+COD200  7455
+COUNT   7451
+KOUNT   7453
+KOWNT   7454
+LOADER  7420
+LOOP    7413
+MASK    7452
+PUNCH   7442
+START   7456
