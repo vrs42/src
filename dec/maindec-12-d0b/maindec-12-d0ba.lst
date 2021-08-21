@@ -1,0 +1,794 @@
+   1               /INSTRUCTION TEST PART I  PDP-12 MAINDEC 12-D0BA-L-(D)
+   2               /COPYRIGHT 1969, DIGITAL EQUIPMENT CORP., MAYNARD MASS.
+   3               /PDP-12 INSTRUCTION DEFINITIONS (PARTIAL)
+   4               /MISCELLANEOUS
+   5               EXPUNGE
+   6               HLT=0000                /HALT
+   7               PDP=0002                /CHANGE TO PDP-8 MODE
+   8               LINC=6141               /CHANGE TO LINC MODE
+   9               QAC=0005                /ZI TO AI-J(11 BITS) I EQUALS 1 TO 11
+  10               CLR=0011                /CLEAR ACCUMULATOR, LINK, AND Z REGISTER
+  11               ATR=0014                /(A6-A11)>R REGISTER
+  12               RTA=0015                /R REGISTER>(A6-A11)
+  13               NOP=0016                /NO OPERATION
+  14               COM=0017                /C(AC)>C(A)
+  15               SET=0040                /C(P+1)>BETA REGISTER (OR INDIRECT)
+  16               XSK=0200                /SKIP ON 1777
+  17               
+  18               /SHIFT
+  19               ROL=0240                /ROTATE LEFT
+  20               ROR=0300                /ROTATE RIGHT ALSO SHIFT RIGHT INTO MQ REGISTER
+  21               SCR=0340                /SCALE RIGHT ALSO SHIFT RIGHT INTO MQ REGISTER
+  22               
+  23               /SKIP
+  24               SXL=0400                /SKIP IF EXTERNAL LEVEL IS -3
+  25               KST=0415                /SKIP IF KEY HAS BEEN STRUCK
+  26               SNS=0440                /SKIP IF SENSE SWITCH IS UP
+  27               SKP=0456                /SKIP UNCONDITIONALLY
+  28               AZE=0450                /SKIP IF ACCUMULATOR ZERO
+  29               APO=0451                /SKIP IF ACCUMULATOR POSITIVE
+  30               LZE=0452                /SKIP IF LINK ZERO
+  31               FLO=0454                /SKIP IF ADD OVERFLOW FLAG IS SET
+  32               QLZ=0455                /SKIP IF BIT 11 OF MQ REGISTER IS 0
+  33               
+  34               /OPERATE
+  35               IOB=0500                /EXECUTE THE FOLLOWING IOT INSTRUCTION IN PDP-8 MODE
+  36               LSW=0517                /READ THE CONTENTS OF THHE LEFT SWITCHES INTO THE AC
+  37               RSW=0516                /READ THE CONTENTS OF THHE RIGHT SWITCHES INTO THE AC
+  38               
+  39               /ARITHMETIC
+  40               LDA=1000                /LOAD ACCUMULATOR
+  41               STA=1040                /STORE CONTENTS OF ACCUMULATOR
+  42               ADA=1100                /ADD TO CONTENTS OF ACCUMULATOR
+  43               ADM=1140                /ADD TO CONTENTS OF MEMORY REGISTER
+  44               LAM=1200                /ADD CONTENTS OF LINK AND ACCUMULATOR
+  45                                       /TO CONTENTS OF MEMORY REGISTER
+  46               MUL=1240                /MULTIPLY
+  47               
+  48               /HALF WORD OPERATIONS
+  49               
+  50               LDH=1300                /TRANSFER HALF WORD FROM MEMORY INTO
+  51                                       /THE RIGHT HALF OF ACCUMULATOR
+  52               STH=1340                /TRANSFER THE HALF WORD FROM THE RIGHT
+  53                                       /SIDE OF ACCUMULATOR REGISTER INTO THE
+  54                                       /DESIGNATED HALF OF A MEMORY REGISTER
+  55               SHD=1400                /SKIP IF THE HALF WORD IN ACCUMULATOR
+  56                                       /REGISTER AND THE MEMORY REGISTER DIFFER
+  57               
+  58               /MEMORY REFERENCE OPERATIONS
+  59               SAE=1440                /SKIP IF THE CONTENTS OF THE ACCUMULATOR
+  60                                       /EQUAL THE CONTENTS OF THE DESIGNATED
+  61                                       /MEMORY REGISTER
+  62               SRO=1500                /SKIP IF THE RIGHTMOST BIT IN THE
+  63                                       /DESIGNATED MEMORY REGISTER IS 0;
+  64                                       /AFTER TESTING, ROTATE THE CONTENTS
+  65                                       /ONE PLACE TO THE RIGHT
+  66               BCL=1540                /FOR EACH BIT POSITION OF MEMORY REGISTER
+  67                                       /Y THAT CONTAINS A 1; CLEAR THE
+  68                                       /CORRESPONDING BIT POSITION OF THE ACCUMULATOR 
+  69                                       /(LOGICAL AND)
+  70               BSE=1600                /FOR EACH BIT POSITION OF MEMORY
+  71                                       /REGISTER Y THAT CONTAINS A 1; SET THE
+  72                                       /THE CORRESPONDING BIT POSITION OF THE ACCUMULATOR 
+  73                                       /(INCLUSIVE OR)
+  74               BCO=1640                /FOR EACH BIT POSITION OF MEMORY
+  75                                       /REGISTER Y THAT CONTAINS A 1; COMPLEMENT
+  76                                       /THE CORRESPONDING BIT POSITION OF THE
+  77                                       /ACCUMULATOR (EXCLUSIVE OR)
+  78               I=0020                  /I BIT ADDRESS REFERENCE
+  79               
+  80               /FULL ADDRESS
+  81               ADD=2000                /ADD THE CONTENTS OF THE DESIGNATED
+  82                                       /MEMORY REGISTER TO THE ACCUMULATOR
+  83               STC=4000                /STORE THE CONTENTS OF THE ACCUMULATOR
+  84                                       /IN THE DESIGNATED MEMORY REGISTER
+  85                                       /THEN CLEAR ACCUMULATOR
+  86               JMP=6000                /JUMP TO ANOTHER DESIGNATED MEMORY
+  87                                       /REGISTER FOR THE NEXT INSTRUCTION.
+  88               
+  89               /INPUT - OUTPUT
+  90               TLS=6046                /LOAD PRINTER/PUNCH BUFFER,
+  91                                       /PRINT, CLEAR FLAG
+  92               
+  93               /THIS TEST IS DESIGNED AS A QUICK CONFIDENCE CHECK
+  94               /OF MOST OF THE PDP-12 L MODE INSTRUCTIONS.
+  95               /SET LEFT AND RIGHT SWITCHES TO ONE'S, SENSE SWITCHES TO ONE'S,
+  96               /I/O PRESET L MODE, START 20
+  97               /PROGRAM WILL HALT AT REL 0022; AC MUST = 0
+  98               /THIS PROGRAM WILL RUN IN ANY 1K SEGMENT
+  99               *4001                   /TAGS AND INITIAL CONSTANTS CALLED
+ 100 004001  0001          0001            /THIS WAY TO AVOID ADDRESSING PROBLEMS.
+ 101 004002  0001          0001
+ 102 004003  0000          0000
+ 103 004004  0000          0000            /B REG
+ 104 004005  0000          0000
+ 105 004006  0000          0000            /B2 REG
+ 106 004007  0000          0000
+ 107 004010  0010          0010            /NUM REG
+ 108 004011  0000          0000
+ 109 004012  0000          0000            /TEM REG
+ 110 004013  0000          0000            /CNT REG
+ 111               B=0004
+ 112               B2=0006
+ 113               NUM=0010
+ 114               TEM=0012
+ 115               CNT=0013
+ 116               
+ 117               *4020
+ 118 004020  0011  S1,     CLR             /MAJOR START L MODE 4020
+ 119 004021  4013          STC     CNT     /SET COUNTER = 0
+ 120 004022  0000          HLT             /LEGAL HALT, AC=0'S
+ 121 004023  0064  S2,     SET I   B       /INITIALIZE B
+ 122 004024  0010          NUM             /(B)=10
+ 123 004025  0066          SET I   B2      /INITIALIZE B2
+ 124 004026  0012          TEM             /(B2)=0
+ 125 004027  0070          SET I   NUM     /NUMBER TO BE TESTED
+ 126 004030  0001          0001            /(NUM)=1
+ 127               /MAJOR RESTART FROM END OF PASS
+ 128 004031  1020  LS1,    LDA I           /TEST MODE OF
+ 129 004032  0000          HLT             /INDEX, LDA, LOAD AC
+ 130 004033  1460          SAE I           /WITH HLT, DOES AC
+ 131 004034  0000          HLT             /CONTAIN HLT?
+ 132 004035  0000          HLT             /LDA I OR SAE I FAILED
+ 133 004036  1004          LDA     B       /SET (AC) = (B)
+ 134 004037  1444          SAE     B       /SHOULD SKIP
+ 135 004040  0000          HLT             /LDA, SAE FAILED
+ 136 004041  1444          SAE     B       /TRY IT AGAIN
+ 137 004042  0000          HLT             /SAE MODIFIED AC
+ 138 004043  1046          STA     B2      /STORE IN C(B2);
+ 139 004044  1444          SAE     B
+ 140 004045  0000          HLT             /STA MODIFIED AC
+ 141 004046  1446          SAE     B2      /CHECK STA
+ 142 004047  0000          HLT             /STA FAILED
+ 143 004050  0470  LS2,    AZE     I       /AC = B
+ 144 004051  0000          HLT             /AZE I FAILED
+ 145 004052  0017          COM             /THE NUMBERS + AND - 0 ARE NEVER USED
+ 146 004053  0470          AZE     I       /
+ 147 004054  0000          HLT             /AZE I FAILED OR COM FAILED
+ 148 004055  0017          COM
+ 149 004056  1446          SAE     B2      /
+ 150 004057  0000          HLT             /AZE, MODIFIED AC OR COM FAILED
+ 151 004060  0451          APO             /SHOULD SKIP
+ 152 004061  0017          COM             /COMP IF NEG (APO FAILED)
+ 153 004062  0451          APO             /SHOULD SKIP
+ 154 004063  0000          HLT             /APO FAILED
+ 155 004064  0011          CLR
+ 156 004065  0450          AZE
+ 157 004066  0000          HLT             /AZE FAILED
+ 158 004067  0017          COM
+ 159 004070  0450          AZE
+ 160 004071  0000          HLT             /AZE FAILED
+ 161 004072  0471          APO     I
+ 162 004073  0000          HLT             /APO I FAILED
+ 163 004074  0011  LS3,    CLR             /CLEAR AC, LINK
+ 164 004075  0452          LZE
+ 165 004076  0000          HLT             /CLR OR LZE FAILED
+ 166 004077  1444          SAE     B
+ 167 004100  0452          LZE             /AC - 0, B + 0
+ 168 004101  0000          HLT             /SAE SKIPPED IN ERROR
+ 169 004102  0471          APO     I
+ 170 004103  0452          LZE             /AC IS POSITIVE
+ 171 004104  0000          HLT             /APO SKIPPED IN ERROR
+ 172               
+ 173 004105  0011  LS4,    CLR             /CLEAR AC, LINK
+ 174 004106  1004          LDA     B
+ 175 004107  0017          COM             /COMP AC
+ 176 004110  1444          SAE     B
+ 177 004111  0452          LZE
+ 178 004112  0000          HLT             /COM, SAE FAILED
+ 179 004113  0017          COM
+ 180 004114  1444          SAE     B
+ 181 004115  0000          HLT             /COM OR SAE FAILED
+ 182 004116  0016          NOP
+ 183 004117  1444          SAE     B
+ 184 004120  0000          HLT             /NOP SKIPPED IN ERROR OR CHANGED AC
+ 185 004121  0452          LZE
+ 186 004122  0000          HLT             /NOP CHANGED LINK
+ 187 004123  1004  SC1,    LDA     B       /NUMBER TO AC
+ 188 004124  0240          ROL             /ROTATE NO PLACES
+ 189 004125  1444          SAE     B       /CHECK THE NUMBER
+ 190 004126  0000          HLT             /ROL ROTATED IN ERROR
+ 191 004127  0254          ROL     14      /ROTATE 12 PLACES
+ 192 004130  1444          SAE     B       /GIVES SAME NUMBER
+ 193 004131  0000          HLT             /ROL FAILED
+ 194 004132  0011  SC2,    CLR             /CLEAR AC AND LINK
+ 195 004133  1004          LDA     B       /LOAD NUMBER
+ 196 004134  0300          ROR             /ROTATE NO PLACES
+ 197 004135  1444          SAE     B       /NUMBER CHANGED?
+ 198 004136  0000          HLT             /ROR ROTATED IN ERROR
+ 199 004137  0314          ROR     14      /ROTATE 12 PLACES
+ 200 004140  1444          SAE     B       /GIVES SAME NUMBER
+ 201 004141  0000          HLT             /ROR FAILED
+ 202 004142  0452          LZE             /LINK WAS CLEARED AT SC2
+ 203 004143  0000          HLT             /ROTATE SET LINK IN ERROR
+ 204 004144  0011  SC3,    CLR             /CLEAR AC
+ 205 004145  0017          COM             /COMP AC
+ 206 004146  0261          ROL I   1       /SET THE LINK
+ 207 004147  1004          LDA     B       /GET NUMBER
+ 208 004150  0317          ROR 17          /GO LEFT AND
+ 209 004151  0257          ROL 17          /RIGHT AN EQUAL
+ 210 004152  1444          SAE     B       /NUMBER OF PLACES
+ 211 004153  0000          HLT             /ROL, ROR FAILED
+ 212 004154  0472          LZE     I       /TEST LINK
+ 213 004155  0000          HLT             /LZE, CLR, ETC
+ 214 004156  0011  SC4,    CLR             /CLEAR AC AND LINK
+ 215 004157  1004          LDA     B       /LOAD AC
+ 216 004160  0335          ROR I   15
+ 217 004161  1444          SAE     B       /ROTATE 13 DECIMAL
+ 218 004162  0000          HLT             /TIMES
+ 219 004163  0452          LZE             /LINK MODIFIED?
+ 220 004164  0000          HLT             /ROR 13 SET LINK IN ERROR
+ 221 004165  1004  SC5,    LDA     B       /LOAD AC
+ 222 004166  0275          ROL I   15
+ 223 004167  1444          SAE     B       /ROTATE 13 GIVES SAME NUMBER
+ 224 004170  0000          HLT             /ROL I 13 CHANGED AC
+ 225               
+ 226 004171  1004  SC6,    LDA     B       /LOAD AC
+ 227 004172  0354          SCR     14      /SCALE RIGHT; THIS SHOULD
+ 228 004173  0450          AZE             /EXTEND THE SIGN
+ 229 004174  0000          HLT             /AC - +/-0 IN ERROR
+ 230 004175  1004          LDA     B
+ 231 004176  0017          COM             /LOAD COMP
+ 232 004177  0354          SCR     14      /AC SHOULD EQUAL
+ 233 004200  0450          AZE             /+/- ZERO
+ 234 004201  0000          HLT             /NOT = +/-ZERO
+ 235 004202  1004  SC7,    LDA     B
+ 236 004203  0261          ROL I   1       /HIGH ORDER BIT TO AC
+ 237 004204  1004          LDA     B       /SIMULATE SCALE
+ 238 004205  0321          ROR I   1       /VIA ROR, ROL
+ 239 004206  1046          STA     B2      /SAVE IN TEMPORARY REGISTER
+ 240 004207  0011          CLR             /CLEAR LINK
+ 241 004210  1004          LDA     B
+ 242 004211  0341          SCR     1       /SCALE RIGHT
+ 243 004212  1446          SAE     B2      /CHECK WITH SIMULATE
+ 244 004213  0000          HLT             /SCR FAILED
+ 245 004214  0452          LZE             /CONTENTS OF LINK
+ 246 004215  0000          HLT             /MODIFIED
+ 247 004216  1004  SC8,    LDA     B
+ 248 004217  1046          STA     B2      /STORE IN TEMPORARY
+ 249 004220  1506          SRO     B2      /ROTATE TEMPORARY
+ 250 004221  0016          NOP
+ 251 004222  0301          ROR     1       /ROTATE AC
+ 252 004223  1446          SAE     B2      /C(Y) C(AC) SHOULD BE THE SAME
+ 253 004224  0000          HLT             /SRO CHANGED C(Y) OR C(AC)
+ 254 004225  1004  SC9,    LDA     B
+ 255 004226  1046          STA     B2      /STORE IN TEMPORARY
+ 256 004227  0301          ROR     1       /ROTATE RIGHT MOST
+ 257 004230  1506          SRO     B2      /TO AC SIGN, SRO,
+ 258 004231  0017          COM             /SKIP IF SIGN ZERO
+ 259 004232  0451          APO             /TEST THE BIT
+ 260 004233  0000          HLT             /SRO CHANGED SIGN
+ 261 004234  1004  SCA,    LDA     B       /TEST SCR I 1
+ 262 004235  1046          STA     B2      /WILL THE LAST
+ 263 004236  0361          SCR I   1       /BIT GO TO
+ 264 004237  1506          SRO     B2      /THE LINK
+ 265 004240  6244          JMP     .+4     /USE SRO TO
+ 266 004241  0452          LZE             /FIND THE LAST
+ 267 004242  0000          HLT             /BIT & SCR I
+ 268 004243  6246          JMP     .+3
+ 269 004244  0472          LZE     I       /SRO SAYS BIT A
+ 270 004245  0000          HLT             /ONE SCR I
+ 271 004246  1004  AA1,    LDA     B       /ADD VALUES THE
+ 272 004247  0017          COM             /RESULT SHOULD EQUAL ZERO
+ 273 004250  1100          ADA             /
+ 274 004251  0010          NUM
+ 275 004252  0450          AZE
+ 276 004253  0000          HLT             /ADA FAILED
+ 277               
+ 278 004254  0011  AA2,    CLR
+ 279 004255  0017          COM             /SET TO ALL ONES
+ 280 004256  1104          ADA     B
+ 281 004257  1444          SAE     B       /CHECK END CARRY
+ 282 004260  0000          HLT             /END CARRY FAILED
+ 283 004261  0011  AA3,    CLR             /CLEAR AC AND LINK
+ 284 004262  0017          COM
+ 285 004263  1104          ADA     B
+ 286 004264  1104          ADA     B       /MULTIPLY VIA ADD
+ 287 004265  0301          ROR     1       /DIVIDE BY 2, VIA ROR
+ 288 004266  1444          SAE     B
+ 289 004267  0000          HLT             /ADDITION FAILED
+ 290 004270  1004  AA4,    LDA     B
+ 291 004271  1120          ADA     I
+ 292 004272  7777          7777            /AC = -ZERO
+ 293 004273  1444          SAE     B
+ 294 004274  0000          HLT             /ADDITION OF -0 FAILED
+ 295 004275  1004  AA5,    LDA     B       /USE ADD AND ADA
+ 296 004276  0306          ROR     6       /ADD ALL THE NUMBERS
+ 297 004277  2010          ADD     NUM     /C(B) = NUM
+ 298 004300  0017          COM
+ 299 004301  1104          ADA     B
+ 300 004302  0246          ROL     6
+ 301 004303  0017          COM
+ 302 004304  1444          SAE     B
+ 303 004305  0000          HLT             /ADDITION, ADD OR ADA
+ 304 004306  0452  AA6,    LZE             /LINK SET, SEE
+ 305 004307  0000          HLT             /AA3 TO AA6
+ 306 004310  4012          STC     TEM     /STORE RESULT IN TEM
+ 307 004311  0450          AZE
+ 308 004312  0000          HLT             /STC FAILED TO CLEAR AC
+ 309 004313  1006          LDA     B2      /C(B2) = TEM
+ 310 004314  1444          SAE     B       /
+ 311 004315  0000          HLT             /STC FAILED TO STORE
+ 312 004316  1004  AA7,    LDA     B       /PUT NUMBER IN
+ 313 004317  1046          STA     B2      /AC AND C(TEM)
+ 314 004320  1146          ADM     B2      /ADD TO MEM AND AC
+ 315 004321  0301          ROR     1
+ 316 004322  1444          SAE     B       /IS AC CORRECT
+ 317 004323  0000          HLT             /ADM FAILED
+ 318 004324  0241          ROL     1       /IS MEMORY SAME AS AC
+ 319 004325  1446          SAE     B2      /
+ 320 004326  0000          HLT             /ADM FAILED
+ 321 004327  0452          LZE
+ 322 004330  0000          HLT             /SEE AA6, AA7
+ 323 004331  0011  AA8,    CLR             /CLEAR AC, LINK
+ 324 004332  1046          STA     B2      /CLEAR TEMPORARY
+ 325 004333  1004          LDA     B       /LOAD NUMBER
+ 326 004334  1206          LAM     B2      /AC + (-0) = AC
+ 327 004335  1444          SAE     B       /LINK WAS ZERO
+ 328 004336  0000          HLT             /LAM CHANGED AC IN ERROR
+ 329 004337  0452          LZE             /LINK SHOULD BE CLEAR
+ 330 004340  0000          HLT             /LAR SET LINK
+ 331 004341  0011          CLR
+ 332 004342  1046          STA     B2      /CLEAR AC, LINK, TEMPORARY
+ 333 004343  0017          COM             /SET AC
+ 334 004344  0261          ROL I   1       /SET LINK =1, AC=7776
+ 335 004345  1206          LAM     B2      /AC = 7777
+ 336 004346  0452          LZE
+ 337 004347  0000          HLT             /0 TO LINK, LAM FAILED
+ 338 004350  0450          AZE
+ 339 004351  0000          HLT             /+1 AC, LAM FAILED
+ 340               
+ 341 004352  0011  AA9,    CLR             /CLEAR LINK
+ 342 004353  4362          STC     .+7
+ 343 004354  1004          LDA     B       /TEST LAM
+ 344 004355  4012          STC     TEM     /STORE IN TEMPORARY
+ 345 004356  1206          LAM     B2
+ 346 004357  1446          SAE     B2
+ 347 004360  0000          HLT             /AC+C(Y); LAM FAILED
+ 348 004361  1220          LAM     I
+ 349 004362  0000          0               /ADD IN THE LINK
+ 350 004363  0016          NOP
+ 351 004364  1444          SAE     B
+ 352 004365  0000          HLT             /LAM FAILED
+ 353 004366  1004  BT,     LDA     B       /LOAD AC
+ 354 004367  1544          BCL     B       /CLEAR SELECTED BITS
+ 355 004370  0450          AZE
+ 356 004371  0000          HLT             /BCL FAILED TO CLEAR
+ 357 004372  1004          LDA     B
+ 358 004373  0017          COM
+ 359 004374  1544          BCL     B
+ 360 004375  0017          COM             /BITS OTHER THAN
+ 361 004376  1444          SAE     B       /SELECTED BITS CLEARED?
+ 362 004377  0000          HLT             /BCL CLEARED IN ERROR
+ 363 004400  1004  BT1,    LDA     B
+ 364 004401  0306          ROR     6
+ 365 004402  1644          BCO     B       /COMP BITS
+ 366 004403  1644          BCO     B       /RE COMP BITS
+ 367 004404  0246          ROL     6
+ 368 004405  1444          SAE     B
+ 369 004406  0000          HLT             /BCO FAILED
+ 370 004407  1004  BT2,    LDA     B
+ 371 004410  1620          BSE     I       /SET NO BITS
+ 372 004411  0000          0
+ 373 004412  1444          SAE     B
+ 374 004413  0000          HLT             /BSE SET BITS IN ERROR
+ 375 004414  1620          BSE     I       /SET ALL BITS
+ 376 004415  7777          7777
+ 377 004416  1104          ADA     B       /-0 + C(B) = C(B)
+ 378 004417  1444          SAE     B
+ 379 004420  0000          HLT             /BSE FAILED TO SET BITS
+ 380 004421  0011          CLR
+ 381 004422  1604          BSE     B
+ 382 004423  1444          SAE     B
+ 383 004424  0000          HLT             /BSE FAILED
+ 384 004425  0011  BT3,    CLR
+ 385 004426  1644          BCO     B       /LOAD VIA COMP
+ 386 004427  0017          COM             /COMP
+ 387 004430  1644          BCO     B       /COMP THE ZERO
+ 388 004431  0450          AZE
+ 389 004432  0000          HLT             /BCO FAILED
+ 390 004433  1644          BCO     B       /ONES TO ZEROS
+ 391 004434  0017          COM             /COMP
+ 392 004435  1444          SAE     B
+ 393 004436  0000          HLT             /BCO FAILED
+ 394               
+ 395 004437  0011  HW1,    CLR
+ 396 004440  1046          STA     B2      /CLEAR TEMPORARY
+ 397 004441  1020          LDA     I
+ 398 004442  4011          TEM-1+4000
+ 399 004443  4006          STC     B2      /FULL ADDRESS STORE
+ 400 004444  1004          LDA     B       /NUMBER TO AC
+ 401 004445  0306          ROR     6
+ 402 004446  1366          STH 20  B2      /PUT IN LEFT HALF
+ 403 004447  0306          ROR     6
+ 404 004450  1366          STH 20  B2      /PUT IN RIGHT HALF
+ 405 004451  1444          SAE     B
+ 406 004452  0000          HLT             /STH MODIFIED AC
+ 407 004453  1446          SAE     B2
+ 408 004454  0000          HLT             /STH, STORED INCORRECTLY
+ 409 004455  0011  HW2,    CLR
+ 410 004456  0017          COM
+ 411 004457  1306          LDH     B2      /TEST LDH, RIGHT HALF
+ 412 004460  0451          APO
+ 413 004461  0000          HLT             /LEFT AC NOT CLEAR
+ 414 004462  1406          SHD     B2
+ 415 004463  0451          APO
+ 416 004464  0000          HLT             /SHD, RIGHT HALF
+ 417 004465  0017          COM
+ 418 004466  1406          SHD     B2      /LINK SHOULD BE ZERO
+ 419 004467  0000          HLT             /SHD, SKIPPED
+ 420 004470  0011  HW3,    CLR
+ 421 004471  1420          SHD     I       /SKP HALF DIFFERENT
+ 422 004472  7700          7700
+ 423 004473  0000          HLT             /SHD FAILED TO SKIP
+ 424 004474  1004          LDA     B
+ 425 004475  1046          STA     B2      /C(B) TO C(B2), 1E TEM
+ 426 004476  1020          LDA     I
+ 427 004477  4011          TEM-1+4000
+ 428 004500  4006          STC     B2
+ 429 004501  0450          AZE
+ 430 004502  0000          HLT             /STC SCALE:
+ 431 004503  1004          LDA     B
+ 432 004504  0306          ROR     6
+ 433 004505  1426          SHD I   B2      /INCREMENT
+ 434 004506  0452          LZE
+ 435 004507  0000          HLT             /SHD I SKIPPED IN ERROR
+ 436 004510  1406          SHD     B2      /NO INCREMENT
+ 437 004511  0452          LZE
+ 438 004512  0000          HLT             /SWD FAILED TO SKIP
+ 439 004513  0306          ROR     6
+ 440 004514  1426          SHD I   B2
+ 441 004515  0452          LZE
+ 442 004516  0000          HLT             /SHD SKIPPED IN ERROR
+ 443 004517  1406          SHD     B2
+ 444 004520  0452          LZE
+ 445 004521  0000          HLT             /NO INCREMENT SHD
+ 446 004522  1444          SAE     B
+ 447 004523  0000          HLT             /GOOD GRIEF, AGAIN!
+ 448 004524  0011  HW4,    CLR
+ 449 004525  1420          SHD     I
+ 450 004526  0077          0077
+ 451 004527  0452          LZE
+ 452 004530  0000          HLT             /SHD I
+ 453 004531  1004          LDA     B
+ 454 004532  0306          ROR     6
+ 455 004533  1400          SHD
+ 456 004534  0012          TEM
+ 457 004535  0452          LZE
+ 458 004536  0000          HLT             /SHD
+ 459               
+ 460 004537  1004  ST,     LDA     B       /TEST SET
+ 461 004540  0017          COM
+ 462 004541  0046          SET     B2
+ 463 004542  0004          B
+ 464 004543  0017          COM
+ 465 004544  1444          SAE     B
+ 466 004545  0000          HLT             /SET DIDN'T WORK
+ 467 004546  0011          CLR
+ 468 004547  2004          ADD     B       /SET MODIFIED AC
+ 469 004550  1440          SAE
+ 470 004551  0006          B2
+ 471 004552  0000          HLT             /SET FAILED
+ 472 004553  1004          LDA     B
+ 473 004554  4556          STC     .+2
+ 474 004555  0066          SET I   B2
+ 475 004556  0000          0
+ 476 004557  0450          AZE
+ 477 004560  0000          HLT             /AC MODIFIED, SET
+ 478 004561  1000          LDA
+ 479 004562  0006          B2
+ 480 004563  1444          SAE     B
+ 481 004564  0000          HLT             /SET I FAILED
+ 482 004565  1004  XS1,    LDA     B
+ 483 004566  4006          STC     B2      /STORE IN B2
+ 484 004567  0206          XSK     B2
+ 485 004570  0016          NOP
+ 486 004571  0450          AZE
+ 487 004572  0000          HLT             /AAC ALTERED, XSK
+ 488 004573  1000          LDA
+ 489 004574  0006          B2
+ 490 004575  1444          SAE     B
+ 491 004576  0000          HLT             /TEST FOR NOT INCREMENT
+ 492 004577  0066          SET I   B2
+ 493 004600  0012          TEM
+ 494               
+ 495 004601  1004  XS2,    LDA     B
+ 496 004602  1046          STA     B2      /CONSTANT+1
+ 497 004603  2002          ADD     2
+ 498 004604  0232          XSK I   TEM
+ 499 004605  1446          SAE     B2
+ 500 004606  6610          JMP     .+2
+ 501 004607  6614          JMP     .+5
+ 502 004610  0242          ROL     2
+ 503 004611  0342          SCR     2
+ 504 004612  0450          AZE
+ 505 004613  0000          HLT             /XSK, INCREMENT
+ 506 004614  0066          SET I   B2
+ 507 004615  1777          1777
+ 508 004616  0011          CLR             /CLEAR LINK
+ 509 004617  0206          XSK     B2
+ 510 004620  0000          HLT             /XSK
+ 511 004621  0066          SET I   B2
+ 512 004622  1776          1776
+ 513 004623  0226          XSK I   B2
+ 514 004624  0000          HLT             /XSK
+ 515 004625  0226          XSK I   B2
+ 516 004626  0452          LZE
+ 517 004627  0000          HLT             /XSK
+ 518 004630  0450          AZE
+ 519 004631  0000          HLT             /AC MODIFIED
+ 520 004632  0011          CLR
+ 521 004633  0017          COM
+ 522 004634  4006          STC     B2
+ 523 004635  0226          XSK I   B2
+ 524 004636  0016          NOP
+ 525 004637  2006          ADD     B2
+ 526 004640  1460          SAE     I
+ 527 004641  6000          6000
+ 528 004642  0000          HLT             /XSK I FAILED
+ 529 004643  0066          SET I   B2
+ 530 004644  0010          10
+ 531               
+ 532 004645  1004  MSA,    LDA     B
+ 533 004646  0306          ROR     6
+ 534 004647  1644          BCO     B
+ 535 004650  1040          STA             /STORE SIGNS
+ 536 004651  0012          TEM             /IN TEM
+ 537 004652  1644          BCO     B       /RESTORE AC
+ 538 004653  0451          APO             /STORE OPERAND
+ 539 004654  0017          COM             /AS + NUMBER
+ 540 004655  4005          STC     B+1
+ 541 004656  1004          LDA     B
+ 542 004657  0451          APO
+ 543 004660  0017          COM             /STORE SECOND
+ 544 004661  4673          STC     MSB+3   /OPERAND
+ 545 004662  4006          STC     B2      /CLEAR AC
+ 546 004663  4007          STC     B2+1
+ 547 004664  1020          LDA     I
+ 548 004665  3777          3777
+ 549 004666  4702          STC     MS      /COUNTER
+ 550 004667  0011          CLR
+ 551 004670  2006  MSB,    ADD     B2      /MULTIPLY SUBROUTINE
+ 552 004671  0321          ROR I   1       /SCALE RIGHT LINK IS ZERO
+ 553 004672  1520          SRO     I
+ 554 004673  0000          0               /SECOND OPERAND
+ 555 004674  2005          ADD     B+1     /ADD IV .-1--
+ 556 004675  4006          STC     B2      /STORE TEMPORARY RESULT
+ 557 004676  2007          ADD     B2+1
+ 558 004677  0321          ROR I   1       /BRING IN LINK
+ 559 004700  4007          STC     B2+1
+ 560 004701  1520          SRO     I
+ 561 004702  0000  MS,     0
+ 562 004703  6670          JMP     MSB
+ 563 004704  1000          LDA
+ 564 004705  0012          TEM
+ 565 004706  0374          SCR I   14      /SIGN TO LINK +/-1 TO AC
+ 566 004707  2006          ADD     B2
+ 567 004710  0452          LZE
+ 568 004711  0017          COM             /IF SIGNS UNLIKE
+ 569 004712  0016          NOP
+ 570 004713  4006          STC     B2
+ 571 004714  2007          ADD     B2+1    /TEM HAS SIGNS
+ 572 004715  0452          LZE             /ANS IN B2
+ 573 004716  0017          COM             /AND B2+1
+ 574 004717  0301          ROR     1
+ 575 004720  4007          STC     B2+1    /END OF SIMULATE
+ 576 004721  1004  MSD,    LDA     B       /ORIGINAL NUMBERS
+ 577 004722  0306          ROR     6       /C(B) AND B(B)-6
+ 578 004723  1244          MUL     B       /SIMULATE RESULTS
+ 579 004724  1440          SAE             /B2 AND B2+1
+ 580 004725  0007          B2+1            /MUL, INTEGER
+ 581 004726  0000          HLT             /LOW ORDER PRODUCT WRONG
+ 582 004727  0452          LZE
+ 583 004730  0017          COM
+ 584 004731  0451          APO
+ 585 004732  0000          HLT             /SIGN, LINK, MUL FAILED
+ 586               
+ 587 004733  1004  MSE,    LDA     B
+ 588 004734  0306          ROR     6       /ORIGINAL NUMBERS
+ 589 004735  1240          MUL             /C(B) AND C(B)-6
+ 590 004736  4010          4000+10         /SIMULATE RESULTS
+ 591 004737  1440          SAE             /B2 + B2+1
+ 592 004740  0006          B2
+ 593 004741  0000          HLT             /MUL, FRACTIONAL FAILED
+ 594 004742  0452          LZE
+ 595 004743  0017          COM
+ 596 004744  0451          APO
+ 597 004745  0000          HLT             /SIGN + LINK MUL FAILED
+ 598 004746  1020  JM1,    LDA     I       /JMP 0 RETURN
+ 599 004747  6000          JMP
+ 600 004750  5777          STC     1777    /JMP OUT AND BACK
+ 601 004751  7777          JMP     1777
+ 602 004752  0064          SET I   B
+ 603 004753  0010          NUM
+ 604 004754  0066          SET I   B2
+ 605 004755  0007          NUM-1
+ 606 004756  1004          LDA     B
+ 607 004757  1466          SAE I   B2
+ 608 004760  0000          HLT             /INDEX 1, B, MODE
+ 609 004761  0066          SET I   B2
+ 610 004762  0012          TEM
+ 611 004763  1020  QL1,    LDA     I
+ 612 004764  7777          7777
+ 613 004765  0314          ROR     14      /LOAD MQ TO ONE'S
+ 614 004766  0455          QLZ
+ 615 004767  0456          SKP
+ 616 004770  0000          HLT             /QLZ MQ11=1 FAILED
+ 617 004771  0475          QLZ     I
+ 618 004772  0000          HLT             /QLZ I FAILED TO SKIP
+ 619 004773  0011          CLR
+ 620 004774  0455          QLZ
+ 621 004775  0000          HLT             /QLZ FAILED MQ11=0
+ 622 004776  0475          QLZ     I
+ 623 004777  0456          SKP
+ 624 005000  0000          HLT             /QLZ I SKIPPED IN ERROR
+ 625 005001  1020  QC1,    LDA     I
+ 626 005002  7777          7777
+ 627 005003  0314          ROR     14      /LOAD MQ TO ONE'S
+ 628 005004  1020          LDA     I
+ 629 005005  0000          0               /CLEAR AC
+ 630 005006  0005          QAC             /MQ TO AC 1-11
+ 631 005007  0451          APO
+ 632 005010  0000          HLT             /QAC LOADED AC0
+ 633 005011  0011          CLR             /CLEAR MQ
+ 634 005012  1020          LDA     I
+ 635 005013  4000          4000            /SET AC0
+ 636 005014  0005          QAC             /MQ TO AC 1-11
+ 637 005015  0451          APO
+ 638 005016  0000          HLT             /QAC FAILED TO CLEAR AC0
+ 639 005017  0517  SW1,    LSW             /READ THE LEFT SWITCHES
+ 640 005020  1460          SAE     I       /EQUAL TO 7777?
+ 641 005021  7777          7777
+ 642 005022  0000          HLT             /LSW FAILED
+ 643 005023  0516  SW2,    RSW             /READ THE RIGHT SWITCHES
+ 644 005024  1460          SAE     I       /EQUAL TO 7777?
+ 645 005025  7777          7777
+ 646 005026  0000          HLT             /RSW FAILED
+ 647               
+ 648 005027  0440  SW3,    SNS     0
+ 649 005030  0000          HLT             /SW0 FAILED
+ 650 005031  0441          SNS     1
+ 651 005032  0000          HLT             /SW1 FAILED
+ 652 005033  0442          SNS     2
+ 653 005034  0000          HLT             /SW2 FAILED
+ 654 005035  0443          SNS     3
+ 655 005036  0000          HLT             /SW3 FAILED
+ 656 005037  0444          SNS     4
+ 657 005040  0000          HLT             /SW4 FAILED
+ 658 005041  0445          SNS     5
+ 659 005042  0000          HLT             /SW5 FAILED
+ 660 005043  0460  SW4,    SNS I   0
+ 661 005044  0456          SKP
+ 662 005045  0000          HLT             /SW0 SKIPPED IN ERROR
+ 663 005046  0461          SNS I   1
+ 664 005047  0456          SKP
+ 665 005050  0000          HLT             /SW1 SKIPPED IN ERROR
+ 666 005051  0462          SNS I   2
+ 667 005052  0456          SKP
+ 668 005053  0000          HLT             /SW2 SKIPPED IN ERROR
+ 669 005054  0463          SNS I   3
+ 670 005055  0456          SKP
+ 671 005056  0000          HLT             /SW3 SKIPPED IN ERROR
+ 672 005057  0464          SNS I   4
+ 673 005060  0456          SKP
+ 674 005061  0000          HLT             /SW4 SKIPPED IN ERROR
+ 675 005062  0465          SNS I   5
+ 676 005063  0456          SKP
+ 677 005064  0000          HLT             /SW5 SKIPPED IN ERROR
+ 678               
+ 679 005065  1001  F1,     LDA     1       /END OF TEST
+ 680 005066  1144          ADM     B       /INCREMENT B
+ 681 005067  1004          LDA     B       /TEST FOR LAST TEST VAL
+ 682 005070  1460          SAE     I
+ 683 005071  7777          7777
+ 684 005072  6031          JMP     LS1     /KEEP GOING
+ 685 005073  0450          AZE
+ 686 005074  0000          HLT             /SAE I SKIPPED IN ERROR
+ 687 005075  0070          SET I   NUM     /RESET POINTER-DONT USE ZERO
+ 688 005076  0001          0001            /CYCLE APPROXIMATELY 8 SECONDS
+ 689 005077  1020          LDA     I
+ 690 005100  0207          0207            /BELL CODE
+ 691 005101  0500          IOB
+ 692 005102  6046          TLS             /RING IT
+ 693 005103  6031          JMP     LS1 
+ 694               $
+
+AA1     4246 unreferenced
+AA2     4254 unreferenced
+AA3     4261 unreferenced
+AA4     4270 unreferenced
+AA5     4275 unreferenced
+AA6     4306 unreferenced
+AA7     4316 unreferenced
+AA8     4331 unreferenced
+AA9     4352 unreferenced
+ADA     1100
+ADD     2000
+ADM     1140
+APO     0451
+ATR     0014 unreferenced
+AZE     0450
+B       0004
+B2      0006
+BCL     1540
+BCO     1640
+BSE     1600
+BT      4366 unreferenced
+BT1     4400 unreferenced
+BT2     4407 unreferenced
+BT3     4425 unreferenced
+CLR     0011
+CNT     0013
+COM     0017
+F1      5065 unreferenced
+FLO     0454 unreferenced
+HLT     0000
+HW1     4437 unreferenced
+HW2     4455 unreferenced
+HW3     4470 unreferenced
+HW4     4524 unreferenced
+I       0020
+IOB     0500
+JM1     4746 unreferenced
+JMP     6000
+KST     0415 unreferenced
+LAM     1200
+LDA     1000
+LDH     1300
+LINC    6141 unreferenced
+LS1     4031
+LS2     4050 unreferenced
+LS3     4074 unreferenced
+LS4     4105 unreferenced
+LSW     0517
+LZE     0452
+MS      4702
+MSA     4645 unreferenced
+MSB     4670
+MSD     4721 unreferenced
+MSE     4733 unreferenced
+MUL     1240
+NOP     0016
+NUM     0010
+PDP     0002 unreferenced
+QAC     0005
+QC1     5001 unreferenced
+QL1     4763 unreferenced
+QLZ     0455
+ROL     0240
+ROR     0300
+RSW     0516
+RTA     0015 unreferenced
+S1      4020 unreferenced
+S2      4023 unreferenced
+SAE     1440
+SC1     4123 unreferenced
+SC2     4132 unreferenced
+SC3     4144 unreferenced
+SC4     4156 unreferenced
+SC5     4165 unreferenced
+SC6     4171 unreferenced
+SC7     4202 unreferenced
+SC8     4216 unreferenced
+SC9     4225 unreferenced
+SCA     4234 unreferenced
+SCR     0340
+SET     0040
+SHD     1400
+SKP     0456
+SNS     0440
+SRO     1500
+ST      4537 unreferenced
+STA     1040
+STC     4000
+STH     1340
+SW1     5017 unreferenced
+SW2     5023 unreferenced
+SW3     5027 unreferenced
+SW4     5043 unreferenced
+SXL     0400 unreferenced
+TEM     0012
+TLS     6046
+XS1     4565 unreferenced
+XS2     4601 unreferenced
+XSK     0200
