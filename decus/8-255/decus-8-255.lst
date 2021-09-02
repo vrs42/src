@@ -1,0 +1,116 @@
+   1               
+   2               *5200
+   3               
+   4               /TAPE CHARACTER EDITOR AND COMMENTATOR.
+   5               /
+   6               /THIS PROGRAM FITS BELOW MACRO-8
+   7               /AND ABOVE DDT-8.
+   8               /
+   9 005200  6046            TLS
+  10 005201  4273  TOP,      JMS RED             /CLEAR THE FLAG TO GET NEXT.
+  11 005202  3311            DCA TEM             /SAVE THE CHARACTER.
+  12 005203  7604            LAS                 /CHECK THE CONTROLS FOR PRINT-SKIP
+  13 005204  0316            AND SKIP            /MASK OUT SKIP SWITCH.
+  14 005205  7640            SZA CLA             /TEST THE SWITCH.
+  15 005206  5211            JMP .+3             /SKIP PRINTING.
+  16 005207  1311            TAD TEM             /PRINT
+  17 005210  4265            JMS PNT             / PRINT A CHARACTER.
+  18 005211  7604            LAS                 /CHECK FOR SPEED COMMAND.
+  19 005212  0320            AND SPEED
+  20 005213  7650            SNA CLA
+  21 005214  5227            JMP WAITER          /GO CHECK THE STOP COMMAND.
+  22 005215  4300            JMS CYCLE           /WAIT.
+  23 005216  7604            LAS                 /READ THE SW'S.
+  24 005217  0321            AND MED             /MASK BIT ONE.
+  25 005220  7650            SNA CLA             /MEDIUM SPEED?
+  26 005221  5227            JMP WAITER          /WAITING DONE.
+  27 005222  4300            JMS CYCLE           /YES
+  28 005223  7604            LAS
+  29 005224  0322            AND LOW
+  30 005225  7640            SZA CLA             /LOW SPEED?
+  31 005226  4300            JMS CYCLE
+  32 005227  7604  WAITER,   LAS                 /NO.
+  33 005230  0315            AND WAIT            /CHECK STOP COMMAND.
+  34 005231  7640            SZA CLA             /IS SW-3 DOWN?
+  35 005232  5227            JMP .-3             /NO,WAIT.
+  36 005233  6032            KCC                 /FETCH NEXT CHARACTER.
+  37 005234  7604            LAS
+  38 005235  0317            AND STOP            /CHECK FOR CR?
+  39 005236  7650            SNA CLA
+  40 005237  5201            JMP TOP             /NO
+  41 005240  4273            JMS RED             /READ NEXT NOW.
+  42 005241  1313            TAD MCR
+  43 005242  7640            SZA CLA             /CR FOUND?
+  44 005243  5201            JMP TOP             /NOT FOUND
+  45 005244  1314            TAD SLASH           /PRINT COMMENT FIELD INSTEAD.
+  46 005245  4265            JMS PNT 
+  47 005246  4273            JMS RED             /WAIT FOR A NON-CR TO COME INTO
+  48 005247  1313            TAD MCR             /THE KEYBOARD BUFFER.
+  49 005250  7650            SNA CLA
+  50 005251  5246            JMP .-3             /CONTINUE WAITING.
+  51 005252  6032            KCC                 /FETCH NEXT CHARACTER.
+  52 005253  4273  COMENT,   JMS RED             /READ COMMENT FIELD.
+  53 005254  3311            DCA TEM             /SAVE ONE.
+  54 005255  1311            TAD TEM
+  55 005256  4265            JMS PNT             /PRINT AND PUNCH.
+  56 005257  6032            KCC                 /FETCH NEXT.
+  57 005260  1311            TAD TEM             /TEST LAST.
+  58 005261  1313            TAD MCR             /TEST FOR CR.
+  59 005262  7650            SNA CLA
+  60 005263  5201            JMP TOP             /RESUME NEXT LINE.
+  61 005264  5253            JMP COMENT          /CONTINUE COMMENT FIELD.
+  62               ///////
+  63 005265  0000  PNT,      0                   /PRINT A LETTER.
+  64 005266  6041            TSF                 /PRINT A LETTER.
+  65 005267  5266            JMP .-1             /WAIT FOR THE LAST ONE TO 
+  66 005270  6046            TLS                 /TO FINISH;THEN TYPE.
+  67 005271  7200            CLA                 /CLEAR AC.
+  68 005272  5665            JMP I PNT           /RETURN.
+  69               /////
+  70 005273  0000  RED,      0
+  71 005274  6031            KSF                 /READ A LETTER.
+  72 005275  5274            JMP .-1
+  73 005276  6034            KRS
+  74 005277  5673            JMP I RED           /RETURN.
+  75               ///////
+  76 005300  0000  CYCLE,    0                   /ENTRY POINT.
+  77 005301  1312            TAD MUMPH           /SETUP # OF TIMES TO DO
+  78 005302  3311            DCA TEM             /20000(8) X35MMS.
+  79 005303  2310            ISZ CNTR            /COUNT 2EXP(12).
+  80 005304  5303            JMP .-1             /WAIT
+  81 005305  2311            ISZ TEM             /COUNT CYCLES.
+  82 005306  5303            JMP .-3             /(NOP)-FOR 8/S.
+  83 005307  5700            JMP I CYCLE         /EXIT.
+  84               ///////
+  85 005310  0000  CNTR,     0
+  86 005311  0000  TEM,      0
+  87 005312  7760  MUMPH,    -20
+  88 005313  7563  MCR,      -215
+  89 005314  0257  SLASH,    257
+  90 005315  0400  WAIT,     400
+  91 005316  0040  SKIP,     40
+  92 005317  0004  STOP,     4
+  93 005320  7000  SPEED,    7000
+  94 005321  3000  MED,      3000
+  95 005322  1000  LOW,      1000
+  96               /////
+  97               
+  98                         $
+
+CNTR    5310
+COMENT  5253
+CYCLE   5300
+LOW     5322
+MCR     5313
+MED     5321
+MUMPH   5312
+PNT     5265
+RED     5273
+SKIP    5316
+SLASH   5314
+SPEED   5320
+STOP    5317
+TEM     5311
+TOP     5201
+WAIT    5315
+WAITER  5227

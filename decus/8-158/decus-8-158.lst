@@ -1,0 +1,272 @@
+   1               DXC=6301
+   2               DXL=6302
+   3               DYC=6311
+   4               DYL=6312
+   5               DIS=6314
+   6               /GENERAL PURPOSE SYMBOL GENERATOR
+   7               /
+   8 000200  0000  CHARS,  0               /ENTRY TO PLOT CHARACTER STRING
+   9 000201  3330          DCA ADDR        /STORE STRING ADDRESS
+  10 000202  1730          TAD I ADDR      /FETCH DOUBLE CHARACTER
+  11 000203  7012          RTR             /SHIFT
+  12 000204  7012          RTR             /  FOR FIRST
+  13 000205  7012          RTR             /    CHARACTER
+  14 000206  4216          JMS CHAR        /PLOT CHARACTER
+  15 000207  7410          SKP             /NORMAL RETURN -- SKIP
+  16 000210  5600          JMP I CHARS     /TERMINATION RETURN -- EXIT
+  17 000211  1730          TAD I ADDR      /RECALL DOUBLE CHARACTER
+  18 000212  2330          ISZ ADDR        /ADVANCE STRING ADDRESS
+  19 000213  4216          JMS CHAR        /PLOT CHARACTER
+  20 000214  5202          JMP CHARS+2     /NORMAL RETURN -- REPEAT
+  21 000215  5600          JMP I CHARS     /TERMINATION RETURN -- EXIT
+  22               /
+  23 000216  0000  CHAR,   0               /ENTRY TO PLOT SINGLE CHARACTER
+  24 000217  0334          AND K77         /MASK OUT UPPER BITS
+  25 000220  7104          CLL RAL         /MULTIPLY CODE BY TWO
+  26 000221  1336          TAD TABLE       /ADD TABLE BASE ADDRESS
+  27 000222  3335          DCA POINT       /CONSTRUCT POINTER TO 24-BIT CODE
+  28 000223  7040          CMA             /INITIALIZE COUNTER FOR
+  29 000224  3332          DCA COUNT2      /  TWO PLOT WORDS
+  30 000225  1735          TAD I POINT     /FETCH FIRST PLOT WORD
+  31 000226  2335          ISZ POINT       /INCREMENT POINTER FOR NEXT ONE
+  32 000227  7450          SNA             /SKIP IF NOT SPECIAL CHARACTER
+  33 000230  5274          JMP SPCHAR      /ELSE GO PROCESS IT
+  34 000231  3327          DCA CURPLT      /SAVE CURRENT PLOT BITS
+  35 000232  1333  XPLOT,  TAD KM6         /INITIALIZE 6-BIT
+  36 000233  3331          DCA COUNT6      /  COUNTER
+  37 000234  1323          TAD YVALUE      /RESET Y TEMPORARY
+  38 000235  3326          DCA YTEMP       /  VALUE FOR CHARACTER
+  39 000236  1322          TAD XVALUE      /OUTPUT CURRENT
+  40 000237  6303          DXC DXL         /  X-VALUE TO CRT
+  41 000240  1324          TAD XINCR       /INCREMENT
+  42 000241  3322          DCA XVALUE      /  ABSCISSA
+  43 000242  1327  YPLOT,  TAD CURPLT      /RECALL CURRENT PLOT BITS
+  44 000243  7104          CLL RAL         /GET NEXT BIT
+  45 000244  3327          DCA CURPLT      /SAVE REMAINING PLOT BITS
+  46 000245  7420          SNL             /SKIP IF POINT TO PLOT
+  47 000246  5255          JMP CNTINU      /ELSE JUMP AHEAD
+  48 000247  1326          TAD YTEMP       /OUTPUT CURRENT
+  49 000250  6317          DYC DYL DIS     /  Y-VALUE TO CRT
+  50 000251  7300          CLA CLL         /CLEAR AC
+  51 000252  1327          TAD CURPLT      /RECALL CURRENT PLOT BITS
+  52 000253  7650          SNA CLA         /SKIP IF POINTS REMAINING
+  53 000254  5263          JMP WRDEND      /ELSE WORD IS FINISHED
+  54 000255  1326  CNTINU, TAD YTEMP       /INCREMENT TEMPORARY
+  55 000256  1325          TAD YINCR       /  Y-VALUE FOR NEXT
+  56 000257  3326          DCA YTEMP       /    CHARACTER STEP
+  57 000260  2331          ISZ COUNT6      /SKIP IF 6 BITS PLOTTED
+  58 000261  5242          JMP YPLOT       /ELSE PLOT NEXT ONE
+  59 000262  5232          JMP XPLOT       /GO UPDATE X-VALUE
+  60 000263  2332  WRDEND, ISZ COUNT2      /SKIP IF ANOTHER BIT WORD
+  61 000264  5270          JMP EXIT        /ELSE EXIT
+  62 000265  1735          TAD I POINT     /FETCH SECOND BIT WORD
+  63 000266  7440          SZA             /SKIP IF NO PLOT POINTS
+  64 000267  5231          JMP XPLOT-1     /ELSE GO PLOT THEM
+  65 000270  1322  EXIT,   TAD XVALUE      /INCREMENT ABSCISSA
+  66 000271  1324          TAD XINCR       /  FOR SPACE BETWEEN
+  67 000272  3322          DCA XVALUE      /    SYMBOLS
+  68 000273  5616          JMP I CHAR      /EXIT FROM CHAR
+  69               /
+  70 000274  1735  SPCHAR, TAD I POINT     /FETCH TRANSFER VECTOR
+  71 000275  3335          DCA POINT       /STORE AS INDIRECT ADDRESS
+  72 000276  5735          JMP I POINT     /GO TO APPROPRIATE ROUTINE
+  73 000277  1324  SPACE,  TAD XINCR       /FETCH BASIC ABSCISSA INCREMENT
+  74 000300  7106          CLL RTL         /MULTIPLY BY FOUR AND
+  75 000301  5270          JMP EXIT        /  GO CREATE SPACE
+  76 000302  1320  CRLF,   TAD INITX       /"CARRIAGE RETURN" RESETS X
+  77 000303  3322          DCA XVALUE      /  TO ITS ORIGINAL VALUE
+  78 000304  1325  LF,     TAD YINCR       /"LINE FEED"
+  79 000305  7106          CLL RTL         /  DECREMENTS THE
+  80 000306  7145          CLL CIA RAL     /    Y-VALUE BY
+  81 000307  1323          TAD YVALUE      /      EIGHT SCALE
+  82 000310  3323          DCA YVALUE      /        STEPS
+  83 000311  5616          JMP I CHAR      /EXIT FROM CHAR
+  84 000312  1320  RESET,  TAD INITX       /"RESET" RESETS
+  85 000313  3322          DCA XVALUE      /  X AND Y TO
+  86 000314  1321          TAD INITY       /    THEIR ORIGINAL
+  87 000315  5310          JMP RESET-2     /      VALUES
+  88 000316  2216  TERM,   ISZ CHAR        /TERMINATE CODE CAUSES
+  89 000317  5616          JMP I CHAR      /  EXIT TO P+2
+  90               /
+  91 000320  0000  INITX,  0               /INITIAL X-VALUE
+  92 000321  0327  INITY,  327             /INITIAL Y-VALUE
+  93 000322  0000  XVALUE, 0               /CURRENT X-VALUE
+  94 000323  0000  YVALUE, 0               /CURRENT Y-VALUE
+  95 000324  0006  XINCR,  6               /BASIC X INCREMENT VALUE
+  96 000325  0010  YINCR,  10              /BASIC Y INCREMENT VALUE
+  97 000326  0000  YTEMP,  0               /TEMPORARY Y-VALUE
+  98 000327  0000  CURPLT, 0               /CURRENT PLOT BITS
+  99 000330  0000  ADDR,   0               /CURRENT STRING ADDRESS
+ 100 000331  0000  COUNT6, 0               /6-BIT COUNTER
+ 101 000332  0000  COUNT2, 0               /2-WORD COUNTER
+ 102 000333  7772  KM6,    -6              /CONSTANT FOR COUNT6
+ 103 000334  0077  K77,    77              /CHARACTER CODE MASK
+ 104 000335  0000  POINT,  0               /TABLE POINTER
+ 105               /
+ 106               
+ 107               /
+ 108 000336  0337  TABLE,  .+1             /TABLE BASE ADDRESS
+ 109 000337  0000          0               /SPECIAL CHARACTER
+ 110 000340  0316          TERM            /TERMINATION CODE
+ 111 000341  7611          7611            / A
+ 112 000342  1176          1176
+ 113 000343  7745          7745            / B
+ 114 000344  4532          4532
+ 115 000345  3641          3641            / C
+ 116 000346  4122          4122
+ 117 000347  7741          7741            / D
+ 118 000350  4136          4136
+ 119 000351  7745          7745            / E
+ 120 000352  4541          4541
+ 121 000353  7705          7705            / F
+ 122 000354  0501          501
+ 123 000355  7741          7741            / G
+ 124 000356  5173          5173
+ 125 000357  7710          7710            / H
+ 126 000360  1077          1077
+ 127 000361  4177          4177            / I
+ 128 000362  4100          4100
+ 129 000363  2040          2040            / J
+ 130 000364  4037          4037
+ 131 000365  7714          7714            / K
+ 132 000366  2241          2241
+ 133 000367  7740          7740            / L
+ 134 000370  4040          4040
+ 135 000371  7702          7702            / M
+ 136 000372  0277          277
+ 137 000373  7706          7706            / N
+ 138 000374  3077          3077
+ 139 000375  7741          7741            / O
+ 140 000376  4177          4177
+ 141 000377  7705          7705            / P
+ 142 000400  0502          502
+ 143 000401  3641          3641            / Q
+ 144 000402  6176          6176
+ 145 000403  7715          7715            / R
+ 146 000404  2542          2542
+ 147 000405  2245          2245            / S
+ 148 000406  5122          5122
+ 149 000407  0177          177             / T
+ 150 000410  0100          100
+ 151 000411  3740          3740            / U
+ 152 000412  4037          4037
+ 153 000413  1720          1720            / V
+ 154 000414  4037          4037
+ 155 000415  7730          7730            / W
+ 156 000416  3077          3077
+ 157 000417  4136          4136            / X
+ 158 000420  3641          3641
+ 159 000421  0374          374             / Y
+ 160 000422  7403          7403
+ 161 000423  6151          6151            / Z
+ 162 000424  4543          4543
+ 163 000425  7741          7741            / [
+ 164 000426  0000          0
+ 165 000427  0204          204             / \
+ 166 000430  1020          1020
+ 167 000431  4177          4177            / ]
+ 168 000432  0000          0
+ 169 000433  0436          436             / ^
+ 170 000434  0400          400
+ 171 000435  0000          0               /SPECIAL CHARACTER
+ 172 000436  0312          RESET           /RESET
+ 173 000437  0000          0               /SPECIAL CHARACTER
+ 174 000440  0277          SPACE           /SPACE
+ 175 000441  5600          5600            / !
+ 176 000442  0000          0
+ 177 000443  0303          303             / "
+ 178 000444  0000          0
+ 179 000445  1477          1477            / #
+ 180 000446  7714          7714
+ 181 000447  2277          2277            / MARKER
+ 182 000450  2200          2200
+ 183 000451  2313          2313            / %
+ 184 000452  6462          6462
+ 185 000453  7777          7777            / BLOCK
+ 186 000454  7777          7777
+ 187 000455  0300          300             / '
+ 188 000456  0000          0
+ 189 000457  3641          3641            / (
+ 190 000460  0000          0
+ 191 000461  4136          4136            / )
+ 192 000462  0000          0
+ 193 000463  4040          4040            / UNDERSCORE
+ 194 000464  4040          4040
+ 195 000465  1034          1034            / +
+ 196 000466  1000          1000
+ 197 000467  0000          0               /SPECIAL CHARACTER
+ 198 000470  0304          LF              /LINE FEED
+ 199 000471  1010          1010            / -
+ 200 000472  1000          1000
+ 201 000473  4000          4000            / .
+ 202 000474  0000          0
+ 203 000475  2010          2010            / /
+ 204 000476  0402          402
+ 205 000477  3641          3641            / 0
+ 206 000500  4136          4136
+ 207 000501  4442          4442            / 1
+ 208 000502  7740          7740
+ 209 000503  4261          4261            / 2
+ 210 000504  5146          5146
+ 211 000505  2145          2145            / 3
+ 212 000506  5321          5321
+ 213 000507  1710          1710            / 4
+ 214 000510  1077          1077
+ 215 000511  4745          4745            / 5
+ 216 000512  4531          4531
+ 217 000513  7750          7750            / 6
+ 218 000514  5070          5070
+ 219 000515  6111          6111            / 7
+ 220 000516  0503          503
+ 221 000517  2255          2255            / 8
+ 222 000520  5522          5522
+ 223 000521  0705          705             / 9
+ 224 000522  0577          577
+ 225 000523  2400          2400            / :
+ 226 000524  0000          0
+ 227 000525  0000          0               /SPECIAL CHARACTER
+ 228 000526  0302          CRLF            /CARRIAGE RETURN; LINE FEED
+ 229 000527  1024          1024            / >
+ 230 000530  4200          4200
+ 231 000531  1212          1212            / =
+ 232 000532  1200          1200
+ 233 000533  4224          4224            / <
+ 234 000534  1000          1000
+ 235 000535  0255          255             / ?
+ 236 000536  0300          300
+ 237               /
+ 238               $
+
+ADDR    0330
+CHAR    0216
+CHARS   0200
+CNTINU  0255
+COUNT2  0332
+COUNT6  0331
+CRLF    0302
+CURPLT  0327
+DIS     6314
+DXC     6301
+DXL     6302
+DYC     6311
+DYL     6312
+EXIT    0270
+INITX   0320
+INITY   0321
+K77     0334
+KM6     0333
+LF      0304
+POINT   0335
+RESET   0312
+SPACE   0277
+SPCHAR  0274
+TABLE   0336
+TERM    0316
+WRDEND  0263
+XINCR   0324
+XPLOT   0232
+XVALUE  0322
+YINCR   0325
+YPLOT   0242
+YTEMP   0326
+YVALUE  0323

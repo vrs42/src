@@ -1,0 +1,240 @@
+DXC=6301
+DXL=6302
+DYC=6311
+DYL=6312
+DIS=6314
+/GENERAL PURPOSE SYMBOL GENERATOR
+/
+CHARS,  0               /ENTRY TO PLOT CHARACTER STRING
+        DCA ADDR        /STORE STRING ADDRESS
+        TAD I ADDR      /FETCH DOUBLE CHARACTER
+        RTR             /SHIFT
+        RTR             /  FOR FIRST
+        RTR             /    CHARACTER
+        JMS CHAR        /PLOT CHARACTER
+        SKP             /NORMAL RETURN -- SKIP
+        JMP I CHARS     /TERMINATION RETURN -- EXIT
+        TAD I ADDR      /RECALL DOUBLE CHARACTER
+        ISZ ADDR        /ADVANCE STRING ADDRESS
+        JMS CHAR        /PLOT CHARACTER
+        JMP CHARS+2     /NORMAL RETURN -- REPEAT
+        JMP I CHARS     /TERMINATION RETURN -- EXIT
+/
+CHAR,   0               /ENTRY TO PLOT SINGLE CHARACTER
+        AND K77         /MASK OUT UPPER BITS
+        CLL RAL         /MULTIPLY CODE BY TWO
+        TAD TABLE       /ADD TABLE BASE ADDRESS
+        DCA POINT       /CONSTRUCT POINTER TO 24-BIT CODE
+        CMA             /INITIALIZE COUNTER FOR
+        DCA COUNT2      /  TWO PLOT WORDS
+        TAD I POINT     /FETCH FIRST PLOT WORD
+        ISZ POINT       /INCREMENT POINTER FOR NEXT ONE
+        SNA             /SKIP IF NOT SPECIAL CHARACTER
+        JMP SPCHAR      /ELSE GO PROCESS IT
+        DCA CURPLT      /SAVE CURRENT PLOT BITS
+XPLOT,  TAD KM6         /INITIALIZE 6-BIT
+        DCA COUNT6      /  COUNTER
+        TAD YVALUE      /RESET Y TEMPORARY
+        DCA YTEMP       /  VALUE FOR CHARACTER
+        TAD XVALUE      /OUTPUT CURRENT
+        DXC DXL         /  X-VALUE TO CRT
+        TAD XINCR       /INCREMENT
+        DCA XVALUE      /  ABSCISSA
+YPLOT,  TAD CURPLT      /RECALL CURRENT PLOT BITS
+        CLL RAL         /GET NEXT BIT
+        DCA CURPLT      /SAVE REMAINING PLOT BITS
+        SNL             /SKIP IF POINT TO PLOT
+        JMP CNTINU      /ELSE JUMP AHEAD
+        TAD YTEMP       /OUTPUT CURRENT
+        DYC DYL DIS     /  Y-VALUE TO CRT
+        CLA CLL         /CLEAR AC
+        TAD CURPLT      /RECALL CURRENT PLOT BITS
+        SNA CLA         /SKIP IF POINTS REMAINING
+        JMP WRDEND      /ELSE WORD IS FINISHED
+CNTINU, TAD YTEMP       /INCREMENT TEMPORARY
+        TAD YINCR       /  Y-VALUE FOR NEXT
+        DCA YTEMP       /    CHARACTER STEP
+        ISZ COUNT6      /SKIP IF 6 BITS PLOTTED
+        JMP YPLOT       /ELSE PLOT NEXT ONE
+        JMP XPLOT       /GO UPDATE X-VALUE
+WRDEND, ISZ COUNT2      /SKIP IF ANOTHER BIT WORD
+        JMP EXIT        /ELSE EXIT
+        TAD I POINT     /FETCH SECOND BIT WORD
+        SZA             /SKIP IF NO PLOT POINTS
+        JMP XPLOT-1     /ELSE GO PLOT THEM
+EXIT,   TAD XVALUE      /INCREMENT ABSCISSA
+        TAD XINCR       /  FOR SPACE BETWEEN
+        DCA XVALUE      /    SYMBOLS
+        JMP I CHAR      /EXIT FROM CHAR
+/
+SPCHAR, TAD I POINT     /FETCH TRANSFER VECTOR
+        DCA POINT       /STORE AS INDIRECT ADDRESS
+        JMP I POINT     /GO TO APPROPRIATE ROUTINE
+SPACE,  TAD XINCR       /FETCH BASIC ABSCISSA INCREMENT
+        CLL RTL         /MULTIPLY BY FOUR AND
+        JMP EXIT        /  GO CREATE SPACE
+CRLF,   TAD INITX       /"CARRIAGE RETURN" RESETS X
+        DCA XVALUE      /  TO ITS ORIGINAL VALUE
+LF,     TAD YINCR       /"LINE FEED"
+        CLL RTL         /  DECREMENTS THE
+        CLL CIA RAL     /    Y-VALUE BY
+        TAD YVALUE      /      EIGHT SCALE
+        DCA YVALUE      /        STEPS
+        JMP I CHAR      /EXIT FROM CHAR
+RESET,  TAD INITX       /"RESET" RESETS
+        DCA XVALUE      /  X AND Y TO
+        TAD INITY       /    THEIR ORIGINAL
+        JMP RESET-2     /      VALUES
+TERM,   ISZ CHAR        /TERMINATE CODE CAUSES
+        JMP I CHAR      /  EXIT TO P+2
+/
+INITX,  0               /INITIAL X-VALUE
+INITY,  327             /INITIAL Y-VALUE
+XVALUE, 0               /CURRENT X-VALUE
+YVALUE, 0               /CURRENT Y-VALUE
+XINCR,  6               /BASIC X INCREMENT VALUE
+YINCR,  10              /BASIC Y INCREMENT VALUE
+YTEMP,  0               /TEMPORARY Y-VALUE
+CURPLT, 0               /CURRENT PLOT BITS
+ADDR,   0               /CURRENT STRING ADDRESS
+COUNT6, 0               /6-BIT COUNTER
+COUNT2, 0               /2-WORD COUNTER
+KM6,    -6              /CONSTANT FOR COUNT6
+K77,    77              /CHARACTER CODE MASK
+POINT,  0               /TABLE POINTER
+/
+
+/
+TABLE,  .+1             /TABLE BASE ADDRESS
+        0               /SPECIAL CHARACTER
+        TERM            /TERMINATION CODE
+        7611            / A
+        1176
+        7745            / B
+        4532
+        3641            / C
+        4122
+        7741            / D
+        4136
+        7745            / E
+        4541
+        7705            / F
+        501
+        7741            / G
+        5173
+        7710            / H
+        1077
+        4177            / I
+        4100
+        2040            / J
+        4037
+        7714            / K
+        2241
+        7740            / L
+        4040
+        7702            / M
+        277
+        7706            / N
+        3077
+        7741            / O
+        4177
+        7705            / P
+        502
+        3641            / Q
+        6176
+        7715            / R
+        2542
+        2245            / S
+        5122
+        177             / T
+        100
+        3740            / U
+        4037
+        1720            / V
+        4037
+        7730            / W
+        3077
+        4136            / X
+        3641
+        374             / Y
+        7403
+        6151            / Z
+        4543
+        7741            / [
+        0
+        204             / \
+        1020
+        4177            / ]
+        0
+        436             / ^
+        400
+        0               /SPECIAL CHARACTER
+        RESET           /RESET
+        0               /SPECIAL CHARACTER
+        SPACE           /SPACE
+        5600            / !
+        0
+        303             / "
+        0
+        1477            / #
+        7714
+        2277            / MARKER
+        2200
+        2313            / %
+        6462
+        7777            / BLOCK
+        7777
+        300             / '
+        0
+        3641            / (
+        0
+        4136            / )
+        0
+        4040            / UNDERSCORE
+        4040
+        1034            / +
+        1000
+        0               /SPECIAL CHARACTER
+        LF              /LINE FEED
+        1010            / -
+        1000
+        4000            / .
+        0
+        2010            / /
+        402
+        3641            / 0
+        4136
+        4442            / 1
+        7740
+        4261            / 2
+        5146
+        2145            / 3
+        5321
+        1710            / 4
+        1077
+        4745            / 5
+        4531
+        7750            / 6
+        5070
+        6111            / 7
+        503
+        2255            / 8
+        5522
+        705             / 9
+        577
+        2400            / :
+        0
+        0               /SPECIAL CHARACTER
+        CRLF            /CARRIAGE RETURN; LINE FEED
+        1024            / >
+        4200
+        1212            / =
+        1200
+        4224            / <
+        1000
+        255             / ?
+        300
+/
+$
+
+
