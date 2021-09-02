@@ -1,0 +1,111 @@
+   1               
+   2               /DIGITAL  8-11-U-SYM
+   3               
+   4               /DOUBLE PRECISION BCD TO BINARY CONVERSION
+   5               /CALLING SEQUENCE:
+   6               /     JMS DOUBLE
+   7               /     ADDRESS OF HIGH ORDER ARGUMENT
+   8               /     RETURN:     C(AC)=HIGH ORDER PART
+   9               /                 C(LOW) = LOW ORDER PART
+  10               
+  11               /ALSO CONTAINS SINGLE PRECISION BCD TO BINARY
+  12               /CALLING SEQUENCE:
+  13               /     C(AC) = 3 BCD CHARACTERS
+  14               /     JMS BCDBIN
+  15               /     RETURN:     ANSWER IN C(AC)
+  16               
+  17 000200  0000  DOUBLE, 0
+  18 000201  7300          CLA CLL
+  19 000202  1600          TAD I DOUBLE    /FETCH ADDRESS
+  20 000203  3271          DCA LOW1                /STORE
+  21 000204  2200          ISZ DOUBLE              /INCREMENT RETURN
+  22 000205  1671          TAD I LOW1      /FETCH HIGH ORDER
+  23 000206  4275          JMS BCDBIN      /CONVERT IT
+  24 000207  3272          DCA HIGH1               /STORE
+  25 000210  2271          ISZ LOW1                /INCREMENT POINTER
+  26 000211  1671          TAD I LOW1      /FETCH LOW ORDER
+  27 000212  4275          JMS BCDBIN      /CONVERT IT
+  28 000213  3271          DCA LOW1                /STORE IT
+  29 000214  1272          TAD HIGH1
+  30 000215  7112          CLL RTR
+  31 000216  7012          RTR
+  32 000217  7010          RAR             /MULTIPLY HIGH ORDER
+  33 000220  3275          DCA BCDBIN      /PART BY 128
+  34 000221  1275          TAD BCDBIN
+  35 000222  0327          AND K177
+  36 000223  3274          DCA HIGH
+  37 000224  1275          TAD BCDBIN
+  38 000225  7010          RAR
+  39 000226  0325          AND K7600
+  40 000227  3273          DCA LOW
+  41 000230  1272          TAD HIGH1               /MULTIPLY HIGH ORDER
+  42 000231  7104          CLL RAL         /BY THREE
+  43               
+  44 000232  1272          TAD HIGH1               /FORM 128*HIGH-3*HIGH
+  45 000233  7141          CIA CLL
+  46 000234  1273          TAD LOW
+  47 000235  3273          DCA LOW
+  48 000236  7420          SNL
+  49 000237  7040          CMA
+  50 000240  1274          TAD HIGH
+  51 000241  3274          DCA HIGH                /125*HIGH
+  52 000242  1274          TAD HIGH                /NOW MULTIPLY BY 8
+  53 000243  7106          CLL RTL
+  54 000244  7004          RAL
+  55 000245  0326          AND K7770               /MASK 9 BITS
+  56 000246  3274          DCA HIGH
+  57 000247  1273          TAD LOW
+  58 000250  7106          CLL RTL
+  59 000251  7004          RAL
+  60 000252  3273          DCA LOW
+  61 000253  1273          TAD LOW
+  62 000254  7004          RAL
+  63 000255  0324          AND K7          /3 BITS
+  64 000256  1274          TAD HIGH
+  65 000257  3274          DCA HIGH
+  66 000260  1273          TAD LOW
+  67 000261  0326          AND K7770               /9 BITS
+  68 000262  7100          CLL
+  69 000263  1271          TAD LOW1                /ADD LOW ORDER PART
+  70 000264  3273          DCA LOW         /STORE LOW ORDER PART
+  71 000265  1274          TAD HIGH
+  72 000266  7430          SZL
+  73 000267  7001          IAC             /CARRY
+  74 000270  5600          JMP I DOUBLE
+  75               
+  76 000271  0000  LOW1,   0
+  77 000272  0000  HIGH1,  0
+  78 000273  0000  LOW,    0
+  79 000274  0000  HIGH,   0
+  80               
+  81               /SINGLE PRECISION CONVERSION
+  82 000275  0000  BCDBIN, 0
+  83 000276  3274          DCA HIGH
+  84 000277  1274          TAD HIGH
+  85 000300  0330          AND K7400               /LEFT DIGIT
+  86 000301  7112          CLL RTR
+  87 000302  3273          DCA LOW
+  88 000303  1273          TAD LOW
+  89 000304  7010          RAR
+  90 000305  1273          TAD LOW
+  91 000306  7041          CIA
+  92 000307  1274          TAD HIGH
+  93 000310  3274          DCA HIGH
+  94 000311  1274          TAD HIGH
+  95 000312  0323          AND K7760
+  96 000313  7112          CLL RTR
+  97 000314  3273          DCA LOW
+  98 000315  1273          TAD LOW
+  99 000316  7010          RAR
+ 100 000317  1273          TAD LOW
+ 101 000320  7041          CIA
+ 102 000321  1274          TAD HIGH
+ 103 000322  5675          JMP I BCDBIN
+ 104 000323  7760  K7760,  7760
+ 105 000324  0007  K7,     7
+ 106 000325  7600  K7600,  7600
+ 107 000326  7770  K7770,  7770
+ 108 000327  0177  K177,   177
+ 109 000330  7400  K7400,  7400
+ 110               
+ 111               $

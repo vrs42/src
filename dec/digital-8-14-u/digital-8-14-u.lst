@@ -1,0 +1,50 @@
+   1               /BINARY TO BCD CONVERSION 3/6/65-HB-DEC
+   2               /ENTER WITH BINARY NUMBER (<999(10))
+   3               /IN ACCUMULATOR; EXIT WITH THREE CHARACTER
+   4               /BCD NUMBER IN ACCUMULATOR
+   5               /AC 0-3; AC 4-7; AC 8-11 WILL CONTAIN
+   6               /THE BCD CHARACTER ON EXIT
+   7               /WEIGHTING:          AC 0-3  100
+   8               /                    AC 4-7   10
+   9               /                    AC 8-11   1
+  10               /STORAGE    33(10) REGISTERS
+  11               /TIME=216.0-235.2 MICRO-SECONDS PDP-8
+  12               /IF INPUT >999 (10) RESULT IS UNSPECIFIED
+  13 000200  0000  BCD,      0
+  14 000201  3226            DCA INPUT             /STORE BINARY
+  15 000202  1225            TAD CONTRL            /SET UP TABLE
+  16 000203  3210            DCA POINTR            /POINTERS
+  17 000204  7100            CLL
+  18 000205  1230            TAD COUNT             /SET BIT 7=1; 8RAL'S
+  19 000206  3227            DCA NUMBER            /WILL PUT IT IN LINK
+  20 000207  1226            TAD INPUT
+  21 000210  1231  POINTR,   TAD TABLE             /OR TABLE+1, TABLE+2, ETC.
+  22 000211  7430            SZL                   /IF C(L)=1, INPUT>-TABLE
+  23 000212  3226            DCA INPUT             /IF SO: INPUT=INPUT+TABLE
+  24 000213  7200            CLA
+  25 000214  1227            TAD NUMBER
+  26 000215  7004            RAL                   /PUT THIS BIT IN ANSWER
+  27 000216  2210            ISZ POINTR            /UPDATE TABLE POINTER
+  28 000217  7420            SNL                   /IF LINK=1, ALL DONE
+  29 000220  5206            JMP POINTR-2
+  30 000221  7106            CLL RTL               /CONVERTED 2 BCD
+  31 000222  7006            RTL                   /CHARACTERS
+  32 000223  1226            TAD INPUT             /SHIFT LEFT AND ADD
+  33 000224  5600            JMP I BCD             /THE THIRD
+  34 000225  1231  CONTRL,   TAD TABLE
+  35 000226  0000  INPUT,    0
+  36 000227  0000  NUMBER,   0
+  37 000230  0020  COUNT,    0020
+  38 000231  6340  TABLE,    -1440                 /-800(10)
+  39 000232  7160            -0620                 /-400
+  40 000233  7470            -0310                 /-200
+  41 000234  7634            -0144                 /-100
+  42 000235  7660            -0120                 /-80
+  43 000236  7730            -0050                 /-40
+  44 000237  7754            -0024                 /-20
+  45 000240  7766            -0012                 /-10
+  46               /EXAMPLE: INPUT  0726  (8)
+  47               /         OUTPUT   0100/0111/0000   = 470 (10)
+  48               
+  49               
+  50               $

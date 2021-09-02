@@ -1,0 +1,418 @@
+   1               / STAND-ALONE CASSETTE HANDLER
+   2               
+   3               /       DEC-8E-UCASA-A-LA
+   4               
+   5               /       COPYRIGHT 1972
+   6               
+   7               /       DIGITAL EQUIPMENT CORPORATION
+   8               
+   9               /       MAYNARD MASSACHUSETTS   01754
+  10               
+  11               
+  12               /       OCTOBER 19, 1972
+  13               
+  14                       KCLR=6700       /CLEAR ALL
+  15                                       /CLEAR STATUS A AND B REGISTERS.
+  16                       KSDR=6701       /SKIP ON DATA FLAG
+  17                       KSEN=6702       /SKIP ON ERROR
+  18                       KSBF=6703       /SKIP ON READY FLAG
+  19                       KLSA=6704       /LOAD STATUS A FROM AC 4-11
+  20                                       /CLEAR AC, THEN
+  21                                       /LOAD 8 BIT COMPLEMENT OF STATUS A
+  22                                       /BACK INTO AC
+  23                       KSAF=6705       /SKIP ON ANY FLAG OR ERROR
+  24                       KGOA=6706       /ASSERT THE CONTENTS OF STATUS A,
+  25                                       /TRANSFER DATA IF READ OR WRITE
+  26                       KRSB=6707       /READ STATUS B INTO AC 4-11
+  27               
+  28               
+  29                       ORG2=1400
+  30                       ORG3=1600
+  31                       ORG1=1200       /ORIGIN FOR SUBROUTINE
+  32                       AFIELD=1        /FIELD OF SUBROUTINE
+  33                       F=10^AFIELD
+  34               
+  35                       INT=1
+  36                       DISMIS=6
+  37               /THIS ROUTINE LEAVES WITH INTERRUPTS OFF AND DEVICE SELECTED
+  38               /AND READY.
+  39               /THE NEW UNIT NUMBER (0-7) IS IN THE AC.
+  40               /THE UNIT  NUMBER IS IN BITS 8-11 OF THE AC.
+  41               /RETURN 1 IS MADE IF THE UNIT IS NOT READY.
+  42               /CINUSE IS SET TO 1.
+  43               /THE HANDLER MUST NOT ALREADY BE IN USE.
+  44               /THE DATA FIELD IS INTERROGATED
+  45               /AND A RETURN CIF CDF IS BUILT
+  46               /AND STORED IN LOCATION RETCIF
+  47               
+  48                       FIELD AFIELD
+  49               
+  50                       *ORG1
+  51               
+  52                       IFNZRO INT <
+  53               
+  54 011200  0000  WAIT,   0
+  55 011201  6214          RDF
+  56 011202  1377          TAD (CIF CDF
+  57 011203  3216          DCA WAITEND
+  58 011204  6211          CDF F
+  59 011205  1776  CWAIT,  TAD I (CINUSE
+  60 011206  7450          SNA
+  61 011207  5215          JMP WLV         /ZERO MEANS READY
+  62 011210  7700          SMA CLA
+  63 011211  5205          JMP CWAIT       /1 MEANS IN USE
+  64 011212  3776          DCA I (CINUSE   /-1 MEANS HAD ERROR
+  65 011213  1775          TAD I (BSTATE   /LEAVE WITH STATUS REGISTER B IN AC
+  66 011214  7410          SKP             /TAKE ERROR RETURN
+  67 011215  2200  WLV,    ISZ WAIT
+  68 011216  7402  WAITEND,HLT
+  69 011217  5600          JMP I WAIT
+  70                       >
+  71 011220  0000  FIXDVC,        0
+  72 011221  3264          DCA DVC
+  73 011222  6214          RDF
+  74 011223  1377          TAD (CIF CDF
+  75 011224  6211          CDF F
+  76 011225  3263          DCA TMP
+  77 011226  1620          TAD I FIXDVC
+  78 011227  3332          DCA ERRET
+  79 011230  2220          ISZ FIXDVC
+  80 011231  1263          TAD TMP
+  81 011232  3732          DCA I ERRET
+  82 011233  6002          IFNZRO INT <IOF>
+  83 011234  1264          TAD DVC
+  84 011235  7010          RAR             /MOVE UNIT TO LINK; DEVICE TO AC
+  85 011236  0374          AND (3          /MASK OFF DEVICE CODE
+  86 011237  3264          DCA DVC         /SAVE DEVICE CODE
+  87 011240  7430          SZL
+  88 011241  1373          TAD (100
+  89 011242  3331          DCA ABUNIT      /SET UNIT IN BIT 5
+  90 011243  1264          TAD DVC
+  91 011244  7106          CLL RTL
+  92 011245  7004          RAL             /UGLY
+  93 011246  3264          DCA DVC         /MOVE TO BITS 6-8
+  94 011247  1372          TAD (IOTBL
+  95 011250  3265          DCA IOTPTR
+  96 011251  1665  IOTLOOP,TAD I IOTPTR
+  97 011252  7450          SNA             /END OF TABLE?
+  98 011253  5266          JMP CHECKR      /YES
+  99 011254  3263          DCA TMP
+ 100 011255  1663          TAD I TMP
+ 101 011256  0371          AND (7707       /MASK OUT OLD DVC
+ 102 011257  1264          TAD DVC         /INSERT NEW ONE
+ 103 011260  3663          DCA I TMP       /REPLACE
+ 104 011261  2265          ISZ IOTPTR      /POINT TO NEXT ONE
+ 105 011262  5251          JMP IOTLOOP
+ 106               
+ 107 011263  0000  TMP,    0
+ 108 011264  0000  DVC,    0               /DEVICE CODE
+ 109 011265  0000  IOTPTR, 0
+ 110 011266  4770  CHECKR,        JMS I (CLEAR
+ 111 011267  1367          TAD (200
+ 112 011270  4766          JMS I (LOADA    /SELECT DRIVE
+ 113 011271  4765          JMS I (CHECKB
+ 114 011272  0364          AND (7735       /IGNORE EOT/BOT FLAG
+ 115                                       /AND WLO
+ 116 011273  1363          TAD (-1
+ 117 011274  7640          SZA CLA
+ 118 011275  5732          JMP I ERRET     /NOT READY
+ 119 011276  2776          ISZ I (CINUSE
+ 120 011277  5620          JMP I FIXDVC
+ 121               
+ 122 011300  6700  ERRCOV, KCLR
+ 123 011301  1362          TAD     (250+INT
+ 124 011302  4766          JMS I   (LOADA
+ 125 011303  4761          JMS I   (GO     /BACKSPACE BLOCK
+ 126 011304  4760          JMS I   (CRET   /WAIT
+ 127 011305  4765          JMS I   (CHECKB
+ 128 011306  0357          AND     (374    /KILL WRITE-LOCK BIT
+ 129 011307  7640          SZA CLA
+ 130 011310  5756          JMP I   (ERRR
+ 131 011311  4755          JMS I   (SETUP  /RE-SET UP OPERATION
+ 132 011312  5754          JMP I   (CRET+1 /GO AWAY
+ 133               
+ 134 011313  1454  IOTBL,  IOT0
+ 135 011314  1465          IOT1
+ 136 011315  1326          IOT4
+ 137 011316  1503          IOT5
+ 138 011317  1457          IOT6
+ 139 011320  1671          IOT6C
+ 140 011321  1446          IOT7
+ 141 011322  1300          ERRCOV
+ 142 011323  0000          0
+ 143 011324  0000  LOADA, 0
+ 144 011325  1331          TAD ABUNIT
+ 145 011326  6704  IOT4,   KLSA
+ 146 011327  7200          CLA
+ 147 011330  5724          JMP I LOADA
+ 148               
+ 149 011331  0000  ABUNIT, 0
+ 150 011332  0000  ERRET,  0               /ERROR RETURN LOCATION
+ 151 011354  1500          PAGE
+     011355  1637  
+     011356  1723  
+     011357  0374  
+     011360  1477  
+     011361  1456  
+     011362  0251  
+     011363  7777  
+     011364  7735  
+     011365  1445  
+     011366  1324  
+     011367  0200  
+     011370  1452  
+     011371  7707  
+     011372  1313  
+     011373  0100  
+     011374  0003  
+     011375  1476  
+     011376  1475  
+     011377  6203  
+ 152                      *ORG2
+ 153               
+ 154 011400  0000  UTIL,   0
+ 155 011401  3242          DCA TEMPU
+ 156 011402  3244          DCA REWSW       /ZERO REWIND SWITCH
+ 157 011403  1600          TAD I UTIL
+ 158 011404  1377          TAD (-10
+ 159 011405  7450          SNA
+ 160 011406  2244          ISZ REWSW
+ 161 011407  2200          ISZ UTIL
+ 162 011410  1376          TAD (210+INT
+ 163 011411  3243          DCA TEMPFN
+ 164 011412  1242          TAD TEMPU
+ 165 011413  4775          JMS I (FIXDVC   /FIX DEVICE CODE
+ 166 011414  1423          UTEND           /UNIT NOT READY
+ 167 011415  1374          TAD (UT
+ 168 011416  3277          DCA CRET        /SET RETURN ADDRESS
+ 169 011417  1243          TAD TEMPFN
+ 170 011420  4773          JMS I (LOADA
+ 171 011421  4256          JMS GO          /INITIATE UTIL
+ 172                       IFZERO INT <JMP CRET+1>
+ 173 011422  2200          ISZ UTIL
+ 174 011423  7402  UTEND,  HLT
+ 175 011424  6001          IFNZRO INT <ION>
+ 176 011425  5600          JMP I UTIL
+ 177 011426  4245  UT,     JMS CHECKB      /LOOK AT STATUS B
+ 178 011427  0372          AND (50         /CHECK FOR CL, EMPTY, OR WLO
+ 179                                       /GIVE NO ERROR ON WLO ************
+ 180                                       /BAD FOR WRGAP
+ 181 011430  7450          SNA
+ 182 011431  5240          JMP OK          /NO ERRORS
+ 183 011432  1371          TAD (-40
+ 184 011433  7640          SZA CLA
+ 185 011434  5237          JMP NOTOK       /ERROR NOT CL
+ 186 011435  1244          TAD REWSW
+ 187 011436  7650          SNA CLA         /CL OK IF DID REWIND
+ 188 011437  7240  NOTOK,  STA
+ 189 011440  4252  OK,     JMS CLEAR
+ 190 011441  5300          IFNZRO INT <JMP CRET+1>
+ 191                       IFZERO INT <
+ 192                       TAD CINUSE
+ 193                       SMA CLA
+ 194                       JMP UTEND-1
+ 195                       TAD BSTATE      /ERROR
+ 196                       JMP UTEND
+ 197                       >
+ 198               
+ 199 011442  0000  TEMPU,  0
+ 200 011443  0000  TEMPFN, 0
+ 201 011444  0000  REWSW,  0               /1 MEANS OPERATION IS REWIND
+ 202 011445  0000  CHECKB,        0
+ 203 011446  6707  IOT7,   KRSB            /READ STATUS B INTO AC 4-11
+ 204 011447  3276          DCA BSTATE      /SAVE STATUS B
+ 205 011450  1276          TAD BSTATE
+ 206 011451  5645          JMP I CHECKB
+ 207               
+ 208 011452  0000  CLEAR,  0
+ 209 011453  3275          DCA CINUSE      /LEAVE STATUS CONDITION IN AC; -1 MEANS  ERROR
+ 210 011454  6700  IOT0,   KCLR            /CLEAR STATUS A AND B
+ 211 011455  5652          JMP I CLEAR
+ 212               
+ 213 011456  0000  GO,     0
+ 214 011457  6706  IOT6,   KGOA            /ASSERT CONTENTS OF STATUS A
+ 215 011460  7200          CLA
+ 216 011461  5656          JMP I GO
+ 217               
+ 218 011462  0000  CHK,    0
+ 219 011463  4770          JMS I (CHECKB
+ 220 011464  0367          AND (376
+ 221 011465  6701  IOT1,   KSDR
+ 222 011466  7410          SKP             /DATA FLAG NOT UP -
+ 223 011467  5662          JMP I CHK
+ 224 011470  1366          TAD (-20
+ 225 011471  7650          SNA CLA         /IS IT END OF FILE?
+ 226 011472  5765          JMP I (ERRR     /YES, ERROR - BUT DON'T RETRY
+ 227 011473  1276          TAD BSTATE
+ 228 011474  5662          JMP I CHK
+ 229               
+ 230 011475  0000  CINUSE, 0               /1 MEANS HANDLER IN USE
+ 231 011476  0000  BSTATE, 0               /STATUS OF REGISTER B ON ERROR
+ 232                      IFNZRO INT <
+ 233               
+ 234 011477  0000  CRET,   0
+ 235 011500  6203          CIF CDF 0
+ 236 011501  5702          JMP I .+1
+ 237 011502  0006          DISMIS
+ 238               
+ 239 011503  6705  IOT5,   KSAF
+ 240 011504  7402  NXTSKP, HLT
+ 241 011505  5677          JMP I CRET
+ 242                       >
+ 243               
+ 244                       IFZERO INT <
+ 245               
+ 246               CRET,   0
+ 247                       CDF F
+ 248               IOT5,   KSAF
+ 249                       JMP .-1
+ 250                       JMP I CRET
+ 251                       >
+ 252 011565  1723          PAGE
+     011566  7760  
+     011567  0376  
+     011570  1445  
+     011571  7740  
+     011572  0050  
+     011573  1324  
+     011574  1426  
+     011575  1220  
+     011576  0211  
+     011577  7770  
+ 253                      *ORG3
+ 254               
+ 255 011600  0000  HANDLER,0
+ 256 011601  3234          DCA TUN
+ 257 011602  1600          TAD I HANDLER   /GET FUNCTION CONTROL WORD
+ 258 011603  0337          AND L70         /ISOLATE FIELD OF BUFFER
+ 259 011604  1377          TAD (CDF
+ 260 011605  3256          DCA WCDF
+ 261 011606  1600          TAD I HANDLER   /RETRIEVE FUNCTION CONTROL WORD
+ 262 011607  7004          RAL             /READ/WRITE BIT TO LINK
+ 263 011610  7204          CLA RAL
+ 264 011611  3235          DCA RW          /RW=1 IF WRITE
+ 265 011612  2200          ISZ HANDLER     /POINT TO BUFFER ADDRESS
+ 266 011613  1600          TAD I HANDLER   /GET BUFFER ADDRESS
+ 267 011614  3351          DCA BUFFER      /SAVE IT
+ 268 011615  2200          ISZ HANDLER     /POINT TO ERROR RETURN
+ 269 011616  1234          TAD TUN
+ 270 011617  4776          JMS I (FIXDVC
+ 271 011620  1631          LV              /NOT READY
+ 272 011621  1256          TAD WCDF
+ 273 011622  3335          DCA BFIELD
+ 274 011623  1256          TAD WCDF
+ 275 011624  3277          DCA BFLD
+ 276 011625  7346          STA CLL RTL     /TAD (-3
+ 277 011626  3236          DCA ERKNT
+ 278 011627  4237          JMS     SETUP   /SET UP READ OR WRITE
+ 279                       IFZERO INT <JMP I (CRET+1>
+ 280 011630  2200          ISZ HANDLER     /POINT TO GOOD RETURN
+ 281 011631  7402  LV,     HLT
+ 282 011632  6001          IFNZRO INT <ION>
+ 283 011633  5600          JMP I HANDLER
+ 284 011634  0000  TUN,    0               /TEMP
+ 285 011635  0000  RW,     0               /1 IF WRITE
+ 286 011636  7775  ERKNT,  -3
+ 287 011637  0000  SETUP, 0
+ 288 011640  1235          TAD RW
+ 289 011641  1375          TAD (WRITEX
+ 290 011642  3774          DCA I (CRET     /SET RETURN ADDRESS
+ 291 011643  1351          TAD BUFFER
+ 292 011644  3347          DCA BPTR
+ 293 011645  1773          TAD I (BSIZE
+ 294 011646  7040          CMA             /WANT TO READ ONE MORE
+ 295 011647  1235          TAD RW
+ 296 011650  3346          DCA BKNT
+ 297 011651  1235          TAD RW
+ 298 011652  7106          CLL RTL
+ 299 011653  7006          RTL             /WRITE FN CODE=20
+ 300 011654  1372          TAD (200+INT    /SELECT AND INTERRUPT ENABLE
+ 301 011655  4771          JMS I (LOADA
+ 302 011656  7402  WCDF,   HLT
+ 303 011657  1235          TAD RW
+ 304 011660  7640          SZA CLA
+ 305 011661  1747          TAD I BPTR
+ 306 011662  6211          CDF F
+ 307 011663  4770          JMS I (GO
+ 308 011664  5637          JMP I   SETUP
+ 309               
+ 310 011665  4767  READX, JMS I (CHK
+ 311 011666  0302          AND L374
+ 312 011667  7440          SZA
+ 313 011670  5317          JMP ERRX
+ 314 011671  6706  IOT6C,  KGOA            /GET CHAR JUST READ
+ 315 011672  3350          DCA BYTE
+ 316 011673  2346          ISZ BKNT
+ 317 011674  7410          SKP
+ 318 011675  5305          JMP RWCRC
+ 319 011676  1350  BMODE,  TAD BYTE
+ 320 011677  7402  BFLD,   HLT
+ 321 011700  3747          DCA I BPTR
+ 322 011701  2347          ISZ BPTR
+ 323 011702  0374  L374,   374
+ 324 011703  5766          JMP I (CRET+1   /CRET ALREADY SET UP
+ 325               
+ 326 011704  0200  BSIZE,  200
+ 327 011705  1365  RWCRC, TAD (260+INT    /ENABLE, ENABLE INTER, READ CRC
+ 328 011706  4771          JMS I (LOADA
+ 329 011707  4770          JMS I (GO
+ 330 011710  4774          JMS I (CRET
+ 331 011711  4767          JMS I (CHK
+ 332 011712  4770  CRCMN,  JMS I (GO
+ 333 011713  4774          JMS I (CRET
+ 334 011714  4764          JMS I (CHECKB
+ 335 011715  0363          AND (7775       /IGNORE WLO
+ 336 011716  1362          TAD (-1
+ 337 011717  7650  ERRX,   SNA CLA         /ERRORS?
+ 338 011720  5324          JMP     ERRR+1  /NO - CLEAN BILL OF HEALTH
+ 339 011721  2236          ISZ     ERKNT   /TRY 3 TIMES
+ 340 011722  5761          JMP I   (ERRCOV /RETRY
+ 341 011723  7240  ERRR,   STA             /ERROR WHILE READING CRC
+ 342 011724  4760          JMS I (CLEAR
+ 343 011725  5766          IFNZRO INT <JMP I (CRET+1>
+ 344                       IFZERO INT <
+ 345                       TAD I (CINUSE
+ 346                       SMA CLA
+ 347                       JMP LV-1
+ 348                       TAD I (BSTATE
+ 349                       JMP LV
+ 350                       >
+ 351 011726  5265  WRITEX,        JMP READX
+ 352 011727  4767          JMS I (CHK
+ 353 011730  7440          SZA
+ 354 011731  5317          JMP ERRX
+ 355 011732  2346          ISZ BKNT
+ 356 011733  7410          SKP
+ 357 011734  5343          JMP WCRC
+ 358 011735  7402  BFIELD, HLT
+ 359 011736  2347          ISZ BPTR
+ 360 011737  0070  L70,    70
+ 361 011740  1747          TAD I BPTR
+ 362 011741  4770          JMS I (GO
+ 363 011742  5766          JMP I (CRET+1
+ 364               
+ 365               
+ 366 011743  1365  WCRC,   TAD (260+INT
+ 367 011744  4771          JMS I (LOADA
+ 368 011745  5312          JMP CRCMN
+ 369 011746  0000  BKNT,   0               /NUMBER OF CHARS EXPECTED
+ 370 011747  0000  BPTR,   0               /NEXT LOCATION IN BUFFER TO STORE INTO
+ 371 011750  0000  BYTE,   0               /TEMPORARILY HOLDS BYTE FOUND
+ 372 011751  0000  BUFFER, 0
+ 373 011760  1452          PAGE
+     011761  1300  
+     011762  7777  
+     011763  7775  
+     011764  1445  
+     011765  0261  
+     011766  1500  
+     011767  1462  
+     011770  1456  
+     011771  1324  
+     011772  0201  
+     011773  1704  
+     011774  1477  
+     011775  1726  
+     011776  1220  
+     011777  6201  
+ 374                      $

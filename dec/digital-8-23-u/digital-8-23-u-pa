@@ -1,0 +1,57 @@
+/BINARY TO DECIMAL CONVERSION AND TYPEOUT
+/SINGLE PRECISION
+/CALLING SEQUENCE:              /AC CONTAINS BINARY WORD
+/                    JMS SSPRNT /SUBROUTINE CALL
+                                /RETURN. AC AND L CLEAR
+SSPRNT,   0
+          CLL
+          SPA                   /IS IS POSITIVE?
+          CML CMA IAC           /NO, SET LINK,FORM ABSOLUTE VALUE
+          DCA SSVAL             /STORE NUMBER AWAY
+          DCA SSBOX             /SET DIGIT LOCATION TO ZERO
+          TAD SSCNTR            /INITIALIZE OUTPUT COUNTER TO "4"
+          DCA SSCNT
+          TAD SSADDR            /INITALIZE INSTRUCTION TO GET FIRST 10
+          DCA SSXYZ+1
+          TAD SSPLUS            /GET CODE TO TYPE A "PLUS"
+          SZL                   /IS THE NUMBER NEGATIVE?
+          TAD SSMNS             /YES, CHANGE CODE TP TYPE A "MINUS"
+          JMS SSOUT             /TYPE IT OUT
+SSXYZ,    TAD SSVAL             /PICK UP NUMBER
+          TAD SSCON             /SUBTRACT CURRENT POWER OF 10
+          SPA                   /IS THE RESULT NEGATIVE?
+          JMP .+4               /YES, INDEXING IS FINISHED
+          ISZ SSBOX             /NO, INDEX THE DIGIT LOCATION
+          DCA SSVAL             /STORE REMAINDER IN SSVAL
+          JMP SSXYZ             /CONTINUE SUBTRACTING
+          CLA
+          TAD SSBOX             /PICK UP THE DIGIT NUMBER
+          JMS SSOUT             /TYPE IT OUT
+          DCA SSBOX             /SET DIGIT COUNTER TO "0"
+          ISZ SSXYZ+1           /INDEX INSTRUCTION TO GET POWER OF 10
+          ISZ SSCNT             /HAVE WE TYPED "4" DIGITS
+          JMP SSXYZ             /NO, CONTINUE
+          JMP I SSPRNT          /YES, RETURN
+/TYPEOUT ROUTINE
+SSOUT,    0
+          TAD SSTWO
+          TLS
+          TSF
+          JMP .-1
+          CLA CLL
+          JMP I SSOUT
+SSADDR,   TAD SSCON             /INSTRUCTION TO PICK UP FIRST POWER OF 10
+SSTWO,    260                   /BASIC CODE FOR DIGITAL OUTPUT
+SSPLUS,   -20                   /NUMBER USED TO GENERATE "SPACE"
+SSMNS,    15                    /NUMBER USED TO GENERATE "MINUS"
+SSCNTR,   -4                    /COUNT OF "4" DIGITS
+SSBOX,    0                     /STORAGE REGISTERS
+SSCNT,    0
+SSVAL,    0
+/TABLE OF POWERS OF 10
+SSCON,    6030                  /-1000
+          7634                  /-100
+          7766                  /-10
+          7777                  /-1
+PAUSE
+
