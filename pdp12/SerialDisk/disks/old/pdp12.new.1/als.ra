@@ -1,0 +1,73 @@
+
+        SECT    SUBR
+        JA      #ST
+#XR,    ORG     .+10
+	TEXT    +SUBR  +
+#RET,   SETX    #XR
+        SETB    #BASE
+        JA      .+3
+#BASE,  ORG     .+6
+J,      ORG     .+3
+        ORG     #BASE+30
+        FNOP
+        JA      #RET
+        FNOP
+#GOBAK, 0;0
+#ARGS,  ORG     .+3
+#TMP,   ORG     .+0011
+#LIT,   0001
+        2000
+        0000
+        0002
+        3000
+        0000
+        0003
+        3000
+        0000
+        #LBL=.
+        ORG     #LBL
+#RTN,   BASE    #BASE
+        JA      #GOBAK
+#ST,    STARTD
+        0210
+        FSTA    #GOBAK,0
+        0200
+        SETX    #XR
+        SETB    #BASE
+	TRAP3  AD1	/ADD 1 TO AC 8-MODE ROUTINE
+        LDX     0,1
+        FSTA    #BASE
+        FSTA    #ARGS
+        FLDA%   #BASE,1+
+        FSTA    J
+        STARTF
+        LDX     0002,0
+        LDX     0003,0
+        EXTERN  #NE
+        JA      #RTN
+        LDX     0004,0
+        EXTERN  #NE
+        JA      #RTN
+AD1,	0
+	NOP
+	CLA CLL
+	TAD	ADDA
+	RTL
+	RAL
+	TAD	KCDF
+	DCA	.+1
+	0
+	CLA CLL
+	TAD	ADDA+1
+	DCA	JPTR
+	TAD%	JPTR
+	IAC
+	DCA%	JPTR
+GETBAK,	CDF CIF 00
+	JMP%	RETURN+1
+	EXTERN	#RETRN
+RETURN,	ADDR	#RETRN
+ADDA,	ADDR	J
+JPTR,	0
+KCDF,	CDF
+
