@@ -1,0 +1,182 @@
+   1                                   /
+   2                                   / PROGRAM TO COMARE TWO
+   3                                   / LINC TAPES IN STD OR
+   4                                   / 129. WORD FORMAT
+   5                                   /
+   6                                   /
+   7                                   / CONSTANTS
+   8                                   /
+   9               SRTAPE=1            / SR 11 = 1 FOR DECTAPE
+  10                                   /
+  11                                   / SPECIAL INSTRUCTIONS
+  12                                   /
+  13               AXO=1
+  14               LINC=6141
+  15               PDP=2
+  16               TMA=23
+  17               RDC=700
+  18                                   /
+  19                                   / DATA
+  20                                   /
+  21               *70
+  22 000070  0000  WDCNTI, 0           / WORDS / BLOCK
+  23 000071  0000  BLKCNT, 0           / BLOCKS / TAPE
+  24 000072  0000  WDCNT,  0           / WORD COUNTER
+  25 000073  0000  HNKCNT, 0           / BLOCK COUNTER
+  26 000074  0000  HNKMEM, 0           / MEMORY POINTER
+  27                                   /
+  28                                   / BEGIN HERE
+  29                                   /
+  30               *200
+  31 000200  7402  START,  HLT         / WAIT FOR TAPE MOUNT
+  32 000201  7300          CLA CLL
+  33 000202  7404          OSR         / READ RIGHT SWITCHES
+  34 000203  0177          AND [SRTAPE
+  35 000204  7440          SZA         / SKIP IF STD LINC TAPE
+  36 000205  5213          JMP INITP   / GO INIT DEC TAPE
+  37 000206  1176          TAD [0-256. / STD IS 256 WDS
+  38 000207  3070          DCA WDCNTI
+  39 000210  1175          TAD [0-1000 / 1000 BLOCKS
+  40 000211  3071          DCA BLKCNT
+  41 000212  5220          JMP INIT1   / CONTINUE
+  42 000213  7300  INITP,  CLA CLL
+  43               /       TAD [0-129. / DEC TAPES 129. WDS
+  44 000214  1174          TAD [0-201 / DEC TAPES 129. WDS
+  45 000215  3070          DCA WDCNTI
+  46 000216  1173          TAD [0-3000 / 3000 BLOCKS
+  47 000217  3071          DCA BLKCNT
+  48 000220  7300  INIT1,  CLA CLL
+  49 000221  3241          DCA BLOCK0  / RESET BLOCK #'S
+  50 000222  3270          DCA BLOCK1
+  51                                   /
+  52                                   / READ IN THE NEXT HUNK
+  53                                   / OF 16 BLOCKS
+  54                                   /
+  55 000223  7300  RDHNK,  CLA CLL
+  56 000224  1172          TAD [0-16.
+  57 000225  3073          DCA HNKCNT  / HNKCNT = -16.
+  58 000226  3074          DCA HNKMEM  / HNKMEM = 0
+  59 000227  7300  RDBLK0, CLA CLL     / READ HUNK FROM U0
+  60 000230  1074          TAD HNKMEM  / TMA MEM ADDR
+  61 000231  6141          LINC
+  62 000232  0023          TMA
+  63 000233  0002          PDP
+  64 000234  7300          CLA CLL
+  65 000235  1171          TAD [1020   / XA FIELD 1
+  66 000236  6141          LINC
+  67 000237  0001          AXO
+  68 000240  0700          RDC 0       / READ UNIT 0
+  69 000241  0000  BLOCK0, 0           / BLOCK NUMBER
+  70 000242  0002          PDP
+  71 000243  2241          ISZ BLOCK0  / ++BLOCK0
+  72 000244  7300          CLA CLL
+  73 000245  1074          TAD HNKMEM  / HNKMEM += 256.
+  74 000246  1170          TAD [256.
+  75 000247  3074          DCA HNKMEM
+  76 000250  2073          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+  77 000251  5227          JMP RDBLK0
+  78                                   /
+  79                                   / THEN READ A HUNK
+  80                                   / FROM UNIT 1
+  81                                   /
+  82 000252  7300          CLA CLL
+  83 000253  1172          TAD [0-16.  / HNKCNT = -16.
+  84 000254  3073          DCA HNKCNT
+  85 000255  3074          DCA HNKMEM  / HNKMEM = 0
+  86 000256  7300  RDBLK1, CLA CLL
+  87 000257  1074          TAD HNKMEM  / TMA MEM ADDR
+  88 000260  6141          LINC
+  89 000261  0023          TMA
+  90 000262  0002          PDP
+  91 000263  7300          CLA CLL
+  92 000264  1167          TAD [2020   / XA MODE, FIELD 2
+  93 000265  6141          LINC
+  94 000266  0001          AXO
+  95 000267  0710          RDC 10      / READ UNIT 1
+  96 000270  0000  BLOCK1, 0
+  97 000271  0002          PDP
+  98 000272  2270          ISZ BLOCK1  / ++BLOCK1
+  99 000273  7300          CLA CLL
+ 100 000274  1074          TAD HNKMEM  / HNKMEM += 256
+ 101 000275  1170          TAD [256.
+ 102 000276  3074          DCA HNKMEM
+ 103 000277  2073          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+ 104 000300  5256          JMP RDBLK1
+ 105                                   /
+ 106                                   / THEN COMPARE THE
+ 107                                   / TWO, 1 WORD AT A
+ 108                                   / TIME, BLOCK BY BLOCK
+ 109                                   / UNTIL THE HUNK IS DONE
+ 110                                   /
+ 111 000301  7300          CLA CLL
+ 112 000302  1172          TAD [0-16.  / BLOCKS / HUNK
+ 113 000303  3073          DCA HNKCNT
+ 114 000304  3074          DCA HNKMEM  / HNKMEM = 0
+ 115 000305  7300  CMPBLK, CLA CLL
+ 116 000306  1070          TAD WDCNTI  / WDCNT = -WORDS/BLOCK
+ 117 000307  3072          DCA WDCNT
+ 118 000310  7300  CMPWD,  CLA CLL
+ 119 000311  6211          CDF 10      / DATA FIELD 1
+ 120 000312  1474          TAD I HNKMEM / GET WORD
+ 121 000313  7041          CMA IAC     / -WORD
+ 122 000314  6221          CDF 20      / DATA FIELD 2
+ 123 000315  1474          TAD I HNKMEM
+ 124 000316  6201          CDF 0       / BACK TO NORMAL
+ 125 000317  7440          SZA         / DID WORDS COMPARE?
+ 126 000320  7402          HLT         / MIS COMPARE !!
+ 127 000321  2074          ISZ HNKMEM  / ++HNKMEM
+ 128 000322  7000          NOP         / FOR SKIP
+ 129 000323  2072          ISZ WDCNT   / UNTIL BLOCK IS DONE
+ 130 000324  5310          JMP CMPWD
+ 131 000325  7300          CLA CLL
+ 132 000326  1070          TAD WDCNTI  / BUMP TO NEXT BLOCK
+ 133 000327  1170          TAD [256.
+ 134 000330  1074          TAD HNKMEM
+ 135 000331  3074          DCA HNKMEM
+ 136 000332  2073          ISZ HNKCNT  / UNTIL ALL HUNKS DONE
+ 137 000333  5305          JMP CMPBLK
+ 138                                   /
+ 139                                   / SEE IF ALL HUNKS
+ 140                                   / HAVE BEEN COMPARED
+ 141                                   /
+ 142 000334  7300          CLA CLL
+ 143 000335  1071          TAD BLKCNT  / BLKCNT += 16
+ 144 000336  1166          TAD [16.
+ 145 000337  3071          DCA BLKCNT
+ 146 000340  1071          TAD BLKCNT  / RESTORE BLOCK COUNTER
+ 147 000341  7440          SZA         / ALL DONE?
+ 148 000342  5223          JMP RDHNK   / NOPE - BACK FOR MORE
+ 149 000343  7402          HLT         / ALL DONE1
+ 150 000344  5201          JMP START+1 / TO RUN AGAIN
+ 151 000166  0016  $
+     000167  2020  
+     000170  0256  
+     000171  1020  
+     000172  7762  
+     000173  5000  
+     000174  7577  
+     000175  7000  
+     000176  7522  
+     000177  0001  
+
+AXO     0001
+BLKCNT  0071
+BLOCK0  0241
+BLOCK1  0270
+CMPBLK  0305
+CMPWD   0310
+HNKCNT  0073
+HNKMEM  0074
+INIT1   0220
+INITP   0213
+LINC    6141
+PDP     0002
+RDBLK0  0227
+RDBLK1  0256
+RDC     0700
+RDHNK   0223
+SRTAPE  0001
+START   0200
+TMA     0023
+WDCNT   0072
+WDCNTI  0070

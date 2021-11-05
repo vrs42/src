@@ -1,0 +1,151 @@
+                    /
+                    / PROGRAM TO COMARE TWO
+                    / LINC TAPES IN STD OR
+                    / 129. WORD FORMAT
+                    /
+                    /
+                    / CONSTANTS
+                    /
+SRTAPE=1            / SR 11 = 1 FOR DECTAPE
+                    /
+                    / SPECIAL INSTRUCTIONS
+                    /
+AXO=1
+LINC=6141
+PDP=2
+TMA=23
+RDC=700
+                    /
+                    / DATA
+                    /
+*70
+WDCNTI, 0           / WORDS / BLOCK
+BLKCNT, 0           / BLOCKS / TAPE
+WDCNT,  0           / WORD COUNTER
+HNKCNT, 0           / BLOCK COUNTER
+HNKMEM, 0           / MEMORY POINTER
+                    /
+                    / BEGIN HERE
+                    /
+*200
+START,  HLT         / WAIT FOR TAPE MOUNT
+        CLA CLL
+        OSR         / READ RIGHT SWITCHES
+        AND [SRTAPE
+        SZA         / SKIP IF STD LINC TAPE
+        JMP INITP   / GO INIT DEC TAPE
+        TAD [0-256. / STD IS 256 WDS
+        DCA WDCNTI
+        TAD [0-1000 / 1000 BLOCKS
+        DCA BLKCNT
+        JMP INIT1   / CONTINUE
+INITP,  CLA CLL
+/       TAD [0-129. / DEC TAPES 129. WDS
+        TAD [0-201 / DEC TAPES 129. WDS
+        DCA WDCNTI
+        TAD [0-3000 / 3000 BLOCKS
+        DCA BLKCNT
+INIT1,  CLA CLL
+        DCA BLOCK0  / RESET BLOCK #'S
+        DCA BLOCK1
+                    /
+                    / READ IN THE NEXT HUNK
+                    / OF 16 BLOCKS
+                    /
+RDHNK,  CLA CLL
+        TAD [0-16.
+        DCA HNKCNT  / HNKCNT = -16.
+        DCA HNKMEM  / HNKMEM = 0
+RDBLK0, CLA CLL     / READ HUNK FROM U0
+        TAD HNKMEM  / TMA MEM ADDR
+        LINC
+        TMA
+        PDP
+        CLA CLL
+        TAD [1020   / XA FIELD 1
+        LINC
+        AXO
+        RDC 0       / READ UNIT 0
+BLOCK0, 0           / BLOCK NUMBER
+        PDP
+        ISZ BLOCK0  / ++BLOCK0
+        CLA CLL
+        TAD HNKMEM  / HNKMEM += 256.
+        TAD [256.
+        DCA HNKMEM
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP RDBLK0
+                    /
+                    / THEN READ A HUNK
+                    / FROM UNIT 1
+                    /
+        CLA CLL
+        TAD [0-16.  / HNKCNT = -16.
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+RDBLK1, CLA CLL
+        TAD HNKMEM  / TMA MEM ADDR
+        LINC
+        TMA
+        PDP
+        CLA CLL
+        TAD [2020   / XA MODE, FIELD 2
+        LINC
+        AXO
+        RDC 10      / READ UNIT 1
+BLOCK1, 0
+        PDP
+        ISZ BLOCK1  / ++BLOCK1
+        CLA CLL
+        TAD HNKMEM  / HNKMEM += 256
+        TAD [256.
+        DCA HNKMEM
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP RDBLK1
+                    /
+                    / THEN COMPARE THE
+                    / TWO, 1 WORD AT A
+                    / TIME, BLOCK BY BLOCK
+                    / UNTIL THE HUNK IS DONE
+                    /
+        CLA CLL
+        TAD [0-16.  / BLOCKS / HUNK
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+CMPBLK, CLA CLL
+        TAD WDCNTI  / WDCNT = -WORDS/BLOCK
+        DCA WDCNT
+CMPWD,  CLA CLL
+        CDF 10      / DATA FIELD 1
+        TAD I HNKMEM / GET WORD
+        CMA IAC     / -WORD
+        CDF 20      / DATA FIELD 2
+        TAD I HNKMEM
+        CDF 0       / BACK TO NORMAL
+        SZA         / DID WORDS COMPARE?
+        HLT         / MIS COMPARE !!
+        ISZ HNKMEM  / ++HNKMEM
+        NOP         / FOR SKIP
+        ISZ WDCNT   / UNTIL BLOCK IS DONE
+        JMP CMPWD
+        CLA CLL
+        TAD WDCNTI  / BUMP TO NEXT BLOCK
+        TAD [256.
+        TAD HNKMEM
+        DCA HNKMEM
+        ISZ HNKCNT  / UNTIL ALL HUNKS DONE
+        JMP CMPBLK
+                    /
+                    / SEE IF ALL HUNKS
+                    / HAVE BEEN COMPARED
+                    /
+        CLA CLL
+        TAD BLKCNT  / BLKCNT += 16
+        TAD [16.
+        DCA BLKCNT
+        TAD BLKCNT  / RESTORE BLOCK COUNTER
+        SZA         / ALL DONE?
+        JMP RDHNK   / NOPE - BACK FOR MORE
+        HLT         / ALL DONE1
+        JMP START+1 / TO RUN AGAIN
+$

@@ -1,0 +1,590 @@
+                    / PROGRAM TO SEND A
+                    / TAPE ON UNIT 1 TO
+                    / A PC VIA XMODEM
+                    /
+                    / CONSTANTS
+                    /
+XSOH=1
+XNAK=25
+XCAN=30
+XACK=6
+XEOT=4
+SRTAPE=1            / SR11 1 FOR OS/12 TAPE
+SRCMP=2             / SR10 1 FOR COMPARE
+SRWRIT=4            / SR9 1 FOR WRITE
+                    /
+                    / SPECIAL INSTRUCTIONS
+                    /
+AXO=1
+LINC=6141
+PDP=2
+TMA=23
+RDC=700
+WDE=706
+DKSF=6401
+DKCC=6402
+DKRB=6406
+DTLS=6416
+DTSF=6411
+                    /
+                    / DATA
+                    /
+*70
+XMPTR,  0           / PTR INTO XMBUF
+XMBLK,  0           / XMODEM BLOCK #
+XMCKSM, 0           / XMODEM CHECKSUM
+XMCNT,  0           / WORK COUNTER
+XMACK,  0           / ACKNOWLEDGEMENT CHAR
+ROTCNT, 0           / WORK COUNTER FOR RAR
+WDCNTI, 0           / WORDS PER BLOCK
+BLKCNT, 0           / BLOCKS PER TAPE
+WDCNT,  0           / WORK COUNTER
+HNKCNT, 0           / WORK COUNTER
+HNKMEM, 0           / ADDRESS OF BLOCK
+XMWORD, 0           / XMODEM INCOMING WORD
+XMPROT, 0           / XMODEM PROTOCOL CHAR
+                    /
+                    / INITIALIZATION
+                    /
+*200
+START,  HLT
+        CLA CLL IAC / XMODEM BLOCK=1
+        DCA XMBLK
+        TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+        DCA XMPTR
+/       TAD [0-128. / XMCNT = -128
+        TAD [0-200  / XMCNT = -128
+        DCA XMCNT
+        OSR         / IF SR11 == 0 THEN
+        AND [SRTAPE
+        SZA
+        JMP INITP
+/       TAD [0-256. / WDCNTI= -256.
+        TAD [0-400  / WDCNTI= -256.
+        DCA WDCNTI
+        TAD [0-1000 / BLKCNT = -01000
+        DCA BLKCNT
+        JMP INIT1   / ELSE
+INITP,  CLA CLL
+/       TAD [0-129. / WDCNTI = -129.
+        TAD [0-201 / WDCNTI = -129.
+        DCA WDCNTI
+        TAD [0-3000 / BLKCNT = - 03000
+        DCA BLKCNT
+INIT1,  DCA BLOCK   / BLOCK = 0
+        OSR         / IF SR10==1 THEN COMPARE
+        AND [SRCMP
+        SZA
+        JMP I [CMPINI  / GO COMPARE
+        OSR         / IF SR9==1 THEN WRITE
+        AND [SRWRIT
+        SZA
+        JMP I [WTINI   / GO WRITE
+                    /
+                    / READ NEXT HUNK (1 FIELD)
+                    / (16 BLOCKS) INTO MEM.
+                    /
+RDHNK,  CLA CLL
+/       TAD [0-16.  / HNKCNT = -16.
+        TAD [0-20   / HNKCNT = -16.
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+RDBLK,  CLA CLL
+        TAD HNKMEM  / TMA MEMORY ADDRESS
+        LINC
+        TMA
+        PDP
+        CLA CLL     / EXTENDED, FIELD 1
+        TAD [1020
+        LINC
+        AXO
+        RDC 10      / READ UNIT 1
+BLOCK,  0
+        PDP
+        ISZ BLOCK   / ++BLOCK
+        CLA CLL
+        TAD HNKMEM  / HNKMEM += 256.
+/       TAD [256.   / EVEN FOR 129. WORD
+        TAD [400    / EVEN FOR 129. WORD
+        DCA HNKMEM  / SIMULATED DECTAPES
+        ISZ HNKCNT  / WHILE ++HNKCNT != 0
+        JMP RDBLK
+                    /
+                    / FILL XMODEM BUFFER
+                    / 1 WORD AT A TIME.
+                    / TRANSMIT AS NECESSARY
+                    /
+        CLA CLL
+/       TAD [0-16.  / HNKCNT = -16.
+        TAD [0-20   / HNKCNT = -16.
+        DCA HNKCNT
+        DCA HNKMEM  / MEMORY ADDR=0
+HNKSND, CLA CLL
+        TAD WDCNTI  / WDCNT = WDCNTI
+        DCA WDCNT   / (- WORD COUNT)
+HNKNXW, CDF 10      / FIELD 1 HOLDS DATA
+        TAD I HNKMEM  / AC=WORD
+        CDF 0       / BACK TO NORMAL
+        JMS WDSEND  / PUT WORD IN BUFF
+        ISZ HNKMEM  / POINT TO NEXT WD
+        NOP         / FOR SKIP ON ZERO
+        ISZ WDCNT   / UNTIL ++WDCNT == 0
+        JMP HNKNXW
+        CLA CLL
+        TAD WDCNTI  / BUMP MEM ADDR TO
+/       TAD [256.   / NEXT BLOCK.  DOES
+        TAD [400    / NEXT BLOCK.  DOES
+        TAD HNKMEM  / NOTHING IF BLOCK
+        DCA HNKMEM  / SIZE IS 256.
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP HNKSND
+                    /
+                    / IF WE HAVE SENT THEM
+                    / ALL, FLUSH THE BUFFER
+                    / AND HALT.  OTHERWISE
+                    / GO BACK FOR MORE
+                    /
+        CLA CLL
+        TAD BLKCNT  / BLKCNT += 16.
+/       TAD [16.
+        TAD [20
+        DCA BLKCNT
+        TAD BLKCNT
+        SZA         / UNTIL BLKCNT == 0
+        JMP RDHNK
+        JMS WDFLSH  / FLUSH THE BUFFER
+        CLA CLL
+        TAD [XEOT   / SEND EOT CHAR
+        JMS I [CHSEND
+        HLT         / AND HALT
+        JMP START
+                    /
+                    / SUBROUTINE TO PUT A
+                    / WORD INTO XMODEM
+                    / BUFFER AND TRIGGER
+                    / A TRANSMISSION IF
+                    / THE BUFFER IS FULL
+                    /
+WDSEND, 0           / RETURN ADDRESS
+        DCA I XMPTR   / STORE LOW 8 BITS
+/       TAD [0-8.
+        TAD [0-10
+        DCA ROTCNT
+        TAD I XMPTR   / RESTORE DATA WORD
+WDROT,  CLL RAR     / AC >>= 8.
+        ISZ ROTCNT
+        JMP WDROT
+        ISZ XMPTR   / ++ XMPTR
+        NOP         / FOR SKIP
+        DCA I XMPTR   / STORE HIGH 4 BITS
+        ISZ XMPTR   / ++ XMPTR
+        NOP         / FOR SKIP
+        ISZ XMCNT
+        ISZ XMCNT
+        JMP I WDSEND  / RTRN IF NOT FULL
+        JMS I [XMSEND  / ELSE SEND BUFFER
+        CLA CLL     / RE-INITIALIZE
+        TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+        DCA XMPTR
+/       TAD [0-128. / XMCNT = -128.
+        TAD [0-200  / XMCNT = -128.
+        DCA XMCNT
+        ISZ XMBLK   / ++XMBLK (XMODEM BLOCK)
+        NOP         / FOR SKIP
+        JMP I WDSEND  / AND RETURN
+                    /
+                    / SUBROUTINE TO FLUSH
+                    / AND AND SEND XMODEM
+                    / BUFFER
+                    /
+/WDFLSH, 0          /BUGBUG: Entry point is over-written
+/	CLA CLL     /...but AC is known to be clear.
+WDFLSH, CLA CLL
+        TAD XMCNT   / IF COUNT==128.
+/       TAD [0-128.
+        TAD [0-200
+        SNA
+        JMP I WDFLSH  / THEN JUST RETURN
+WDFILL, CLA CLL
+        DCA I XMPTR   / STUFF A 0 BYTE
+        ISZ XMPTR   / ++XMPTR
+        NOP         / FOR SKIP
+        ISZ XMCNT   / UNTIL ++XMCNT == 0
+        JMP WDFILL
+        JMP I WDFLSH  / RETURN WHEN DONE
+                    /
+                    / SUBROUTINE TO SEND
+                    / AN XMODEM MESSAGE,
+                    / WITH RETRIES
+                    /
+*400
+XMSEND, 0           / RETURN ADDRESS
+        JMS XMPUT   / TRY AND SEND
+        JMS CHGET   / GET ACKNOWLEDGEMENT
+        AND [77     / FOR TESTING CONV.
+        DCA XMACK   / SAVE IT FOR LATER
+        TAD XMACK   / GET IT BACK
+        TAD [0-XNAK / IF == NAK
+        SNA
+        JMP XMSEND+1 / THEN RETRY
+        CLA CLL
+        TAD XMACK
+        TAD [0-XCAN / IF == CANCEL
+        SZA
+        JMP XMSND1
+        JMP I [START+1 / JUST RESTART
+XMSND1, CLA CLL     / ELSE
+        TAD XMACK
+        TAD [0-XACK / IF != ACK
+        SZA
+        JMP XMSEND+1 / RETRY
+        JMP I XMSEND  / ACK -- RETURN
+                    /
+                    / SUBROUTINE TO SEND
+                    / XMODEM BUFFER 1 TIME
+                    /
+XMPUT,  0           / RETURN ADDRESS
+        CLA CLL
+        TAD [XSOH   / TRANSMIT SOH
+        JMS CHSEND
+        CLA CLL
+        TAD XMBLK   / TRANSMIT BLOCK NO.
+        JMS CHSEND
+        CLA CLL
+        TAD XMBLK
+        CMA         / TRANSMIT COMPLEMENT
+        JMS CHSEND
+        CLA CLL
+        DCA XMCKSM  / XMCKSM = 0
+/       TAD [0-128. / XMCNT = -128.
+        TAD [0-200  / XMCNT = -128.
+        DCA XMCNT
+        TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+        DCA XMPTR
+XMSPUT, CLA CLL     / SEND *XMPTR
+        TAD I XMPTR
+        JMS CHSEND
+        CLA CLL     / XMCKSM += *XMPTR
+        TAD I XMPTR
+        TAD XMCKSM
+        DCA XMCKSM
+        ISZ XMPTR   / ++XMPTR
+        NOP         / FOR SKIP
+        ISZ XMCNT   / UNTIL ++XMCNT == 0
+        JMP XMSPUT
+        DKCC        / PREPARE FOR ACK CHAR
+        CLA CLL     / SEND CHECKSUM
+        TAD XMCKSM
+        JMS CHSEND
+        JMP I XMPUT   / AND RETURN
+                    /
+                    / ROUTINE TO SEND CHAR
+                    /
+CHSEND, 0           / RETURN ADDRESS
+        DTLS        / SEND THE CHAR
+        DTSF        / CHECK FLAG
+        JMP .-1     / WAIT TILL DONE
+        JMP I CHSEND
+                    /
+                    / ROUTINE TO WAIT FOR
+                    / AND RECEIVE A CHAR
+                    /
+CHGET,  0           / RETURN ADDRESS
+        DKSF        / WAIT FOR CHAR
+        JMP .-1
+        DKRB        / RECEIVE THE CHAR
+        JMP I CHGET   / AND RETURN
+                    /
+                    / COMPARE INCOMING DATA
+                    / TO TAPE DRIVE 1
+                    /
+CMPINI, CLA CLL
+        DCA CMPBLK  / CMPBLK = 0
+        DCA XMCNT   / INIT XM BUFFER EMPTY
+        TAD [XNAK   / PRIME INITAL NACK
+        DCA XMACK
+                    /
+                    / COMPARE NEXT HUNK
+                    /
+CMPHNK, CLA CLL
+/       TAD [0-16.  / HNKCNT = -16
+        TAD [0-20   / HNKCNT = -16
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+CMPRB,  CLA CLL     / READ NEXT BLOCK
+        TAD HNKMEM  / GET MEM ADDR
+        LINC
+        TMA
+        PDP
+        CLA CLL
+        TAD [1020   / XA MODE, FIELD 1
+        LINC
+        AXO
+        RDC 10      / READ UNIT 1
+CMPBLK, 0           / BLOCK NUMBER
+        PDP
+        ISZ CMPBLK  / ++CMPBLK
+        CLA CLL
+        TAD HNKMEM  / HNKMEM += 256
+/       TAD [256.   / EVEN FOR 129 WORD
+        TAD [400    / EVEN FOR 129 WORD
+        DCA HNKMEM  / BLOCK TAPES
+        ISZ HNKCNT  / WHILE ++HNKCNT != 0
+        JMP CMPRB   / GO READ NEXT BLK
+                    /
+                    / THEN COMPARE WHAT WE
+                    / JUST READ TO INCOMING
+                    / DATA FROM XMODEM
+                    /
+        CLA CLL
+/       TAD [0-16.  / HNKCNT = -16.
+        TAD [0-20   / HNKCNT = -16.
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+CMPCBK, CLA CLL
+        TAD WDCNTI  / WDCNT = WDCNTI
+        DCA WDCNT
+CMPCWD, JMS I [RDWD    / GET WORD FROM XMODEM
+        CMA IAC     / AC = -AC
+        CDF 10      / COMPARE TO DATA
+        TAD I HNKMEM  / FROM TAPE
+        CDF 0
+        SZA         / COMPARE OK
+        HLT         / MIS-COMPARE!!!
+        ISZ HNKMEM  / POINT TO NEXT WORD
+        NOP         / FOR SKIP
+        ISZ WDCNT   / UNTIL ++WDCNT == 0
+        JMP CMPCWD  / GO COMPARE NEXT WD
+        CLA CLL     / BUMP UP TO NEXT
+        TAD WDCNTI  / BLOCK.  DOES NOTHING
+/       TAD [256.   / FOR 256. WORD BLOCKS
+        TAD [400    / FOR 256. WORD BLOCKS
+        TAD HNKMEM
+        DCA HNKMEM
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP CMPCBK  / GO COMPARE NEXT BLOCK
+                    /
+                    / IF WE COMPARED IT ALL, HALT
+                    /
+        CLA CLL
+        TAD BLKCNT  / BLKCNT += 16
+/ This line references a new literal "16.", not the existing one.
+/ We kludge here by using "16", then patching the value below.
+/       TAD [16.
+        TAD [20
+        DCA BLKCNT
+        TAD BLKCNT  / RESTORE AC
+        SZA
+        JMP CMPHNK  / MORE TO COMPARE
+        TAD [XACK   / ACK FINAL BLOCK
+        JMS CHSEND
+        CLA CLL
+        TAD [XACK
+        JMS I [CHSEND
+        HLT         / HALT, THEN RESTART
+        JMP I [START+1 / SKIP INIT HLT
+                    /
+                    / WRITE TAPE FROM INCOMING DATA
+                    /
+WTINI,  HLT         / FOR SAFETY
+        CLA CLL
+        DCA WTBLOK  / WTBLOK = 0
+        DCA XMCNT   / INIT XMODEM BUF EMPTY
+        TAD [XNAK   / PRIME INITIAL NACK
+        DCA XMACK
+WTGHNK, CLA CLL     / HNKCNT = -16.
+/       TAD [0-16.
+        TAD [0-20
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+WTGBK,  CLA CLL
+        TAD WDCNTI  / WDCNT = -WORDS/BLOCK
+        DCA WDCNT
+WTGWD,  JMS I [RDWD    / GET WORD FROM XMODEM
+        CDF 10
+        DCA I HNKMEM  / STORE IN TAPE BUFF
+        CDF 0
+        ISZ HNKMEM  / ++HNKMEM
+        NOP         / FOR SKIP
+        ISZ WDCNT   / UNTIL ++WDCNT == 0
+        JMP WTGWD
+        TAD WDCNTI  / BUMP TO NEXT BLOCK
+/       TAD [256.   / HNKMEM += 256-BLKSIZE
+        TAD [400    / HNKMEM += 256-BLKSIZE
+        TAD HNKMEM
+        DCA HNKMEM
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP WTGBK
+/       TAD [0-16.  / HNKCNT = -16.
+        TAD [0-20   / HNKCNT = -16.
+        DCA HNKCNT
+        DCA HNKMEM  / HNKMEM = 0
+WTBLK,  CLA CLL
+        TAD HNKMEM  / TMA MEMORY ADDR
+        LINC
+        TMA
+        PDP
+        CLA CLL
+        TAD [1020   / XA MODE, FIELD 1
+        LINC
+        AXO
+        WDE 10      / WRITE TAPE BLOCK
+WTBLOK, 0
+        PDP
+        ISZ WTBLOK  / ++WTBLOK
+        CLA CLL
+        TAD HNKMEM  / HNKMEM += 256.
+/       TAD [256.   / EVEN FOR 129 WD
+        TAD [400    / EVEN FOR 129 WD
+        DCA HNKMEM  / BLOCKS
+        ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+        JMP WTBLK
+                    /
+                    / IF ALL HUNKS WRITTEN
+                    / THEN HALT
+                    /
+        CLA CLL
+        TAD BLKCNT  / BLKCNT += BLOCKS/HUNK
+/       TAD [16.
+        TAD [20
+        DCA BLKCNT
+        TAD BLKCNT
+        SZA
+        JMP WTGHNK  / GO DO NEXT HUNK
+        TAD [XACK   / ACK FINAL BLOCK
+        JMS I [CHSEND
+        CLA CLL
+        TAD [XACK
+        JMS I [CHSEND
+        HLT         / THEN HALT -- WELL DONE!
+        JMP I [START+1 / SKIP INITIAL HALT
+                    /
+                    / ROUTINE TO RECEIVE
+                    / A WORD FROM XMODEM
+                    /
+*1000
+RDWD,   0           / RETURN ADDR
+        CLA CLL
+        TAD XMCNT   / IF BUFFER IS EMPTY
+        SZA
+        JMP RDWD2   / BUFFER NOT EMPTY
+        JMS XMGET   / GO FILL BUFFER
+        SNA         / SKIP IF EOT
+        JMP RDWD1   / NOT EOT -- OK
+        HLT         / EOT - NOT EXPECTED
+        JMP .-1     / HARD HALT
+RDWD1,  TAD [XMBUF  / XMPTR = ADDR(XMBUFF)
+        DCA XMPTR
+/       TAD [0-128. / XMCNT = -128.
+        TAD [0-200  / XMCNT = -128.
+        DCA XMCNT
+RDWD2,  CLA CLL     / CLEAR AC
+        TAD I XMPTR   / WORD = *XMPTR
+        DCA XMWORD  / SAVE IT
+        ISZ XMPTR   / ++XMPTR
+        NOP         / FOR SKIP
+        TAD I XMPTR   / GET NEXT CHAR
+        ISZ XMPTR   / ++XMPTR
+        NOP         / FOR SKIP
+        RTR         / >>= 2
+        RTR         / >>= 2
+        RAR         / >>= 1  == <<= 8
+        AND [7400   / KEEP 4 BITS
+        TAD XMWORD  / OR IN LOW 8 BITS
+        ISZ XMCNT
+        ISZ XMCNT
+        NOP         / FOR SKIP
+        JMP I RDWD    / RETURN WITH WORD
+                    /
+                    / ROUTINE TO READ 1
+                    / 128 BYTE XMODEM BLOCK
+                    /
+XMGET,  0           / RETURN ADDRESS
+        CLA CLL
+        TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+        DCA XMPTR
+        DCA XMCKSM  / XMCKSM = 0
+/       TAD [0-128.
+        TAD [0-200
+        DCA XMCNT   / XMCNT = -128.
+        TAD XMACK   / SEND ACK OR NACK
+        JMS I [CHSEND
+XMGSOH, JMS I [CHGET   / WAIT FOR SOH
+        DCA XMPROT  / SAVE CHAR
+        TAD XMPROT  / RESTORE
+        TAD [0-XSOH / IS CHAR == SOH?
+        SNA
+        JMP XMGBLK  / CHAR == SOH
+        CLA CLL     / CHAR != SOH
+        TAD XMPROT  / IS CHAR == EOT?
+        TAD [0-XEOT
+        SNA
+        JMP XMGEOT  / CHAR IS EOT
+        JMS XMNACK  / NOT EOT.  JUNK!  NAK!
+        JMP XMGSOH  / AND GO LOOK FOR SOH
+XMGEOT, CLA CLL IAC / IF EOT -- RETURN 1
+        JMP I XMGET
+XMGBLK, JMS I [CHGET   / SOH.  GET BLOCK #
+        CMA IAC     / COMPARE TO EXPECTED
+        TAD XMBLK
+        SNA
+        JMP XMGBLC  / OK.  GET COMPLEMENT
+        HLT         / NOT OK.  HALT, THEN NAK
+        JMS XMNACK
+        JMP XMGSOH  / THEN GET SOH AGAIN
+XMGBLC, JMS I [CHGET   / GET BLOCK COMPLEMENT
+        IAC         / NOW IT IS -BLOCK (ALMOST)
+        TAD XMBLK   / COMPARE WITH EXPECTED
+        AND [377    / 8 BIT SUM
+        SNA
+        JMP XMGDAT  / OK - GO GET DATA
+        HLT         / NOT OK.  HALT, THEN NAK
+        JMS XMNACK
+        JMP XMGSOH
+XMGDAT, JMS I [CHGET   / GET A CHAR OF DATA
+        DCA I XMPTR   / *XMPTR = CHAR
+        TAD I XMPTR   / RESTORE TO AC
+        TAD XMCKSM  / ADD TO CHKSUM
+        DCA XMCKSM
+        ISZ XMPTR   / ++XMPTR
+        NOP         / FOR SKIP
+        ISZ XMCNT   / UNTIL ++XMCNT == 0
+        JMP XMGDAT
+XMGCKS, JMS I [CHGET   / GET CHECKSUM CHAR
+        CMA IAC     / - CHECKSUM
+        TAD XMCKSM  / COMPARE WITH EXPECTED
+        AND [377    / 8 BIT SUM
+        SNA
+        JMP XMGACK  / OK -- GO ACK
+        HLT         / FOR DEBUGGING
+        CLA CLL
+        TAD [XNAK   / PRIME TO NACK
+        DCA XMACK
+        JMP XMGET+1 / AND TRY AGAIN
+XMGACK, TAD [XACK   / ACK1
+        DCA XMACK   / PRIME TO ACK IT
+        CLA CLL     / BUMP XMODEM BLOCK #
+        TAD XMBLK
+        IAC
+        AND [377    / ONLY 8 BITS!
+        DCA XMBLK
+        TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+        DCA XMPTR
+/       TAD [0-128. / XMCNT = -128.
+        TAD [0-200  / XMCNT = -128.
+        DCA XMCNT
+        JMP I XMGET   / RETURN (AC=0)
+                    /
+                    / ROUTINE TO SEND
+                    / A NACK CHAR
+                    /
+XMNACK, 0           / RETURN ADDR
+        CLA CLL
+        TAD [XNAK
+        JMS I [CHSEND
+        JMP I XMNACK  / RETURN
+                    /
+                    / XMODEM BUFFER
+                    /
+XMBUF,  0
+$

@@ -1,0 +1,694 @@
+   1                                   / PROGRAM TO SEND A
+   2                                   / TAPE ON UNIT 1 TO
+   3                                   / A PC VIA XMODEM
+   4                                   /
+   5                                   / CONSTANTS
+   6                                   /
+   7               XSOH=1
+   8               XNAK=25
+   9               XCAN=30
+  10               XACK=6
+  11               XEOT=4
+  12               SRTAPE=1            / SR11 1 FOR OS/12 TAPE
+  13               SRCMP=2             / SR10 1 FOR COMPARE
+  14               SRWRIT=4            / SR9 1 FOR WRITE
+  15                                   /
+  16                                   / SPECIAL INSTRUCTIONS
+  17                                   /
+  18               AXO=1
+  19               LINC=6141
+  20               PDP=2
+  21               TMA=23
+  22               RDC=700
+  23               WDE=706
+  24               DKSF=6401
+  25               DKCC=6402
+  26               DKRB=6406
+  27               DTLS=6416
+  28               DTSF=6411
+  29                                   /
+  30                                   / DATA
+  31                                   /
+  32               *70
+  33 000070  0000  XMPTR,  0           / PTR INTO XMBUF
+  34 000071  0000  XMBLK,  0           / XMODEM BLOCK #
+  35 000072  0000  XMCKSM, 0           / XMODEM CHECKSUM
+  36 000073  0000  XMCNT,  0           / WORK COUNTER
+  37 000074  0000  XMACK,  0           / ACKNOWLEDGEMENT CHAR
+  38 000075  0000  ROTCNT, 0           / WORK COUNTER FOR RAR
+  39 000076  0000  WDCNTI, 0           / WORDS PER BLOCK
+  40 000077  0000  BLKCNT, 0           / BLOCKS PER TAPE
+  41 000100  0000  WDCNT,  0           / WORK COUNTER
+  42 000101  0000  HNKCNT, 0           / WORK COUNTER
+  43 000102  0000  HNKMEM, 0           / ADDRESS OF BLOCK
+  44 000103  0000  XMWORD, 0           / XMODEM INCOMING WORD
+  45 000104  0000  XMPROT, 0           / XMODEM PROTOCOL CHAR
+  46                                   /
+  47                                   / INITIALIZATION
+  48                                   /
+  49               *200
+  50 000200  7402  START,  HLT
+  51 000201  7301          CLA CLL IAC / XMODEM BLOCK=1
+  52 000202  3071          DCA XMBLK
+  53 000203  1177          TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+  54 000204  3070          DCA XMPTR
+  55               /       TAD [0-128. / XMCNT = -128
+  56 000205  1176          TAD [0-200  / XMCNT = -128
+  57 000206  3073          DCA XMCNT
+  58 000207  7404          OSR         / IF SR11 == 0 THEN
+  59 000210  0175          AND [SRTAPE
+  60 000211  7440          SZA
+  61 000212  5220          JMP INITP
+  62               /       TAD [0-256. / WDCNTI= -256.
+  63 000213  1174          TAD [0-400  / WDCNTI= -256.
+  64 000214  3076          DCA WDCNTI
+  65 000215  1173          TAD [0-1000 / BLKCNT = -01000
+  66 000216  3077          DCA BLKCNT
+  67 000217  5225          JMP INIT1   / ELSE
+  68 000220  7300  INITP,  CLA CLL
+  69               /       TAD [0-129. / WDCNTI = -129.
+  70 000221  1172          TAD [0-201 / WDCNTI = -129.
+  71 000222  3076          DCA WDCNTI
+  72 000223  1171          TAD [0-3000 / BLKCNT = - 03000
+  73 000224  3077          DCA BLKCNT
+  74 000225  3254  INIT1,  DCA BLOCK   / BLOCK = 0
+  75 000226  7404          OSR         / IF SR10==1 THEN COMPARE
+  76 000227  0170          AND [SRCMP
+  77 000230  7440          SZA
+  78 000231  5567          JMP I [CMPINI  / GO COMPARE
+  79 000232  7404          OSR         / IF SR9==1 THEN WRITE
+  80 000233  0166          AND [SRWRIT
+  81 000234  7440          SZA
+  82 000235  5565          JMP I [WTINI   / GO WRITE
+  83                                   /
+  84                                   / READ NEXT HUNK (1 FIELD)
+  85                                   / (16 BLOCKS) INTO MEM.
+  86                                   /
+  87 000236  7300  RDHNK,  CLA CLL
+  88               /       TAD [0-16.  / HNKCNT = -16.
+  89 000237  1164          TAD [0-20   / HNKCNT = -16.
+  90 000240  3101          DCA HNKCNT
+  91 000241  3102          DCA HNKMEM  / HNKMEM = 0
+  92 000242  7300  RDBLK,  CLA CLL
+  93 000243  1102          TAD HNKMEM  / TMA MEMORY ADDRESS
+  94 000244  6141          LINC
+  95 000245  0023          TMA
+  96 000246  0002          PDP
+  97 000247  7300          CLA CLL     / EXTENDED, FIELD 1
+  98 000250  1163          TAD [1020
+  99 000251  6141          LINC
+ 100 000252  0001          AXO
+ 101 000253  0710          RDC 10      / READ UNIT 1
+ 102 000254  0000  BLOCK,  0
+ 103 000255  0002          PDP
+ 104 000256  2254          ISZ BLOCK   / ++BLOCK
+ 105 000257  7300          CLA CLL
+ 106 000260  1102          TAD HNKMEM  / HNKMEM += 256.
+ 107               /       TAD [256.   / EVEN FOR 129. WORD
+ 108 000261  1162          TAD [400    / EVEN FOR 129. WORD
+ 109 000262  3102          DCA HNKMEM  / SIMULATED DECTAPES
+ 110 000263  2101          ISZ HNKCNT  / WHILE ++HNKCNT != 0
+ 111 000264  5242          JMP RDBLK
+ 112                                   /
+ 113                                   / FILL XMODEM BUFFER
+ 114                                   / 1 WORD AT A TIME.
+ 115                                   / TRANSMIT AS NECESSARY
+ 116                                   /
+ 117 000265  7300          CLA CLL
+ 118               /       TAD [0-16.  / HNKCNT = -16.
+ 119 000266  1164          TAD [0-20   / HNKCNT = -16.
+ 120 000267  3101          DCA HNKCNT
+ 121 000270  3102          DCA HNKMEM  / MEMORY ADDR=0
+ 122 000271  7300  HNKSND, CLA CLL
+ 123 000272  1076          TAD WDCNTI  / WDCNT = WDCNTI
+ 124 000273  3100          DCA WDCNT   / (- WORD COUNT)
+ 125 000274  6211  HNKNXW, CDF 10      / FIELD 1 HOLDS DATA
+ 126 000275  1502          TAD I HNKMEM  / AC=WORD
+ 127 000276  6201          CDF 0       / BACK TO NORMAL
+ 128 000277  4330          JMS WDSEND  / PUT WORD IN BUFF
+ 129 000300  2102          ISZ HNKMEM  / POINT TO NEXT WD
+ 130 000301  7000          NOP         / FOR SKIP ON ZERO
+ 131 000302  2100          ISZ WDCNT   / UNTIL ++WDCNT == 0
+ 132 000303  5274          JMP HNKNXW
+ 133 000304  7300          CLA CLL
+ 134 000305  1076          TAD WDCNTI  / BUMP MEM ADDR TO
+ 135               /       TAD [256.   / NEXT BLOCK.  DOES
+ 136 000306  1162          TAD [400    / NEXT BLOCK.  DOES
+ 137 000307  1102          TAD HNKMEM  / NOTHING IF BLOCK
+ 138 000310  3102          DCA HNKMEM  / SIZE IS 256.
+ 139 000311  2101          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+ 140 000312  5271          JMP HNKSND
+ 141                                   /
+ 142                                   / IF WE HAVE SENT THEM
+ 143                                   / ALL, FLUSH THE BUFFER
+ 144                                   / AND HALT.  OTHERWISE
+ 145                                   / GO BACK FOR MORE
+ 146                                   /
+ 147 000313  7300          CLA CLL
+ 148 000314  1077          TAD BLKCNT  / BLKCNT += 16.
+ 149               /       TAD [16.
+ 150 000315  1161          TAD [20
+ 151 000316  3077          DCA BLKCNT
+ 152 000317  1077          TAD BLKCNT
+ 153 000320  7440          SZA         / UNTIL BLKCNT == 0
+ 154 000321  5236          JMP RDHNK
+ 155 000322  4361          JMS WDFLSH  / FLUSH THE BUFFER
+ 156 000323  7300          CLA CLL
+ 157 000324  1166          TAD [XEOT   / SEND EOT CHAR
+ 158 000325  4560          JMS I [CHSEND
+ 159 000326  7402          HLT         / AND HALT
+ 160 000327  5200          JMP START
+ 161                                   /
+ 162                                   / SUBROUTINE TO PUT A
+ 163                                   / WORD INTO XMODEM
+ 164                                   / BUFFER AND TRIGGER
+ 165                                   / A TRANSMISSION IF
+ 166                                   / THE BUFFER IS FULL
+ 167                                   /
+ 168 000330  0000  WDSEND, 0           / RETURN ADDRESS
+ 169 000331  3470          DCA I XMPTR   / STORE LOW 8 BITS
+ 170               /       TAD [0-8.
+ 171 000332  1157          TAD [0-10
+ 172 000333  3075          DCA ROTCNT
+ 173 000334  1470          TAD I XMPTR   / RESTORE DATA WORD
+ 174 000335  7110  WDROT,  CLL RAR     / AC >>= 8.
+ 175 000336  2075          ISZ ROTCNT
+ 176 000337  5335          JMP WDROT
+ 177 000340  2070          ISZ XMPTR   / ++ XMPTR
+ 178 000341  7000          NOP         / FOR SKIP
+ 179 000342  3470          DCA I XMPTR   / STORE HIGH 4 BITS
+ 180 000343  2070          ISZ XMPTR   / ++ XMPTR
+ 181 000344  7000          NOP         / FOR SKIP
+ 182 000345  2073          ISZ XMCNT
+ 183 000346  2073          ISZ XMCNT
+ 184 000347  5730          JMP I WDSEND  / RTRN IF NOT FULL
+ 185 000350  4562          JMS I [XMSEND  / ELSE SEND BUFFER
+ 186 000351  7300          CLA CLL     / RE-INITIALIZE
+ 187 000352  1177          TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+ 188 000353  3070          DCA XMPTR
+ 189               /       TAD [0-128. / XMCNT = -128.
+ 190 000354  1176          TAD [0-200  / XMCNT = -128.
+ 191 000355  3073          DCA XMCNT
+ 192 000356  2071          ISZ XMBLK   / ++XMBLK (XMODEM BLOCK)
+ 193 000357  7000          NOP         / FOR SKIP
+ 194 000360  5730          JMP I WDSEND  / AND RETURN
+ 195                                   /
+ 196                                   / SUBROUTINE TO FLUSH
+ 197                                   / AND AND SEND XMODEM
+ 198                                   / BUFFER
+ 199                                   /
+ 200               /WDFLSH, 0          /BUGBUG: Entry point is over-written
+ 201               /       CLA CLL     /...but AC is known to be clear.
+ 202 000361  7300  WDFLSH, CLA CLL
+ 203 000362  1073          TAD XMCNT   / IF COUNT==128.
+ 204               /       TAD [0-128.
+ 205 000363  1176          TAD [0-200
+ 206 000364  7450          SNA
+ 207 000365  5761          JMP I WDFLSH  / THEN JUST RETURN
+ 208 000366  7300  WDFILL, CLA CLL
+ 209 000367  3470          DCA I XMPTR   / STUFF A 0 BYTE
+ 210 000370  2070          ISZ XMPTR   / ++XMPTR
+ 211 000371  7000          NOP         / FOR SKIP
+ 212 000372  2073          ISZ XMCNT   / UNTIL ++XMCNT == 0
+ 213 000373  5366          JMP WDFILL
+ 214 000374  5761          JMP I WDFLSH  / RETURN WHEN DONE
+ 215                                   /
+ 216                                   / SUBROUTINE TO SEND
+ 217                                   / AN XMODEM MESSAGE,
+ 218                                   / WITH RETRIES
+ 219                                   /
+ 220               *400
+ 221 000400  0000  XMSEND, 0           / RETURN ADDRESS
+ 222 000401  4225          JMS XMPUT   / TRY AND SEND
+ 223 000402  4273          JMS CHGET   / GET ACKNOWLEDGEMENT
+ 224 000403  0156          AND [77     / FOR TESTING CONV.
+ 225 000404  3074          DCA XMACK   / SAVE IT FOR LATER
+ 226 000405  1074          TAD XMACK   / GET IT BACK
+ 227 000406  1155          TAD [0-XNAK / IF == NAK
+ 228 000407  7450          SNA
+ 229 000410  5201          JMP XMSEND+1 / THEN RETRY
+ 230 000411  7300          CLA CLL
+ 231 000412  1074          TAD XMACK
+ 232 000413  1154          TAD [0-XCAN / IF == CANCEL
+ 233 000414  7440          SZA
+ 234 000415  5217          JMP XMSND1
+ 235 000416  5553          JMP I [START+1 / JUST RESTART
+ 236 000417  7300  XMSND1, CLA CLL     / ELSE
+ 237 000420  1074          TAD XMACK
+ 238 000421  1152          TAD [0-XACK / IF != ACK
+ 239 000422  7440          SZA
+ 240 000423  5201          JMP XMSEND+1 / RETRY
+ 241 000424  5600          JMP I XMSEND  / ACK -- RETURN
+ 242                                   /
+ 243                                   / SUBROUTINE TO SEND
+ 244                                   / XMODEM BUFFER 1 TIME
+ 245                                   /
+ 246 000425  0000  XMPUT,  0           / RETURN ADDRESS
+ 247 000426  7300          CLA CLL
+ 248 000427  1175          TAD [XSOH   / TRANSMIT SOH
+ 249 000430  4266          JMS CHSEND
+ 250 000431  7300          CLA CLL
+ 251 000432  1071          TAD XMBLK   / TRANSMIT BLOCK NO.
+ 252 000433  4266          JMS CHSEND
+ 253 000434  7300          CLA CLL
+ 254 000435  1071          TAD XMBLK
+ 255 000436  7040          CMA         / TRANSMIT COMPLEMENT
+ 256 000437  4266          JMS CHSEND
+ 257 000440  7300          CLA CLL
+ 258 000441  3072          DCA XMCKSM  / XMCKSM = 0
+ 259               /       TAD [0-128. / XMCNT = -128.
+ 260 000442  1176          TAD [0-200  / XMCNT = -128.
+ 261 000443  3073          DCA XMCNT
+ 262 000444  1177          TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+ 263 000445  3070          DCA XMPTR
+ 264 000446  7300  XMSPUT, CLA CLL     / SEND *XMPTR
+ 265 000447  1470          TAD I XMPTR
+ 266 000450  4266          JMS CHSEND
+ 267 000451  7300          CLA CLL     / XMCKSM += *XMPTR
+ 268 000452  1470          TAD I XMPTR
+ 269 000453  1072          TAD XMCKSM
+ 270 000454  3072          DCA XMCKSM
+ 271 000455  2070          ISZ XMPTR   / ++XMPTR
+ 272 000456  7000          NOP         / FOR SKIP
+ 273 000457  2073          ISZ XMCNT   / UNTIL ++XMCNT == 0
+ 274 000460  5246          JMP XMSPUT
+ 275 000461  6402          DKCC        / PREPARE FOR ACK CHAR
+ 276 000462  7300          CLA CLL     / SEND CHECKSUM
+ 277 000463  1072          TAD XMCKSM
+ 278 000464  4266          JMS CHSEND
+ 279 000465  5625          JMP I XMPUT   / AND RETURN
+ 280                                   /
+ 281                                   / ROUTINE TO SEND CHAR
+ 282                                   /
+ 283 000466  0000  CHSEND, 0           / RETURN ADDRESS
+ 284 000467  6416          DTLS        / SEND THE CHAR
+ 285 000470  6411          DTSF        / CHECK FLAG
+ 286 000471  5270          JMP .-1     / WAIT TILL DONE
+ 287 000472  5666          JMP I CHSEND
+ 288                                   /
+ 289                                   / ROUTINE TO WAIT FOR
+ 290                                   / AND RECEIVE A CHAR
+ 291                                   /
+ 292 000473  0000  CHGET,  0           / RETURN ADDRESS
+ 293 000474  6401          DKSF        / WAIT FOR CHAR
+ 294 000475  5274          JMP .-1
+ 295 000476  6406          DKRB        / RECEIVE THE CHAR
+ 296 000477  5673          JMP I CHGET   / AND RETURN
+ 297                                   /
+ 298                                   / COMPARE INCOMING DATA
+ 299                                   / TO TAPE DRIVE 1
+ 300                                   /
+ 301 000500  7300  CMPINI, CLA CLL
+ 302 000501  3323          DCA CMPBLK  / CMPBLK = 0
+ 303 000502  3073          DCA XMCNT   / INIT XM BUFFER EMPTY
+ 304 000503  1151          TAD [XNAK   / PRIME INITAL NACK
+ 305 000504  3074          DCA XMACK
+ 306                                   /
+ 307                                   / COMPARE NEXT HUNK
+ 308                                   /
+ 309 000505  7300  CMPHNK, CLA CLL
+ 310               /       TAD [0-16.  / HNKCNT = -16
+ 311 000506  1164          TAD [0-20   / HNKCNT = -16
+ 312 000507  3101          DCA HNKCNT
+ 313 000510  3102          DCA HNKMEM  / HNKMEM = 0
+ 314 000511  7300  CMPRB,  CLA CLL     / READ NEXT BLOCK
+ 315 000512  1102          TAD HNKMEM  / GET MEM ADDR
+ 316 000513  6141          LINC
+ 317 000514  0023          TMA
+ 318 000515  0002          PDP
+ 319 000516  7300          CLA CLL
+ 320 000517  1163          TAD [1020   / XA MODE, FIELD 1
+ 321 000520  6141          LINC
+ 322 000521  0001          AXO
+ 323 000522  0710          RDC 10      / READ UNIT 1
+ 324 000523  0000  CMPBLK, 0           / BLOCK NUMBER
+ 325 000524  0002          PDP
+ 326 000525  2323          ISZ CMPBLK  / ++CMPBLK
+ 327 000526  7300          CLA CLL
+ 328 000527  1102          TAD HNKMEM  / HNKMEM += 256
+ 329               /       TAD [256.   / EVEN FOR 129 WORD
+ 330 000530  1162          TAD [400    / EVEN FOR 129 WORD
+ 331 000531  3102          DCA HNKMEM  / BLOCK TAPES
+ 332 000532  2101          ISZ HNKCNT  / WHILE ++HNKCNT != 0
+ 333 000533  5311          JMP CMPRB   / GO READ NEXT BLK
+ 334                                   /
+ 335                                   / THEN COMPARE WHAT WE
+ 336                                   / JUST READ TO INCOMING
+ 337                                   / DATA FROM XMODEM
+ 338                                   /
+ 339 000534  7300          CLA CLL
+ 340               /       TAD [0-16.  / HNKCNT = -16.
+ 341 000535  1164          TAD [0-20   / HNKCNT = -16.
+ 342 000536  3101          DCA HNKCNT
+ 343 000537  3102          DCA HNKMEM  / HNKMEM = 0
+ 344 000540  7300  CMPCBK, CLA CLL
+ 345 000541  1076          TAD WDCNTI  / WDCNT = WDCNTI
+ 346 000542  3100          DCA WDCNT
+ 347 000543  4550  CMPCWD, JMS I [RDWD    / GET WORD FROM XMODEM
+ 348 000544  7041          CMA IAC     / AC = -AC
+ 349 000545  6211          CDF 10      / COMPARE TO DATA
+ 350 000546  1502          TAD I HNKMEM  / FROM TAPE
+ 351 000547  6201          CDF 0
+ 352 000550  7440          SZA         / COMPARE OK
+ 353 000551  7402          HLT         / MIS-COMPARE!!!
+ 354 000552  2102          ISZ HNKMEM  / POINT TO NEXT WORD
+ 355 000553  7000          NOP         / FOR SKIP
+ 356 000554  2100          ISZ WDCNT   / UNTIL ++WDCNT == 0
+ 357 000555  5343          JMP CMPCWD  / GO COMPARE NEXT WD
+ 358 000556  7300          CLA CLL     / BUMP UP TO NEXT
+ 359 000557  1076          TAD WDCNTI  / BLOCK.  DOES NOTHING
+ 360               /       TAD [256.   / FOR 256. WORD BLOCKS
+ 361 000560  1162          TAD [400    / FOR 256. WORD BLOCKS
+ 362 000561  1102          TAD HNKMEM
+ 363 000562  3102          DCA HNKMEM
+ 364 000563  2101          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+ 365 000564  5340          JMP CMPCBK  / GO COMPARE NEXT BLOCK
+ 366                                   /
+ 367                                   / IF WE COMPARED IT ALL, HALT
+ 368                                   /
+ 369 000565  7300          CLA CLL
+ 370 000566  1077          TAD BLKCNT  / BLKCNT += 16
+ 371               / This line references a new literal "16.", not the existing one.
+ 372               / We kludge here by using "16", then patching the value below.
+ 373               /       TAD [16.
+ 374 000567  1161          TAD [20
+ 375 000570  3077          DCA BLKCNT
+ 376 000571  1077          TAD BLKCNT  / RESTORE AC
+ 377 000572  7440          SZA
+ 378 000573  5305          JMP CMPHNK  / MORE TO COMPARE
+ 379 000574  1147          TAD [XACK   / ACK FINAL BLOCK
+ 380 000575  4266          JMS CHSEND
+ 381 000576  7300          CLA CLL
+ 382 000577  1147          TAD [XACK
+ 383 000600  4560          JMS I [CHSEND
+ 384 000601  7402          HLT         / HALT, THEN RESTART
+ 385 000602  5553          JMP I [START+1 / SKIP INIT HLT
+ 386                                   /
+ 387                                   / WRITE TAPE FROM INCOMING DATA
+ 388                                   /
+ 389 000603  7402  WTINI,  HLT         / FOR SAFETY
+ 390 000604  7300          CLA CLL
+ 391 000605  3253          DCA WTBLOK  / WTBLOK = 0
+ 392 000606  3073          DCA XMCNT   / INIT XMODEM BUF EMPTY
+ 393 000607  1151          TAD [XNAK   / PRIME INITIAL NACK
+ 394 000610  3074          DCA XMACK
+ 395 000611  7300  WTGHNK, CLA CLL     / HNKCNT = -16.
+ 396               /       TAD [0-16.
+ 397 000612  1164          TAD [0-20
+ 398 000613  3101          DCA HNKCNT
+ 399 000614  3102          DCA HNKMEM  / HNKMEM = 0
+ 400 000615  7300  WTGBK,  CLA CLL
+ 401 000616  1076          TAD WDCNTI  / WDCNT = -WORDS/BLOCK
+ 402 000617  3100          DCA WDCNT
+ 403 000620  4550  WTGWD,  JMS I [RDWD    / GET WORD FROM XMODEM
+ 404 000621  6211          CDF 10
+ 405 000622  3502          DCA I HNKMEM  / STORE IN TAPE BUFF
+ 406 000623  6201          CDF 0
+ 407 000624  2102          ISZ HNKMEM  / ++HNKMEM
+ 408 000625  7000          NOP         / FOR SKIP
+ 409 000626  2100          ISZ WDCNT   / UNTIL ++WDCNT == 0
+ 410 000627  5220          JMP WTGWD
+ 411 000630  1076          TAD WDCNTI  / BUMP TO NEXT BLOCK
+ 412               /       TAD [256.   / HNKMEM += 256-BLKSIZE
+ 413 000631  1162          TAD [400    / HNKMEM += 256-BLKSIZE
+ 414 000632  1102          TAD HNKMEM
+ 415 000633  3102          DCA HNKMEM
+ 416 000634  2101          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+ 417 000635  5215          JMP WTGBK
+ 418               /       TAD [0-16.  / HNKCNT = -16.
+ 419 000636  1164          TAD [0-20   / HNKCNT = -16.
+ 420 000637  3101          DCA HNKCNT
+ 421 000640  3102          DCA HNKMEM  / HNKMEM = 0
+ 422 000641  7300  WTBLK,  CLA CLL
+ 423 000642  1102          TAD HNKMEM  / TMA MEMORY ADDR
+ 424 000643  6141          LINC
+ 425 000644  0023          TMA
+ 426 000645  0002          PDP
+ 427 000646  7300          CLA CLL
+ 428 000647  1163          TAD [1020   / XA MODE, FIELD 1
+ 429 000650  6141          LINC
+ 430 000651  0001          AXO
+ 431 000652  0716          WDE 10      / WRITE TAPE BLOCK
+ 432 000653  0000  WTBLOK, 0
+ 433 000654  0002          PDP
+ 434 000655  2253          ISZ WTBLOK  / ++WTBLOK
+ 435 000656  7300          CLA CLL
+ 436 000657  1102          TAD HNKMEM  / HNKMEM += 256.
+ 437               /       TAD [256.   / EVEN FOR 129 WD
+ 438 000660  1162          TAD [400    / EVEN FOR 129 WD
+ 439 000661  3102          DCA HNKMEM  / BLOCKS
+ 440 000662  2101          ISZ HNKCNT  / UNTIL ++HNKCNT == 0
+ 441 000663  5241          JMP WTBLK
+ 442                                   /
+ 443                                   / IF ALL HUNKS WRITTEN
+ 444                                   / THEN HALT
+ 445                                   /
+ 446 000664  7300          CLA CLL
+ 447 000665  1077          TAD BLKCNT  / BLKCNT += BLOCKS/HUNK
+ 448               /       TAD [16.
+ 449 000666  1161          TAD [20
+ 450 000667  3077          DCA BLKCNT
+ 451 000670  1077          TAD BLKCNT
+ 452 000671  7440          SZA
+ 453 000672  5211          JMP WTGHNK  / GO DO NEXT HUNK
+ 454 000673  1147          TAD [XACK   / ACK FINAL BLOCK
+ 455 000674  4560          JMS I [CHSEND
+ 456 000675  7300          CLA CLL
+ 457 000676  1147          TAD [XACK
+ 458 000677  4560          JMS I [CHSEND
+ 459 000700  7402          HLT         / THEN HALT -- WELL DONE!
+ 460 000701  5553          JMP I [START+1 / SKIP INITIAL HALT
+ 461                                   /
+ 462                                   / ROUTINE TO RECEIVE
+ 463                                   / A WORD FROM XMODEM
+ 464                                   /
+ 465               *1000
+ 466 001000  0000  RDWD,   0           / RETURN ADDR
+ 467 001001  7300          CLA CLL
+ 468 001002  1073          TAD XMCNT   / IF BUFFER IS EMPTY
+ 469 001003  7440          SZA
+ 470 001004  5216          JMP RDWD2   / BUFFER NOT EMPTY
+ 471 001005  4237          JMS XMGET   / GO FILL BUFFER
+ 472 001006  7450          SNA         / SKIP IF EOT
+ 473 001007  5212          JMP RDWD1   / NOT EOT -- OK
+ 474 001010  7402          HLT         / EOT - NOT EXPECTED
+ 475 001011  5210          JMP .-1     / HARD HALT
+ 476 001012  1177  RDWD1,  TAD [XMBUF  / XMPTR = ADDR(XMBUFF)
+ 477 001013  3070          DCA XMPTR
+ 478               /       TAD [0-128. / XMCNT = -128.
+ 479 001014  1176          TAD [0-200  / XMCNT = -128.
+ 480 001015  3073          DCA XMCNT
+ 481 001016  7300  RDWD2,  CLA CLL     / CLEAR AC
+ 482 001017  1470          TAD I XMPTR   / WORD = *XMPTR
+ 483 001020  3103          DCA XMWORD  / SAVE IT
+ 484 001021  2070          ISZ XMPTR   / ++XMPTR
+ 485 001022  7000          NOP         / FOR SKIP
+ 486 001023  1470          TAD I XMPTR   / GET NEXT CHAR
+ 487 001024  2070          ISZ XMPTR   / ++XMPTR
+ 488 001025  7000          NOP         / FOR SKIP
+ 489 001026  7012          RTR         / >>= 2
+ 490 001027  7012          RTR         / >>= 2
+ 491 001030  7010          RAR         / >>= 1  == <<= 8
+ 492 001031  0174          AND [7400   / KEEP 4 BITS
+ 493 001032  1103          TAD XMWORD  / OR IN LOW 8 BITS
+ 494 001033  2073          ISZ XMCNT
+ 495 001034  2073          ISZ XMCNT
+ 496 001035  7000          NOP         / FOR SKIP
+ 497 001036  5600          JMP I RDWD    / RETURN WITH WORD
+ 498                                   /
+ 499                                   / ROUTINE TO READ 1
+ 500                                   / 128 BYTE XMODEM BLOCK
+ 501                                   /
+ 502 001037  0000  XMGET,  0           / RETURN ADDRESS
+ 503 001040  7300          CLA CLL
+ 504 001041  1177          TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+ 505 001042  3070          DCA XMPTR
+ 506 001043  3072          DCA XMCKSM  / XMCKSM = 0
+ 507               /       TAD [0-128.
+ 508 001044  1176          TAD [0-200
+ 509 001045  3073          DCA XMCNT   / XMCNT = -128.
+ 510 001046  1074          TAD XMACK   / SEND ACK OR NACK
+ 511 001047  4560          JMS I [CHSEND
+ 512 001050  4546  XMGSOH, JMS I [CHGET   / WAIT FOR SOH
+ 513 001051  3104          DCA XMPROT  / SAVE CHAR
+ 514 001052  1104          TAD XMPROT  / RESTORE
+ 515 001053  1145          TAD [0-XSOH / IS CHAR == SOH?
+ 516 001054  7450          SNA
+ 517 001055  5267          JMP XMGBLK  / CHAR == SOH
+ 518 001056  7300          CLA CLL     / CHAR != SOH
+ 519 001057  1104          TAD XMPROT  / IS CHAR == EOT?
+ 520 001060  1144          TAD [0-XEOT
+ 521 001061  7450          SNA
+ 522 001062  5265          JMP XMGEOT  / CHAR IS EOT
+ 523 001063  4350          JMS XMNACK  / NOT EOT.  JUNK!  NAK!
+ 524 001064  5250          JMP XMGSOH  / AND GO LOOK FOR SOH
+ 525 001065  7301  XMGEOT, CLA CLL IAC / IF EOT -- RETURN 1
+ 526 001066  5637          JMP I XMGET
+ 527 001067  4546  XMGBLK, JMS I [CHGET   / SOH.  GET BLOCK #
+ 528 001070  7041          CMA IAC     / COMPARE TO EXPECTED
+ 529 001071  1071          TAD XMBLK
+ 530 001072  7450          SNA
+ 531 001073  5277          JMP XMGBLC  / OK.  GET COMPLEMENT
+ 532 001074  7402          HLT         / NOT OK.  HALT, THEN NAK
+ 533 001075  4350          JMS XMNACK
+ 534 001076  5250          JMP XMGSOH  / THEN GET SOH AGAIN
+ 535 001077  4546  XMGBLC, JMS I [CHGET   / GET BLOCK COMPLEMENT
+ 536 001100  7001          IAC         / NOW IT IS -BLOCK (ALMOST)
+ 537 001101  1071          TAD XMBLK   / COMPARE WITH EXPECTED
+ 538 001102  0143          AND [377    / 8 BIT SUM
+ 539 001103  7450          SNA
+ 540 001104  5310          JMP XMGDAT  / OK - GO GET DATA
+ 541 001105  7402          HLT         / NOT OK.  HALT, THEN NAK
+ 542 001106  4350          JMS XMNACK
+ 543 001107  5250          JMP XMGSOH
+ 544 001110  4546  XMGDAT, JMS I [CHGET   / GET A CHAR OF DATA
+ 545 001111  3470          DCA I XMPTR   / *XMPTR = CHAR
+ 546 001112  1470          TAD I XMPTR   / RESTORE TO AC
+ 547 001113  1072          TAD XMCKSM  / ADD TO CHKSUM
+ 548 001114  3072          DCA XMCKSM
+ 549 001115  2070          ISZ XMPTR   / ++XMPTR
+ 550 001116  7000          NOP         / FOR SKIP
+ 551 001117  2073          ISZ XMCNT   / UNTIL ++XMCNT == 0
+ 552 001120  5310          JMP XMGDAT
+ 553 001121  4546  XMGCKS, JMS I [CHGET   / GET CHECKSUM CHAR
+ 554 001122  7041          CMA IAC     / - CHECKSUM
+ 555 001123  1072          TAD XMCKSM  / COMPARE WITH EXPECTED
+ 556 001124  0143          AND [377    / 8 BIT SUM
+ 557 001125  7450          SNA
+ 558 001126  5334          JMP XMGACK  / OK -- GO ACK
+ 559 001127  7402          HLT         / FOR DEBUGGING
+ 560 001130  7300          CLA CLL
+ 561 001131  1151          TAD [XNAK   / PRIME TO NACK
+ 562 001132  3074          DCA XMACK
+ 563 001133  5240          JMP XMGET+1 / AND TRY AGAIN
+ 564 001134  1147  XMGACK, TAD [XACK   / ACK1
+ 565 001135  3074          DCA XMACK   / PRIME TO ACK IT
+ 566 001136  7300          CLA CLL     / BUMP XMODEM BLOCK #
+ 567 001137  1071          TAD XMBLK
+ 568 001140  7001          IAC
+ 569 001141  0143          AND [377    / ONLY 8 BITS!
+ 570 001142  3071          DCA XMBLK
+ 571 001143  1177          TAD [XMBUF  / XMPTR = ADDR(XMBUF)
+ 572 001144  3070          DCA XMPTR
+ 573               /       TAD [0-128. / XMCNT = -128.
+ 574 001145  1176          TAD [0-200  / XMCNT = -128.
+ 575 001146  3073          DCA XMCNT
+ 576 001147  5637          JMP I XMGET   / RETURN (AC=0)
+ 577                                   /
+ 578                                   / ROUTINE TO SEND
+ 579                                   / A NACK CHAR
+ 580                                   /
+ 581 001150  0000  XMNACK, 0           / RETURN ADDR
+ 582 001151  7300          CLA CLL
+ 583 001152  1151          TAD [XNAK
+ 584 001153  4560          JMS I [CHSEND
+ 585 001154  5750          JMP I XMNACK  / RETURN
+ 586                                   /
+ 587                                   / XMODEM BUFFER
+ 588                                   /
+ 589 001155  0000  XMBUF,  0
+ 590 000143  0377  $
+     000144  7774  
+     000145  7777  
+     000146  0473  
+     000147  0006  
+     000150  1000  
+     000151  0025  
+     000152  7772  
+     000153  0201  
+     000154  7750  
+     000155  7753  
+     000156  0077  
+     000157  7770  
+     000160  0466  
+     000161  0020  
+     000162  0400  
+     000163  1020  
+     000164  7760  
+     000165  0603  
+     000166  0004  
+     000167  0500  
+     000170  0002  
+     000171  5000  
+     000172  7577  
+     000173  7000  
+     000174  7400  
+     000175  0001  
+     000176  7600  
+     000177  1155  
+
+AXO     0001
+BLKCNT  0077
+BLOCK   0254
+CHGET   0473
+CHSEND  0466
+CMPBLK  0523
+CMPCBK  0540
+CMPCWD  0543
+CMPHNK  0505
+CMPINI  0500
+CMPRB   0511
+DKCC    6402
+DKRB    6406
+DKSF    6401
+DTLS    6416
+DTSF    6411
+HNKCNT  0101
+HNKMEM  0102
+HNKNXW  0274
+HNKSND  0271
+INIT1   0225
+INITP   0220
+LINC    6141
+PDP     0002
+RDBLK   0242
+RDC     0700
+RDHNK   0236
+RDWD    1000
+RDWD1   1012
+RDWD2   1016
+ROTCNT  0075
+SRCMP   0002
+SRTAPE  0001
+SRWRIT  0004
+START   0200
+TMA     0023
+WDCNT   0100
+WDCNTI  0076
+WDE     0706
+WDFILL  0366
+WDFLSH  0361
+WDROT   0335
+WDSEND  0330
+WTBLK   0641
+WTBLOK  0653
+WTGBK   0615
+WTGHNK  0611
+WTGWD   0620
+WTINI   0603
+XACK    0006
+XCAN    0030
+XEOT    0004
+XMACK   0074
+XMBLK   0071
+XMBUF   1155
+XMCKSM  0072
+XMCNT   0073
+XMGACK  1134
+XMGBLC  1077
+XMGBLK  1067
+XMGCKS  1121 unreferenced
+XMGDAT  1110
+XMGEOT  1065
+XMGET   1037
+XMGSOH  1050
+XMNACK  1150
+XMPROT  0104
+XMPTR   0070
+XMPUT   0425
+XMSEND  0400
+XMSND1  0417
+XMSPUT  0446
+XMWORD  0103
+XNAK    0025
+XSOH    0001

@@ -1,0 +1,211 @@
+
+     8L OF CMPTAP     PAGE 01
+LN=0001
+
+0001                                     [
+0002                                     [ PROGRAM TO COMARE TWO
+0003                                     [ LINC TAPES IN STD OR
+0004                                     [ 129. WORD FORMAT
+0005                                     [
+0006                                     [
+0007                                     [ CONSTANTS
+0010                                     [
+0011                 SRTAPE=1            [ SR 11 = 1 FOR DECTAPE
+0012                                     [
+0013                                     [ SPECIAL INSTRUCTIONS
+0014                                     [
+0015                 AXO=1
+0016                 PDP=2
+0017                 TMA=23
+0020                 RDC=700
+0021                                     [
+0022                                     [ DATA
+0023                                     [
+0024                 $70
+0025  0070 0000      #WDCNTI 0           [ WORDS / BLOCK
+0026  0071 0000      #BLKCNT 0           [ BLOCKS / TAPE
+0027  0072 0000      #WDCNT  0           [ WORD COUNTER
+0030  0073 0000      #HNKCNT 0           [ BLOCK COUNTER
+0031  0074 0000      #HNKMEM 0           [ MEMORY POINTER
+0032                                     [
+0033                                     [ BEGIN HERE
+0034                                     [
+0035                 $200
+0036  0200 7402      #START  HLT         [ WAIT FOR TAPE MOUNT
+0037  0201 7300              CLA CLL
+0040  0202 7404              OSR         [ READ RIGHT SWITCHES
+0041  0203 0177 0001         AND (SRTAPE
+0042  0204 7440              SZA         [ SKIP IF STD LINC TAPE
+0043  0205 5213 0213         JMP INITP   [ GO INIT DEC TAPE
+0044  0206 1176 7400         TAD (0-256. [ STD IS 256 WDS
+0045  0207 3070 0070         DCA WDCNTI
+0046  0210 1175 7000         TAD (0-1000 [ 1000 BLOCKS
+0047  0211 3071 0071         DCA BLKCNT
+0050  0212 5220 0220         JMP INIT1   [ CONTINUE
+0051  0213 7300      #INITP  CLA CLL
+0052  0214 1174 7577         TAD (0-129. [ DEC TAPES 129. WDS
+0053  0215 3070 0070         DCA WDCNTI
+0054  0216 1173 5000         TAD (0-3000 [ 3000 BLOCKS
+0055  0217 3071 0071         DCA BLKCNT
+0056  0220 7300      #INIT1  CLA CLL
+0057  0221 3241 0241         DCA BLOCK0  [ RESET BLOCK #'S
+0060  0222 3270 0270         DCA BLOCK1
+0061                                     [
+0062                                     [ READ IN THE NEXT HUNK
+0063                                     [ OF 16 BLOCKS
+0064                                     [
+0065  0223 7300      #RDHNK  CLA CLL
+0066  0224 1172 7760         TAD (0-16.
+0067  0225 3073 0073         DCA HNKCNT  [ HNKCNT = -16.
+
+
+    8L OF CMPTAP     PAGE 02
+LN=0070
+
+0070  0226 3074 0074         DCA HNKMEM  [ HNKMEM = 0
+0071  0227 7300      #RDBLK0 CLA CLL     [ READ HUNK FROM U0
+0072  0230 1074 0074         TAD HNKMEM  [ TMA MEM ADDR
+0073  0231 6141              LINC
+0074  0232 0023              TMA
+0075  0233 0002              PDP
+0076  0234 7300              CLA CLL
+0077  0235 1171 1020         TAD (1020   [ XA FIELD 1
+0100  0236 6141              LINC
+0101  0237 0001              AXO
+0102  0240 0700              RDC 0       [ READ UNIT 0
+0103  0241 0000      #BLOCK0 0           [ BLOCK NUMBER
+0104  0242 0002              PDP
+0105  0243 2241 0241         ISZ BLOCK0  [ ++BLOCK0
+0106  0244 7300              CLA CLL
+0107  0245 1074 0074         TAD HNKMEM  [ HNKMEM += 256.
+0110  0246 1170 0400         TAD (256.
+0111  0247 3074 0074         DCA HNKMEM
+0112  0250 2073 0073         ISZ HNKCNT  [ UNTIL ++HNKCNT == 0
+0113  0251 5227 0227         JMP RDBLK0
+0114                                     [
+0115                                     [ THEN READ A HUNK
+0116                                     [ FROM UNIT 1
+0117                                     [
+0120  0252 7300              CLA CLL
+0121  0253 1172 7760         TAD (0-16.  [ HNKCNT = -16.
+0122  0254 3073 0073         DCA HNKCNT
+0123  0255 3074 0074         DCA HNKMEM  [ HNKMEM = 0
+0124  0256 7300      #RDBLK1 CLA CLL
+0125  0257 1074 0074         TAD HNKMEM  [ TMA MEM ADDR
+0126  0260 6141              LINC
+0127  0261 0023              TMA
+0130  0262 0002              PDP
+0131  0263 7300              CLA CLL
+0132  0264 1167 2020         TAD (2020   [ XA MODE, FIELD 2
+0133  0265 6141              LINC
+0134  0266 0001              AXO
+0135  0267 0710              RDC 10      [ READ UNIT 1
+0136  0270 0000      #BLOCK1 0
+0137  0271 0002              PDP
+0140  0272 2270 0270         ISZ BLOCK1  [ ++BLOCK1
+0141  0273 7300              CLA CLL
+0142  0274 1074 0074         TAD HNKMEM  [ HNKMEM += 256
+0143  0275 1170 0400         TAD (256.
+0144  0276 3074 0074         DCA HNKMEM
+0145  0277 2073 0073         ISZ HNKCNT  [ UNTIL ++HNKCNT == 0
+0146  0300 5256 0256         JMP RDBLK1
+0147                                     [
+0150                                     [ THEN COMPARE THE
+0151                                     [ TWO, 1 WORD AT A
+0152                                     [ TIME, BLOCK BY BLOCK
+0153                                     [ UNTIL THE HUNK IS DONE
+0154                                     [
+0155  0301 7300              CLA CLL
+0156  0302 1172 7760         TAD (0-16.  [ BLOCKS / HUNK
+
+
+    8L OF CMPTAP     PAGE 03
+LN=0157
+
+0157  0303 3073 0073         DCA HNKCNT
+0160  0304 3074 0074         DCA HNKMEM  [ HNKMEM = 0
+0161  0305 7300      #CMPBLK CLA CLL
+0162  0306 1070 0070         TAD WDCNTI  [ WDCNT = -WORDS/BLOCK
+0163  0307 3072 0072         DCA WDCNT
+0164  0310 7300      #CMPWD  CLA CLL
+0165  0311 6211              CDF 10      [ DATA FIELD 1
+0166  0312 1474 0074         TAD;HNKMEM  [ GET WORD
+0167  0313 7041              CMA IAC     [ -WORD
+0170  0314 6221              CDF 20      [ DATA FIELD 2
+0171  0315 1474 0074         TAD;HNKMEM
+0172  0316 6201              CDF 0       [ BACK TO NORMAL
+0173  0317 7440              SZA         [ DID WORDS COMPARE?
+0174  0320 7402              HLT         [ MIS COMPARE !!
+0175  0321 2074 0074         ISZ HNKMEM  [ ++HNKMEM
+0176  0322 7000              NOP         [ FOR SKIP
+0177  0323 2072 0072         ISZ WDCNT   [ UNTIL BLOCK IS DONE
+0200  0324 5310 0310         JMP CMPWD
+0201  0325 7300              CLA CLL
+0202  0326 1070 0070         TAD WDCNTI  [ BUMP TO NEXT BLOCK
+0203  0327 1170 0400         TAD (256.
+0204  0330 1074 0074         TAD HNKMEM
+0205  0331 3074 0074         DCA HNKMEM
+0206  0332 2073 0073         ISZ HNKCNT  [ UNTIL ALL HUNKS DONE
+0207  0333 5305 0305         JMP CMPBLK
+0210                                     [
+0211                                     [ SEE IF ALL HUNKS
+0212                                     [ HAVE BEEN COMPARED
+0213                                     [
+0214  0334 7300              CLA CLL
+0215  0335 1071 0071         TAD BLKCNT  [ BLKCNT += 16
+0216  0336 1166 0020         TAD (16.
+0217  0337 3071 0071         DCA BLKCNT
+0220  0340 1071 0071         TAD BLKCNT  [ RESTORE BLOCK COUNTER
+0221  0341 7440              SZA         [ ALL DONE?
+0222  0342 5223 0223         JMP RDHNK   [ NOPE - BACK FOR MORE
+0223  0343 7402              HLT         [ ALL DONE1
+0224  0344 5201 0201         JMP START+1 [ TO RUN AGAIN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     8R OF CMPTAP     PAGE 01
+
+0001 AXO    0015  0101 0134
+0071 BLKCNT 0026  0047 0055 0215 0217 0220
+0241 BLOCK0 0103  0057 0105
+0270 BLOCK1 0136  0060 0140
+0305 CMPBLK 0161  0207
+0310 CMPWD  0164  0200
+0073 HNKCNT 0030  0067 0112 0122 0145 0157 0206
+0074 HNKMEM 0031  0070 0072 0107 0111 0123 0125 0142 0144 0160 0166 0171
+                   0175 0204 0205
+0220 INIT1  0056  0050
+0213 INITP  0051  0043
+0002 PDP    0016  0075 0104 0130 0137
+0227 RDBLK0 0071  0113
+0256 RDBLK1 0124  0146
+0700 RDC    0020  0102 0135
+0223 RDHNK  0065  0222
+0001 SRTAPE 0011  0041
+0200 START  0036  0224
+0023 TMA    0017  0074 0127
+0072 WDCNT  0027  0163 0177
+0070 WDCNTI 0025  0045 0053 0162 0202
+
+
+
+
+
+
+
