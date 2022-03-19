@@ -2,7 +2,7 @@
 
 $dir = "misc";
 $DIR = $dir; $DIR =~ y/a-z/A-Z/;
-$SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
+$SVNURL="https://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
 
 open(INPUT, "Descriptions") || die "Descriptions: $!";
 while (<INPUT>) {

@@ -305,7 +305,6 @@ foreach $dir (sort keys %dirs) {
     $in = &lookfor($file);
     if ($in) {
       print " found: $in\n";
-#     print "cp $in $dir/$file\n";
       $found++;
     } else {
       print " not found\n";

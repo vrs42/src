@@ -2,7 +2,7 @@
 
 $dir = "ak";
 $DIR = $dir; $DIR =~ y/a-z/A-Z/;
-$SVNURL="http://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
+$SVNURL="https://svn.so-much-stuff.com/svn/trunk/pdp8/src/$dir";
 
 #
 # Make lists of the directories and files we expect to create.
