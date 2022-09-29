@@ -43,3 +43,19 @@ flop2.tar: $(FLOP2)
 
 ptape.tar: $(PTAPE)
 	tar cf $@ $^
+
+flop1.new: flop1.0 flop1.0/*
+	./os8implode -rx1 flop1
+	mkdsk flop1.xml+
+
+flop2.new: flop2.0 flop2.0/*
+	./os8implode -rx1 flop2
+	mkdsk flop2.xml+
+
+flop1.rx1: flop1.new
+	./dk2rx $<
+	mv flop1.rx01+ $@
+
+flop2.rx1: flop2.new
+	./dk2rx $<
+	mv flop2.rx01+ $@
