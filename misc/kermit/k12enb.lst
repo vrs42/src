@@ -1,0 +1,901 @@
+   1               /       OS/8 BOO ENCODING PROGRAM
+   2               
+   3               /       LAST EDIT:      01-OCT-1991     15:00:00        CJL
+   4               
+   5               /       MAY BE ASSEMBLED WITH '/F' SWITCH SET.
+   6               
+   7               /       PROGRAM TO ENCODE ANY  TYPE  OF  OS/8  FILE  INTO  "PRINTABLE"  ASCII (".BOO")
+   8               /       FORMAT.  THIS IS A  COMMON  DISTRIBUTION FORMAT FOR MANY COLUMBIA KERMIT FILES
+   9               /       AND IS AN ALTERNATIVE TO ENCODE FORMAT FOR PDP-8 AND DECMATE USERS.
+  10               
+  11               /       DISTRIBUTED BY CUCCA AS "K12ENB.PAL" AS PART OF THE CUCCA KERMIT-12 PACKAGE.
+  12               
+  13               /       WRITTEN BY:
+  14               
+  15               /       CHARLES LASNER (CJL)
+  16               /       CLA SYSTEMS
+  17               /       72-55 METROPOLITAN AVENUE
+  18               /       MIDDLE VILLAGE, NEW YORK 11379-2107
+  19               /       (718) 894-6499
+  20               
+  21               /       USAGE:
+  22               
+  23               /       .RUN DEV ENBOO          INVOKE PROGRAM
+  24               /       *OUTPUT<INPUT           PASS ONE INPUT AND ONE OUTPUT FILE ONLY (WITH <CR>)
+  25               /       *OUTPUT<INPUT$          PASS ONE INPUT AND ONE OUTPUT FILE ONLY (WITH <ESC>)
+  26               /       .                       PROGRAM EXITS NORMALLY
+  27               
+  28               /       INPUT FILE ASSUMES .SV EXTENSION; THERE IS NO ASSUMED OUTPUT EXTENSION.
+  29               
+  30               /       PROGRAM EXIT  IS THE NORMAL OS/8 METHOD OF EITHER PRESSING <^C> ON THE CONSOLE
+  31               /       KEYBOARD DURING THE  COMMAND,  OR  ENDING THE COMMAND INPUT LINE WITH AN <ESC>
+  32               /       CHARACTER.
+  33               
+  34               /       THIS PROGRAM SUPPORTS THE .BOO FORMAT  FOR  FILE  ENCODING WHICH IS POPULAR IN
+  35               /       OTHER  SYSTEMS.  THIS VERSION IMPLEMENTS THE  FILE  LENGTH  PROTECTION  SCHEME
+  36               /       DEVELOPED BY CHARLES LASNER TO ENSURE PRECISE FILE LENGTH.
+  37               
+  38               /       MANY .BOO PROGRAMS HAVE PROBLEMS MAINTAINING PRECISE FILE  LENGTH.  THE ACTUAL
+  39               /       LENGTH  MAY  BE IMPRECISELY STATED BY ONE OR TWO  BYTES  DUE  TO  AN  INHERENT
+  40               /       WEAKNESS  IN  THE  ORIGINAL .BOO ENCODING FORMAT DESIGN.  THIS  IMPLEMENTATION
+  41               /       APPENDS CORRECTION BYTES AS NECESSARY TO THE BASIC .BOO FILE TO  ENSURE PROPER
+  42               /       DECODING BY PROGRAMS COMPATIBLE WITH THIS EXTENSION.  
+  43               
+  44               /       FILES CREATED BY THIS PROGRAM MAY BE  USED  WITH  EARLIER  .BOO DECODERS;  THE
+  45               /       RESULTANT FILES MAY INACCURATELY RECREATE THE ORIGINAL FILES BY AS MUCH AS TWO
+  46               /       EXTRANEOUS  TRAILING  BYTES.   THERE WILL BE NO PROBLEMS  (BEYOND  THE  LENGTH
+  47               /       ANOMALY)  AS LONG AS THE DECODERS IMPLEMENT ZERO-LENGTH COMPRESSION FIELDS  AS
+  48               /       NO  OPERATION.  IT IS POSSIBLE THAT CERTAIN DECODERS COULD ERRONEOUSLY  APPEND
+  49               /       MASSIVE  QUANTITIES  OF  ZEROES  ONTO  THE END OF THE DECODED FILES, BUT  THIS
+  50               /       ACTION WOULD CERTAINLY BE CAUSED BY DEFECTIVE PROGRAM CODE WITHIN THE DECODER.
+  51               /       (ALTHOUGH NOT  LIKELY  SEEN  BEFORE  ENCOUNTERING FILES WITH LENGTH CORRECTION
+  52               /       BYTES, THIS WOULD  BE  A  LATENT  BUG  IN  THESE  DECODING  PROGRAMS.  UPDATED
+  53               /       VERSIONS SHOULD BE SOUGHT IF THIS PROBLEM SURFACES.)
+  54               /      ERROR MESSAGES.
+  55               
+  56               /       ERROR MESSAGES ARE ONE OF TWO VARIETIES:   COMMAND  DECODER  MESSAGES AND USER
+  57               /       (PROGRAM-SIGNALLED) MESSAGES.
+  58               
+  59               /       COMMAND  DECODER  MESSAGES  ARE  NON-FATAL  AND  MERELY  REQUIRE RETYPING  THE
+  60               /       COMMAND.  ATTEMPTING TO USE MORE THAN ONE OUTPUT FILE  WILL  YIELD THE COMMAND
+  61               /       DECODER  MESSAGE  "TOO MANY FILES" AND CAUSE A REPEAT OF THE  COMMAND  DECODER
+  62               /       PROMPT REQUIRING  USER  INPUT.  THE USER IS DIRECTED TO OTHER DOCUMENTATION OF
+  63               /       THE "SPECIAL" MODE  OF  THE  COMMAND DECODER, AS THAT IS THE ONLY MODE USED BY
+  64               /       THIS UTILITY PROGRAM.
+  65               
+  66               /       ANY USER MESSAGE PRINTED IS A  FATAL  ERROR MESSAGE CAUSED BY A PROBLEM BEYOND
+  67               /       THE SCOPE OF THE COMMAND DECODER.   ALL  USER  MESSAGES  ARE THE STANDARD OS/8
+  68               /       "USER" ERROR MESSAGES OF THE FORM:  "USER  ERROR  X  AT AAAAA", WHERE X IS THE
+  69               /       ERROR NUMBER AND AAAAA IS THE PROGRAM ADDRESS WHERE  THE  ERROR  WAS DETECTED.
+  70               /       THE FOLLOWING USER ERRORS ARE DEFINED:
+  71               
+  72               /       ERROR NUMBER            PROBABLE CAUSE
+  73               
+  74               /       0                       NO OUTPUT FILE.
+  75               
+  76               /       1                       INPUT FILE ERROR  (CAN'T  FIND INPUT FILE) OR NO INPUT
+  77               /                               FILE SPECIFIED OR TOO MANY INPUT FILES SPECIFIED.
+  78               /       2                       ILLEGAL OUTPUT FILE NAME (WILD CARDS NOT ALLOWED).
+  79               
+  80               /       3                       NO OUTPUT FILE NAME (DEVICE ONLY IS NOT ALLOWED).
+  81               
+  82               /       4                       ERROR WHILE FETCHING FILE HANDLER.
+  83               
+  84               /       5                       ERROR WHILE ATTEMPTING TO ENTER OUTPUT FILE.
+  85               
+  86               /       6                       OUTPUT FILE LARGER THAN AVAILABLE FILE SPACE.
+  87               
+  88               /       7                       ERROR WHILE CLOSING THE OUTPUT FILE.
+  89               
+  90               /       8                       I/O ERROR WHILE ENCODING FILE DATA.
+  91               
+  92               /       9                       OUTPUT ERROR WHILE ENCODING FILE DATA.
+  93               
+  94               /       ASSEMBLY INSTRUCTIONS.
+  95               
+  96               /       IT IS  ASSUMED  THE  SOURCE  FILE  K12ENB.PAL  HAS  BEEN  MOVED AND RENAMED TO
+  97               /       DSK:ENBOO.PA.
+  98               
+  99               /       .PAL ENBOO<ENBOO/E/F    ASSEMBLE SOURCE PROGRAM
+ 100               /       .LOAD ENBOO             LOAD THE BINARY FILE
+ 101               /       .SAVE DEV ENBOO=2001    SAVE THE CORE-IMAGE FILE
+ 102               /      DEFINITIONS.
+ 103               
+ 104                       CLOSE=  4               /CLOSE OUTPUT FILE
+ 105                       DECODE= 5               /CALL COMMAND DECODER
+ 106                       ENTER=  3               /ENTER TENTATIVE FILE
+ 107                       FETCH=  1               /FETCH HANDLER
+ 108                       IHNDBUF=7200            /INPUT HANDLER BUFFER
+ 109                       INBUFFE=6200            /INPUT BUFFER
+ 110                       INFILE= 7605            /INPUT FILE INFORMATION HERE
+ 111                       LOOKUP= 2               /LOOKUP INPUT FILE
+ 112                       NL0001= CLA IAC         /LOAD AC WITH 0001
+ 113                       NL0002= CLA CLL CML RTL /LOAD AC WITH 0002
+ 114                       NL7776= CLA CLL CMA RAL /LOAD AC WITH 7776
+ 115                       NL7777= CLA CMA         /LOAD AC WITH 7777
+ 116                       OHNDBUF=6600            /OUTPUT HANDLER BUFFER
+ 117                       OUTBUFF=5600            /OUTPUT BUFFER
+ 118                       OUTFILE=7600            /OUTPUT FILE INFORMATION HERE
+ 119                       PRGFLD= 00              /PROGRAM FIELD
+ 120                       RESET=  13              /RESET SYSTEM TABLES
+ 121                       SBOOT=  7600            /MONITOR EXIT
+ 122                       TBLFLD= 10              /COMMAND DECODER TABLE FIELD
+ 123                       TERMWRD=7642            /TERMINATOR WORD
+ 124                       USERROR=7               /USER SIGNALLED ERROR
+ 125                       USR=    0200            /USR ENTRY POINT
+ 126                       USRENT= 7700            /USR ENTRY POINT WHEN NON-RESIDENT
+ 127                       USRFLD= 10              /USR FIELD
+ 128                       USRIN=  10              /LOCK USR IN CORE
+ 129                       WIDTH=  114             /LINES MUST BE 76 WIDE OR LESS
+ 130                       WRITE=  4000            /I/O WRITE BIT
+ 131                      *0                      /START AT THE BEGINNING
+ 132               
+ 133                       *20                     /GET PAST AUTO-INDEX AREA
+ 134               
+ 135 000020  0000  BUFPTR, .-.                     /OUTPUT BUFFER POINTER
+ 136 000021  0000  CHAR,   .-.                     /LATEST INPUT BYTE
+ 137 000022  0000  CHARPTR,.-.                     /OUTPUT BYTE POINTER
+ 138 000023  0000  CHARS,  ZBLOCK  3               /OUTPUT BYTES HERE
+     000024  0000  
+     000025  0000  
+ 139 000026  0000  CMPCNT, .-.                     /MATCH COUNT FOR COMPRESSION
+ 140 000027  0000  COLUMN, .-.                     /LATEST COLUMN
+ 141 000030  0000  DANGCNT,.-.                     /DANGER COUNT
+ 142 000031  0000  IDNUMBE,.-.                     /INPUT DEVICE NUMBER
+ 143 000032  0000  IFNAME, ZBLOCK  4               /INPUT FILENAME
+     000033  0000  
+     000034  0000  
+     000035  0000  
+ 144 000036  0000  INLEN,  .-.                     /INPUT FILE LENGTH
+ 145 000037  0000  INPTR,  .-.                     /INPUT BUFFER POINTER
+ 146 000040  0000  INPUT,  .-.                     /INPUT HANDLER POINTER
+ 147 000041  0000  INRECOR,.-.                     /INPUT RECORD
+ 148 000042  0000  FNAME,  ZBLOCK  4               /OUTPUT FILENAME
+     000043  0000  
+     000044  0000  
+     000045  0000  
+ 149 000046  0000  LATEST, .-.                     /LATEST OUTPUT CHARACTER
+ 150 000047  0000  ODNUMBE,.-.                     /OUTPUT DEVICE NUMBER
+ 151 000050  0000  OUTPUT, .-.                     /OUTPUT HANDLER POINTER
+ 152 000051  0000  OUTRECO,.-.                     /OUTPUT RECORD
+ 153 000052  0000  PIFTEMP,.-.                     /PRINT INPUT FILENAME TEMPORARY
+ 154 000053  0000  TEMPTR, .-.                     /TEMPORARY POINTER
+ 155 000054  0000  THIRD,  .-.                     /THIRD INPUT BYTE UNPACKING TEMPORARY
+ 156                      PAGE                    /START AT THE USUAL PLACE
+ 157               
+ 158 000200  7000  BEGIN,  NOP                     /IN CASE WE'RE CHAINED TO
+ 159 000201  7200          CLA                     /CLEAN UP
+ 160 000202  6212  START,  CIF     USRFLD          /GOTO USR FIELD
+ 161 000203  4777          JMS I   (USRENT)        /CALL USR ROUTINE
+ 162 000204  0010          USRIN                   /GET IT LOCKED IN
+ 163 000205  6212          CIF     USRFLD          /GOTO USR FIELD
+ 164 000206  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 165 000207  0005          DECODE                  /WANT COMMAND DECODER
+ 166 000210  5200          "*^100                  /USING SPECIAL MODE
+ 167 000211  6211          CDF     TBLFLD          /GOTO TABLE FIELD
+ 168 000212  1776          TAD I   (TERMWRD)       /GET TERMINATOR WORD
+ 169 000213  7710          SPA CLA                 /SKIP IF <CR> TERMINATED THE LINE
+ 170 000214  3320          DCA     EXITZAP         /ELSE CAUSE EXIT LATER
+ 171 000215  1775          TAD I   (OUTFILE)       /GET OUTPUT FILE DEVICE WORD
+ 172 000216  7450          SNA                     /SKIP IF FIRST OUTPUT FILE PRESENT
+ 173 000217  5347          JMP     TSTMORE         /JUMP IF NOT THERE
+ 174 000220  0176          AND     [17]            /JUST DEVICE BITS
+ 175 000221  3047          DCA     ODNUMBER        /SAVE OUTPUT DEVICE NUMBER
+ 176 000222  1774          TAD I   (INFILE)        /GET FIRST INPUT FILE DEVICE WORD
+ 177 000223  7450          SNA                     /SKIP IF PRESENT
+ 178 000224  5340          JMP     INERR           /JUMP IF NOT
+ 179 000225  0176          AND     [17]            /JUST DEVICE BITS
+ 180 000226  3031          DCA     IDNUMBER        /SAVE INPUT DEVICE NUMBER
+ 181 000227  1773          TAD I   (INFILE+5)      /GET SECOND INPUT FILE DEVICE WORD
+ 182 000230  7640          SZA CLA                 /SKIP IF ONLY ONE INPUT FILE
+ 183 000231  5340          JMP     INERR           /ELSE COMPLAIN
+ 184 000232  4772          JMS I   (MIFNAME)       /MOVE INPUT FILENAME WITH ADJUSTED EXTENSION
+ 185 000233  1575          TAD I   [OUTFILE+1]     /GET FIRST OUTPUT FILENAME WORD
+ 186 000234  7650          SNA CLA                 /SKIP IF NAME PRESENT
+ 187 000235  5336          JMP     NONAME          /JUMP IF DEVICE ONLY
+ 188 000236  4771          JMS I   (MOFNAME)       /MOVE OUTPUT FILENAME
+ 189 000237  6201          CDF     PRGFLD          /BACK TO OUR FIELD
+ 190 000240  6212          CIF     USRFLD          /GOTO USR FIELD
+ 191 000241  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 192 000242  0013          RESET                   /RESET SYSTEM TABLES
+ 193 000243  1370          TAD     (OHNDBUFFER+1)  /GET BUFFER POINTER+TWO-PAGE BIT
+ 194 000244  3251          DCA     OHPTR           /STORE IN-LINE
+ 195 000245  1047          TAD     ODNUMBER        /GET OUTPUT DEVICE NUMBER
+ 196 000246  6212          CIF     USRFLD          /GOTO USR FIELD
+ 197 000247  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 198 000250  0001          FETCH                   /FETCH HANDLER
+ 199 000251  0000  OHPTR,  .-.                     /WILL BE BUFFER POINTER+TWO-PAGE BIT
+ 200 000252  5335          JMP     FERROR          /FETCH ERROR
+ 201 000253  1251          TAD     OHPTR           /GET RETURNED ADDRESS
+ 202 000254  3050          DCA     OUTPUT          /STORE AS OUTPUT HANDLER ADDRESS
+ 203 000255  1367          TAD     (IHNDBUFFER+1)  /GET INPUT BUFFER POINTER+TWO-PAGE BIT
+ 204 000256  3263          DCA     IHPTR           /STORE IN-LINE
+ 205 000257  1031         TAD     IDNUMBER        /GET INPUT DEVICE NUMBER
+ 206 000260  6212          CIF     USRFLD          /GOTO USR FIELD
+ 207 000261  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 208 000262  0001          FETCH                   /FETCH HANDLER
+ 209 000263  0000  IHPTR,  .-.                     /WILL BE BUFFER POINTER+TWO-PAGE BIT
+ 210 000264  5335          JMP     FERROR          /FETCH ERROR
+ 211 000265  1263          TAD     IHPTR           /GET RETURNED ADDRESS
+ 212 000266  3040          DCA     INPUT           /STORE AS INPUT HANDLER ADDRESS
+ 213 000267  4766          JMS I   (GEIFILE)       /GO LOOKUP INPUT FILE
+ 214 000270  1365          TAD     (FNAME)         /POINT TO
+ 215 000271  3277          DCA     ENTAR1          /STORED FILENAME
+ 216 000272  3300          DCA     ENTAR2          /CLEAR SECOND ARGUMENT
+ 217 000273  1047          TAD     ODNUMBER        /GET OUTPUT DEVICE NUMBER
+ 218 000274  6212          CIF     USRFLD          /GOTO USR FIELD
+ 219 000275  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 220 000276  0003          ENTER                   /ENTER TENTATIVE FILENAME
+ 221 000277  0000  ENTAR1, .-.                     /WILL POINT TO FILENAME
+ 222 000300  0000  ENTAR2, .-.                     /WILL BE ZERO
+ 223 000301  5333          JMP     ENTERR          /ENTER ERROR
+ 224 000302  1277          TAD     ENTAR1          /GET RETURNED FIRST RECORD
+ 225 000303  3051          DCA     OUTRECORD       /STORE IT
+ 226 000304  1300          TAD     ENTAR2          /GET RETURNED EMPTY LENGTH
+ 227 000305  7001          IAC                     /ADD 2-1 FOR OS/278 CRAZINESS
+ 228 000306  3030          DCA     DANGCNT         /STORE AS DANGER COUNT
+ 229 000307  4764          JMS I   (ENCODIT)       /GO DO THE ACTUAL ENCODING
+ 230 000310  5324          JMP     PROCERR         /ERROR WHILE ENCODING
+ 231 000311  1047          TAD     ODNUMBER        /GET OUTPUT DEVICE NUMBER
+ 232 000312  6212          CIF     USRFLD          /GOTO USR FIELD
+ 233 000313  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 234 000314  0004          CLOSE                   /CLOSE OUTPUT FILE
+ 235 000315  0042          FNAME                   /POINTER TO FILENAME
+ 236 000316  0000  OUTCNT, .-.                     /WILL BE ACTUAL COUNT
+ 237 000317  5326          JMP     CLSERR          /CLOSE ERROR
+ 238 000320  5202  EXITZAP,JMP     START           /**** <ESC> TERMINATION **** 0000
+ 239 000321  5775          JMP I   (SBOOT)         /EXIT TO MONITOR
+ 240               /      OUTPUT FILE ERROR WHILE PROCESSING.
+ 241               
+ 242 000322  1174  ENCERRO,TAD     [3]             /SET INCREMENT
+ 243 000323  7410          SKP                     /DON'T USE NEXT
+ 244               
+ 245               /       ERROR WHILE PROCESSING INPUT FILE.
+ 246               
+ 247 000324  7326  PROCERR,NL0002                  /SET INCREMENT
+ 248 000325  7410          SKP                     /DON'T USE NEXT
+ 249               
+ 250               /       ERROR WHILE CLOSING THE OUTPUT FILE.
+ 251               
+ 252 000326  7201  CLSERR, NL0001                  /SET INCREMENT
+ 253 000327  7410          SKP                     /DON'T CLEAR IT
+ 254               
+ 255               /       OUTPUT FILE TOO LARGE ERROR.
+ 256               
+ 257 000330  7200  SIZERR, CLA                     /CLEAN UP
+ 258 000331  1174          TAD     [3]             /SET INCREMENT
+ 259 000332  7410          SKP                     /DON'T USE NEXT
+ 260               
+ 261               /       ENTER ERROR.
+ 262               
+ 263 000333  7326  ENTERR, NL0002                  /SET INCREMENT
+ 264 000334  7410          SKP                     /DON'T USE NEXT
+ 265               
+ 266               /       HANDLER FETCH ERROR.
+ 267               
+ 268 000335  7201  FERROR, NL0001                  /SET INCREMENT
+ 269               
+ 270               /       NO OUTPUT FILENAME ERROR.
+ 271               
+ 272 000336  7001  NONAME, IAC                     /SET INCREMENT
+ 273               
+ 274               /       ILLEGAL OUTPUT FILE NAME ERROR.
+ 275               
+ 276 000337  7001  BADNAME,IAC                     /SET INCREMENT
+ 277               
+ 278               /       INPUT FILESPEC ERROR.
+ 279               
+ 280 000340  7001  INERR,  IAC                     /SET INCREMENT
+ 281               
+ 282               /       OUTPUT FILESPEC ERROR.
+ 283               
+ 284 000341  3346  OUTERR, DCA     ERRNUMBER       /STORE ERROR NUMBER
+ 285 000342  6201          CDF     PRGFLD          /ENSURE OUR FIELD
+ 286 000343  6212          CIF     USRFLD          /GOTO USR FIELD
+ 287 000344  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 288 000345  0007          USERROR                 /USER ERROR
+ 289 000346  0000  ERRNUMB,.-.                     /WILL BE PASSED ERROR NUMBER
+ 290               /      COMES HERE TO TEST FOR NULL LINE.
+ 291               
+ 292 000347  1774  TSTMORE,TAD I   (INFILE)        /GET FIRST INPUT FILE DEVICE WORD
+ 293 000350  7640          SZA CLA                 /SKIP NO INPUT OR OUTPUT GIVEN
+ 294 000351  5341          JMP     OUTERR          /ELSE COMPLAIN
+ 295 000352  6201          CDF     PRGFLD          /BACK TO OUR FIELD
+ 296 000353  5320          JMP     EXITZAP         /MIGHT BE LAST TIME, SO GO THERE FIRST
+ 297               
+ 298 000364  0400          PAGE
+     000365  0042  
+     000366  1200  
+     000367  7201  
+     000370  6601  
+     000371  1275  
+     000372  1065  
+     000373  7612  
+     000374  7605  
+     000375  7600  
+     000376  7642  
+     000377  7700  
+ 299 000400  0000  ENCODIT,.-.                    /ENCODING ROUTINE
+ 300 000401  7240          NL7777                  /SETUP INITIALIZE VALUE
+ 301 000402  4573          JMS I   [DOBYTE]        /INITIALIZE OUTPUT ROUTINE
+ 302 000403  4777          JMS I   (PIFNAME)       /OUTPUT THE INPUT FILENAME
+ 303 000404  4776          JMS I   (PCRLF)         /OUTPUT <CR>/<LF> AND CLEAR COLUMN COUNTER
+ 304 000405  3026          DCA     CMPCNT          /CLEAR COMPRESSION
+ 305 000406  1172          TAD     [CHARS]         /SETUP THE
+ 306 000407  3022          DCA     CHARPTR         /OUTPUT POINTER
+ 307 000410  7240          NL7777                  /MAKE IT INITIALIZE
+ 308 000411  4775  LOOP,   JMS I   (GETBYTE)       /GET LATEST BYTE
+ 309 000412  5260          JMP     ENDCHECK        /AREN'T ANY MORE, FINISH THE FILE
+ 310               
+ 311               /       TEST IF ALREADY WITHIN A DEVELOPING COMPRESSION FIELD.
+ 312               
+ 313 000413  1026          TAD     CMPCNT          /GET COMPRESSION COUNT
+ 314 000414  7650          SNA CLA                 /SKIP IF COMPRESSION IN PROGRESS
+ 315 000415  5241          JMP     NOCOMP          /JUMP IF NOT
+ 316               
+ 317               /       CHECK IF LATEST INPUT BYTE IS ZERO.
+ 318               
+ 319 000416  1021          TAD     CHAR            /GET LATEST
+ 320 000417  7640          SZA CLA                 /SKIP IF SO
+ 321 000420  5227          JMP     ENDCOMPRESS     /JUMP IF NOT
+ 322 000421  2026  SETCOMP,ISZ     CMPCNT          /BUMP COMPRESSION COUNT
+ 323 000422  1026          TAD     CMPCNT          /GET LATEST COUNT
+ 324 000423  1374          TAD     (-116)          /COMPARE TO MAXIMUM ALLOWED
+ 325 000424  7650          SNA CLA                 /SKIP IF NOT
+ 326 000425  4773          JMS I   (COMPRESSOUT)   /OUTPUT MAXIMUM COMPRESSION AND CANCEL COMPRESSION
+ 327 000426  5211          JMP     LOOP            /GO GET ANOTHER ONE
+ 328               
+ 329               /       IF LATEST IS NON-ZERO, THEN COMPLETE EXISTING COMPRESSION FIELD.
+ 330               
+ 331 000427  7240  ENDCOMP,NL7777                  /-1
+ 332 000430  1026          TAD     CMPCNT          /COMPARE TO COMPRESSION COUNT
+ 333 000431  7640          SZA CLA                 /SKIP IF TRIVIAL CASE
+ 334 000432  5240          JMP     OUTCOMPRESS     /JUMP IF NOT
+ 335               
+ 336               /       CANCEL TRIVIAL CASE OF ONE BYTE COMPRESSION.
+ 337               
+ 338 000433  3026          DCA     CMPCNT          /CLEAR COMPRESSION MODE
+ 339 000434  3023          DCA     CHARS           /FIRST BYTE WAS ZERO
+ 340 000435  1372          TAD     (CHARS+1)       /SETUP OUTPUT POINTER TO
+ 341 000436  3022          DCA     CHARPTR         /STORE INTO SECOND BYTE
+ 342 000437  5250          JMP     BYTEINSERT      /CONTINUE THERE
+ 343               /      OUTPUT LATEST COMPRESSION AND PROCESS NEW NON-ZERO BYTE.
+ 344               
+ 345 000440  4773  OUTCOMP,JMS I   (COMPRESSOUT)   /OUTPUT COMPRESSION FIELD AND CANCEL COMPRESSION
+ 346               
+ 347               /       COMES HERE IF NOT WITHIN A COMPRESSION REGION.
+ 348               
+ 349 000441  1022  NOCOMP, TAD     CHARPTR         /GET POINTER
+ 350 000442  1371          TAD     (-CHARS)        /CHECK IF AT BEGINNING
+ 351 000443  7640          SZA CLA                 /SKIP IF BUFFER EMPTY
+ 352 000444  5250          JMP     BYTEINSERT      /JUMP IF NOT
+ 353               
+ 354               /       IF AT BEGINNING OF THREE BYTES, TEST IF LATEST STARTS A COMPRESSION FIELD.
+ 355               
+ 356 000445  1021          TAD     CHAR            /GET LATEST BYTE
+ 357 000446  7650          SNA CLA                 /SKIP IF NOT ZERO
+ 358 000447  5221          JMP     SETCOMPRESSION  /JUMP IF SO
+ 359 000450  1021  BYTEINS,TAD     CHAR            /GET LATEST BYTE
+ 360 000451  3422          DCA I   CHARPTR         /STORE IT
+ 361 000452  2022          ISZ     CHARPTR         /BUMP TO NEXT
+ 362 000453  1022          TAD     CHARPTR         /GET THE UPDATED POINTER
+ 363 000454  1370          TAD     (-CHARS-2-1)    /COMPARE TO UPPER LIMIT
+ 364 000455  7650          SNA CLA                 /SKIP IF LESS THAN THREE PRESENT
+ 365 000456  4767          JMS I   (OUT3)          /ELSE OUTPUT THE THREE BYTES AND RESET THE BUFFER
+ 366 000457  5211          JMP     LOOP            /GO GET ANOTHER ONE
+ 367               
+ 368               /       COMES HERE AT END OF INPUT.
+ 369               
+ 370 000460  7344  ENDCHEC,NL7776                  /-2
+ 371 000461  1026          TAD     CMPCNT          /COMPARE TO COMPRESSION COUNT
+ 372 000462  7500          SMA                     /SKIP IF AT TRIVIAL CASE OR NO COMPRESSION CURRENTLY
+ 373 000463  5275          JMP     ENDFCOMPRESS    /FINISH WITH A COMPRESSION FIELD
+ 374 000464  7001          IAC                     /CHECK FURTHER
+ 375 000465  7640          SZA CLA                 /SKIP IF TRIVIAL COMPRESSION AT END
+ 376 000466  5277          JMP     NORMEND         /JUMP IF NOT WITHIN COMPRESSION
+ 377               
+ 378               /       THE TRIVIAL CASE  CONVERTS  TO  AN INCOMPLETE OUTPUT, COMPLETE WITH CORRECTION
+ 379               /       BYTES TO INDICATE THE SHORT FIELD.
+ 380               
+ 381 000467  3023          DCA     CHARS           /MOVE ZERO BYTE TO FIRST POSITION
+ 382 000470  3024  NORM1,  DCA     CHARS+1         /CLEAR SECOND POSITION
+ 383 000471  3025          DCA     CHARS+2         /CLEAR THIRD POSITION
+ 384 000472  4767          JMS I   (OUT3)          /OUTPUT THE THREE BYTES
+ 385 000473  3026          DCA     CMPCNT          /CLEAR COMPRESSION COUNT
+ 386 000474  4773          JMS I   (COMPRESSOUT)   /OUTPUT NULL COMPRESSION FIELD TO CANCEL THIRD BYTE
+ 387                                               /NEXT WILL CANCEL SECOND BYTE
+ 388               
+ 389               /       COMES HERE IF FILE ENDS ON A COMPRESSION FIELD.
+ 390               
+ 391 000475  4773  ENDFCOM,JMS I   (COMPRESSOUT)   /OUTPUT COMPRESSION FIELD AND CANCEL COMPRESSION
+ 392 000476  5306          JMP     CLOSFILE        /FINISH IT THERE
+ 393               /      COMES HERE IF FILE ENDS IN SOME FORM OF DATA FIELD.
+ 394               
+ 395 000477  1022  NORMEND,TAD     CHARPTR         /GET CHARACTER POINTER
+ 396 000500  1366          TAD     (-CHARS-2)      /COMPARE TO TWO PRESENT VALUE
+ 397 000501  7450          SNA                     /SKIP IF NOT THE CASE
+ 398 000502  5321          JMP     NORM2           /JUMP IF SO
+ 399 000503  7001          IAC                     /BUMP TO ONE PRESENT VALUE
+ 400 000504  7650          SNA CLA                 /SKIP IF NOT THE CASE
+ 401 000505  5270          JMP     NORM1           /JUMP IF SO
+ 402 000506  1027  CLOSFIL,TAD     COLUMN          /GET CURRENT COLUMN COUNTER
+ 403 000507  7640          SZA CLA                 /SKIP IF AT BEGINNING ALREADY
+ 404 000510  4776          JMS I   (PCRLF)         /ELSE OUTPUT <CR>/<LF> NOW
+ 405 000511  1365          TAD     ("Z&37)         /GET <^Z>
+ 406 000512  4573  CLOSLUP,JMS I   [DOBYTE]        /OUTPUT A BYTE (^Z OR NULL)
+ 407 000513  1020          TAD     BUFPTR          /GET THE OUTPUT BUFFER POINTER
+ 408 000514  1364          TAD     (-OUTBUFFER)    /COMPARE TO RESET VALUE
+ 409 000515  7640          SZA CLA                 /SKIP IF IT MATCHES
+ 410 000516  5312          JMP     CLOSLUP         /ELSE KEEP GOING
+ 411 000517  2200          ISZ     ENCODIT         /NO ERRORS
+ 412 000520  5600          JMP I   ENCODIT         /RETURN
+ 413               
+ 414               /       COMES HERE IF FILE ENDS WITH ONLY TWO DATA CHARACTERS.
+ 415               
+ 416 000521  3025  NORM2,  DCA     CHARS+2         /CLEAR THIRD CHARACTER
+ 417 000522  4767          JMS I   (OUT3)          /OUTPUT THE THREE BYTES
+ 418 000523  5275          JMP     ENDFCOMPRESS    /FINISH IT THERE
+ 419               
+ 420 000564  2200          PAGE
+     000565  0032  
+     000566  7753  
+     000567  0667  
+     000570  7752  
+     000571  7755  
+     000572  0024  
+     000573  0653  
+     000574  7662  
+     000575  0600  
+     000576  0734  
+     000577  1236  
+ 421               /      GET AN INPUT BYTE ROUTINE.
+ 422               
+ 423 000600  0000  GETBYTE,.-.                             /GET A BYTE ROUTINE
+ 424 000601  7650          SNA CLA                         /INITIALIZING?
+ 425 000602  5646          JMP I   PUTC                    /NO, GO GET NEXT BYTE
+ 426 000603  1041          TAD     INRECORD                /GET INPUT FILE STARTING RECORD
+ 427 000604  3210          DCA     GETRECORD               /STORE IN-LINE
+ 428 000605  4440  GETNEWR,JMS I   INPUT                   /CALL INPUT HANDLER
+ 429 000606  0200          2^100                           /READ TWO PAGES
+ 430 000607  6200  PINBUFF,INBUFFER                        /INTO INPUT BUFFER
+ 431 000610  0000  GETRECO,.-.                             /WILL BE LATEST INPUT FILE RECORD
+ 432 000611  5777          JMP I   (PROCERR)               /INPUT READ ERROR, GO COMPLAIN
+ 433 000612  1207          TAD     PINBUFFER/(INBUFFER)    /SETUP THE
+ 434 000613  3037          DCA     INPTR                   /BUFFER POINTER
+ 435 000614  3054  GETLOOP,DCA     THIRD                   /CLEAR THIRD BYTE NOW
+ 436 000615  4232          JMS     PUTONE                  /OBTAIN AND SEND BACK FIRST BYTE
+ 437 000616  4232          JMS     PUTONE                  /OBTAIN AND SEND BACK SECOND BYTE
+ 438 000617  1054          TAD     THIRD                   /GET THIRD BYTE
+ 439 000620  4246          JMS     PUTC                    /SEND IT BACK
+ 440 000621  1037          TAD     INPTR                   /GET THE POINTER
+ 441 000622  1376          TAD     (-2^200-INBUFFER)       /COMPARE TO LIMIT
+ 442 000623  7640          SZA CLA                         /SKIP IF AT END
+ 443 000624  5214          JMP     GETLOOP                 /KEEP GOING
+ 444 000625  2210          ISZ     GETRECORD               /BUMP TO NEXT RECORD
+ 445 000626  7000          NOP                             /JUST IN CASE
+ 446 000627  2036          ISZ     INLEN                   /DONE ALL INPUT RECORDS?
+ 447 000630  5205          JMP     GETNEWRECORD            /NO, KEEP GOING
+ 448               
+ 449               /       AT END-OF-FILE, SO JUST TAKE IMMEDIATE RETURN.
+ 450               
+ 451 000631  5600          JMP I   GETBYTE                 /RETURN TO CALLER
+ 452               
+ 453 000632  0000  PUTONE, .-.                             /SEND BACK A BYTE ROUTINE
+ 454 000633  1437          TAD I   INPTR                   /GET LATEST WORD
+ 455 000634  0171          AND     [7400]                  /JUST THIRD-BYTE NYBBLE
+ 456 000635  7104          CLL RAL                         /MOVE UP
+ 457 000636  1054          TAD     THIRD                   /GET OLD NYBBLE (IF ANY)
+ 458 000637  7006          RTL;RTL                         /MOVE UP NYBBLE BITS
+     000640  7006  
+ 459 000641  3054          DCA     THIRD                   /SAVE FOR NEXT TIME
+ 460 000642  1437          TAD I   INPTR                   /GET LATEST WORD AGAIN
+ 461 000643  4246          JMS     PUTC                    /SEND BACK CURRENT BYTE
+ 462 000644  2037          ISZ     INPTR                   /BUMP TO NEXT WORD
+ 463 000645  5632          JMP I   PUTONE                  /RETURN
+ 464               
+ 465 000646  0000  PUTC,   .-.                             /SEND BACK LATEST BYTE ROUTINE
+ 466 000647  0375          AND     (377)                   /KEEP ONLY GOOD BITS
+ 467 000650  3021          DCA     CHAR                    /SAVE AS LATEST BYTE
+ 468 000651  2200          ISZ     GETBYTE                 /BUMP PAST <EOF> RETURN
+ 469 000652  5600          JMP I   GETBYTE                 /RETURN TO MAIN CALLER
+ 470               /      COMPRESSION FIELD OUTPUT ROUTINE.
+ 471               
+ 472 000653  0000  COMPRES,.-.                     /COMPRESSION OUTPUT ROUTINE
+ 473 000654  7200          CLA                     /CLEAN UP
+ 474 000655  1027          TAD     COLUMN          /GET CURRENT COLUMN COUNTER
+ 475 000656  1374          TAD     (-WIDTH+2)      /COMPARE TO UPPER LIMIT
+ 476 000657  7740          SMA SZA CLA             /SKIP IF NOT ABOVE LIMIT
+ 477 000660  4334          JMS     PCRLF           /ELSE DO <CR>/<LF> FIRST
+ 478 000661  1373          TAD     (176)           /GET TILDE VALUE
+ 479 000662  4573          JMS I   [DOBYTE]        /OUTPUT IT
+ 480 000663  1026          TAD     CMPCNT          /GET COMPRESSION COUNT
+ 481 000664  4327          JMS     PDIGIT          /OUTPUT IT
+ 482 000665  3026          DCA     CMPCNT          /CLEAR COMPRESSION
+ 483 000666  5653          JMP I   COMPRESSOUT     /RETURN
+ 484               
+ 485               /       DATA FIELD OUTPUT ROUTINE.
+ 486               
+ 487 000667  0000  OUT3,   .-.                     /OUTPUT THREE BYTES ROUTINE
+ 488 000670  1027          TAD     COLUMN          /GET CURRENT COLUMN COUNTER
+ 489 000671  1372          TAD     (-WIDTH+4)      /COMPARE TO UPPER LIMIT
+ 490 000672  7740          SMA SZA CLA             /SKIP IF NOT ABOVE LIMIT
+ 491 000673  4334          JMS     PCRLF           /ELSE DO <CR>/<LF> FIRST
+ 492 000674  1023          TAD     CHARS           /GET FIRST BYTE
+ 493 000675  7012          RTR                     /WANT HIGH SIX BITS FIRST
+ 494 000676  4327          JMS     PDIGIT          /OUTPUT THEM
+ 495 000677  1023          TAD     CHARS           /GET IT AGAIN
+ 496 000700  0174          AND     [3]             /JUST TWO LOWEST BITS
+ 497 000701  7112          CLL RTR;RTR;RAR         /MOVE UP
+     000702  7012  
+     000703  7010  
+ 498 000704  1024          TAD     CHARS+1         /GET SECOND BYTE
+ 499 000705  7012          RTR;RTR                 /MOVE DOWN
+     000706  7012  
+ 500 000707  4327          JMS     PDIGIT          /OUTPUT THEM
+ 501 000710  1025          TAD     CHARS+2         /GET THIRD BYTE
+ 502 000711  0371          AND     (300)           /JUST TWO HIGHEST BITS NEEDED
+ 503 000712  7106          CLL RTL;RTL;RAL         /MOVE INTO POSITION
+     000713  7006  
+     000714  7004  
+ 504 000715  1024          TAD     CHARS+1         /GET SECOND BYTE
+ 505 000716  7006          RTL                     /MOVE UP
+ 506 000717  0170          AND     [77]            /JUST DESIRED BITS
+ 507 000720  4327          JMS     PDIGIT          /OUTPUT THEM
+ 508 000721  1025          TAD     CHARS+2         /GET THIRD BYTE
+ 509 000722  0170          AND     [77]            /JUST SIX BITS
+ 510 000723  4327          JMS     PDIGIT          /OUTPUT THEM
+ 511 000724  1172          TAD     [CHARS]         /RESET THE
+ 512 000725  3022          DCA     CHARPTR         /OUTPUT POINTER
+ 513 000726  5667          JMP I   OUT3            /RETURN
+ 514               
+ 515 000727  0000  PDIGIT, .-.                     /PRINT AS A DIGIT INTO FILE ROUTINE
+ 516 000730  0167          AND     [177]           /REMOVE JUNK BITS
+ 517 000731  1370          TAD     ("0&177)        /TURN PASSED VALUE INTO A DIGIT
+ 518 000732  4573          JMS I   [DOBYTE]        /OUTPUT IT
+ 519 000733  5727          JMP I   PDIGIT          /RETURN
+ 520 000734  0000  PCRLF, .-.                     /PRINT <CR>/<LF> INTO FILE ROUTINE
+ 521 000735  1367          TAD     ("M&37)         /GET A <CR>
+ 522 000736  4573          JMS I   [DOBYTE]        /OUTPUT IT
+ 523 000737  1366          TAD     ("J&37)         /GET A <LF>
+ 524 000740  4573          JMS I   [DOBYTE]        /OUTPUT IT
+ 525 000741  3027          DCA     COLUMN          /CLEAR COLUMN COUNTER
+ 526 000742  5734          JMP I   PCRLF           /RETURN
+ 527               
+ 528 000766  0012          PAGE
+     000767  0015  
+     000770  0060  
+     000771  0300  
+     000772  7670  
+     000773  0176  
+     000774  7666  
+     000775  0377  
+     000776  1200  
+     000777  0324  
+ 529 001000  0000  PUTBYTE,.-.                    /OUTPUT A BYTE ROUTINE
+ 530 001001  7510          SPA                     /ARE WE INITIALIZING?
+ 531 001002  5213          JMP     PUTINITIALIZE   /YES
+ 532 001003  0167          AND     [177]           /JUST IN CASE
+ 533 001004  3046          DCA     LATEST          /SAVE LATEST CHARACTER
+ 534 001005  1046          TAD     LATEST          /GET LATEST CHARACTER
+ 535 001006  5607          JMP I   PUTNEXT         /GO WHERE YOU SHOULD GO
+ 536               
+ 537 001007  0000  PUTNEXT,.-.                     /EXIT ROUTINE
+ 538 001010  2200          ISZ     PUTBYTE         /BUMP TO GOOD RETURN
+ 539 001011  7300  PUTERRO,CLA CLL                 /CLEAN UP
+ 540 001012  5600          JMP I   PUTBYTE         /RETURN TO MAIN CALLER
+ 541               
+ 542 001013  7200  PUTINIT,CLA                     /CLEAN UP
+ 543 001014  1051          TAD     OUTRECORD       /GET STARTING RECORD OF TENTATIVE FILE
+ 544 001015  3260          DCA     PUTRECORD       /STORE IN-LINE
+ 545 001016  3777          DCA I   (OUTCNT)        /CLEAR ACTUAL FILE LENGTH
+ 546 001017  1376  PUTNEWR,TAD     (OUTBUFFER)     /SETUP THE
+ 547 001020  3020          DCA     BUFPTR          /BUFFER POINTER
+ 548 001021  4207  PUTLOOP,JMS     PUTNEXT         /GET A CHARACTER
+ 549 001022  3420          DCA I   BUFPTR          /STORE IT
+ 550 001023  1020          TAD     BUFPTR          /GET POINTER VALUE
+ 551 001024  3053          DCA     TEMPTR          /SAVE FOR LATER
+ 552 001025  2020          ISZ     BUFPTR          /BUMP TO NEXT
+ 553 001026  4207          JMS     PUTNEXT         /GET A CHARACTER
+ 554 001027  3420          DCA I   BUFPTR          /STORE IT
+ 555 001030  4207          JMS     PUTNEXT         /GET A CHARACTER
+ 556 001031  7006          RTL;RTL                 /MOVE UP
+     001032  7006  
+ 557 001033  0171          AND     [7400]          /ISOLATE HIGH NYBBLE
+ 558 001034  1453          TAD I   TEMPTR          /ADD ON FIRST BYTE
+ 559 001035  3453          DCA I   TEMPTR          /STORE COMPOSITE
+ 560 001036  1046          TAD     LATEST          /GET LATEST CHARACTER
+ 561 001037  7012          RTR;RTR;RAR             /MOVE UP AND
+     001040  7012  
+     001041  7010  
+ 562 001042  0171          AND     [7400]          /ISOLATE LOW NYBBLE
+ 563 001043  1420          TAD I   BUFPTR          /ADD ON SECOND BYTE
+ 564 001044  3420          DCA I   BUFPTR          /STORE COMPOSITE
+ 565 001045  2020          ISZ     BUFPTR          /BUMP TO NEXT
+ 566 001046  1020          TAD     BUFPTR          /GET LATEST POINTER VALUE
+ 567 001047  1375          TAD     (-2^200-OUTBUFF)/COMPARE TO LIMIT
+ 568 001050  7640          SZA CLA                 /SKIP IF AT END
+ 569 001051  5221          JMP     PUTLOOP         /KEEP GOING
+ 570 001052  2030          ISZ     DANGCNT         /TOO MANY RECORDS?
+ 571 001053  7410          SKP                     /SKIP IF NOT
+ 572 001054  5774          JMP I   (SIZERR)        /JUMP IF SO
+ 573 001055  4450          JMS I   OUTPUT          /CALL I/O HANDLER
+ 574 001056  4200          2^100+WRITE             /WRITE SOME PAGES FROM OUTPUT BUFFER
+ 575 001057  5600          OUTBUFFER               /BUFFER ADDRESS
+ 576 001060  0000  PUTRECO,.-.                     /WILL BE LATEST RECORD NUMBER
+ 577 001061  5211          JMP     PUTERROR        /OUTPUT ERROR!
+ 578 001062  2777          ISZ I   (OUTCNT)        /BUMP ACTUAL LENGTH
+ 579 001063  2260          ISZ     PUTRECORD       /BUMP TO NEXT RECORD
+ 580 001064  5217          JMP     PUTNEWRECORD    /KEEP GOING
+ 581               /      INPUT FILENAME MOVE ROUTINE; USES DEFAULT EXTENSION IF NONE PROVIDED BY USER.
+ 582               
+ 583 001065  0000  MIFNAME,.-.                     /MOVE INPUT FILENAME ROUTINE
+ 584 001066  1773          TAD I   (INFILE+1)      /GET FIRST INPUT FILENAME WORD
+ 585 001067  3032          DCA     IFNAME          /STASH IT
+ 586 001070  1772          TAD I   (INFILE+2)      /GET SECOND INPUT FILENAME WORD
+ 587 001071  3033          DCA     IFNAME+1        /STASH IT
+ 588 001072  1771          TAD I   (INFILE+3)      /GET THIRD INPUT FILENAME WORD
+ 589 001073  3034          DCA     IFNAME+2        /STASH IT
+ 590 001074  1566          TAD I   [INFILE+4]      /GET FOURTH INPUT FILENAME WORD
+ 591 001075  7450          SNA                     /SKIP IF SOMETHING THERE
+ 592 001076  1370          TAD     ("S^100+"V-300) /ELSE USE DEFAULT EXTENSION VALUE
+ 593 001077  3035          DCA     IFNAME+3        /STASH IT EITHER WAY
+ 594 001100  5665          JMP I   MIFNAME         /RETURN
+ 595               
+ 596 001101  0000  DOBYTE, .-.                     /OUTPUT A BYTE ROUTINE
+ 597 001102  4200          JMS     PUTBYTE         /OUTPUT PASSED VALUE
+ 598 001103  5767          JMP I   (ENCERROR)      /COULDN'T DO IT
+ 599 001104  2027          ISZ     COLUMN          /BUMP COLUMN COUNTER
+ 600 001105  5701          JMP I   DOBYTE          /RETURN
+ 601               
+ 602 001167  0322          PAGE
+     001170  2326  
+     001171  7610  
+     001172  7607  
+     001173  7606  
+     001174  0330  
+     001175  1600  
+     001176  5600  
+     001177  0316  
+ 603               /      INPUT FILE ROUTINE.
+ 604               
+ 605 001200  0000  GEIFILE,.-.                     /GET INPUT FILE ROUTINE
+ 606 001201  4222          JMS     LUKUP           /TRY TO LOOKUP THE FILE
+ 607 001202  7410          SKP                     /SKIP IF IT WORKED
+ 608 001203  5211          JMP     TRYNULL         /TRY NULL EXTENSION VERSION
+ 609 001204  1232  NULLOK, TAD     LARG1           /GET FIRST INPUT RECORD
+ 610 001205  3041          DCA     INRECORD        /STASH IT
+ 611 001206  1233          TAD     LARG2           /GET NEGATED LENGTH
+ 612 001207  3036          DCA     INLEN           /STASH IT
+ 613 001210  5600          JMP I   GEIFILE         /RETURN
+ 614               
+ 615               /       COMES HERE IF LOOKUP FAILED.
+ 616               
+ 617 001211  6211  TRYNULL,CDF     TBLFLD          /GOTO TABLE FIELD
+ 618 001212  1566          TAD I   [INFILE+4]      /GET ORIGINAL FILENAME'S EXTENSION
+ 619 001213  6201          CDF     PRGFLD          /BACK TO OUR FIELD
+ 620 001214  7640          SZA CLA                 /SKIP IF IT WAS NULL ORIGINALLY
+ 621 001215  5777          JMP I   (INERR)         /ELSE COMPLAIN OF EXPLICIT LOOKUP FAILURE
+ 622 001216  3035          DCA     IFNAME+3        /NOW TRY NULL VERSION INSTEAD OF DEFAULT VERSION
+ 623 001217  4222          JMS     LUKUP           /TRY TO LOOK IT UP AGAIN
+ 624 001220  5204          JMP     NULLOK          /THAT WORKED!
+ 625 001221  5777          JMP I   (INERR)         /COMPLAIN OF LOOKUP FAILURE
+ 626               
+ 627 001222  0000  LUKUP,  .-.                     /LOW-LEVEL LOOKUP ROUTINE
+ 628 001223  1376          TAD     (IFNAME)        /GET OUR FILENAME POINTER
+ 629 001224  3232          DCA     LARG1           /STORE IN-LINE
+ 630 001225  3233          DCA     LARG2           /CLEAR SECOND ARGUMENT
+ 631 001226  1031          TAD     IDNUMBER        /GET INPUT DEVICE NUMBER
+ 632 001227  6212          CIF     USRFLD          /GOTO USR FIELD
+ 633 001230  4577          JMS I   [USR]           /CALL USR ROUTINE
+ 634 001231  0002          LOOKUP                  /WANT LOOKUP FUNCTION
+ 635 001232  0000  LARG1,  .-.                     /WILL BE POINTER TO OUR FILENAME
+ 636 001233  0000  LARG2,  .-.                     /WILL RETURN FILE LENGTH (HOPEFULLY)
+ 637 001234  2222          ISZ     LUKUP           /LOOKUP FAILED, SO BUMP RETURN ADDRESS
+ 638 001235  5622          JMP I   LUKUP           /RETURN EITHER WAY
+ 639               /      INPUT FILENAME PRINT ROUTINE.
+ 640               
+ 641 001236  0000  PIFNAME,.-.                     /PRINT INPUT FILENAME ROUTINE
+ 642 001237  1032          TAD     IFNAME          /GET FIRST PAIR
+ 643 001240  4252          JMS     PIF2            /PRINT IT
+ 644 001241  1033          TAD     IFNAME+1        /GET SECOND PAIR
+ 645 001242  4252          JMS     PIF2            /PRINT IT
+ 646 001243  1034          TAD     IFNAME+2        /GET THIRD PAIR
+ 647 001244  4252          JMS     PIF2            /PRINT IT
+ 648 001245  1375          TAD     (".&177)        /GET SEPARATOR
+ 649 001246  4264          JMS     PIFOUT          /PRINT IT
+ 650 001247  1035          TAD     IFNAME+3        /GET FOURTH PAIR
+ 651 001250  4252          JMS     PIF2            /PRINT IT
+ 652 001251  5636          JMP I   PIFNAME         /RETURN
+ 653               
+ 654 001252  0000  PIF2,   .-.                     /PRINT A PAIR ROUTINE
+ 655 001253  3052          DCA     PIFTEMP         /SAVE PASSED PAIR
+ 656 001254  1052          TAD     PIFTEMP         /GET IT BACK
+ 657 001255  7012          RTR;RTR;RTR             /MOVE DOWN
+     001256  7012  
+     001257  7012  
+ 658 001260  4264          JMS     PIFOUT          /PRINT HIGH-ORDER FIRST
+ 659 001261  1052          TAD     PIFTEMP         /GET IT AGAIN
+ 660 001262  4264          JMS     PIFOUT          /PRINT LOW-ORDER
+ 661 001263  5652          JMP I   PIF2            /RETURN
+ 662               
+ 663 001264  0000  PIFOUT, .-.                     /FILENAME CHARACTER OUTPUT ROUTINE
+ 664 001265  0170          AND     [77]            /JUST SIXBIT
+ 665 001266  7450          SNA                     /SKIP IF SOMETHING THERE
+ 666 001267  5664          JMP I   PIFOUT          /ELSE IGNORE IT
+ 667 001270  1165          TAD     [40]            /INVERT IT
+ 668 001271  0170          AND     [77]            /REMOVE EXCESS
+ 669 001272  1165          TAD     [40]            /INVERT IT AGAIN
+ 670 001273  4573          JMS I   [DOBYTE]        /OUTPUT IT
+ 671 001274  5664          JMP I   PIFOUT          /RETURN
+ 672               
+ 673 001275  0000  MOFNAME,.-.                     /MOVE OUTPUT FILENAME ROUTINE
+ 674 001276  1575          TAD I   [OUTFILE+1]     /GET FIRST OUTPUT FILENAME WORD
+ 675 001277  4313          JMS     CHKNAME         /CHECK IF LEGAL
+ 676 001300  3042          DCA     FNAME           /STASH IT
+ 677 001301  1774          TAD I   (OUTFILE+2)     /GET SECOND OUTPUT FILENAME WORD
+ 678 001302  4313          JMS     CHKNAME         /CHECK IF LEGAL
+ 679 001303  3043          DCA     FNAME+1         /STASH IT
+ 680 001304  1773          TAD I   (OUTFILE+3)     /GET THIRD OUTPUT FILENAME WORD
+ 681 001305  4313          JMS     CHKNAME         /CHECK IF LEGAL
+ 682 001306  3044          DCA     FNAME+2         /STASH IT
+ 683 001307  1772          TAD I   (OUTFILE+4)     /GET FOURTH OUTPUT FILENAME WORD
+ 684 001310  4313          JMS     CHKNAME         /CHECK IF LEGAL
+ 685 001311  3045          DCA     FNAME+3         /STASH IT
+ 686 001312  5675          JMP I   MOFNAME         /RETURN
+ 687               /      OUTPUT NAME CHECK ROUTINE.
+ 688               
+ 689 001313  0000  CHKNAME,.-.                     /OUTPUT NAME CHECK ROUTINE
+ 690 001314  3222          DCA     LUKUP           /SAVE PASSED VALUE
+ 691 001315  1222          TAD     LUKUP           /GET IT BACK
+ 692 001316  7012          RTR;RTR;RTR             /MOVE DOWN
+     001317  7012  
+     001320  7012  
+ 693 001321  4324          JMS     CHKIT           /CHECK HIGH-ORDER AND GET IT BACK
+ 694 001322  4324          JMS     CHKIT           /CHECK LOW-ORDER AND GET IT BACK
+ 695 001323  5713          JMP I   CHKNAME         /RETURN
+ 696               
+ 697 001324  0000  CHKIT,  .-.                     /ONE CHARACTER CHECK ROUTINE
+ 698 001325  0170          AND     [77]            /JUST SIX BITS
+ 699 001326  1371          TAD     (-"?!200)       /COMPARE TO "?"
+ 700 001327  7440          SZA                     /SKIP IF ALREADY BAD
+ 701 001330  1370          TAD     (-"*+"?)        /ELSE COMPARE TO "*"
+ 702 001331  7650          SNA CLA                 /SKIP IF NEITHER BAD CASE
+ 703 001332  5767          JMP I   (BADNAME)       /COMPLAIN OF WILD CHARACTER
+ 704 001333  1222          TAD     LUKUP           /GET THE PAIR BACK FOR NEXT TIME
+ 705 001334  5724          JMP I   CHKIT           /RETURN
+ 706               
+ 707 001367  0337          PAGE
+     001370  0025  
+     001371  7701  
+     001372  7604  
+     001373  7603  
+     001374  7602  
+     001375  0056  
+     001376  0032  
+     001377  0340  
+ 708 000165  0040         $                       /THAT'S ALL FOLK!
+     000166  7611  
+     000167  0177  
+     000170  0077  
+     000171  7400  
+     000172  0023  
+     000173  1101  
+     000174  0003  
+     000175  7601  
+     000176  0017  
+     000177  0200  
+
+BADNAM  0337
+BEGIN   0200 unreferenced
+BUFPTR  0020
+BYTEIN  0450
+CHAR    0021
+CHARPT  0022
+CHARS   0023
+CHKIT   1324
+CHKNAM  1313
+CLOSE   0004
+CLOSFI  0506
+CLOSLU  0512
+CLSERR  0326
+CMPCNT  0026
+COLUMN  0027
+COMPRE  0653
+DANGCN  0030
+DECODE  0005
+DOBYTE  1101
+ENCERR  0322
+ENCODI  0400
+ENDCHE  0460
+ENDCOM  0427
+ENDFCO  0475
+ENTAR1  0277
+ENTAR2  0300
+ENTER   0003
+ENTERR  0333
+ERRNUM  0346
+EXITZA  0320
+FERROR  0335
+FETCH   0001
+FNAME   0042
+GEIFIL  1200
+GETBYT  0600
+GETLOO  0614
+GETNEW  0605
+GETREC  0610
+IDNUMB  0031
+IFNAME  0032
+IHNDBU  7200
+IHPTR   0263
+INBUFF  6200
+INERR   0340
+INFILE  7605
+INLEN   0036
+INPTR   0037
+INPUT   0040
+INRECO  0041
+LARG1   1232
+LARG2   1233
+LATEST  0046
+LOOKUP  0002
+LOOP    0411
+LUKUP   1222
+MIFNAM  1065
+MOFNAM  1275
+NL0001  7201
+NL0002  7326
+NL7776  7344
+NL7777  7240
+NOCOMP  0441
+NONAME  0336
+NORM1   0470
+NORM2   0521
+NORMEN  0477
+NULLOK  1204
+ODNUMB  0047
+OHNDBU  6600
+OHPTR   0251
+OUT3    0667
+OUTBUF  5600
+OUTCNT  0316
+OUTCOM  0440
+OUTERR  0341
+OUTFIL  7600
+OUTPUT  0050
+OUTREC  0051
+PCRLF   0734
+PDIGIT  0727
+PIF2    1252
+PIFNAM  1236
+PIFOUT  1264
+PIFTEM  0052
+PINBUF  0607
+PRGFLD  0000
+PROCER  0324
+PUTBYT  1000
+PUTC    0646
+PUTERR  1011
+PUTINI  1013
+PUTLOO  1021
+PUTNEW  1017
+PUTNEX  1007
+PUTONE  0632
+PUTREC  1060
+RESET   0013
+SBOOT   7600
+SETCOM  0421
+SIZERR  0330
+START   0202
+TBLFLD  0010
+TEMPTR  0053
+TERMWR  7642
+THIRD   0054
+TRYNUL  1211
+TSTMOR  0347
+USERRO  0007
+USR     0200
+USRENT  7700
+USRFLD  0010
+USRIN   0010
+WIDTH   0114
+WRITE   4000
