@@ -1,0 +1,77 @@
+/
+/ Seek/Read test
+/ SWR Bits:
+/	0	Halt after Read
+/	1-8	Cylinder Address
+/	9	Surface Bit
+/	10-11	Sector / 4
+/
+DSKP=	6741		/Skip if XFR Done or Error
+DCLR=	6742		/Clear Registers:
+			/0000 - Clear AC and Status
+			/0001 - Clear AC and Controller
+			/0002 - Clear AC and Recalibrate
+			/0003 - Clear AC and Status (as for 0000)
+DLAG=	6743		/Load Address and Start Command
+DLDC=	6746		/Command Register:
+			/0000 - Read Data
+			/1000 - Read All
+			/2000 - Write Protect
+			/3000 - Seek
+			/4000 - Write Data
+			/5000 - Write All
+			/0400 - Enable Interrupt
+			/0200 - Set XFR Done when finished
+			/0100 - 128 Word XFR
+			/00x0 - Memory Field
+			/0000 - Drive 0
+			/0002 - Drive 1
+			/0004 - Drive 2
+			/0006 - Drive 3
+			/0001 - Cyl Addrress
+
+RKS8=	0		/Set non-zero for RKS8E
+
+	*0200
+START,	CLA CLL IAC
+	DCLR		/Clear AC, Reset Controller
+	JMS READ1	/Go Seek and Read
+	0000		/Address Argument
+	CLA OSR 	/Read switches
+	RTL 		/Position them
+	DCA ADDR	/Remember them
+ifzero RKS8 <
+	RAL 		/Rotate in Link
+>
+ifnzro RKS8 <
+	JMP PATCH	/JMP to Patch
+>
+RESUME,	JMS READ1	/Go Seek and Read
+ADDR,	.-.		/Address is OSR;RTL
+	CLA OSR 	/Read switches
+	SPA CLA 	/Bit 0 set?
+	HLT		/Yes, HLT after test
+	JMP START	/Go do it all again
+/
+/ Subroutine to execute Seek, then Read.
+/ Extra address bit is passed in AC.
+/
+READ1,	.-.
+	TAD SEEK	/Get Seek Command
+	DLDC		/Load it
+	TAD I READ1	/Get argument
+	DLAG		/Load and Go
+	DSKP		/Wait for it
+	JMP .-1
+	TAD READ	/Get Read Command
+	DLDC		/Load it
+	DSKP		/Wait for it
+	JMP .-1
+	ISZ READ1	/Skip over argument
+	JMP I READ1	/Return
+SEEK,	3200		/Seek
+READ,	0200		/Read Data
+PATCH,	RAL 		/Rotate in Link
+	BSW 		/byte swap
+	JMP RESUME	/Resume
+$

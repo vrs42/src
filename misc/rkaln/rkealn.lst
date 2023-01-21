@@ -1,0 +1,77 @@
+   1               /
+   2               / Seek/Read test
+   3               / SWR Bits:
+   4               /       0       Halt after Read
+   5               /       1-8     Cylinder Address
+   6               /       9       Surface Bit
+   7               /       10-11   Sector / 4
+   8               /
+   9               DSKP=   6741            /Skip if XFR Done or Error
+  10               DCLR=   6742            /Clear Registers:
+  11                                       /0000 - Clear AC and Status
+  12                                       /0001 - Clear AC and Controller
+  13                                       /0002 - Clear AC and Recalibrate
+  14                                       /0003 - Clear AC and Status (as for 0000)
+  15               DLAG=   6743            /Load Address and Start Command
+  16               DLDC=   6746            /Command Register:
+  17                                       /0000 - Read Data
+  18                                       /1000 - Read All
+  19                                       /2000 - Write Protect
+  20                                       /3000 - Seek
+  21                                       /4000 - Write Data
+  22                                       /5000 - Write All
+  23                                       /0400 - Enable Interrupt
+  24                                       /0200 - Set XFR Done when finished
+  25                                       /0100 - 128 Word XFR
+  26                                       /00x0 - Memory Field
+  27                                       /0000 - Drive 0
+  28                                       /0002 - Drive 1
+  29                                       /0004 - Drive 2
+  30                                       /0006 - Drive 3
+  31                                       /0001 - Cyl Addrress
+  32               
+  33               RKS8=   0               /Set non-zero for RKS8E
+  34               
+  35                       *0200
+  36 000200  7301  START,  CLA CLL IAC
+  37 000201  6742          DCLR            /Clear AC, Reset Controller
+  38 000202  4216          JMS READ1       /Go Seek and Read
+  39 000203  0000          0000            /Address Argument
+  40 000204  7604          CLA OSR         /Read switches
+  41 000205  7006          RTL             /Position them
+  42 000206  3211          DCA ADDR        /Remember them
+  43               ifzero RKS8 <
+  44 000207  7004          RAL             /Rotate in Link
+  45               >
+  46               ifnzro RKS8 <
+  47                       JMP PATCH       /JMP to Patch
+  48               >
+  49 000210  4216  RESUME, JMS READ1       /Go Seek and Read
+  50 000211  0000  ADDR,   .-.             /Address is OSR;RTL
+  51 000212  7604          CLA OSR         /Read switches
+  52 000213  7710          SPA CLA         /Bit 0 set?
+  53 000214  7402          HLT             /Yes, HLT after test
+  54 000215  5200          JMP START       /Go do it all again
+  55               /
+  56               / Subroutine to execute Seek, then Read.
+  57               / Extra address bit is passed in AC.
+  58               /
+  59 000216  0000  READ1,  .-.
+  60 000217  1233          TAD SEEK        /Get Seek Command
+  61 000220  6746          DLDC            /Load it
+  62 000221  1616          TAD I READ1     /Get argument
+  63 000222  6743          DLAG            /Load and Go
+  64 000223  6741          DSKP            /Wait for it
+  65 000224  5223          JMP .-1
+  66 000225  1234          TAD READ        /Get Read Command
+  67 000226  6746          DLDC            /Load it
+  68 000227  6741          DSKP            /Wait for it
+  69 000230  5227          JMP .-1
+  70 000231  2216          ISZ READ1       /Skip over argument
+  71 000232  5616          JMP I READ1     /Return
+  72 000233  3200  SEEK,   3200            /Seek
+  73 000234  0200  READ,   0200            /Read Data
+  74 000235  7004  PATCH,  RAL             /Rotate in Link
+  75 000236  7002          BSW             /byte swap
+  76 000237  5210          JMP RESUME      /Resume
+  77               $
