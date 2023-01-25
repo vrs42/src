@@ -1,0 +1,443 @@
+   1               /
+   2               /I think what this does is, depending on responses to the prompt,
+   3               /either repeatedly seek to the requested address, or alternate
+   4               /seeks to the requested address with seeks to 0000.
+   5               /
+   6               
+   7               / IOT & PARAMETER DEFINITIONS
+   8               /DSKP=6741
+   9               DCLR=6742
+  10               DLAG=6743
+  11               /DLCA=6744
+  12               DRST=6745
+  13               DLDC=6746
+  14               /DMAN=6747
+  15               
+  16               *0
+  17 000000  0005          0005            /Version "E"
+  18 000001  7402          HLT             /Please don't come here
+  19               
+  20               *20
+  21 000020  0453  PYESNO, YESNO           /Ask a YES/NO question
+  22 000021  0445  INCHR,  INCH            /Input a character
+  23 000022  0473  GETNUM, NUMGET          /Input a number
+  24 000023  0437  POUTCH, OUTCH           /Output a character
+  25 000024  0400  PMESG,  MESG            /Output six-bit message
+  26 000025  0000  TEMP1,  .-.
+  27 000026  0000  TEMP2,  .-.
+  28               /Recalibrate if asked, then wait for drive idle.
+  29               /Entry point also used as a temporary.
+  30               TEMP3,
+  31 000027  0000  RKINIT, .-.
+  32 000030  6742  DCLR1,  DCLR            /Clear AC and Status
+  33 000031  6745  DRST1,  DRST            /Read Status
+  34 000032  7640          SZA CLA         /Is it clear?
+  35 000033  5030          JMP DCLR1       /No, try again
+  36 000034  5427          JMP I RKINIT    /Yes, return
+  37               
+  38                       PAGE
+  39 000200  7600  START,  CLA 7600
+  40 000201  4424          JMS I PMESG
+  41 000202  0600          D00600          /_RK8E - RK05 DISK ALIGNMENT PROGRAM VERSION 1/
+  42 000203  1377          TAD D00377      /Get a NOP
+  43 000204  3776          DCA I D00376    /Set up for OCTAL input
+  44 000205  4420          JMS I PYESNO
+  45 000206  0627          D00627          /_DO YOU WISH TO CHANGE DEVICE CODES?/
+  46 000207  5235          JMP L00235      /Nope
+  47 000210  4424          JMS I PMESG     /Yes, prompt
+  48 000211  0652          D00652          /_DEVICE CODE #/
+  49 000212  7344          CLA CLL CMA RAL /-2
+  50 000213  4422          JMS I GETNUM    /Get an (octal) number
+  51 000214  7106          CLL RTL         /Shift new device code
+  52 000215  7004          RAL 
+  53 000216  3026          DCA TEMP2       /Remember it
+  54 000217  1375          TAD D00375      / 6002
+  55 000220  1026          TAD TEMP2       / +code (DCLR)
+  56 000221  3030          DCA DCLR1
+  57 000222  1374          TAD D00374      / 6003
+  58 000223  1026          TAD TEMP2       / +code (DLAG)
+  59 000224  3332          DCA DLAG1
+  60 000225  1373          TAD D00373      / 6005
+  61 000226  1026          TAD TEMP2       / +code (DRST)
+  62 000227  3031          DCA DRST1
+  63 000230  1372          TAD L00372      / 6006
+  64 000231  1026          TAD TEMP2       / +code (DLDC)
+  65 000232  3261          DCA DLDC1
+  66 000233  1261          TAD DLDC1
+  67 000234  3330          DCA DLDC2
+  68 000235  4420  L00235, JMS I PYESNO
+  69 000236  0662          D00662          /_OCTAL INPUT?/
+  70 000237  1371          TAD D00371      / TAD TEMP2 + 1000
+  71 000240  1377          TAD D00377      / Get NOP or - 1000
+  72 000241  3776          DCA I D00376    /Set new radix
+  73 000242  4424          JMS I PMESG
+  74 000243  0671          D00671          /_DRIVE #/
+  75 000244  4421  L00244, JMS I INCHR
+  76 000245  1370          TAD D00370
+  77 000246  7100          CLL 
+  78 000247  1367          TAD D00367
+  79 000250  7420          SNL 
+  80 000251  5244          JMP L00244
+  81 000252  7104          CLL RAL 
+  82 000253  3025          DCA TEMP1
+  83 000254  1025          TAD TEMP1
+  84 000255  7010          RAR 
+  85 000256  1366          TAD D00366
+  86 000257  4423          JMS I POUTCH
+  87 000260  1025          TAD TEMP1
+  88 000261  6746  DLDC1,  DLDC
+  89 000262  7326          CLA CLL CML RTL / 0002: Recalibrate
+  90 000263  4027          JMS RKINIT      / Go do it
+  91 000264  4424  L00264, JMS I PMESG
+  92 000265  0676          D00676          /_CYLINDER #/
+  93 000266  7346          CLA CLL CMA RTL 
+  94 000267  4422          JMS I GETNUM
+  95 000270  7104          CLL RAL
+  96 000271  3312          DCA D00312
+  97 000272  4420          JMS I PYESNO
+  98 000273  0704          D00704          /_LOWER SURFACE?/
+  99 000274  2312          ISZ D00312
+ 100 000275  4420          JMS I PYESNO
+ 101 000276  0714          D00714          /_HEAD ALIGNMENT?/
+ 102 000277  1311          TAD L00311      /No, Get the JMS
+ 103 000300  3313          DCA D00313      /Store an instruction
+ 104 000301  7421  L00301, MQL             /Update iteration count in MQ
+ 105 000302  6031          KSF             /Key struck?
+ 106 000303  5311          JMP L00311
+ 107 000304  6034          KRS             /Yes, read it
+ 108 000305  0365          AND D00365      /Remove parity bit
+ 109 000306  1364          TAD D00364      /Carriage Return?
+ 110 000307  7650          SNA CLA         /No, keep going
+ 111 000310  5264          JMP L00264      /Yes
+ 112 000311  4320  L00311, JMS DOIT        /Go do our thing
+ 113 000312  0000  D00312, 0000            /Argument: Cyl, Surface, etc.
+ 114 000313  7402  D00313, 7402            /JMS DOIT again or 0000
+ 115 000314  0000          0000            /Argument for JMS: always 0000
+ 116 000315  7701          ACL             /Get MQ
+ 117 000316  7001          IAC             /Increment
+ 118 000317  5301          JMP L00301      /Go update MQ and repeat
+ 119               / Do our thing
+ 120               /The outer loop displays how many times, in MQ.
+ 121 000320  0000  DOIT,   .-.
+ 122 000321  1720          TAD I DOIT      /Get Argument
+ 123 000322  7106          CLL RTL         /Shift it
+ 124 000323  7006          RTL 
+ 125 000324  3027          DCA TEMP3       /Save it
+ 126 000325  7004          RAL             /Get bit 4
+ 127 000326  1025          TAD TEMP1
+ 128 000327  1363          TAD D00363      /Form a seek command
+ 129 000330  6746  DLDC2,  DLDC            /Load it
+ 130 000331  1027          TAD TEMP3       /Get saved argument
+ 131 000332  6743  DLAG1,  DLAG            /Start it
+ 132 000333  4027          JMS RKINIT      /Initialize without recalibrate;
+ 133                                       /Effectively waits for drive idle?
+ 134 000334  5720          JMP I DOIT
+ 135               
+ 136               *363
+ 137 000363  3200  D00363, 3200
+ 138 000364  7763  D00364, 7763
+ 139 000365  0177  D00365, 0177
+ 140 000366  0260  D00366, 0260
+ 141 000367  0004  D00367, 0004
+ 142 000370  7714  D00370, 7714
+ 143 000371  2026  D00371, 1000+TAD TEMP2
+ 144 000372  6006  L00372, 6006
+ 145 000373  6005  D00373, 6005
+ 146 000374  6003  D00374, 6003
+ 147 000375  6002  D00375, 6002
+ 148 000376  0515  D00376, D00515
+ 149 000377  7000  D00377, NOP
+ 150               
+ 151                       PAGE
+ 152               /Print a message.  Non-zero AC points to the message,
+ 153               /otherwise a pointer to the message follows the call.
+ 154 000400  0000  MESG,   .-.
+ 155 000401  7440          SZA             /Got arg in AC?
+ 156 000402  5205          JMP L00405      /Yes, no need to fetch it
+ 157 000403  1600          TAD I MESG      /No, fetch it
+ 158 000404  2200          ISZ MESG        /Skip it on return
+ 159 000405  3027  L00405, DCA TEMP3       /Save message pointer
+ 160 000406  1427  NEXT12, TAD I TEMP3     /Get a word
+ 161 000407  7112          CLL RTR         /Position first sixbit
+ 162 000410  7012          RTR 
+ 163 000411  7012          RTR 
+ 164 000412  4217          JMS OUT6        /Print it
+ 165 000413  1427          TAD I TEMP3     /Get second sixbit
+ 166 000414  2027          ISZ TEMP3       /Bump message pointer
+ 167 000415  4217          JMS OUT6        /Output second sixbit
+ 168 000416  5206          JMP NEXT12      /Repeat until EOM
+ 169               /Output the next six bit character.
+ 170               /Return from MESG if the end of the message is seen.
+ 171 000417  0000  OUT6,   .-.
+ 172 000420  0377          AND D00577      /Mask to 6 bits
+ 173 000421  7450          SNA             /End of message?
+ 174 000422  5600          JMP I MESG      /Yes, bail
+ 175 000423  1376          TAD D00576      /Underscore?
+ 176 000424  7440          SZA 
+ 177 000425  5232          JMP L00432      /No, go output as is
+ 178 000426  1375          TAD D00575      /Yes, Get CR
+ 179 000427  4423          JMS I POUTCH    /Output it
+ 180 000430  1374          TAD D00574      /Get LF
+ 181 000431  5235          JMP L00435      /Go output it
+ 182 000432  1377  L00432, TAD D00577      /-37+77 gives net +40
+ 183 000433  0377          AND D00577      /Mask with 77
+ 184 000434  1373          TAD L00573      /+240 makes it printable
+ 185 000435  4423  L00435, JMS I POUTCH    /So print it
+ 186 000436  5617          JMP I OUT6      /...and return
+ 187               /Output the character
+ 188 000437  0000  OUTCH,  .-.
+ 189 000440  6046          TLS
+ 190 000441  7200          CLA 
+ 191 000442  6041          TSF 
+ 192 000443  5242          JMP .-1
+ 193 000444  5637          JMP I OUTCH
+ 194               / Get a character
+ 195 000445  0000  INCH,   .-.
+ 196 000446  6031          KSF 
+ 197 000447  5246          JMP .-1
+ 198 000450  6036          KRB
+ 199 000451  0372          AND D00572
+ 200 000452  5645          JMP I INCH
+ 201               / This asks a yes/no question.
+ 202               / The call is always followed by an argument pointing
+ 203               / to the question, followed by the NO return, then the
+ 204               / YES return.
+ 205 000453  0000  YESNO,  .-.
+ 206 000454  1653          TAD I YESNO
+ 207 000455  2253          ISZ YESNO
+ 208 000456  4424          JMS I PMESG
+ 209 000457  4421  L00457, JMS I INCHR
+ 210 000460  1371          TAD D00571
+ 211 000461  7450          SNA 
+ 212 000462  5270          5270
+ 213 000463  1370          TAD D00570
+ 214 000464  7640          SZA CLA 
+ 215 000465  5257          JMP L00457      /Try again
+ 216 000466  2253          ISZ YESNO       /Take skip return
+ 217 000467  1367          TAD D00567      /Print YES
+ 218 000470  1366          TAD L00566      /or NO
+ 219 000471  4424          JMS I PMESG
+ 220 000472  5653          JMP I YESNO
+ 221               /Subroutine to Read a character
+ 222 000473  0000  NUMGET, .-.
+ 223 000474  3253          DCA YESNO       /Save digit count
+ 224 000475  3026  L00475, DCA TEMP2
+ 225 000476  1315  L00476, TAD D00515      /7000?
+ 226 000477  7700          SMA CLA         /Too big?
+ 227 000500  5323          JMP L00523      /Yes, bail
+ 228 000501  4421          JMS I INCHR     /Read a character
+ 229 000502  1365          TAD D00565      / -70
+ 230 000503  7100          CLL 
+ 231 000504  1364          TAD D00564      / +10
+ 232 000505  7420  L00505, SNL 
+ 233 000506  5276          JMP L00476      /No, try again
+ 234 000507  3245          DCA INCH
+ 235 000510  1245          TAD INCH
+ 236 000511  1363          TAD D00563      /Convert to a digit
+ 237 000512  4423          JMS I POUTCH    /Echo it
+ 238 000513  1026          TAD TEMP2       /Get number
+ 239 000514  7106          CLL RTL         /Shift it
+ 240 000515  7000  D00515, NOP             /NOP or TAD TEMP2
+ 241                                       /=> *4 or *5, depending on radix
+ 242 000516  7004          RAL             /=> *8 or *10, depending on radix
+ 243 000517  1245          TAD INCH        /Add new digit
+ 244 000520  2253          ISZ YESNO       /Done all digits?
+ 245 000521  5275          JMP L00475      /No, go again
+ 246 000522  5673          JMP I NUMGET    /Yes, return to caller
+ 247 000523  4421  L00523, JMS I INCHR     /Get a character
+ 248 000524  1362          TAD D00562      / -12
+ 249 000525  7100          CLL 
+ 250 000526  1361          TAD D00561      / + 12
+ 251 000527  5305          JMP L00505      /Go check it
+ 252               
+ 253               *561
+ 254 000561  0012  D00561, 0012
+ 255 000562  7706  D00562, 7706
+ 256 000563  0260  D00563, 0260
+ 257 000564  0010  D00564, 0010
+ 258 000565  7710  D00565, 7710
+ 259 000566  0730  L00566, D00730          / NO/
+ 260 000567  7775  D00567, D00725-D00730   / YES-NO
+ 261 000570  7765  D00570, 7765
+ 262 000571  7662  D00571, 7662
+ 263 000572  0177  D00572, 0177
+ 264 000573  0240  L00573, 0240
+ 265 000574  0212  D00574, 0212
+ 266 000575  0215  D00575, 0215
+ 267 000576  7741  D00576, 7741
+ 268 000577  0077  D00577, 0077
+ 269               
+ 270                       PAGE
+ 271 000600  3722  D00600, TEXT    /_RK8E - RK05 DISK ALIGNMENT PROGRAM VERSION 1/
+     000601  1370  
+     000602  0540  
+     000603  5540  
+     000604  2213  
+     000605  6065  
+     000606  4004  
+     000607  1123  
+     000610  1340  
+     000611  0114  
+     000612  1107  
+     000613  1615  
+     000614  0516  
+     000615  2440  
+     000616  2022  
+     000617  1707  
+     000620  2201  
+     000621  1540  
+     000622  2605  
+     000623  2223  
+     000624  1117  
+     000625  1640  
+     000626  6100  
+ 272 000627  3704  D00627, TEXT    /_DO YOU WISH TO CHANGE DEVICE CODES?/
+     000630  1740  
+     000631  3117  
+     000632  2540  
+     000633  2711  
+     000634  2310  
+     000635  4024  
+     000636  1740  
+     000637  0310  
+     000640  0116  
+     000641  0705  
+     000642  4004  
+     000643  0526  
+     000644  1103  
+     000645  0540  
+     000646  0317  
+     000647  0405  
+     000650  2377  
+     000651  0000  
+ 273 000652  3704  D00652, TEXT    /_DEVICE CODE #/
+     000653  0526  
+     000654  1103  
+     000655  0540  
+     000656  0317  
+     000657  0405  
+     000660  4043  
+     000661  0000  
+ 274 000662  3717  D00662, TEXT    /_OCTAL INPUT?/
+     000663  0324  
+     000664  0114  
+     000665  4011  
+     000666  1620  
+     000667  2524  
+     000670  7700  
+ 275 000671  3704  D00671, TEXT    /_DRIVE #/
+     000672  2211  
+     000673  2605  
+     000674  4043  
+     000675  0000  
+ 276 000676  3703  D00676, TEXT    /_CYLINDER #/
+     000677  3114  
+     000700  1116  
+     000701  0405  
+     000702  2240  
+     000703  4300  
+ 277 000704  3714  D00704, TEXT    /_LOWER SURFACE?/
+     000705  1727  
+     000706  0522  
+     000707  4023  
+     000710  2522  
+     000711  0601  
+     000712  0305  
+     000713  7700  
+ 278 000714  3710  D00714, TEXT    /_HEAD ALIGNMENT?/
+     000715  0501  
+     000716  0440  
+     000717  0114  
+     000720  1107  
+     000721  1615  
+     000722  0516  
+     000723  2477  
+     000724  0000  
+ 279 000725  4031  D00725, TEXT    / YES/
+     000726  0523  
+     000727  0000  
+ 280 000730  4016  D00730, TEXT    / NO/
+     000731  1700  
+ 281               $
+
+D00312  0312
+D00313  0313
+D00363  0363
+D00364  0364
+D00365  0365
+D00366  0366
+D00367  0367
+D00370  0370
+D00371  0371
+D00373  0373
+D00374  0374
+D00375  0375
+D00376  0376
+D00377  0377
+D00515  0515
+D00561  0561
+D00562  0562
+D00563  0563
+D00564  0564
+D00565  0565
+D00567  0567
+D00570  0570
+D00571  0571
+D00572  0572
+D00574  0574
+D00575  0575
+D00576  0576
+D00577  0577
+D00600  0600
+D00627  0627
+D00652  0652
+D00662  0662
+D00671  0671
+D00676  0676
+D00704  0704
+D00714  0714
+D00725  0725
+D00730  0730
+DCLR    6742
+DCLR1   0030
+DLAG    6743
+DLAG1   0332
+DLDC    6746
+DLDC1   0261
+DLDC2   0330
+DOIT    0320
+DRST    6745
+DRST1   0031
+GETNUM  0022
+INCH    0445
+INCHR   0021
+L00235  0235
+L00244  0244
+L00264  0264
+L00301  0301
+L00311  0311
+L00372  0372
+L00405  0405
+L00432  0432
+L00435  0435
+L00457  0457
+L00475  0475
+L00476  0476
+L00505  0505
+L00523  0523
+L00566  0566
+L00573  0573
+MESG    0400
+NEXT12  0406
+NUMGET  0473
+OUT6    0417
+OUTCH   0437
+PMESG   0024
+POUTCH  0023
+PYESNO  0020
+RKINIT  0027
+START   0200 unreferenced
+TEMP1   0025
+TEMP2   0026
+TEMP3   0027
+YESNO   0453

@@ -1,0 +1,552 @@
+/	NEW SUPER RK05 ALIGNMENT PROGRAM ... ALIGNX ... R.L.MOORE
+/
+/						11/19/75
+/
+/	THANKS TO JOE LOMBARDI FOR TOGGLE-IN PROGRAMS
+/
+/	**************************************************************
+/
+/
+/
+/	SIMPLE TOGGLE IN PROGRAM	-	FOR DISK ALIGNMENT
+/
+/	20/	7201
+/		6742
+/		1051
+/		6744
+/		1050
+/		6746
+/		7604
+/		6743
+/		6741
+/		5230
+/		5220
+/	50/	0000
+/	51/	1000
+/
+/	CHANGE LOC. 50 TO 0002 FOR DRIVE 1; 0004 FOR DRIVE 2; 0006 FOR DRIVE 3
+/
+/
+/	SIMPLE TOGGLE IN	-	FOR OSCILLATING SEEKS
+/
+/	20/	7201
+/		7104
+/		6742
+/		1242
+/		6746
+/		7604
+/		6743
+/		6741
+/		5227
+/		2070
+/		5231
+/		1243
+/		6746
+/		7300
+/		6743
+/		6741
+/		5237
+/		5223
+/		3200
+/		3200
+/
+/
+/	CHANGE LOC'S 42 & 43 TO 3202,3204,ETC FOR OTHER DRIVES
+/		*** USEFUL PROGRAMMING INFO  ***
+/
+/
+/	SETUP OF 8E FRONT PANEL SWITCHES
+/
+/:  0  :  1  :  2  :  3  :  4  :  5  :  6  :  7  :  8  :  9  : 10 : 11 :
+/-----------------------------------------------------------------------
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/:           :SEEK :UPPER:>128 :                                       :
+/: DRIVE 0-3 :     :     :     :    ENTER TRACK TO SEEK OR ALIGN TO    :
+/:           :ALIGN:LOWER:<128 :                                       :
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/-----------------------------------------------------------------------
+/
+/
+/	RK8E COMMAND REGISTER CONTENTS
+/
+/:  0  :  1  :  2  :  3  :  4  :  5  :  6  :  7  :  8  :  9  : 10 : 11 :
+/----------------------------------------------------------------------
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/:                 : EN. : EN. : XFER:      EXTENDED   :          : EXT:
+/:  - FUNCTION -   : INT.: INT.: 128 : - MEMORY FIELD -: - DRIVE -:CYLN:
+/:                 : ON  : ON  : WORD:     ADDRESS     :          : BIT:
+/:  (SEE BELOW)    :DONE :SEEK :BLOCK:                 :          : IF :
+/:                 :FLAG :DONE :     :                 :          :>128:
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/-----------------------------------------------------------------------
+/
+/	FUNCTION BITS (0-2)
+/
+/	0 0 0	READ DATA
+/	0 0 1	READ ALL
+/	0 1 0	SET WRITE PROTECT BIT
+/	0 1 1	SEEK ONLY
+/	1 0 0	WRITE DATA
+/	1 0 1	WRITE ALL
+/	1 1 0	NOT USED
+/	1 1 1	NOT USED
+/
+/
+/	RK8E DISK ADDRESS REGISTER
+/
+/:  0  :  1  :  2  :  3  :  4  :  5  :  6  :  7  :  8  :  9  : 10 : 11 :
+/-----------------------------------------------------------------------
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/:                                         : SUR-:                     :
+/:       -   CYLINDER  (TRACK)    -        :FACE :     -  SECTOR  -    :
+/:     :     :     :     :     :     :     :     :     :     :    :    :
+/-----------------------------------------------------------------------
+/
+/	NOTE:
+/		MSB OF CYLINDER ADDR. IS BIT 11 OF CMD REGISTER
+/		THIS BIT IS SET IF ADDR. IS GREATER THAN CYL 128
+	/ IOT & PARAMETER DEFINITIONS
+	DSKP=6741
+	DCLR=6742
+	DLAG=6743
+	DLCA=6744
+	DRST=6745
+	DLDC=6746
+	DMAN=6747
+	/
+	OS8=1			/=1 IF OS-8 RESIDENT, 0 IF PAPER TAPE
+	/	
+	TYPE=JMS I A6BIT
+	WIPE=JMS I SCREN
+	DELAY=JMS I DEL
+	CHAR=JMS I ACHAR
+	RECAL=JMS I ARECAL
+	SEEK=JMS I ASEEK
+	ALIGN=JMS I AALIGN
+	MES1=JMS I MESG1
+	MES2=JMS I MESG2
+	MES3=JMS I MESG3
+	MES4=JMS I MESG4
+	MES5=JMS I MESG5
+	KBDMON=JMS I MON
+	BEEP=JMS I ABEEP
+	SWITCH=JMS I SW
+	TIME=JMS I TIMOUT
+	/
+	/
+	FIELD 0
+	*50
+	/
+SW,	SETUP
+MESG1,	MESS1
+MESG2,	MESS2
+MESG3,	MESS3
+MESG4,	MESS4
+MESG5,	MESS5
+A6BIT,	SIXBIT
+SCREN,	SCREEN
+DEL,	DELAY4
+ACHAR,	TTYOUT
+ARECAL,	RECAL1
+AALIGN,	ALIGN1
+ASEEK,	SEEK1
+MON,	KBFLAG
+ABEEP,	BEEP1
+TIMOUT,	XTIME
+/
+/
+/
+DRIVE,	0000
+CMD,	0000
+CURADD,	4000
+SWREG,	0000
+TRACK,	0000
+NEW,	0000
+OLD,	0000
+EXT,	0000
+	/ CONTROL PROGRAM
+	/
+	*0200
+START,	SKP
+	JMP NOMESS
+	CLA CLL
+	WIPE
+	MES1
+	MES2
+	MES3
+	MES4
+	MES5
+NOMESS,	HLT
+	RECAL
+LOOP,	IFNZRO OS8<KBDMON>		/ASSEMBLE ONLY IF AN OS-8 SYS
+	SWITCH
+	SEEK
+	ALIGN
+	JMP LOOP
+	/
+	/
+	/
+	/ SUBROUTINE TO RECALIBRATE DRIVE
+	/
+RECAL1,	0				/RECAL AT STARTUP TIME
+	TIME
+	TAD Z DRIVE
+	DLDC				/LOAD COMMAND REG
+	CLA CLL CML RTL			/AC=0002
+	DCLR				/RECALIBRATE
+	DSKP
+	JMP .-1
+	JMP I RECAL1			/EXIT THIS SUB
+	/	
+	/
+	/
+	/ SUBROTINE TO MONITOR KEYBOARD FOR ^C
+	/
+KBFLAG,	0
+	KSF				/IS A FLAG ??
+	JMP I KBFLAG			/NO...SPLIT
+	KRB				/YES...READ BUFFER
+	TAD (-203)			/TEST FOR ^C
+	SZA CLA				/IT IS ...
+	JMP I KBFLAG			/NOT !
+	JMP I (07600)			/EXIT TO OS-8
+	/
+PAGE
+	/
+	/
+	/	SETUP CALLING SEQUENCE
+	/
+	/	JMS SETUP
+	/	SEEK
+	/	ALIGN
+	/
+	/
+/
+/
+/
+SETUP,	0000			/SETUP DISK INFO FROM SW. REG.
+	CLA CLL
+	DCA SWREG
+	DCA DRIVE
+	DCA TRACK		/CLEAR OUT A LOT OF LOCATIONS
+	DCA CMD
+	DCA NEW
+/
+/
+/
+/	********************************************************
+/
+/	DECIDE IF THE SW. REG. HAS BEEN CHANGED SINCE LAST TIME
+/
+/	********************************************************
+/
+/
+	LAS
+	DCA SWREG		/SAVE SR VALUE
+	TAD SWREG
+	AND (7000
+	RTR;RTR;RTR
+	DCA NEW
+	TAD NEW
+	CIA			/COMPLIMENT & INCR.
+	TAD OLD			/COMPARE WITH OLD SR
+	SZA CLA
+	RECAL
+	CLA CLL
+	TAD NEW
+	DCA OLD
+/
+EJECT
+/
+/	**************************
+/	
+/	MAKE UP COMMAND REGISTER
+/
+/	**************************
+/
+/
+	CLA CLL
+	TAD SWREG
+	AND (0200)		/MASK FOR >128 BIT
+	RTL;RTL;RTL		/GET INTO BIT 11 (PASSES THRU LINK)
+	DCA EXT			/SAVE THE EXT SEEK BIT
+	CLA CLL
+	TAD SWREG
+	AND (6000)		/MASK BITS 0-1    (DRIVE #)
+	RTL;RTL			/GET INTO BITS 9-10
+	DCA DRIVE
+	CLA CLL
+	TAD SWREG
+	AND (1000)		/MASK FOR SEEK OR ALIGN BIT
+	SZA CLA			/SKIP IF ALIGN (SEEK BIT DID NOT "AND" THRU)
+	TAD (3200)		/SEEK ONLY CMD WORD
+	TAD EXT			/ADD THE EXT BIT
+	DCA CMD			/TO SAVE AS COMMAND REGISTER WORD
+/
+/
+/	**************************
+/
+/	MAKE UP THE TRACK WORD
+/
+/	**************************
+/
+/
+	CLA CLL
+	TAD SWREG
+	AND (0400)		/MASK FOR THE UPPER-LOWER HEAD BIT
+	RTR;RTR			/GET INTO BIT 7
+	DCA TRACK
+	CLA CLL
+	TAD SWREG
+	AND (0177)		/MASK TRACK INFO BITS 5-11
+	RTL;RTL;RAL		/GET INTO BITS 0-6
+	TAD TRACK		/ADD HEAD BIT (STORED IN TRACK)
+	DCA TRACK		/SAVE THE ENTIRE TRACK WORD
+	CLA CLL
+	TAD SWREG
+	AND (1000)		/GET BACK THE SEEK - ALIGN BIT
+	SNA CLA
+	ISZ SETUP		/BUMP RETURN POINTER FOR ALIGN
+	CLA CLL
+	JMP I SETUP		/EXIT
+PAGE
+	/
+/
+/
+/	*****************************************************************
+/
+/	THIS SUBROUTINE DOES A SEEK TO THE ADDRESS LOADED INTO THE SW REG.,
+/	THEN READS THE DATA AT THAT CYLINDER ADDRESS INTO THE DUMP AREA
+/	IN CORE .... HEADS ARE ALIGNED DURING THIS SUB ....
+/
+/	******************************************************************
+/
+/
+/
+/
+/
+/
+/
+/
+ALIGN1,	0
+	CLA IAC				/SET AC=1
+	DCLR
+	TAD Z CURADD
+	DLCA				/LOAD CURRENT ADDRESS
+	TAD Z DRIVE			/GET DRIVE NUMBER FROM PG 0
+	TAD Z CMD			/GET COMMAND WORD
+	DLDC				/LOAD COMMAND REG.
+	TAD TRACK
+	DLAG				/LOAD ADDR & GO
+	DSKP				/WAIT FOR HEAD
+	JMP .-1				/TO GET THERE
+	CLA CLL
+	JMP I ALIGN1			/EXIT THIS SUB
+	/
+	/
+	/SUBROUTINE TO DO OSCILLATING SEEKS
+	/
+	/
+SEEK1,	0				/OSC. SEEK SUBROUTINE
+	CLA CLL
+	TAD DRIVE			/GET DRIVE NUMBER
+	TAD CMD				/GET CMD WORD
+	DLDC				/LOAD COMMAND REGISTER
+	TAD TRACK
+	DLAG				/LOAD ADDR & GO
+	DSKP				/WAIT...
+	JMP .-1				/FOR FLAG
+	ISZ WAIT1
+	JMP .-1
+	TAD DRIVE
+	TAD CMD
+	AND (7776)			/GET RID OF EXT BIT FOR CYL 0
+	DLDC
+	CLA CLL	
+	DLAG				/LOADS FOR CYLINDER 0
+	DSKP
+	JMP .-1
+	ISZ WAIT1
+	JMP .-1
+	ISZ SEEK1
+	CLL CLA
+	JMP I SEEK1
+	/
+WAIT1,	0
+	/
+	/
+PAGE
+	EJECT UTILITY PROGRAMS
+/
+/
+/	*******************************************************************
+/
+/	THIS SUBROUTINE CLEARS THE VT05 SCREEN PRIOR TO PRINTING OUT A 
+/	A MESSAGE...ALL CHARS ARE NON-PRINTABLE ON TTY OR LA30 ...
+/
+/	******************************************************************
+	/
+SCREEN,	0
+	CLA CLL
+	TAD (035)
+	CHAR
+	DELAY
+	CLA CLL
+	TAD (037)
+	CHAR
+	DELAY
+	CLA CLL
+	JMP I SCREEN
+/
+/
+/	********************************************************************
+/
+/	SUBROUTINE TO OUTPUT 4 NULL CHARACTERS TO VT05 FOR 2400 BUAD FIX
+/
+/	*********************************************************************
+	/
+DELAY4,	0
+	TAD (-0004)			/OUTPUTS 4 NULL CHARACTERS
+	DCA KDLAY			/FOR OS-8 2400 BUAD RATE
+	CLA CLL				/PROBLEM
+	CHAR
+	ISZ KDLAY
+	JMP .-3
+	JMP I DELAY4
+KDLAY,	0				/GETS SET TO 7774
+	/
+	/
+BEEP1,	0
+	CLA CLL
+	TAD (0007)
+	CHAR
+	DELAY
+	CLA CLL
+	JMP I BEEP1
+	/
+XTIME,	0
+	TAD (7700)
+	DCA SETTL2
+	ISZ SETTLE
+	JMP .-1
+	ISZ SETTL2
+	JMP .-3
+	JMP I XTIME
+	/
+SETTLE,	0
+SETTL2,	0
+	/
+PAGE
+/	OUTPUT MESSAGES TO SCREEN
+/
+MESS1,	0
+	TYPE
+	TEXT"                         ***  RK05   ALIGNX  ***                RLM '75"
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TYPE
+	TEXT":  0  :  1  :  2  :  3  :  4  :  5  :  6  :  7  :  8  :  9  : 10 : 11 :"
+	DELAY
+	TYPE
+	TEXT":---------------------------------------------------------------------:"
+	DELAY
+	JMP I MESS1
+	PAGE
+MESS2,	0
+	TYPE
+	TEXT":     :     :     :     :     :     :     :     :     :     :    :    :"
+	DELAY
+	TYPE
+	TEXT":           :SEEK :UPPER:>128 :                                       :"
+	DELAY
+	TYPE
+	TEXT": DRIVE 0-3 :     :     :     :    ENTER TRACK TO SEEK OR ALIGN TO    :"
+	DELAY
+	JMP I MESS2
+	PAGE
+MESS3,	0
+	TYPE
+	TEXT":           :ALIGN:LOWER:<128 :                                       :"
+	DELAY
+	TYPE
+	TEXT":     :     :     :     :     :     :     :     :     :     :    :    :"
+	DELAY
+	JMP I MESS3
+	PAGE
+MESS4,	0
+	TYPE
+	TEXT":---------------------------------------------------------------------:"
+	DELAY
+	TYPE
+	TEXT"                          8E FRONT PANEL SWITCHES"
+	DELAY
+	JMP I MESS4
+	PAGE
+MESS5,	0
+	TAD (212)
+	CHAR
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TAD (212)
+	CHAR
+	DELAY
+	TYPE
+	TEXT"PRESS  'CONT'  TO START ALIGNMENT                    ^C  RETURNS TO OS-8"
+	DELAY
+	JMP I MESS5
+	EJECT        SIXBIT TEXT RECOVERY  SUBROUTINE
+	/
+	/ SUBROUTINE SIXBIT
+	/
+	/*** SIXBIT ***
+	/TEXT RECOVERY SUBROUTINE
+	PAGE
+SIXBIT,	0
+	TAD I SIXBIT			/POINTER TO TEXT
+	RTR;RTR;RTR			/GET 1ST HALF OF WORD
+	JMS TYPIT			/PROCESS CHARACTER FOR OUTPUT
+	TAD I SIXBIT			/GET CHAR. AGAIN....
+	JMS TYPIT			/THIS TIME LAST HALF
+	ISZ SIXBIT			/UP THE POINTER
+	JMP SIXBIT+1			/NEXT WORD
+TYPIT,	0				/CHARACTER PROCESSING
+	AND (77)			/MASK FOR A SINGLE 6 BIT CHAR.
+	SNA				/TEST FOR 0000
+	JMP CRLF			/LAST CHAR....BEAT IT !!
+	DCA TEMP			/TEMPORARY CHAR. STORAGE
+	TAD TEMP			/RESTORE IT
+	AND (40)			/TEST RANGE FOR BIT 6
+	SNA CLA				/NUMERIC OR ALPHA DATA ??
+	TAD (100)			/ADD 100 FOR ALPHA DATA
+	TAD (200)			/ADD 200 FOR ALL DATA
+	TAD TEMP			/ADD CHAR. ASCII VALUE
+	JMS TTYOUT			/EXIT TO TTY ROUTINE
+	JMP I TYPIT			/EXIT THIS SUB
+CRLF,	CLA CLL				/CRLF ROUTINE
+	TAD (215)			/ASCII FOR CR
+	JMS TTYOUT			/DO IT
+	TAD (212)			/ASCII FOR LF
+	JMS TTYOUT			/DO IT
+	JMP I SIXBIT			/DONE...BYE !!
+TTYOUT,	0				/TTY OUTPUT SUB
+	TLS
+	TSF
+	JMP .-1
+	CLA CLL
+	JMP I TTYOUT			/EXIT THIS SUB
+TEMP,	0				/TEMPORARY CHAR STORAGE
+$$$$
+

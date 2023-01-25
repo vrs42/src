@@ -1,0 +1,281 @@
+/
+/I think what this does is, depending on responses to the prompt,
+/either repeatedly seek to the requested address, or alternate
+/seeks to the requested address with seeks to 0000.
+/
+
+/ IOT & PARAMETER DEFINITIONS
+/DSKP=6741
+DCLR=6742
+DLAG=6743
+/DLCA=6744
+DRST=6745
+DLDC=6746
+/DMAN=6747
+
+*0
+	0005		/Version "E"
+	HLT		/Please don't come here
+
+*20
+PYESNO,	YESNO		/Ask a YES/NO question
+INCHR,	INCH		/Input a character
+GETNUM,	NUMGET		/Input a number
+POUTCH,	OUTCH		/Output a character
+PMESG,	MESG		/Output six-bit message
+TEMP1,	.-.
+TEMP2,	.-.
+/Recalibrate if asked, then wait for drive idle.
+/Entry point also used as a temporary.
+TEMP3,
+RKINIT,	.-.
+DCLR1,	DCLR		/Clear AC and Status
+DRST1,	DRST		/Read Status
+	SZA CLA		/Is it clear?
+	JMP DCLR1	/No, try again
+	JMP I RKINIT	/Yes, return
+
+	PAGE
+START,	CLA 7600
+	JMS I PMESG
+	D00600		/_RK8E - RK05 DISK ALIGNMENT PROGRAM VERSION 1/
+	TAD D00377	/Get a NOP
+	DCA I D00376	/Set up for OCTAL input
+	JMS I PYESNO
+	D00627		/_DO YOU WISH TO CHANGE DEVICE CODES?/
+	JMP L00235	/Nope
+	JMS I PMESG	/Yes, prompt
+	D00652		/_DEVICE CODE #/
+	CLA CLL CMA RAL /-2
+	JMS I GETNUM	/Get an (octal) number
+	CLL RTL 	/Shift new device code
+	RAL 
+	DCA TEMP2	/Remember it
+	TAD D00375	/ 6002
+	TAD TEMP2	/ +code (DCLR)
+	DCA DCLR1
+	TAD D00374	/ 6003
+	TAD TEMP2	/ +code (DLAG)
+	DCA DLAG1
+	TAD D00373	/ 6005
+	TAD TEMP2	/ +code (DRST)
+	DCA DRST1
+	TAD L00372	/ 6006
+	TAD TEMP2	/ +code (DLDC)
+	DCA DLDC1
+	TAD DLDC1
+	DCA DLDC2
+L00235,	JMS I PYESNO
+	D00662		/_OCTAL INPUT?/
+	TAD D00371	/ TAD TEMP2 + 1000
+	TAD D00377	/ Get NOP or - 1000
+	DCA I D00376	/Set new radix
+	JMS I PMESG
+	D00671		/_DRIVE #/
+L00244,	JMS I INCHR
+	TAD D00370
+	CLL 
+	TAD D00367
+	SNL 
+	JMP L00244
+	CLL RAL 
+	DCA TEMP1
+	TAD TEMP1
+	RAR 
+	TAD D00366
+	JMS I POUTCH
+	TAD TEMP1
+DLDC1,	DLDC
+	CLA CLL CML RTL	/ 0002: Recalibrate
+	JMS RKINIT	/ Go do it
+L00264,	JMS I PMESG
+	D00676		/_CYLINDER #/
+	CLA CLL CMA RTL 
+	JMS I GETNUM
+	CLL RAL
+	DCA D00312
+	JMS I PYESNO
+	D00704		/_LOWER SURFACE?/
+	ISZ D00312
+	JMS I PYESNO
+	D00714		/_HEAD ALIGNMENT?/
+	TAD L00311	/No, Get the JMS
+	DCA D00313	/Store an instruction
+L00301,	MQL		/Update iteration count in MQ
+	KSF 		/Key struck?
+	JMP L00311
+	KRS		/Yes, read it
+	AND D00365	/Remove parity bit
+	TAD D00364	/Carriage Return?
+	SNA CLA 	/No, keep going
+	JMP L00264	/Yes
+L00311,	JMS DOIT	/Go do our thing
+D00312,	0000		/Argument: Cyl, Surface, etc.
+D00313,	7402		/JMS DOIT again or 0000
+	0000		/Argument for JMS: always 0000
+	ACL		/Get MQ
+	IAC		/Increment
+	JMP L00301	/Go update MQ and repeat
+/ Do our thing
+/The outer loop displays how many times, in MQ.
+DOIT,	.-.
+	TAD I DOIT	/Get Argument
+	CLL RTL 	/Shift it
+	RTL 
+	DCA TEMP3	/Save it
+	RAL 		/Get bit 4
+	TAD TEMP1
+	TAD D00363	/Form a seek command
+DLDC2,	DLDC		/Load it
+	TAD TEMP3	/Get saved argument
+DLAG1,	DLAG		/Start it
+	JMS RKINIT	/Initialize without recalibrate;
+			/Effectively waits for drive idle?
+	JMP I DOIT
+
+*363
+D00363,	3200
+D00364,	7763
+D00365,	0177
+D00366,	0260
+D00367,	0004
+D00370,	7714
+D00371,	1000+TAD TEMP2
+L00372,	6006
+D00373,	6005
+D00374,	6003
+D00375,	6002
+D00376,	D00515
+D00377,	NOP
+
+	PAGE
+/Print a message.  Non-zero AC points to the message,
+/otherwise a pointer to the message follows the call.
+MESG,	.-.
+	SZA 		/Got arg in AC?
+	JMP L00405	/Yes, no need to fetch it
+	TAD I MESG	/No, fetch it
+	ISZ MESG	/Skip it on return
+L00405,	DCA TEMP3	/Save message pointer
+NEXT12,	TAD I TEMP3	/Get a word
+	CLL RTR 	/Position first sixbit
+	RTR 
+	RTR 
+	JMS OUT6	/Print it
+	TAD I TEMP3	/Get second sixbit
+	ISZ TEMP3	/Bump message pointer
+	JMS OUT6	/Output second sixbit
+	JMP NEXT12	/Repeat until EOM
+/Output the next six bit character.
+/Return from MESG if the end of the message is seen.
+OUT6,	.-.
+	AND D00577	/Mask to 6 bits
+	SNA 		/End of message?
+	JMP I MESG	/Yes, bail
+	TAD D00576	/Underscore?
+	SZA 
+	JMP L00432	/No, go output as is
+	TAD D00575	/Yes, Get CR
+	JMS I POUTCH	/Output it
+	TAD D00574	/Get LF
+	JMP L00435	/Go output it
+L00432,	TAD D00577	/-37+77 gives net +40
+	AND D00577	/Mask with 77
+	TAD L00573	/+240 makes it printable
+L00435,	JMS I POUTCH	/So print it
+	JMP I OUT6	/...and return
+/Output the character
+OUTCH,	.-.
+	TLS
+	CLA 
+	TSF 
+	JMP .-1
+	JMP I OUTCH
+/ Get a character
+INCH,	.-.
+	KSF 
+	JMP .-1
+	KRB
+	AND D00572
+	JMP I INCH
+/ This asks a yes/no question.
+/ The call is always followed by an argument pointing
+/ to the question, followed by the NO return, then the
+/ YES return.
+YESNO,	.-.
+	TAD I YESNO
+	ISZ YESNO
+	JMS I PMESG
+L00457,	JMS I INCHR
+	TAD D00571
+	SNA 
+	5270
+	TAD D00570
+	SZA CLA 
+	JMP L00457	/Try again
+	ISZ YESNO	/Take skip return
+	TAD D00567	/Print YES
+	TAD L00566	/or NO
+	JMS I PMESG
+	JMP I YESNO
+/Subroutine to Read a character
+NUMGET,	.-.
+	DCA YESNO	/Save digit count
+L00475,	DCA TEMP2
+L00476,	TAD D00515	/7000?
+	SMA CLA 	/Too big?
+	JMP L00523	/Yes, bail
+	JMS I INCHR	/Read a character
+	TAD D00565	/ -70
+	CLL 
+	TAD D00564	/ +10
+L00505,	SNL 
+	JMP L00476	/No, try again
+	DCA INCH
+	TAD INCH
+	TAD D00563	/Convert to a digit
+	JMS I POUTCH	/Echo it
+	TAD TEMP2	/Get number
+	CLL RTL 	/Shift it
+D00515,	NOP		/NOP or TAD TEMP2
+			/=> *4 or *5, depending on radix
+	RAL		/=> *8 or *10, depending on radix
+	TAD INCH	/Add new digit
+	ISZ YESNO	/Done all digits?
+	JMP L00475	/No, go again
+	JMP I NUMGET	/Yes, return to caller
+L00523,	JMS I INCHR	/Get a character
+	TAD D00562	/ -12
+	CLL 
+	TAD D00561	/ + 12
+	JMP L00505	/Go check it
+
+*561
+D00561,	0012
+D00562,	7706
+D00563,	0260
+D00564,	0010
+D00565,	7710
+L00566,	D00730		/ NO/
+D00567,	D00725-D00730	/ YES-NO
+D00570,	7765
+D00571,	7662
+D00572,	0177
+L00573,	0240
+D00574,	0212
+D00575,	0215
+D00576,	7741
+D00577,	0077
+
+	PAGE
+D00600,	TEXT	/_RK8E - RK05 DISK ALIGNMENT PROGRAM VERSION 1/
+D00627,	TEXT	/_DO YOU WISH TO CHANGE DEVICE CODES?/
+D00652,	TEXT	/_DEVICE CODE #/
+D00662,	TEXT	/_OCTAL INPUT?/
+D00671,	TEXT	/_DRIVE #/
+D00676,	TEXT	/_CYLINDER #/
+D00704,	TEXT	/_LOWER SURFACE?/
+D00714,	TEXT	/_HEAD ALIGNMENT?/
+D00725,	TEXT	/ YES/
+D00730,	TEXT	/ NO/
+$
