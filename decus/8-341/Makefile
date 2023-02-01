@@ -12,5 +12,5 @@ BIN =	8-341.bin
 8-341.pal: $(TXT)
 	cat $(TXT) >$@
 
-#8-341-LISP8-links(user).txt
+#8-341-LISP8-links-user.txt
 #8-341-LISP8-Origin.txt
