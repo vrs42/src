@@ -12,7 +12,7 @@ $SVNURL="https://svn.so-much-stuff.com/svn/trunk/pdp8/src/decus";
 $head = <<'EOM';
 <?php
   $title = "DECUS Software Files";
-  include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/header.php';
+  include $_SERVER['DOCUMENT_ROOT'].'/pdp8/header.php';
 ?>
 <BODY><FONT size=4>
 EOM
@@ -41,7 +41,7 @@ have taken the time to scan and archive this software and documentation.
 EOM
 
 $tail = <<'EOM';
-<?php include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/footer.php'; ?>
+<?php include $_SERVER['DOCUMENT_ROOT'].'/pdp8/footer.php'; ?>
 EOM
 #
 # Return a suitable link to the current object.  As a side effect, 

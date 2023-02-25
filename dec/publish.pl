@@ -76,7 +76,7 @@ open(STDOUT, ">$dir.php") || die "$dir.php: $!";
 $head = <<'EOM';
 <?php
   $title = "$DIR Software Files";
-  include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/header.php';
+  include $_SERVER['DOCUMENT_ROOT'].'/pdp8/header.php';
 ?>
 <BODY><FONT size=4>
 EOM
@@ -295,6 +295,6 @@ printf STDERR "$links of $files files linked (%.1f%%), in $dirs directories\n",
 print "</div>\n";
 
 $tail = <<'EOM';
-<?php include $_SERVER{'DOCUMENT_ROOT'}.'/pdp8/footer.php'; ?>
+<?php include $_SERVER['DOCUMENT_ROOT'].'/pdp8/footer.php'; ?>
 EOM
 print $tail;
