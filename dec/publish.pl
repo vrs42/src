@@ -114,6 +114,7 @@ sub link {
   "-pr.lbl", "Fortran Library image label",
   "-pr.od", "Fortran Library image in octal",
   "-d.pdf", "PDF write-up",
+  "-vrs.pdf", "PDF write-up",
   "-d.doc", "Word write-up",
   "-d.txt", "Text write-up",
   "-ma.pdf", "PDF write-up",
