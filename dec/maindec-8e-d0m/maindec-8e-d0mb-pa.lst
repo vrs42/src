@@ -1,0 +1,3159 @@
+   1               /KE8 EAE MULTIPLY/DIVIDE TEST  MAINDEC-8E-D0MB
+   2               /COPYRIGHT 1872, DIGITAL EQUIPMENT CORPORATION, MAYNARD, MASS. 01754
+   3               /
+   4               /PROGRAMMER:  ED FORTMILLER
+   5               /
+   6               *0
+   7 000000  0000          0
+   8 000001  5001          JMP 1
+   9 000002  0002          2
+  10 000003  0003          3
+  11 000004  0000          OPEN
+  12 000005  0000          OPEN
+  13               *6
+  14 000006  0000  ZMB,    OPEN
+  15 000007  0000  ADDA,   OPEN
+  16               /
+  17               DVI=7407
+  18               NMI=7411
+  19               SHL=7413
+  20               ASR=7415
+  21               LSR=7417
+  22               MQL=7421
+  23               MUY=7405
+  24               MQA=7501
+  25               CAM=7621
+  26               SCA=7441
+  27               SCL=7401
+  28               ION=6001
+  29               HLT=7402
+  30               
+  31               OPEN=0000               /PROGRAM MODIFYABLE
+  32               AMODE=7447              /"OLD" INSTRUCTION SET
+  33               BMODE=7431              /"NEW" INSTRUCTION SET
+  34               /
+  35               *20
+  36 000020  0000  MODE,   OPEN            /0 = "AMODE";  NON 0 = "B MODE"
+  37 000021  4400  KSTART, TST0
+  38 000022  0234  CHAIN,  CHAINN
+  39 000023  0274  SHLT,   SHALT
+  40 000024  1565  SETCTR, STCTR
+  41 000025  0200  SRST,   SRSET
+  42 000026  0400  XTYPST, TYPSTG
+  43 000027  0326  RANDNO, RANGEN
+  44 000030  1200  UMUYT,  MUYT
+  45 000031  1400  UDIVT,  DIVT
+  46 000032  1650  UMOVE,  MOVE
+  47 000033  1676  UCOMP,  COMP
+  48 000034  1600  USR4T,  SR4T
+  49 000035  1610  USR5T,  SR5T
+  50 000036  1620  USR6T,  SR6T
+  51 000037  1630  UST7T,  SR7T
+  52 000040  1640  USATET, SATET
+  53               
+  54 000041  2464  UMUYSM, MUYSM
+  55 000042  2600  UDIVSM, DIVSM
+  56 000043  1726  UPRT0,  PRT0
+  57 000044  1732  UPRT1,  PRT1
+  58 000045  1736  UPSPC,  PSPC
+  59 000046  1753  UCRLF,  CRLF
+  60 000047  2000  UMSG1,  MSG1
+  61 000050  1771  UMSG1A, MSG1A
+  62 000051  2064  UMSG2,  MSG2
+  63 000052  2200  UPL,    PL
+  64 000053  2145  UPREG,  PREG
+  65 000054  2014  UERPSB, ERPSB
+  66 000055  2230  UPLRGS, PLRGS
+  67 000056  2400  UHDSC0, HDSC0
+  68 000057  2256  UF1TEL, F1TEL
+  69 000060  2423  UP1213, P1213
+  70 000061  2215  UPFR,   PFR
+  71 000062  3000  UADAC,  ADAC
+  72 000063  3012  UADNAC, ADNAC
+  73 000064  3025  UADSB,  ADSB
+  74 000065  2542  UMQROT, MQROT
+  75 000066  2563  UMQRTA, MQRTA
+  76 000067  2741  UMVR,   MVR
+  77 000070  2567  UZMQ11, ZMQ11
+  78 000071  5000  UTAB,   TAB
+  79 000072  4150  UFBRM,  FBRM
+  80 000073  4200  UMDEXR, MDEXR
+  81 000074  1000  UPUNCH, PUNCH
+  82 000075  1046  UEXERP, EXERP
+  83               
+  84 000076  3756  UTYMOD, TYMOD
+  85 000077  0000  TEMP,   0
+  86 000100  0000  TEMP1,  0
+  87 000101  0000  CURTST, 0
+  88 000102  0000  RTNNO,  0
+  89 000103  0000  NXTST,  0
+  90 000104  0000  A,      0
+  91 000105  0000  B,      0
+  92 000106  0000  L,      0
+  93 000107  0000  AC,     0
+  94 000110  0000  MQ,     0
+  95 000111  0000  MB,     0
+  96 000112  0000  LSB,    0
+  97 000113  0000  ACSB,   0
+  98 000114  0000  MQSB,   0
+  99 000115  0000  MBSB,   0
+ 100 000116  0000  LR,     0
+ 101 000117  0000  ACR,    0
+ 102 000120  0000  MQR,    0
+ 103 000121  0000  MBR,    0
+ 104 000122  0000  LB,     0
+ 105 000123  0000  ACB,    0
+ 106 000124  0000  MQB,    0
+ 107 000125  0000  MBB,    0
+ 108 000126  0000  LF,     0
+ 109 000127  0000  ACF,    0
+ 110 000130  0000  MQF,    0
+ 111 000131  0000  MBF,    0
+ 112 000132  0000  SCS,    0
+ 113 000133  0000  MQ0S,   0
+ 114 000134  0000  OFLO,   0
+ 115 000135  0000  TABF,   0
+ 116 000136  7776  R11Z,   7776
+ 117 000137  0002  MQ10M,  0002
+ 118 000140  0000  FCTR,   0               /FAILURES COUNTER
+ 119 000141  0000  FRCTR,  0
+ 120 000142  7766  LCNT,   -12             /DESIRED TEST LOOP COUNT
+ 121 000143  0000  LCTR,   0               /TEST LOOP COUNTER
+ 122 000144  0000  TCTR,   0               /NUMBER OF TESTS COUNTER
+ 123 000145  7771  BELCNT, -7              /DESIRED PASSES BEFORE RINGING THE BELL
+ 124 000146  0000  SHORT,  OPEN            /TEST LOOP COUNT FOR RINGING THE BELL
+ 125 000147  0002  K2,     2
+ 126 000150  0003  K3,     3
+ 127 000151  0004  K4,     4
+ 128 000152  0006  K6,     6
+ 129 000153  0000  TEXR,   0
+ 130 000154  0707  K0707,  0707
+ 131 000155  6060  K6060,  6060
+ 132 000156  7700  K7700,  7700
+ 133 000157  0000  LINK,   OPEN
+ 134               
+ 135 000160  0000  HOMEDF, OPEN
+ 136 000161  0000          OPEN            /TO CONTAIN A CHG. DF INSTRUCTION
+ 137 000162  5560          JMP I HOMEDF    /EXIT.
+ 138               
+ 139 000163  4446  ENDTYP, JMS I UCRLF
+ 140 000164  7777          -1
+ 141 000165  4426          JMS I XTYPST
+ 142 000166  4372          KE8SP2
+ 143 000167  5777          JMP GETRDY-5
+ 144               
+ 145 000170  4426  BELTYP, JMS I XTYPST
+ 146 000171  2175          BELL
+ 147 000172  5776          JMP GETRDY-3
+ 148               
+ 149               
+ 150               
+ 151               
+ 152                       *0200
+ 153 000200  6032  SRSET,  KCC             /SET READER RUN
+ 154 000201  7402          HLT             /HALT TO SET SR SWITCHES TO
+ 155                                       /ANY DESIRED OPTION
+ 156 000202  4777          JMS INTLD       /SET UP FOR INTERRUPTS
+ 157 000203  1142          TAD LCNT
+ 158 000204  3143          DCA LCTR
+ 159 000205  1145          TAD BELCNT
+ 160 000206  3146          DCA SHORT
+ 161 000207  6001          ION
+ 162 000210  7200  GETRDY, CLA
+ 163 000211  1021          TAD KSTART      /SET ADDRESS OF 1ST ROUTINE
+ 164 000212  3103          DCA NXTST               /STORE AT NXTST
+ 165 000213  4260          JMS FORWD
+ 166 000214  7604          LAS
+ 167 000215  7004          RAL 
+ 168 000216  7500          SMA             /ROUTINE SELECT?
+ 169 000217  5776          JMP SELECT      /NO,  START WITH 1ST RTN
+ 170 000220  7604  FINDIT, LAS             /YES
+ 171 000221  0175          AND [7
+ 172 000222  7041          CIA
+ 173 000223  1102          TAD RTNNO
+ 174 000224  7650          SNA CLA         /IS IT THIS RTN?
+ 175 000225  5775          JMP LOPSEL      /YES, GO DO IT
+ 176 000226  1103          TAD NXTST               /NO
+ 177 000227  7001          IAC             /US THIS LAST RTN?
+ 178 000230  7640          SZA CLA 
+ 179 000231  5213          JMP GETRDY+3    /NO
+ 180 000232  7402  INCRTN, HLT             /YES, INCORRECT ROUTINE NO.
+ 181 000233  5210          JMP GETRDY
+ 182 000234  4274  CHAINN, JMS SHALT               /HALT ? (SR0)
+ 183 000235  5774          JMP DETMOD              /MODE DETERMINER
+ 184 000236  7510          SPA             /LOOP ROUTINE (SR2)
+ 185 000237  5303          JMP SELMOD      /YES,  GO DO IT
+ 186 000240  3100          DCA TEMP1               /NO, SAVE AC
+ 187 000241  1103          TAD NXTST       /GET NEXT ROUTINE ADDR
+ 188 000242  7001          IAC
+ 189 000243  7640          SZA CLA         /LAST ROUTINE?
+ 190 000244  5213          JMP GETRDY+3    /NO
+ 191 000245  1100          TAD TEMP1
+ 192 000246  7004          RAL 
+ 193 000247  7510          SPA             /LOOP PROGRAM
+ 194 000250  5253          JMP .+3         /YES
+ 195 000251  7402          HLT             /END OF PROGRAM HALT;  SR 3=1.
+ 196 000252  5234          JMP CHAINN
+ 197 000253  2146          ISZ SHORT
+ 198 000254  5210          JMP GETRDY      /REPEAT TEST WITHOUT ANY BELL OR PRINTOUT.
+ 199 000255  2143          ISZ LCTR
+ 200 000256  5170          JMP BELTYP      /GO RING THE BELL.
+ 201 000257  5163          JMP ENDTYP      /GO PRINT.
+ 202               
+ 203               
+ 204 000260  0000  FORWD,  0
+ 205 000261  1503          TAD I NXTST     /GET NEXT RTN NO
+ 206 000262  3102          DCA RTNNO               /STORE AT RTNNO
+ 207 000263  2103          ISZ NXTST
+ 208 000264  1103          TAD NXTST               /GET CURRENT
+ 209 000265  3077          DCA TEMP                /ROUTINE NUMBER
+ 210 000266  2103          ISZ NXTST
+ 211 000267  1103          TAD NXTST               /SET CURRENT
+ 212 000270  3101          DCA CURTST      /ROUTINE ADDRESS
+ 213 000271  1477          TAD I TEMP      /GET NEXT ROUTINE
+ 214 000272  3103          DCA NXTST               /ADDR, STORE AT NEXTST
+ 215 000273  5660          JMP I FORWD     /EXIT
+ 216 000274  0000  SHALT,  0
+ 217 000275  7604          LAS             /READ SR
+ 218 000276  7700          SMA CLA         /HALT ? (SR0)
+ 219 000277  5674          JMP I SHALT     /NO,  EXIT
+ 220 000300  1102          TAD RTNNO
+ 221               /
+ 222 000301  7402          HLT             /UNCONDITIONAL HALT (SR0 = 1)
+ 223               /
+ 224 000302  5674          JMP I SHALT     /EXIT
+ 225               
+ 226 000303  7200  SELMOD, CLA             /
+ 227 000304  1020          TAD MODE        /
+ 228 000305  7640          SZA CLA         /WHICH MODE IS TO BE SELECTED?
+ 229 000306  5312          JMP CHGTOB      /"B" MODE
+ 230 000307  3773          DCA ABLSR       /SET ABLDT IN "MUL SIM" FOR "A" MODE.
+ 231 000310  7447          AMODE           /CHANGE TO "A" MODE NOW.
+ 232 000311  5501          JMP I CURTST    /START TEST.
+ 233 000312  7201  CHGTOB, CLA IAC         /0001.
+ 234 000313  3773          DCA ABLSR       /SET ABLSR IN "MUL SIM" FOR "B" MODE.
+ 235 000314  7431          BMODE           /CHANGE TO "B" MODE NOW.
+ 236 000315  5501          JMP I CURTST    /START TEST.
+ 237               
+ 238 000316  7300  SW1SET, CLA CLL
+ 239 000317  1102          TAD RTNNO
+ 240 000320  7402          HLT             /SR 1 IS SET:  ROUTINE JUST EXECUTED IS
+ 241                                       /DISPLAYED IN THE AC. LEAVE SR 1 SET
+ 242                                       /AND SELECT NEW DESIRED ROUTINE BY
+ 243                                       /PLACINT DESIRED ROUTINE NUMBER IN
+ 244                                       /SR 9-11.  PRESS CONTINUE.
+ 245 000321  7300          CLA CLL         /
+ 246 000322  1021          TAD KSTART
+ 247 000323  3103          DCA NXTST
+ 248 000324  4260          JMS FORWD
+ 249 000325  5220          JMP FINDIT
+ 250               
+ 251               
+ 252               
+ 253               
+ 254               /RANDOM NUMBER GENERATOR SUBROUTIN
+ 255 000326  0000  RANGEN, 0
+ 256 000327  7200          CLA 
+ 257 000330  1371          TAD RANTND
+ 258 000331  1356          TAD RANDEX
+ 259 000332  7640          SZA CLA 
+ 260 000333  5343          JMP RANTAD
+ 261 000334  1360          TAD RANTBL
+ 262 000335  3356          DCA RANDEX
+ 263 000336  1357          TAD RANCON
+ 264 000337  7104          CLL RAL 
+ 265 000340  7430          SZL 
+ 266 000341  7001          IAC
+ 267 000342  3357          DCA RANCON
+ 268 000343  1357  RANTAD, TAD RANCON
+ 269 000344  1756          TAD I RANDEX
+ 270 000345  3756          DCA I RANDEX
+ 271 000346  1372          TAD RANSAV
+ 272 000347  7010          RAR 
+ 273 000350  1756          TAD I RANDEX
+ 274 000351  2356          ISZ RANDEX
+ 275 000352  7000          NOP
+ 276 000353  3372          DCA RANSAV
+ 277 000354  1372          TAD RANSAV
+ 278 000355  5726          JMP I RANGEN
+ 279 000356  0371  RANDEX, RANTND
+ 280 000357  6543  RANCON, 6543
+ 281 000360  0361  RANTBL, .+1
+ 282 000361  6543          6543
+ 283 000362  3210          3210
+ 284 000363  0765          0765
+ 285 000364  5432          5432
+ 286 000365  2107          2107
+ 287 000366  7654          7654
+ 288 000367  4321          4321
+ 289 000370  1076          1076
+ 290 000371  7407  RANTND, -.
+ 291 000372  0000  RANSAV, OPEN
+ 292               
+ 293               
+ 294               
+ 295               
+ 296               
+ 297 000373  2455  *0400
+     000374  4721  
+     000375  4572  
+     000376  1360  
+     000377  4750  
+ 298 000400  0000  TYPSTG, 0
+ 299 000401  7200          CLA 
+ 300 000402  1600          TAD I TYPSTG    /GET INITIAL ADDRESS
+ 301 000403  3262          DCA TEMQ                /STORE INITIAL ADDRESS
+ 302 000404  3264          DCA FLAG                /CLEAR FLAG
+ 303 000405  2200          ISZ TYPSTG      /PRESETUP EXIT
+ 304 000406  1662  TSC1,   TAD I TEMQ      /PICK UP DATA
+ 305 000407  7012          RTR             /ROTATE 6 BITS RIGHT
+ 306 000410  7012          RTR 
+ 307 000411  7012          RTR 
+ 308 000412  4217          JMS TSC2                /GO TYPE FIRST CHAR
+ 309 000413  1662          TAD I TEMQ      /PICK UP DATA
+ 310 000414  4217          JMS TSC2                /GO TYPE SECOND CHARACTER
+ 311 000415  2262          ISZ TEMQ                /EVAN STRING ADDRESS
+ 312 000416  5206          JMP TSC1                /GO BACK FOR MORE
+ 313 000417  0000  TSC2,   0
+ 314 000420  0265          AND K77         /MASK OFF 6 BITS
+ 315 000421  3263          DCA TEMR                /SAVE CHARACTER
+ 316 000422  1264          TAD FLAG                /TEST "SPECIAL" FLAG
+ 317 000423  7640          SZA CLA 
+ 318 000424  5234          JMP TYPSP               /SET: TYPE SPECIAL
+ 319 000425  1263          TAD TEMR                /NO,  REGULAR CHARACTER
+ 320 000426  7450          SNA             /ZERO?
+ 321 000427  5232          JMP .+3         /YES, SET FLAG
+ 322 000430  4253  TYPAT,  JMS PRINT               /NO,  PRINT IT
+ 323 000431  5617          JMP I TSC2      /RETURN
+ 324 000432  2264          ISZ FLAG                /SET "SPECIAL" FLAG
+ 325 000433  5617          JMP I TSC2      /EXIT
+ 326 000434  3264  TYPSP,  DCA FLAG                /CLEAR FLAG
+ 327 000435  1263          TAD TEMR                /TEST FOR "0"
+ 328 000436  7041          CIA
+ 329 000437  7450          SNA 
+ 330 000440  5230          JMP TYPAT               /0:  TYPE "0"
+ 331 000441  7001          IAC             /TEST FOR 01
+ 332 000442  7650          SNA CLA 
+ 333 000443  5600          JMP I TYPSTGA           /YES:  EXIT CODE
+ 334 000444  1271          TAD SKIPMAA     /ATER INSTRUCTION
+ 335 000445  3255          DCA SWITCH      /TO BE "SMA"
+ 336 000446  1263          TAD TEMR                /TYPE CHAR
+ 337 000447  4253          JMS PRINT
+ 338 000450  1272          TAD SKIPPA      /ALTER INSTRUCTION
+ 339 000451  3255          DCA SWITCH      /TO BE "SPA"
+ 340 000452  5617          JMP I TSC2      /RETURN
+ 341               
+ 342 000453  0000  PRINT,  0
+ 343 000454  1266          TAD M40         /COMPARE WITH 40
+ 344 000455  7510  SWITCH, SPA             /OR SMA FOR SPECIAL CODES
+ 345 000456  1267          TAD C100
+ 346 000457  1270          TAD C240
+ 347 000460  4474          JMS I UPUNCH
+ 348 000461  5653          JMP I PRINT
+ 349 000462  0000  TEMQ,   0
+ 350 000463  0000  TEMR,   0
+ 351 000464  0000  FLAG,   0
+ 352 000465  0077  K77,    77
+ 353 000466  7740  M40,    -40
+ 354 000467  0100  C100,   100
+ 355 000470  0240  C240,   240
+ 356 000471  7500  SKIPMA, SMA
+ 357 000472  7510  SKIPPA, SPA
+ 358               
+ 359               
+ 360               
+ 361               
+ 362 000473  0000  L0,     0
+ 363 000474  0000          0
+ 364 000475  0000          0
+ 365               
+ 366 000476  0000  L1,     0
+ 367 000477  0000          0
+ 368 000500  0000          0
+ 369               
+ 370 000501  0000  L2,     0
+ 371 000502  0000          0
+ 372 000503  0000          0
+ 373               
+ 374 000504  0000  L3,     0
+ 375 000505  0000          0
+ 376 000506  0000          0
+ 377               
+ 378 000507  0000  L4,     0
+ 379 000510  0000          0
+ 380 000511  0000          0
+ 381               
+ 382 000512  0000  L5,     0
+ 383 000513  0000          0
+ 384 000514  0000          0
+ 385               
+ 386 000515  0000  L6,     0
+ 387 000516  0000          0
+ 388 000517  0000          0
+ 389               
+ 390 000520  0000  L7,     0
+ 391 000521  0000          0
+ 392 000522  0000          0
+ 393               
+ 394 000523  0000  LATE,   0
+ 395 000524  0000          0
+ 396 000525  0000          0
+ 397               
+ 398 000526  0000  LNINE,  0
+ 399 000527  0000          0
+ 400 000530  0000          0
+ 401               
+ 402 000531  0000  L10,    0
+ 403 000532  0000          0
+ 404 000533  0000          0
+ 405               
+ 406 000534  0000  L11,    0
+ 407 000535  0000          0
+ 408 000536  0000          0
+ 409               
+ 410 000537  0000  L12,    0
+ 411 000540  0000          0
+ 412 000541  0000          0
+ 413               
+ 414 000542  0000  L13,    0
+ 415 000543  0000          0
+ 416 000544  0000          0
+ 417               
+ 418 000545  6000  ZERO,   6000            /0
+ 419 000546  0100          0100
+ 420               
+ 421 000547  6100  ONE,    6100            /1
+ 422 000550  0100          0100
+ 423               
+ 424 000551  1525  MUYERR, 1525            /MUYERR
+ 425 000552  3105          3105
+ 426 000553  2222          2222
+ 427 000554  0001          0001
+ 428               
+ 429 000555  0411  DIVERR, 0411            /DIVERR
+ 430 000556  2605          2605
+ 431 000557  2222          2222
+ 432 000560  0001          0001
+ 433               
+ 434 000561  2303  SC0,    2303            /SC0
+ 435 000562  6000          6000
+ 436 000563  0100          0100
+ 437               
+ 438 000564  2303  SC1,    2303            /SC1
+ 439 000565  6100          6100
+ 440 000566  0100          0100
+ 441               
+ 442 000567  2303  SC2,    2303            /SC2
+ 443 000570  6200          6200
+ 444 000571  0100          0100
+ 445               
+ 446 000572  2303  SC3,    2303            /SC3
+ 447 000573  6300          6300
+ 448 000574  0100          0100
+ 449               
+ 450 000575  2303  SC4,    2303            /SC4
+ 451 000576  6400          6400
+ 452 000577  0100          0100
+ 453               
+ 454                       *0600
+ 455 000600  2303  SC5,    2303            /SC5
+ 456 000601  6500          6500
+ 457 000602  0100          0100
+ 458               
+ 459 000603  2303  SC6,    2303            /SC6
+ 460 000604  6600          6600
+ 461 000605  0100          0100
+ 462               
+ 463 000606  2303  SC7,    2303            /SC7
+ 464 000607  6700          6700
+ 465 000610  0100          0100
+ 466               
+ 467 000611  2303  SCATE,  2303            /SC8
+ 468 000612  7000          7000
+ 469 000613  0100          0100
+ 470               
+ 471 000614  2303  SCNINE, 2303            /SC9
+ 472 000615  7100          7100
+ 473 000616  0100          0100
+ 474               
+ 475 000617  2303  SC10,   2303            /SC10
+ 476 000620  6160          6160
+ 477 000621  0001          0001
+ 478               
+ 479 000622  2303  SC11,   2303            /SC11
+ 480 000623  6161          6161
+ 481 000624  0001          0001
+ 482               
+ 483 000625  2303  SC12,   2303            /SC12
+ 484 000626  6162          6162
+ 485 000627  0001          0001
+ 486               
+ 487 000630  2303  SC13,   2303            /SC13
+ 488 000631  6163          6163
+ 489 000632  0001          0001
+ 490               
+ 491 000633  2303  SCCNT,  2303            /SCCNT
+ 492 000634  0316          0316
+ 493 000635  2400          2400
+ 494 000636  0100          0100
+ 495               
+ 496 000637  0616  FNRSLT, 0616            /FNRSLT
+ 497 000640  2223          2223
+ 498 000641  1424          1424
+ 499 000642  0001          0001
+ 500               
+ 501 000643  2022  PROB,   2022            /PROB
+ 502 000644  1702          1702
+ 503 000645  0001          0001
+ 504               
+ 505 000646  0717  GOOD,   0717            /GOOD
+ 506 000647  1704          1704
+ 507 000650  0001          0001
+ 508               
+ 509 000651  0201  BAD,    0201            /BAD
+ 510 000652  0400          0400
+ 511 000653  0100          0100
+ 512               
+ 513 000654  2303  SCAT,   2303            /SCA
+ 514 000655  0100          0100
+ 515 000656  0100          0100
+ 516               
+ 517 000657  1400  LT,     1400            /L
+ 518 000660  0100          0100
+ 519               
+ 520 000661  0350  CAC,    0350            /C(AC)
+ 521 000662  0103          0103
+ 522 000663  5100          5100
+ 523 000664  0100          0100
+ 524               
+ 525 000665  0350  CMQ,    0350            /C(MQ)
+ 526 000666  1521          1521
+ 527 000667  5100          5100
+ 528 000670  0100          0100
+ 529               
+ 530 000671  0350  CMB,    0350            /C(MB)
+ 531 000672  1502          1502
+ 532 000673  5100          5100
+ 533 000674  0100          0100
+ 534               
+ 535 000675  0522  ERPER,  0522            /ERRORS PER
+ 536 000676  2217          2217            /HUNDRED:
+ 537 000677  2223          2223
+ 538 000700  4020          4020
+ 539 000701  0522          0522
+ 540 000702  4010          4010
+ 541 000703  2516          2516
+ 542 000704  0422          0422
+ 543 000705  0504          0504
+ 544 000706  7240          7240
+ 545 000707  0001          0001
+ 546               
+ 547 000710  0530  EXERR,  0530            /E,X
+ 548 000711  0522          0522            /E,R
+ 549 000712  2200          2200            /R,
+ 550 000713  0100          0100            /END CODE
+ 551               
+ 552 000714  0130  PRB1,   0130            /A,X
+ 553 000715  0234          0234            /B,/
+ 554 000716  0240          0240            /B,SPC
+ 555 000717  7540          7540            /=,SPC
+ 556 000720  0140          0140            /A,SPC
+ 557 000721  0001          0001            /END CODE
+ 558               
+ 559 000722  0130  PRB2,   0130            /A,X
+ 560 000723  0234          0234            /B,/
+ 561 000724  0230          0230            /B,X
+ 562 000725  0234          0234            /B,/
+ 563 000726  0140          0140            /A,SPC
+ 564 000727  7540          7540            /=,SPC
+ 565 000730  0240          0240            /B,SPC
+ 566 000731  0001          0001            /END CODE
+ 567               
+ 568 000732  0130  PRB3,   0130            /A,X
+ 569 000733  0234          0234            /B,/
+ 570 000734  0230          0230            /B,X
+ 571 000735  0234          0234            /B,/
+ 572 000736  0130          0130            /A,X
+ 573 000737  0134          0134            /A,/
+ 574 000740  0140          0140            /A,SPC
+ 575 000741  7540          7540            /=,SPC
+ 576 000742  0240          0240            /B,SPC
+ 577 000743  0001          0001            /END CODE
+ 578               
+ 579 000744  0130  PRB4,   0130            /A,X
+ 580 000745  0234          0234            /B,/
+ 581 000746  0230          0230            /B,X
+ 582 000747  0234          0234            /B,/
+ 583 000750  0130          0130            /A,X
+ 584 000751  0134          0134            /A,/
+ 585 000752  0130          0130            /A,X
+ 586 000753  0134          0134            /A,/
+ 587 000754  0240          0240            /B,SPC
+ 588 000755  7540          7540            /=,SPC
+ 589 000756  0140          0140            /A,SPC
+ 590 000757  0001          0001            /END CODE
+ 591               
+ 592 000760  0140  ABVAL,  0140            /A,SPC
+ 593 000761  7540          7540            /=,SPC
+ 594 000762  4040  AVALUE, 4040            /SPC,SPC
+ 595 000763  4040          4040            /SPC,SPC
+ 596 000764  4040          4040            /SPC,SPC
+ 597 000765  0240          0240            /B,SPC
+ 598 000766  7540          7540            /=,SPC
+ 599 000767  4040  BVALUE, 4040            /SPC,SPC
+ 600 000770  4040          4040            /SPC,SPC
+ 601 000771  0015          0015            /CR
+ 602 000772  0012          0012            /LF
+ 603 000773  0001          0001            /END CODE
+ 604               
+ 605                       PAGE
+ 606               
+ 607 001000  0000  PUNCH,  0
+ 608 001001  2215          ISZ PFLAG               /SET PUNCH/PRINTER FLAG.
+ 609 001002  6046          TLS             /PUNCH/PRINT
+ 610 001003  7200          CLA 
+ 611 001004  1215          TAD PFLAG
+ 612 001005  7640          SZA CLA         /PFLAG RESET?
+ 613 001006  7410          SKP             /NO
+ 614 001007  5212          JMP .+3         /YES
+ 615 001010  6041          TSF             /PUNCH/PRINTER FLAG UP?
+ 616 001011  5204          JMP .-5         /NO, REPEAT
+ 617 001012  6042          TCF             /YES, CLEAR PUNCH/PRINTER FLAG
+ 618 001013  3215          DCA PFLAG               /CLEAR FLAG
+ 619 001014  5600          JMP I PUNCH     /EXIT
+ 620 001015  0000  PFLAG,  0
+ 621 001016  0000  INTAC,  0
+ 622               
+ 623               
+ 624 001017  3216  INTSVC, DCA INTAC               /SAVE AC
+ 625 001020  7010          RAR 
+ 626 001021  3157          DCA LINK                /SAVE LINK
+ 627 001022  6201          CDF 0
+ 628 001023  1777          TAD I (0
+ 629 001024  3000          DCA 0
+ 630 001025  4160          JMS HOMEDF
+ 631 001026  6041          TSF             /PUNCH/PRINTER?
+ 632 001027  5233          JMP .+4         /NO.
+ 633 001030  6042          TCF             /YES, CLEAR ITS FLAG
+ 634 001031  3215          DCA PFLAG               /CLEAR PFLAG
+ 635 001032  5236          JMP OUT
+ 636 001033  6031          KSF             /READER/KEYBD?
+ 637 001034  5244          JMP UNXINT      /NO, ERROR
+ 638 001035  6032          KCC             /YES, CLEAR FLAG, AC, ADVANCE
+ 639 001036  7300  OUT,    CLA CLL
+ 640 001037  1157          TAD LINK                /RESTORE LINK
+ 641 001040  7004          RAL 
+ 642 001041  1216          TAD INTAC               /RESTORE AC
+ 643 001042  6001          ION             /ENABLE INTERRUPT
+ 644 001043  5400          JMP I OPEN      /EXIT
+ 645 001044  7402  UNXINT, HLT             /UNEXPECTED INTERRUPT HALT
+ 646 001045  5236          JMP OUT
+ 647               
+ 648 001046  0000  EXERP,  0
+ 649 001047  4426          JMS I XTYPST    /PRINT EXERR
+ 650 001050  0710          EXERR
+ 651 001051  4445          JMS I UPSPC     /SPACE 5
+ 652 001052  7773          -5
+ 653 001053  4447          JMS I UMSG1
+ 654 001054  4476          JMS I UTYMOD    /TYPE MODE
+ 655 001055  4446          JMS I UCRLF     /CRLF
+ 656 001056  7776          -2              /TWICE
+ 657 001057  4426          JMS I XTYPST    /PRINT GOOD
+ 658 001060  0646          GOOD
+ 659 001061  4445          JMS I UPSPC     /SPACE 6
+ 660 001062  7772          -6
+ 661 001063  4455          JMS I UPLRGS    /PRINT REGS
+ 662 001064  0112          LSB
+ 663 001065  7776          -2
+ 664 001066  4426          JMS I XTYPST    /PRINT BAD
+ 665 001067  0651          BAD
+ 666 001070  4445          JMS I UPSPC     /SPACE 7
+ 667 001071  7771          -7
+ 668 001072  4455          JMS I UPLRGS    /PRINT REGS
+ 669 001073  0116          LR
+ 670 001074  7776          -2
+ 671 001075  5646          JMP I EXERP     /EXIT
+ 672               
+ 673               
+ 674 001076  0000  MLDZMB, OPEN
+ 675 001077  1111          TAD MB          /GET THE MB
+ 676 001100  3006          DCA ZMB         /ZMB=MB
+ 677 001101  1020          TAD MODE        /"A" OR "B"
+ 678 001102  7650          SNA CLA         /
+ 679 001103  5676          JMP I MLDZMB    /"A" MODE
+ 680 001104  1776          TAD MTADR       /GET MTADR
+ 681 001105  7001          IAC             /+1 TO IT
+ 682 001106  3006          DCA ZMB         /ADDRESS OF OPERAND
+ 683 001107  5676          JMP I MLDZMB    /EXIT
+ 684               
+ 685 001110  0000  MSMBR,  OPEN
+ 686 001111  1775          TAD MBM         /GET THE "MUL" MB
+ 687 001112  3121          DCA MBR         /MBR=MB
+ 688 001113  1020          TAD MODE        /"A" OR "B"
+ 689 001114  7650          SNA CLA         /
+ 690 001115  5710          JMP I MSMBR     /"A" MODE
+ 691 001116  1775          TAD MBM         /"B" MODE, GET CONTENTS OF ADDRESS STORED IN MBM.
+ 692 001117  3005          DCA 5
+ 693 001120  1405          TAD I 5
+ 694 001121  3121          DCA MBR         /STORE OPERAND IN MBR.
+ 695 001122  5710          JMP I MSMBR     /EXIT.
+ 696               
+ 697 001123  0000  DLDZMB, OPEN
+ 698 001124  1111          TAD MB          /PUT C(MB)
+ 699 001125  3006          DCA ZMB         /INTO AMB,
+ 700 001126  1020          TAD MODE        /"A" OR "B" MODE?
+ 701 001127  7650          SNA CLA         /
+ 702 001130  5723          JMP I DLDZMB    /"A" MODE, EXIT WITH ZMB=MB, SET FOR 8I.
+ 703 001131  1774          TAD DVADR       /"B" MODE, GET DVADR
+ 704 001132  1147          TAD K2          /ADD 2 TO MAKE IT THE ADDRESS OF OPERAND
+ 705 001133  3006          DCA ZMB         /ZMB = ADDRESS OF OPERAND
+ 706 001134  5723          JMP I DLDZMB    /EXIT,  SET FOR "B" MODE.
+ 707               
+ 708 001135  0000  DSMSB,  OPEN
+ 709 001136  1773          TAD MBD         /GET THE "DIVIDE" MB
+ 710 001137  3121          DCA MBR         /MBR=MB
+ 711 001140  1020          TAD MODE        /"A" OR "B" MODE?
+ 712 001141  7650          SNA CLA         /
+ 713 001142  5735          JMP I DSMSB     /"A" MODE, EXIT SET FOR "A" MODE.
+ 714 001143  1773          TAD MBD         /GET THE CONTENTS OF ADDRESS STORED IN MBD
+ 715 001144  3005          DCA 5
+ 716 001145  1405          TAD I 5
+ 717 001146  3121          DCA MBR         /STORE OPERAN IN MBR
+ 718 001147  5735          JMP I DSMSB     /EXIT SET FOR "B" MODE
+ 719               
+ 720 001150  0000  WHATA,  OPEN
+ 721 001151  7200          CLA 
+ 722 001152  1020          TAD MODE        /WHICH MODE? "A" OR "B"
+ 723 001153  7640          SZA CLA         /SKIP IF "A" MODE
+ 724 001154  5357          JMP .+3
+ 725 001155  1104          TAD A           /GET "A" OPERAND
+ 726 001156  5750          JMP I WHATA     /EXIT WITH OPERAND IN AC
+ 727 001157  1007          TAD ADDA        /GET ADDRESS OF "A"
+ 728 001160  5750          JMP I WHATA     /EXIT WITH ADDRESS OF OPERAND IN AC
+ 729               
+ 730 001161  0000  WHATB,  OPEN
+ 731 001162  7200          CLA 
+ 732 001163  1020          TAD MODE        /WHICH MODE? "A" OR "B"
+ 733 001164  7640          SZA CLA         /SKIP IF "A" MODE
+ 734 001165  5370          JMP .+3         /"B" MODE MODE
+ 735 001166  1105          TAD B           /GET "B" OPERAND
+ 736 001167  5761          JMP I WHATB     /EXIT WITH OPERAND IN AC
+ 737 001170  1007          TAD ADDA        /GET ADDRESS OF "A"
+ 738 001171  7001          IAC             /ADD 1 TO MAKE IT THE ADDRESS OF B
+ 739 001172  5761          JMP I WHATB     /EXIT WITH ADDRESS OF OPERAND IN AC
+ 740               
+ 741               
+ 742               /MULTIPLY TEST ROUTINE
+ 743 001173  1472  *. 177+1
+     001174  1415  
+     001175  1271  
+     001176  1215  
+     001177  0000  
+ 744 001200  0000  MUYT,   0
+ 745 001201  7200          CLA 
+ 746 001202  3106          DCA L
+ 747 001203  4432          JMS I UMOVE
+ 748 001204  0106          L
+ 749 001205  0107          AC
+ 750 001206  7752          -26
+ 751 001207  1600          TAD I MUYT
+ 752 001210  3215          DCA MTADR
+ 753 001211  2200          ISZ MUYT
+ 754 001212  1600          TAD I MUYT
+ 755 001213  3144          DCA TCTR
+ 756 001214  4432          JMS I UMOVE
+ 757               
+ 758 001215  0000  MTADR,  0               /TEST PARAMETERS
+ 759 001216  0110          MQ
+ 760 001217  7776          -2
+ 761 001220  4777          JMS MLDZMB      /SET THE ZMB
+ 762 001221  1215          TAD MTADR
+ 763 001222  1147          TAD K2
+ 764 001223  3225          DCA .+2
+ 765 001224  4432          JMS I UMOVE     /GET AND STORE
+ 766 001225  0000          0000            /EXPECTED RESULTS
+ 767 001226  0113          ACSB
+ 768 001227  7776          -2
+ 769 001230  1111          TAD MB
+ 770 001231  3115          DCA MBSB
+ 771 001232  3112          DCA LSB
+ 772 001233  4263  HDM,    JMS MULT                /HARDWARE MULTIPLY
+ 773 001234  4273          JMS MSTR                /STORE RESULTS
+ 774 001235  4433          JMS I UCOMP     /CHECK RESULTS
+ 775 001236  7774          -4
+ 776 001237  5251          JMP MERR                /ERROR
+ 777 001240  4434  MLT,    JMS I USR4T     /LOCK ON TEST? (SR4 ON)
+ 778 001241  5233          JMP HDM         /YES
+ 779 001242  2144          ISZ TCTR                /ALL TESTS DONE?
+ 780 001243  5245          JMP .+2         /NO
+ 781 001244  5422          JMP I CHAIN     /YES, EXIT
+ 782 001245  1215          TAD MTADR               /SET U FOR
+ 783 001246  1151          TAD K4          /NEXT MULTIPLY
+ 784 001247  3215          DCA MTADR               /TEST
+ 785 001250  5214          JMP MTADR-1
+ 786               
+ 787               
+ 788 001251  4435  MERR,   JMS I USR5T     /PRINT/HALT?
+ 789 001252  5257          JMP .+5         /GO PRINT
+ 790 001253  4305          JMS MEHLT               /GO HALT
+ 791 001254  4435          JMS I USR5T     /PRINT?
+ 792 001255  7410          SKP             /60 PRINT
+ 793 001256  5240          JMP MLT
+ 794 001257  4312          JMS MERPT               /PRINT MULT ERROR
+ 795 001260  4325          JMS MFRP                /PRINT FAILURE RATE IF DESIRED
+ 796 001261  4347          JMS MSMP                /PRINT SIMU AND GO INTO SCOPE LOOP
+ 797                                       /IF DESIRED
+ 798 001262  5240          JMP MLT
+ 799               
+ 800 001263  0000  MULT,   0
+ 801 001264  7200          CLA 
+ 802 001265  1006          TAD ZMB         /ZMB TO MBM
+ 803 001266  3271          DCA MBM
+ 804 001267  1110          TAD MQ
+ 805 001270  7425          MQL MUY         /LOAD MQ AND MULTIPLY
+ 806 001271  0000  MBM,    0
+ 807 001272  5663          JMP I MULT      /EXIT
+ 808               /
+ 809 001273  0000  MSTR,   0
+ 810 001274  3117          DCA ACR         /STORE AC RESULTS
+ 811 001275  7004          RAL 
+ 812 001276  3116          DCA LR          /STORE LINK RESULT
+ 813 001277  7501          MQA
+ 814 001300  3120          DCA MQR         /STORE MQ RESULT
+ 815 001301  4776          JMS MSMBR       /STORE MB RESULT
+ 816 001302  7441          SCA
+ 817 001303  3132          DCA SCS         /STORE CONTENTS OF STEP COUNTER
+ 818 001304  5673          JMP I MSTR      /EXIT
+ 819               /
+ 820 001305  0000  MEHLT,  0
+ 821 001306  7200          CLA 
+ 822 001307  1102          TAD RTNNO               /GET ROUTINE NUMBER
+ 823 001310  7402          HLT             /MULTIPLY ERROR HALT
+ 824 001311  5705          JMP I MEHLT     /EXIT
+ 825               /
+ 826 001312  0000  MERPT,  0
+ 827 001313  4446          JMS I UCRLF     /CRLF
+ 828 001314  7776          -2              /TWICE
+ 829 001315  4426          JMS I XTYPST    /PRINT MUYERR
+ 830 001316  0551          MUYERR
+ 831 001317  4445          JMS I UPSPC     /SPACE 4
+ 832 001320  7774          -4
+ 833 001321  4454          JMS I UERPSB    /PRINT ERROR DATA
+ 834 001322  4436          JMS I USR6T     /HALT AFTER PRINT?
+ 835 001323  4305          JMS MEHLT               /YES
+ 836 001324  5712          JMP I MERPT     /NO, EXIT
+ 837               
+ 838 001325  0000  MFRP,   0
+ 839 001326  4437          JMS I UST7T     /PRINT FAILURE RATE?
+ 840 001327  5725          JMP I MFRP      /NO, EXIT
+ 841 001330  4424          JMS I SETCTR    /SET FRCTR
+ 842 001331  0141          FRCTR           /TO -100
+ 843 001332  7634          -144
+ 844 001333  3140          DCA FCTR                /CLEAR FCTR
+ 845 001334  4263          JMS MULT                /MULTIPLY
+ 846 001335  4273          JMS MSTR                /STORE RESULTS
+ 847 001336  4433          JMS I UCOMP     /CHECK RESULTS
+ 848 001337  7774          -4
+ 849 001340  2140          ISZ FCTR                /ERROR, +1 TO FCTR
+ 850 001341  2141          ISZ FRCTR               /DONE 100 TIMES?
+ 851 001342  5335          JMP .-5         /NO, REPEAT
+ 852 001343  4451          JMS I UMSG2     /PRINT FAILURE RATE
+ 853 001344  4436          JMS I USR6T     /HALT AFTER PRINT?
+ 854 001345  4305          JMS MEHLT               /YES
+ 855 001346  5725          JMP I MFRP      /NO,   EXIT
+ 856               /
+ 857 001347  0000  MSMP,   0
+ 858 001350  4440          JMS I USATET    /SIMULATION AND SCOPE LOOP?
+ 859 001351  5747          JMP I MSMP      /NO,  EXIT
+ 860 001352  4441          JMS I UMUYSM    /SIMULATE MULTIPLY
+ 861 001353  4456          JMS I UHDSC0    /PRINT HEADIN AND SC0
+ 862 001354  4457          JMS I UF1TEL    /PRINT SC1 THROUGH SC11
+ 863 001355  4461          JMS I UPFR      /PRINT FINAL RESULT
+ 864 001356  4263  MSLOOP, JMS MULT
+ 865 001357  5356          JMP .-1
+ 866               
+ 867               /ROUTINE TO SET MODE INDICATOR
+ 868               
+ 869 001360  7604  SELECT, LAS
+ 870 001361  7012          RTR 
+ 871 001362  7420          SNL             /SR 10 SET?
+ 872 001363  5366          JMP .+3         /NO
+ 873 001364  7710          SPA CLA         /YES.  SR11 SET?
+ 874 001365  5371          JMP .+4         /YES.
+ 875 001366  7300  SETA,   CLA CLL 
+ 876 001367  3020          DCA MODE        /MODE SET FOR "A"
+ 877 001370  5775          JMP SELMOD      /DO MODE SELECTION
+ 878 001371  7240  SETB,   CLA CMA         /7777
+ 879 001372  3020          DCA MODE        /MODE SET FOR "B"
+ 880 001373  5775          JMP SELMOD      /DO MODE SELECTION
+ 881               
+ 882               /TAPE 2 - KE8I
+ 883               /DIVIDE TEST ROUTINE
+ 884 001375  0303  *. 177+1
+     001376  1110  
+     001377  1076  
+ 885 001400  0000  DIVT,   0
+ 886 001401  7200          CLA 
+ 887 001402  3106          DCA L
+ 888 001403  4432          JMS I UMOVE
+ 889 001404  0106          L
+ 890 001405  0107          AC
+ 891 001406  7752          -26
+ 892 001407  1600          TAD I DIVT      /GET AND STORE ADDRESS
+ 893 001410  3215          DCA DVADR               /OF TEST DATA
+ 894 001411  2200          ISZ DIVT
+ 895 001412  1600          TAD I DIVT      /GET AND STORE
+ 896 001413  3144          DCA TCTR                /TEST COUNT
+ 897 001414  4432          JMS I UMOVE     /GET AND STORE
+ 898 001415  0000  DVADR,  0                       /TEST PARAMETERS
+ 899 001416  0107          AC
+ 900 001417  7775          -3
+ 901 001420  4777          JMS DLDZMB      /SET DLDZMB
+ 902 001421  1215          TAD DVADR
+ 903 001422  1150          TAD K3
+ 904 001423  3225          DCA .+2
+ 905 001424  4432          JMS I UMOVE     /GET AND STORE
+ 906 001425  0000          0000            /EXPECTED RESULTS,
+ 907 001426  0112          LSB
+ 908 001427  7775          -3
+ 909 001430  1111          TAD MB
+ 910 001431  3115          DCA MBSB
+ 911 001432  4262  HDD,    JMS DIVD                /HARDWARE DIVIDE
+ 912 001433  4274          JMS DSTR                /STORE DIVIDE RESULTS
+ 913 001434  4433          JMS I UCOMP     /CHECK RESULTS
+ 914 001435  7774          -4
+ 915 001436  5250          JMP DERR                /ERRORS.
+ 916 001437  4434  DLT,    RMSTPA          /LOCK ON TEST? (SR4 ON)
+ 917 001440  5232          JMP HDD         /YES.
+ 918 001441  2144          ISZ TCTR                /ALL TESTS DONE?
+ 919 001442  5244          JMP .+2         /NO.
+ 920 001443  5422          JMP I CHAIN     /YES, EXIT.
+ 921 001444  1215          TAD DVADR               /SET UP FOR NEXT
+ 922 001445  1152          TAD K6                  /DIVIDE TEST.
+ 923 001446  3215          DCA DVADR
+ 924 001447  5214          JMP DVADR-1
+ 925               
+ 926 001450  4435  DERR,   JMS I USR5T     /PRINT/HALT?
+ 927 001451  5256          JMP .+5         /GO PRINT
+ 928 001452  4306          JMS DEHLT               /GO HALT
+ 929 001453  4435          JMS I USR5T     /PRINT?
+ 930 001454  7410          SKP             /GO PRINT
+ 931 001455  5237          JMP DLT
+ 932 001456  4313          JMS DERPT               /PRINT DIV ERROR
+ 933 001457  4326          JMS DFRP                /PRINT FAILURE RATE IF DESIRED
+ 934 001460  4350          JMS DSMP                /PRINT SIMU AND SCOPE LOOP IF DESIRED.
+ 935 001461  5237          JMP DLT
+ 936               
+ 937 001462  0000  DIVD,   0
+ 938 001463  7200          CLA 
+ 939 001464  1006          TAD ZMB
+ 940 001465  3272          DCA MBD         /MB TO MBD
+ 941 001466  1110          TAD MQ
+ 942 001467  7421          MQL             /LOAD MQ
+ 943 001470  1107          TAD AC                  /LOAD AC
+ 944 001471  7407          DVI             /DIVIDE
+ 945 001472  0000  MBD,    0
+ 946 001473  5662          JMP I DIVD      /EXIT.
+ 947               /
+ 948 001474  0000  DSTR,   0
+ 949 001475  3117          DCA ACR         /STORE AC RESULT
+ 950 001476  7004          RAL 
+ 951 001477  3116          DCA LR                  /STORE LINK RESULT
+ 952 001500  7501          MQA
+ 953 001501  3120          DCA MQR         /STORE MQ RESULT
+ 954 001502  4776          JMS DSMSB       /STORE MB RESULT
+ 955 001503  7441          SCA
+ 956 001504  3132          DCA SCS         /STORE CONTENT OF STEP COUNTER
+ 957 001505  5674          JMP I DSTR      /EXIT.
+ 958               /
+ 959 001506  0000  DEHLT,  0
+ 960 001507  7200          CLA 
+ 961 001510  1102          TAD RTNNO       /GET ROUTINE NUMBER
+ 962 001511  7402          HLT             /DIVIDE ERROR HALT
+ 963 001512  5706          JMP I DEHLT     /EXIT.
+ 964               /
+ 965 001513  0000  DERPT,  0
+ 966 001514  4446          JMS I UCRLF     /CRLF
+ 967 001515  7776          -2              /TWICE
+ 968 001516  4426          JMS I XTYPST    /PRINT DIVERR
+ 969 001517  0555          DIVERR
+ 970 001520  4445          JMS I UPSPC     /SPACE 4
+ 971 001521  7774          -4
+ 972 001522  4454          JMS I UERPSB    /PRINT ERROR DATA
+ 973 001523  4436          JMS I USR6T     /HALT AFTER PRINT?
+ 974 001524  4306          JMS DEHLT               /YES.
+ 975 001525  5713          JMP I DERPT     /NO, EXIT
+ 976               /
+ 977 001526  0000  DFRP,   0
+ 978 001527  4437          JMS I UST7T     /PRINT FAILURE RATE?
+ 979 001530  5726          JMP I DFRP      /NO, EXIT.
+ 980 001531  4424          JMS I SETCTR    /SET FRCTR
+ 981 001532  0141          FRCTR           /TO -100
+ 982 001533  7634          -144
+ 983 001534  3140          DCA FCTR                /LCEAR FCTR
+ 984 001535  4262          JMS DIVD                /DIVIDE
+ 985 001536  4274          JMS DSTR                /STORE RESULTS
+ 986 001537  4433          JMS I UCOMP     /CHECK RESULTS
+ 987 001540  7774          -4
+ 988 001541  2140          ISZ FCTR                /ERROR .+1 TO FCTR
+ 989               
+ 990 001542  2141          ISZ FRCTR               /DONE 100 TIMES?
+ 991 001543  5336          JMP .-5         /NO, REPEAT
+ 992 001544  4451          JMS I UMSG2     /PRINT FAILURE RATE
+ 993 001545  4436          JMS I USR6T     /HALT AFTER PRINT?
+ 994 001546  4306          JMS DEHLT               /YES.
+ 995 001547  5726          JMP I DFRP      /NO, EXIT.
+ 996               /
+ 997 001550  0000  DSMP,   0
+ 998 001551  4440          JMS I USATET    /SIMULATION AND SCOPE LOOP?
+ 999 001552  5750          JMP I DSMP      /NO, EXIT
+1000 001553  4442          JMS I UDIVSM    /SIMULATE DIVIDE
+1001 001554  4456          JMS I UHDSC0    /PRINT HEADING AND SC0
+1002 001555  1134          TAD OFLO
+1003 001556  7640          SZA CLA         /OFLO?
+1004 001557  5362          JMP .+3         /YES.
+1005 001560  4457          JMS I UF1TEL    /NO, PRINT SC1 TO SC11
+1006 001561  4460          JMS I UP1213    /PRINT SC12 AND SC13.
+1007 001562  4461          JMS I UPFR      /PRINT FINAL RESULT.
+1008 001563  4262  DSLOOP, JMS DIVD                /DIVIDE.
+1009 001564  5363          JMP .-1         /REPEAT.
+1010               
+1011 001565  0000  STCTR,  OPEN
+1012 001566  7300          CLA CLL 
+1013 001567  1765          TAD I STCTR     /SET CTR ADDRESS
+1014 001570  3077          DCA TEMP        /SAVE AT TEMP
+1015 001571  2365          ISZ STCTR       /
+1016 001572  1765          TAD I STCTR     /SET COUNT
+1017 001573  3477          DCA I TEMP      /STORE PER C(TEMP)
+1018 001574  2365          ISZ STCTR
+1019 001575  5765          JMP I STCTR
+1020               
+1021 001576  1135  *. 177+1
+     001577  1123  
+1022 001600  0000  SR4T,   0
+1023 001601  7604          LAS             /READ SR
+1024 001602  0207          AND SR4MSK
+1025 001603  7640          SZA CLA         /SR4 ON?
+1026 001604  5600          JMP I SR4T      /YES.
+1027 001605  2200          ISZ SR4T                /NO.
+1028 001606  5600          JMP I SR4T
+1029 001607  0200  SR4MSK, 0200
+1030 001610  0000  SR5T,   0
+1031 001611  7604          LAS             /READ SR
+1032 001612  0217          AND SR5MSK
+1033 001613  7650          SNA CLA         /SR5 ON?
+1034 001614  5610          JMP I SR5T      /NO.
+1035 001615  2210          ISZ SR5T                /YES.
+1036 001616  5610          JMP I SR5T
+1037 001617  0100  SR5MSK, 0100
+1038 001620  0000  SR6T,   0
+1039 001621  7604          LAS             /READ SR
+1040 001622  0227          AND SR6MSK
+1041 001623  7640          SZA CLA         /SR6 ON?
+1042 001624  5620          JMP I SR6T      /YES.
+1043 001625  2220          ISZ SR6T                /NO.
+1044 001626  5620          JMP I SR6T
+1045 001627  0040  SR6MSK, 0040
+1046 001630  0000  SR7T,   0
+1047 001631  7604          LAS             /READ SR
+1048 001632  0237          AND SR7MSK
+1049 001633  7650          SNA CLA         /SR7 ON?
+1050 001634  5630          JMP I SR7T      /NO.
+1051 001635  2230          ISZ SR7T                /YES.
+1052 001636  5630          JMP I SR7T
+1053 001637  0020  SR7MSK, 0020
+1054 001640  0000  SATET,  0
+1055 001641  7604          LAS             /READ SR
+1056 001642  0247          AND SATEMK
+1057 001643  7650          SNA CLA         /SR8 ON?
+1058 001644  5640          JMP I SATET     /NO.
+1059 001645  2240          ISZ SATET       /YES.
+1060 001646  5640          JMP I SATET
+1061 001647  0010  SATEMK, 0010
+1062               
+1063 001650  0000  MOVE,   0
+1064 001651  7200          CLA 
+1065 001652  1650          TAD I MOVE      /GET "FROM ADDR" AND
+1066 001653  3273          DCA FADDR               /STORE AT FADDR
+1067 001654  2250          ISZ MOVE
+1068 001655  1650          TAD I MOVE      /GET "TO ADDR" AND
+1069 001656  3274          DCA TADDR               /STORE AT TADDR
+1070 001657  2250          ISZ MOVE
+1071 001660  1650          TAD I MOVE      /GET "MOVE COUNT" AND
+1072 001661  3275          DCA MCTR                /STORE AT MCTR
+1073 001662  2250          ISZ MOVE                /SET UP EXIT ADDRESS
+1074               
+1075               
+1076 001663  7200  MOVEA,  CLA
+1077 001664  1673          TAD I FADDR     /GET "FROM" WORD
+1078 001665  3674          DCA I TADDR     /STORE AT "TO" LOCATION
+1079 001666  2273          ISZ FADDR               /INCREMENT "FROM" ADDRESS
+1080 001667  2274          ISZ TADDR               /INCREMENT "TO" ADDRESS
+1081 001670  2275          ISZ MCTR                /ALL WORDS MOVED?
+1082 001671  5263          JMP MOVEA               /NO.
+1083 001672  5650          JMP I MOVE      /YES.
+1084               /
+1085 001673  0000  FADDR,  0
+1086 001674  0000  TADDR,  0
+1087 001675  0000  MCTR,   0
+1088               /
+1089               
+1090 001676  0000  COMP,   0
+1091 001677  1676          TAD I COMP      /GET AND STORE NUMBER OF
+1092 001700  3325          DCA CMPCTR      /WORDS TO COMPARE
+1093 001701  2276          ISZ COMP
+1094 001702  1321          TAD C1          /LSB ADDRESS TO C1A
+1095 001703  3323          DCA C1A
+1096 001704  1322          TAD C2          /LR ADDRESS TO C2A
+1097 001705  3324          DCA C2A
+1098 001706  1723  COMPA,  TAD I C1A               /GET SHOULD BE WORD.
+1099 001707  7041          CIA             /2'S COMPLEMENT IT
+1100 001710  1724          TAD I C2A               /ADD RESULT WORD
+1101 001711  7640          SZA CLA         /RESULT 0?
+1102 001712  5676          JMP I COMP      /NO..L
+1103 001713  2323          ISZ C1A         /YES, 16L
+1104 001714  2324          ISZ C2A         /FOR NEXT COMPARE
+1105 001715  2325          ISZ CMPCTR              /DONE COMPARING?
+1106 001716  5306          JMP COMPA               /NO.
+1107 001717  2276          ISZ COMP                /YES, 16L
+1108 001720  5676          JMP I COMP      /EXIT.
+1109 001721  0112  C1,     LSB
+1110 001722  0116  C2,     LR
+1111 001723  0000  C1A,    0
+1112 001724  0000  C2A,    0
+1113 001725  0000  CMPCTR, 0
+1114               
+1115               /
+1116 001726  0000  PRT0,   0
+1117 001727  4426          JMS I XTYPST    /PRINT A 0.
+1118 001730  0545          ZERO
+1119 001731  5726          JMP I PRT0
+1120               
+1121 001732  0000  PRT1,   0
+1122 001733  4426          JMS I XTYPST    /PRINT A 1.
+1123 001734  0547          ONE
+1124 001735  5732          JMP I PRT1
+1125               
+1126               /
+1127 001736  0000  PSPC,   0
+1128 001737  7200          CLA 
+1129 001740  1736          TAD I PSPC      /GET NUMBER
+1130 001741  3352          DCA SPCTR               /OF SPACES
+1131 001742  2336          ISZ PSPC
+1132 001743  4426          JMS I XTYPST    /SPACE ONCE
+1133 001744  1750          .+4
+1134 001745  2352          ISZ SPCTR               /ALL SPACES DONE?
+1135 001746  5343          JMP .-3         /NO, REPEAT
+1136 001747  5736          JMP I PSPC      /YES, EXIT
+1137 001750  4000          4000
+1138 001751  0100          0100
+1139 001752  0000  SPCTR,  0
+1140               
+1141               /
+1142 001753  0000  CRLF,   0
+1143 001754  7200          CLA 
+1144 001755  1753          TAD I CRLF      /GET NUMBER
+1145 001756  3370          DCA CRCTR               /OF CRLF
+1146 001757  2353          ISZ CRLF
+1147 001760  4426          JMS I XTYPST    /CRLF ONCE
+1148 001761  1765          .+4
+1149 001762  2370          ISZ CRCTR               /ALL CRLF DONE?
+1150 001763  5360          JMP .-3         /NO, REPEAT
+1151 001764  5753          JMP I CRLF      /YES, EXIT.
+1152 001765  0015          0015
+1153 001766  0012          0012
+1154 001767  0001          0001
+1155 001770  0000  CRCTR,  0
+1156               /
+1157 001771  0000  MSG1A,  0
+1158 001772  4445          JMS I UPSPC     /SPACE 10.
+1159 001773  7766          -12
+1160 001774  4426          JMS I XTYPST    /PRINT C(MB)
+1161 001775  0671          CMB
+1162 001776  5771          JMP I MSG1A     /EXIT
+1163               
+1164               *. 177+1
+1165 002000  0000  MSG1,   0
+1166 002001  4426          JMS I XTYPST    /PRINT L.
+1167 002002  0657          LT
+1168 002003  4445          JMS I UPSPC     /SPACE 7.
+1169 002004  7771          -7
+1170 002005  4426          JMS I XTYPST    /PRINNT C(AC)
+1171 002006  0661          CAC
+1172 002007  4445          JMS I UPSPC     /SPACE 10.
+1173 002010  7766          -12
+1174 002011  4426          JMS I XTYPST    /PRINT C(MQ)
+1175 002012  0665          CMQ
+1176 002013  5600          JMP I MSG1      /EXIT
+1177               /
+1178 002014  0000  ERPSB,  0
+1179 002015  4447          JMS I UMSG1     /PRINT HEADINGS
+1180 002016  4450          JMS I UMSG1A
+1181 002017  4476          JMS I UTYMOD    /TYPE MODE
+1182 002020  4446          JMS I UCRLF     /CRLF
+1183 002021  7776          -2              /ONCE
+1184 002022  4426          JMS I XTYPST    /PRINT PROB
+1185 002023  0643          PROB
+1186 002024  4445          JMS I UPSPC     /SPACE 6
+1187 002025  7772          -6
+1188 002026  4455          JMS I UPLRGS    /PRINT 3 REGISTER
+1189 002027  0106          L
+1190 002030  7775          -3
+1191 002031  4446          JMS I UCRLF     /CRLF
+1192 002032  7777          -1              /ONCE
+1193 002033  4426          JMS I XTYPST    /PRINT GOOD
+1194 002034  0646          GOOD
+1195 002035  4445          JMS I UPSPC     /SPACE 6
+1196 002036  7772          -6
+1197 002037  4455          JMS I UPLRGS    /PRINT 3 REGISTERS
+1198 002040  0112          LSB
+1199 002041  7775          -3
+1200 002042  4426          JMS I XTYPST    /PRINT BAD
+1201 002043  0651          BAD
+1202 002044  4445          JMS I UPSPC     /SPACE 7
+1203 002045  7771          -7
+1204 002046  4455          JMS I UPLRGS    /PRINT 3 REGISTERS
+1205 002047  0116          LR
+1206 002050  7775          -3
+1207 002051  4446          JMS I UCRLF     /CRLF
+1208 002052  7777          -1              /ONCE.
+1209 002053  4426          JMS I XTYPST    /PRINT SCA
+1210 002054  0654          SCAT
+1211 002055  4445          JMS I UPSPC     /SPACE 8
+1212 002056  7770          -10
+1213 002057  4453          JMS I UPREG     /PRINT 1 REGISTER
+1214 002060  0132          SCS
+1215 002061  4446          JMS I UCRLF     /CRLF
+1216 002062  7777          -1              /ONCE
+1217 002063  5614          JMP I ERPSB     /EXIT
+1218               
+1219               
+1220 002064  0000  MSG2,   0
+1221 002065  4446          JMS I UCRLF     /CRLF
+1222 002066  7776          -2              /TWICE
+1223 002067  4426          JMS I XTYPST    /PRINT ERRORS PER
+1224 002070  0675          ERPER           /HUNDRED:
+1225 002071  4277          JMS BDCNV       /PRINT FAILURE
+1226 002072  0140          FCTR            /COUNT IN DECIMAL
+1227 002073  4476          JMS I UTYMOD    /TYPE MODE
+1228 002074  4446          JMS I UCRLF     /CRLF
+1229 002075  7777          -1              /ONCE
+1230 002076  5664          JMP I MSG2      /END
+1231 002077  0000  BDCNV,  0
+1232 002100  4424          JMS I SETCTR    /SET CNVCTR
+1233 002101  2143          CNVCTR          /TO -4
+1234 002102  7774          -4
+1235 002103  1334          TAD ADDRZA
+1236 002104  3315          DCA ARROW       /INITIALIZE ARROW
+1237 002105  1677          TAD I BDCNV
+1238 002106  2277          ISZ BDCNV
+1239 002107  3342          DCA DIGIT
+1240 002110  1742          TAD I DIGIT
+1241 002111  3341          DCA VALUE
+1242 002112  3342          DCA DIGIT       /CLEAR DIGIT
+1243 002113  7100          CLL 
+1244 002114  1341          TAD VALUE
+1245 002115  1335  ARROW,  TAD TENPWR
+1246 002116  7420          SNL 
+1247 002117  5323          JMP .+4
+1248 002120  2342          ISZ DIGIT       /DEVELOP DIGIT
+1249 002121  3341          DCA VALUE
+1250 002122  5313          JMP ARROW-2
+1251 002123  7200          CLA 
+1252 002124  1342          TAD DIGIT               /GET DIGIT
+1253 002125  1344          TAD K260                /ADD 260
+1254 002126  4474          JMS I UPUNCH    /PRINT
+1255 002127  7300          CLA CLL 
+1256 002130  2315          ISZ ARROW               /POINT ARROW
+1257 002131  2343          ISZ CNVCTR      /DONE?
+1258 002132  5312          JMP ARROW-3     /NO, REPEAT
+1259 002133  5677          JMP I BDCNV     /YES,  EXIT
+1260 002134  1335  ADDRZA, TAD TENPWR
+1261 002135  6030  TENPWR, -1750
+1262 002136  7634          -144
+1263 002137  7766          -12
+1264 002140  7777          -1
+1265 002141  0000  VALUE,  0
+1266 002142  0000  DIGIT,  0
+1267 002143  0000  CNVCTR, 0
+1268 002144  0260  K260,   260
+1269               
+1270               
+1271 002145  0000  PREG,   0
+1272 002146  4445          JMS I UPSPC     /SPACE 3
+1273 002147  7775          -3
+1274 002150  4424          JMS I SETCTR    /SET PRCTR
+1275 002151  2174          PRCTR           /TO -12
+1276 002152  7764          -14
+1277 002153  1745          TAD I PREG      /GET ADDRESS
+1278 002154  3373          DCA PRB         /OF REGISTER
+1279 002155  2345          ISZ PREG
+1280 002156  1773          TAD I PRB       /GET CONTENTS OF REG.
+1281 002157  3373          DCA PRB
+1282 002160  1373          TAD PRB
+1283 002161  7004          RAL 
+1284 002162  3373          DCA PRB
+1285 002163  7430          SZL             /BIT A 0?
+1286 002164  5367          JMP .+3         /NO
+1287 002165  4443          JMS I UPRT0     /YES, PRINT A 0
+1288 002166  7410          SKP 
+1289 002167  4444          JMS I UPRT1     /PRINT A 1.
+1290 002170  2374          ISZ PRCTR               /DONE?
+1291 002171  5360          JMP .-11                /NO
+1292 002172  5745          JMP I PREG      /YES, EXIT
+1293 002173  0000  PRB,    0
+1294 002174  0000  PRCTR,  0
+1295               
+1296 002175  0007  BELL,   0007
+1297 002176  0001          0001
+1298               
+1299                       PAGE
+1300 002200  0000  PL,     0
+1301 002201  7200          CLA 
+1302 002202  1600          TAD I PL                /GET ADDRESS OF
+1303 002203  3214          DCA PLB         /REGISTER
+1304 002204  2200          ISZ PL
+1305 002205  1614          TAD I PLB               /GET CONTENTS OF REG.
+1306 002206  7640          SZA CLA         /0?
+1307 002207  5212          JMP .+3         /NO.
+1308 002210  4443          JMS I UPRT0     /YES, PRINT 0
+1309 002211  5600          JMP I PL                /EXIT
+1310 002212  4444          JMS I UPRT1     /PRINT 1
+1311 002213  5600          JMP I PL                /EXIT
+1312 002214  0000  PLB,    0
+1313               /
+1314 002215  0000  PFR,    0
+1315 002216  4446          JMS I UCRLF     /CRLF
+1316 002217  7777          -1              /ONCE
+1317 002220  4426          JMS I XTYPST    /PRINT FNRSLT
+1318 002221  0637          FNRSLT
+1319 002222  4445          JMS I UPSPC     /SPACE 4
+1320 002223  7774          -4
+1321 002224  4455          JMS I UPLRGS    /PRINT FINAL RESULTS
+1322 002225  0126          LF
+1323 002226  7776          -2
+1324 002227  5615          JMP I PFR               /EXIT
+1325 002230  0000  PLRGS,  0
+1326 002231  7200          CLA 
+1327 002232  1630          TAD I PLRGS     /GET ADDRESS OF
+1328 002233  3244          DCA LADR                /LINK REGISTER
+1329 002234  1244          TAD LADR                /DEVELOP ADDRESS
+1330 002235  7001          IAC             /OF REGISTERS
+1331 002236  3246          DCA RADR
+1332 002237  2230          PLRGS
+1333 002240  1630          TAD I PLRGS     /GET NUMBERS OF
+1334 002241  3255          DCA PXCTR               /REGISTERS
+1335 002242  2230          ISZ PLRGS
+1336 002243  4452          JMS I UPL               /PRINT CONTENTS OF
+1337 002244  0000  LADR,   0               /LINK REGISTER
+1338 002245  4453          JMS I UPREG     /PRINT CONTENTS
+1339 002246  0000  RADR,   0               /OF REGISTERS
+1340 002247  2246          ISZ RADR                /SET UP FOR NEXT REG
+1341 002250  2255          ISZ PXCTR               /DONE?
+1342 002251  5245          JMP RADR-1      /NO, REPEAT
+1343 002252  4446          JMS I UCRLF     /YES, CRLF
+1344 002253  7777          -1              /ONCE
+1345 002254  5630          JMP I PLRGS     /EXIT
+1346 002255  0000  PXCTR,  0
+1347               
+1348               
+1349               /
+1350 002256  0000  F1TEL,  0
+1351 002257  4426          JMS I XTYPST    /PRINT SC1
+1352 002260  0564          SC1
+1353 002261  4445          JMS I UPSPC     /SPACE 7
+1354 002262  7771          -7
+1355 002263  4455          JMS I UPLRGS    /PRINT SC1 RESULTS
+1356 002264  0476          L1
+1357 002265  7776          -2
+1358 002266  4426          JMS I XTYPST    /PRINT SC2
+1359 002267  0567          SC2
+1360 002270  4445          JMS I UPSPC     /SPACE 7
+1361 002271  7771          -7
+1362 002272  4455          JMS I UPLRGS    /PRINT SC2 RESULTS
+1363 002273  0501          L2
+1364 002274  7776          -2
+1365 002275  4426          JMS I XTYPST    /PRINT SC3
+1366 002276  0572          SC3
+1367 002277  4445          JMS I UPSPC     /SPACE 7
+1368 002300  7771          -7
+1369 002301  4455          JMS I UPLRGS    /PRINT SC3 RESULTS
+1370 002302  0504          L3
+1371 002303  7776          -2
+1372 002304  4426          JMS I XTYPST    /PRINT SC4
+1373 002305  0575          SC4
+1374 002306  4445          JMS I UPSPC     /SPACE 7
+1375 002307  7771          -7
+1376 002310  4455          JMS I UPLRGS    /PRINT SC4 RESULTS
+1377 002311  0507          L4
+1378 002312  7776          -2
+1379 002313  4426          JMS I XTYPST    /PRINT SC5
+1380 002314  0600          SC5
+1381 002315  4445          JMS I UPSPC     /SPACE 7
+1382 002316  7771          -7
+1383 002317  4455          JMS I UPLRGS    /PRINT SC5 RESULTS
+1384 002320  0512          L5
+1385 002321  7776          -2
+1386 002322  4426          JMS I XTYPST    /PRINT SC6
+1387 002323  0603          SC6
+1388 002324  4445          JMS I UPSPC     /SPACE 7
+1389 002325  7771          -7
+1390 002326  4455          JMS I UPLRGS    /PRINT SC6 RESULTS
+1391 002327  0515          L6
+1392 002330  7776          -2
+1393 002331  4426          JMS I XTYPST    /PRINT SC7
+1394 002332  0606          SC7
+1395 002333  4445          JMS I UPSPC     /SPACE 7
+1396 002334  7771          -7
+1397 002335  4455          JMS I UPLRGS    /PRINT SC7 RESULTS
+1398 002336  0520          L7
+1399 002337  7776          -2
+1400 002340  4426          JMS I XTYPST    /PRINT SC8
+1401 002341  0611          SCATE
+1402 002342  4445          JMS I UPSPC     /SPACE 7
+1403 002343  7771          -7
+1404 002344  4455          JMS I UPLRGS    /PRINT SC8 RESULTS
+1405 002345  0523          LATE
+1406 002346  7776          -2
+1407 002347  4426          JMS I XTYPST    /PRINT SC9
+1408 002350  0614          SCNINE
+1409 002351  4445          JMS I UPSPC     /SPACE 7
+1410 002352  7771          -7
+1411 002353  4455          JMS I UPLRGS    /PRINT SC9 RESULTS
+1412 002354  0526          LNINE
+1413 002355  7776          -2
+1414 002356  4426          JMS I XTYPST    /PRINT SC10
+1415 002357  0617          SC10
+1416 002360  4445          JMS I UPSPC     /SPACE 6
+1417 002361  7772          -6
+1418 002362  4455          JMS I UPLRGS    /PRINT SC10 RESULTS
+1419 002363  0531          L10
+1420 002364  7776          -2
+1421 002365  4426          JMS I XTYPST    /PRINT SC11
+1422 002366  0622          SC11
+1423 002367  4445          JMS I UPSPC     /SPACE 6
+1424 002370  7772          -6
+1425 002371  4455          JMS I UPLRGS    /PRINT SC11 RESULTS
+1426 002372  0534          L11
+1427 002373  7776          -2
+1428 002374  5656          JMP I F1TEL     /EXIT
+1429               
+1430               /KE8I - TAPE3
+1431               *. 177+1
+1432 002400  0000  HDSC0,  0
+1433 002401  4446          JMS I UCRLF     /CRLF
+1434 002402  7776          -2              /TWICE
+1435 002403  4426          JMS I XTYPST    /PRINT SCCNT
+1436 002404  0633          SCCNT
+1437 002405  4445          JMS I UPSPC     /SPACE 5
+1438 002406  7773          -5
+1439 002407  4447          JMS I UMSG1     /PRINT HEADINGS
+1440 002410  4476          JMS I UTYMOD    /TYPE MODE
+1441 002411  4446          JMS I UCRLF     /CRLF
+1442 002412  7776          -2              /TWICE
+1443 002413  4426          JMS I XTYPST    /PRINT SC0
+1444 002414  0561          SC0
+1445 002415  4445          JMS I UPSPC     /SPACE 7
+1446 002416  7771          -7
+1447 002417  4455          JMS I UPLRGS    /PRINT SC0 RESULTS
+1448 002420  0473          L0
+1449 002421  7776          -2
+1450 002422  5600          JMP I HDSC0     /EXIT
+1451 002423  0000  P1213,  0
+1452 002424  4426          JMS I XTYPST    /PRINT SC12
+1453 002425  0625          SC12
+1454 002426  4445          JMS I UPSPC     /SPACE 6
+1455 002427  7772          -6
+1456 002430  4455          JMS I UPLRGS    /PRINT SC12 RESULTS
+1457 002431  0537          L12
+1458 002432  7776          -2
+1459 002433  4426          JMS I XTYPST    /PRINT SC13
+1460 002434  0630          SC13
+1461 002435  4445          JMS I UPSPC     /SPACE 6
+1462 002436  7772          -6
+1463 002437  4455          JMS I UPLRGS    /PRINT SC13 RESULTS
+1464 002440  0542          L13
+1465 002441  7776          -2
+1466 002442  5623          JMP I P1213     /EXIT
+1467               
+1468 002443  0000  ADSFT,  0
+1469 002444  7300          CLA CLL 
+1470 002445  1124          TAD MQB
+1471 002446  7010          RAR 
+1472 002447  7630          SZL CLA         /MQ11(1)?
+1473 002450  4462          JMS I UADAC     /YES, MEM ADD TO AC
+1474 002451  1124          TAD MQB         /NO, MBQ TO MQ
+1475 002452  7421          MQL
+1476 002453  1123          TAD ACB         /ACB TO AC
+1477 002454  7417          LSR             /SHIFT RIGHT ONCE
+1478 002455  0000  ABLSR,  OPEN            /CONTAINS 0 WHEN IN "A" MODE AND 1 WHEN IN "B" MODE
+1479 002456  1122          TAD LB          /LB TO AC0
+1480 002457  3123          DCA ACB         /STORE AC
+1481 002460  3122          DCA LB          /0 TO LB
+1482 002461  7701          CLA MQA         /MQ TO AC
+1483 002462  3124          DCA MQB         /STORE AT MQB
+1484 002463  5643          JMP I ADSFT     /EXIT.
+1485               
+1486 002464  0000  MUYSM,  0
+1487 002465  4432          JMS I UMOVE     /MOVE INITIAL
+1488 002466  0106          L               /MUY PARAMETERS
+1489 002467  0122          LB
+1490 002470  7774          -4
+1491 002471  3122          DCA LB          /CLEAR LB
+1492 002472  3123          DCA ACB         /CLEAR ACB
+1493 002473  4467          JMS I UMVR      /REGS TO L0
+1494 002474  0473          L0
+1495 002475  4243          JMS ADSFT
+1496 002476  4467          JMS I UMVR      /REGS TO L1
+1497 002477  0476          L1
+1498 002500  4243          JMS ADSFT
+1499 002501  4467          JMS I UMVR      /REGS TO L2
+1500 002502  0501          L2
+1501 002503  4243          JMS ADSFT
+1502 002504  4467          JMS I UMVR      /REGS TO L3
+1503 002505  0504          L3
+1504 002506  4243          JMS ADSFT
+1505 002507  4467          JMS I UMVR      /REGS TO L4
+1506 002510  0507          L4
+1507 002511  4243          JMS ADSFT
+1508 002512  4467          JMS I UMVR      /REGS TO L5
+1509 002513  0512          L5
+1510 002514  4243          JMS ADSFT
+1511 002515  4467          JMS I UMVR      /REGS TO L6
+1512 002516  0515          L6
+1513 002517  4243          JMS ADSFT
+1514 002520  4467          JMS I UMVR      /REGS TO L7
+1515 002521  0520          L7
+1516 002522  4243          JMS ADSFT
+1517 002523  4467          JMS I UMVR      /REGS TO LATE
+1518 002524  0523          LATE
+1519 002525  4243          JMS ADSFT
+1520 002526  4467          JMS I UMVR      /REGS TO LNINE
+1521 002527  0526          LNINE
+1522 002530  4243          JMS ADSFT
+1523 002531  4467          JMS I UMVR      /REGS TO L10
+1524 002532  0531          L10
+1525 002533  4243          JMS ADSFT
+1526 002534  4467          JMS I UMVR      /REGS TO L11
+1527 002535  0534          L11
+1528 002536  4243          JMS ADSFT
+1529 002537  4467          JMS I UMVR      /REGS TO LF
+1530 002540  0126          LF
+1531 002541  5664          JMP I MUYSM     /EXIT
+1532               
+1533               
+1534               /
+1535 002542  0000  MQROT,  0
+1536 002543  7320          CLA CLL CML     /ROTATE MQB LEFT.
+1537 002544  1124          TAD MQB         /SET 1 IN MQB11
+1538 002545  7004          RAL             /AND SAVE MBQ0 AT
+1539 002546  3124          DCA MQB         /MQBS
+1540 002547  7010          RAR 
+1541 002550  3133          DCA MQ0S
+1542 002551  5742          JMP I MQROT     /EXIT.
+1543               /
+1544 002552  0000  DM11,   0               /IF MQ10=LB0,
+1545 002553  1124          TAD MQB         /GO TO ZMQ11 TO
+1546 002554  0137          AND MQ10M               /MAKE MQ11=0.
+1547 002555  7112          CLL RTR 
+1548 002556  7010          RAR 
+1549 002557  1122          TAD LB
+1550 002560  7640          SZA CLA 
+1551 002561  4367          JMS ZMQ11
+1552 002562  5752          JMP I DM11      /EXIT.
+1553               /
+1554 002563  0000  MQRTA,  0
+1555 002564  4342          JMS MQROT       /ROTATE LEFT MQB
+1556 002565  4352          JMS DM11        /0 TO MQB11 IF REQUIRED.
+1557 002566  5763          JMP I MQRTA     /EXIT.
+1558               /
+1559 002567  0000  ZMQ11,  0
+1560 002570  7300          CLA CLL         /0 TO MQB11.
+1561 002571  1124          TAD MQB
+1562 002572  0136          AND R11Z
+1563 002573  3124          DCA MQB
+1564 002574  5767          JMP I ZMQ11     /EXIT.
+1565               
+1566               *. 177+1
+1567               
+1568 002600  0000  DIVSM,  0
+1569 002601  4432          JMS I UMOVE     /MOVE INITIAL
+1570 002602  0106          L               /DIVIDE PARAMETERS
+1571 002603  0122          LB
+1572 002604  7774          -4
+1573 002605  3134          DCA OFLO                /CLEAR OFLO
+1574 002606  3122          DCA LB          /CLEAR LB
+1575 002607  4341          JMS MVR         /REGS TO L0
+1576 002610  0473          L0
+1577 002611  4463          JMS I UADNAC    /MEM ADD TO NOT AV
+1578 002612  1122          TAD LB
+1579 002613  7640          SZA CLA         /DIV OFLO?
+1580 002614  5227          JMP DVOFLO      /YES
+1581 002615  4465          JMS I UMQROT    /NO, ROTATE MQ
+1582 002616  4470          JMS I UZMQ11    /0 TO MQ11
+1583 002617  1133          TAD MQ0S        /ROTATE L AND AC
+1584 002620  7004          RAL             /NOT MQ0 TO AC11
+1585 002621  1123          TAD ACB
+1586 002622  7024          CML RAL 
+1587 002623  3123          DCA ACB         /STORE AC
+1588 002624  7010          RAR 
+1589 002625  3122          DCA LB          /STORE L
+1590 002626  5241          JMP DSC1
+1591 002627  7201  DVOFLO, CLA IAC         /SIMULATED LINK RESULTS
+1592 002630  3126          DCA LF          /STORE IN LINK FINAL
+1593 002631  7320          CLA CLL CML     /L=1 AC=0
+1594 002632  1110          TAD MQ          /GET GOOD MQ
+1595 002633  7004          RAL             /SIMULATE EAE
+1596 002634  3130          DCA MQF         /STORE IN MQ FINAL
+1597 002635  1107          TAD AC          /GET GOOD AC
+1598 002636  3127          DCA ACF         /STORE IN AC FINAL
+1599 002637  2134          ISZ OFLO        /SET OFLO IND.
+1600 002640  5600          JMP I DIVSM
+1601 002641  4341  DSC1,   JMS MVR         /REGS TO L1
+1602 002642  0476          L1
+1603 002643  4463          JMS I UADNAC    /MEM ADD TO NOT AC
+1604 002644  4466          JMS I UMQRTA    /MQ ROTATE
+1605 002645  4360          JMS LACRT               /L AND AC ROTATE
+1606 002646  4341          JMS MVR         /REGS TO L2
+1607 002647  0501          L2
+1608 002650  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1609 002651  4341          JMS MVR         /REGS TO L3
+1610 002652  0504          L3
+1611 002653  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1612 002654  4341          JMS MVR         /REGS TO L4
+1613 002655  0507          L4
+1614 002656  4353          JMS SCDVS       /SC2-11 SEQUENCE
+1615 002657  4341          JMS MVR                 /REGS TO L5
+1616 002660  0512          L5
+1617 002661  4353          JMS SCDVS       /SC2-11 SEQUENCE
+1618 002662  4341          JMS MVR         /REGS TO L6
+1619 002663  0515          L6
+1620 002664  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1621 002665  4341          JMS MVR         /REGS TO L7
+1622 002666  0520          L7
+1623 002667  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1624 002670  4341          JMS MVR         /REGS TO LATE
+1625 002671  0523          LATE
+1626 002672  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1627 002673  4341          JMS MVR         /REGS TO LNINE
+1628 002674  0526          LNINE
+1629 002675  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1630 002676  4341          JMS MVR         /REGS TO L10
+1631 002677  0531          L10
+1632 002700  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1633 002701  4341          JMS MVR         /REGS TO L11
+1634 002702  0534          L11
+1635 002703  4353          JMS SCDVS               /SC2-11 SEQUENCE
+1636 002704  4341          JMS MVR         /REGS TO L12
+1637 002705  0537          L12
+1638 002706  4464          JMS I UADSB     /ADD/SUBTRACT?
+1639 002707  4466          JMS I UMQRTA    /ROTATE MQ
+1640 002710  4341          JMS MVR         /REGS TO L13
+1641 002711  0542          L13
+1642 002712  7300          CLA CLL 
+1643 002713  1124          TAD MQB
+1644 002714  7012          RTR 
+1645 002715  7430          SZL 
+1646 002716  5323          JMP .+5
+1647 002717  7710          SPA CLA         /MQ10(0),MQ11(0)=MEM ADD
+1648 002720  5336          JMP STF         /TO AC
+1649 002721  4462          JMS I UADAC
+1650 002722  5336          JMP STF         /MQ10(0),MA11(1)= AC TO AC
+1651 002723  7710          SPA CLA 
+1652 002724  5327          JMP .+3                 /MQ10(1),MQ11(0)=MEM ADD
+1653 002725  4463          JMS I UADNAC            /TO NOT AC
+1654 002726  5336          JMP STF
+1655 002727  1122          TAD LB          /MQ10(1),MQ11(1)= NOT AC TO AC
+1656 002730  7104          CLL RAL 
+1657 002731  1123          TAD ACB
+1658 002732  7060          CMA CML 
+1659 002733  3123          DCA ACB         /STORE AC
+1660 002734  7004          RAL 
+1661 002735  3122          DCA LB          /STORE LINK
+1662 002736  4341  STF,    JMS MVR         /REGS TO LF
+1663 002737  0126          LF
+1664 002740  5600          JMP I DIVSM     /EXIT.
+1665               
+1666 002741  0000  MVR,    0
+1667 002742  7200          CLA 
+1668 002743  1741          TAD I MVR               /MOVE LB, ACR, AND
+1669 002744  3347          DCA .+3         /MQB TO LOC SPECIFIED
+1670 002745  4432          JMS I UMOVE     /AT CALL(+1)
+1671 002746  0122          LB
+1672 002747  0000          0
+1673 002750  7775          -3
+1674 002751  2341          ISZ MVR
+1675 002752  5741          JMP I MVR               /EXIT
+1676               /
+1677 002753  0000  SCDVS,  0
+1678 002754  4464          JMS I UADSB     /SUBROUTINE CALL
+1679 002755  4466          JMS I UMQRTA    /SEQUENCE FOR
+1680 002756  4360          JMS LACRT               /DSC2=11
+1681 002757  5753          JMP I SCDVS     /EXIT
+1682               /
+1683 002760  0000  LACRT,  0
+1684 002761  7200          CLA             /ROTATE LEFT LB AND ACB.
+1685 002762  1124          TAD MQB         /IF MQB10=0, MQ0S GOES
+1686 002763  7012          RTR             /TO ACB11. IF MQB10=1,
+1687 002764  7630          SZL CLA         /NOW MQ05 GOES TO ACB11
+1688 002765  7040          CMA 
+1689 002766  1133          TAD MQ0S
+1690 002767  7004          RAL 
+1691 002770  7200          CLA 
+1692 002771  1123          TAD ACB
+1693 002772  7004          RAL 
+1694 002773  3123          DCA ACB
+1695 002774  7010          RAR 
+1696 002775  3122          DCA LB
+1697 002776  5760          JMP I LACRT
+1698               
+1699               *. 177+1
+1700               
+1701 003000  0000  ADAC,   0
+1702 003001  7300          CLA CLL         /ADD C(MBB)
+1703 003002  1122          TAD LB          /TO C(ACB) AND C(LB),
+1704 003003  7004          RAL             /AND STORE RESULT BACK
+1705 003004  1123          TAD ACB         /IN ACB AND LB.
+1706 003005  1125          TAD MBB
+1707 003006  3123          DCA ACB
+1708 003007  7010          RAR 
+1709 003010  3122          DCA LB
+1710 003011  5600          JMP I ADAC
+1711               /
+1712 003012  0000  ADNAC,  0
+1713 003013  7300          CLA CLL         /ADD C(MBB) TO
+1714 003014  1122          TAD LB          /NOT C(ACB) AND C(LB),
+1715 003015  7004          RAL             /STORE RESULT IN ACB AND LB
+1716 003016  1123          TAD ACB
+1717 003017  7060          CMA CML 
+1718 003020  1125          TAD MBB
+1719 003021  3123          DCA ACB
+1720 003022  7010          RAR 
+1721 003023  3122          DCA LB
+1722 003024  5612          JMP I ADNAC
+1723               /
+1724 003025  0000  ADSB,   0
+1725 003026  7300          CLA CLL         /IF MQB10=MQB11
+1726 003027  1124          TAD MQB         /GO TO ADAC SUB.
+1727 003030  7012          RTR             /IF NOT TO ADNAC SUB.
+1728 003031  7010          RAR 
+1729 003032  0174          AND [6000
+1730 003033  1174          TAD [6000
+1731 003034  7500          SMA 
+1732 003035  5240          JMP .+3
+1733 003036  4200          JMS ADAC
+1734 003037  5625          JMP I ADSB
+1735 003040  4212          JMS ADNAC
+1736 003041  5625          JMP I ADSB
+1737               /
+1738               
+1739               
+1740 003042  0000  FMFCT,  0               /0X0=0000 0000
+1741 003043  0000          0
+1742 003044  0000          0
+1743 003045  0000          0
+1744 003046  0001          1               /1X0=0000 0000
+1745 003047  0000          0
+1746 003050  0000          0
+1747 003051  0000          0
+1748 003052  0000          0               /0X1=0000 0000
+1749 003053  0001          1
+1750 003054  0000          0
+1751 003055  0000          0
+1752 003056  0001          1               /1X1=0000 0001
+1753 003057  0001          1
+1754 003060  0000          0
+1755 003061  0001          1
+1756 003062  0001          1               /0X3=0000 0003
+1757 003063  0003          3
+1758 003064  0000          0
+1759 003065  0003          3
+1760 003066  0001          1               /1X7=0000 0007
+1761 003067  0007          7
+1762 003070  0000          0
+1763 003071  0007          7
+1764 003072  0001          1               /1X17=0000 0017
+1765 003073  0017          17
+1766 003074  0000          0
+1767 003075  0017          17
+1768 003076  0001          1               /1X37=0000 0037
+1769 003077  0037          37
+1770 003100  0000          0
+1771 003101  0037          37
+1772 003102  0001          1               /1X77=0000 0077
+1773 003103  0077          77
+1774 003104  0000          0
+1775 003105  0077          77
+1776 003106  0001          1               /1X177=0000 0177
+1777 003107  0177          177
+1778 003110  0000          0
+1779 003111  0177          177
+1780 003112  0001          1               /1X377=0000 0377
+1781 003113  0377          377
+1782 003114  0000          0
+1783 003115  0377          377
+1784 003116  0001          1               /1X777=0000 0777
+1785 003117  0777          777
+1786 003120  0000          0
+1787 003121  0777          777
+1788 003122  0001          1               /1X1777=0000 1777
+1789 003123  1777          1777
+1790 003124  0000          0
+1791 003125  1777          1777
+1792 003126  0001          1               /1X3777=0000 3777
+1793 003127  3777          3777
+1794 003130  0000          0
+1795 003131  3777          3777
+1796 003132  0001          1               /1X7777=0000 7777
+1797 003133  7777          7777
+1798 003134  0000          0
+1799 003135  7777          7777
+1800 003136  0003          3               /3X1=0000 0003
+1801 003137  0001          1
+1802 003140  0000          0
+1803 003141  0003          3
+1804 003142  0007          7               /7X1=0000 0007
+1805 003143  0001          1
+1806 003144  0000          0
+1807 003145  0007          7
+1808 003146  0017          17              /17X1=0000 0017
+1809 003147  0001          1
+1810 003150  0000          0
+1811 003151  0017          17
+1812 003152  0037          37              /37X1=0000 0037
+1813 003153  0001          1
+1814 003154  0000          0
+1815 003155  0037          37
+1816 003156  0077          77              /77X1=0000 0077
+1817 003157  0001          1
+1818 003160  0000          0
+1819 003161  0077          77
+1820 003162  0177          177             /177X1=0000 0177
+1821 003163  0001          1
+1822 003164  0000          0
+1823 003165  0177          177
+1824 003166  0377          377             /377X1=0000 0377
+1825 003167  0001          1
+1826 003170  0000          0
+1827 003171  0377          377
+1828 003172  0777          777             /777X1=0000 0777
+1829 003173  0001          1
+1830 003174  0000          0
+1831 003175  0777          777
+1832 003176  1777          1777            /1777X1=0000 1777
+1833 003177  0001          1
+1834 003200  0000          0
+1835 003201  1777          1777
+1836 003202  3777          3777            /3777X1=0000 3777
+1837 003203  0001          1
+1838 003204  0000          0
+1839 003205  3777          3777
+1840 003206  7777          7777            /7777X1=0000 7777
+1841 003207  0001          1
+1842 003210  0000          0
+1843 003211  7777          7777            /7777X3=0002 7775
+1844 003212  0003          3
+1845 003213  7777          7777
+1846 003214  0002          2
+1847 003215  7775          7775
+1848 003216  0007          7               /7X7777=0006 7771
+1849 003217  7777          7777
+1850 003220  0006          6
+1851 003221  7771          7771
+1852 003222  0017          17              /17X7777=0016 7761
+1853 003223  7777          7777
+1854 003224  0016          16
+1855 003225  7761          7761
+1856 003226  0037          37              /37X7777=0036 7741
+1857 003227  7777          7777
+1858 003230  0036          36
+1859 003231  7741          7741
+1860 003232  0077          77              /77X7777=0076 7701
+1861 003233  7777          7777
+1862 003234  0076          76
+1863 003235  7701          7701
+1864 003236  0177          177             /177X7777=0176 7601
+1865 003237  7777          7777
+1866 003240  0176          176
+1867 003241  7601          7601
+1868 003242  0377          377             /377X7777=0376 7401
+1869 003243  7777          7777
+1870 003244  0376          376
+1871 003245  7401          7401
+1872 003246  0777          777             /777X7777=0776 7001
+1873 003247  7777          7777
+1874 003250  0776          776
+1875 003251  7001          7001
+1876 003252  1777          1777            /1777X7777=1776 6001
+1877 003253  7777          7777
+1878 003254  1776          1776
+1879 003255  6001          6001
+1880 003256  3777          3777            /3777X7777=3776 4001
+1881 003257  7777          7777
+1882 003260  3776          3776
+1883 003261  4001          4001
+1884 003262  7777          7777            /7777X7777=7776 0001
+1885 003263  7777          7777
+1886 003264  7776          7776
+1887 003265  0001          1
+1888 003266  7777          7777            /7777X3=0002 7775
+1889 003267  0003          3
+1890 003270  0002          2
+1891 003271  7775          7775
+1892 003272  7777          7777            /7777X7=0006 7771
+1893 003273  0007          7
+1894 003274  0006          6
+1895 003275  7771          7771
+1896 003276  7777          7777            /7777X17=0016 7761
+1897 003277  0017          17
+1898 003300  0016          16
+1899 003301  7761          7761
+1900 003302  7777          7777            /7777X37=0036 7741
+1901 003303  0037          37
+1902 003304  0036          36
+1903 003305  7741          7741
+1904 003306  7777          7777            /7777X77=0076 7701
+1905 003307  0077          77
+1906 003310  0076          76
+1907 003311  7701          7701
+1908 003312  7777          7777            /7777X177=0176 7601
+1909 003313  0177          177
+1910 003314  0176          176
+1911 003315  7601          7601
+1912 003316  7777          7777            /7777X377=0376 7401
+1913 003317  0377          377
+1914 003320  0376          376
+1915 003321  7401          7401
+1916 003322  7777          7777            /7777X777=0776 7001
+1917 003323  0777          777
+1918 003324  0776          776
+1919 003325  7001          IAC
+1920 003326  7777          7777            /7777X1777=1775 6001
+1921 003327  1777          1777
+1922 003330  1776          1776
+1923 003331  6001          ION
+1924 003332  7777          7777            /7777X3777=3776 4001
+1925 003333  3777          3777
+1926 003334  3776          3776
+1927 003335  4001          4001
+1928 003336  0001          1               /1X4000=0000 4000
+1929 003337  4000          4000
+1930 003340  0000          0
+1931 003341  4000          4000
+1932 003342  4000          4000            /4000x1=0000 4000
+1933 003343  0001          1
+1934 003344  0000          0
+1935 003345  4000          4000
+1936 003346  0001          1               /1X5252=0000 5252
+1937 003347  5252          5252
+1938 003350  0000          0
+1939 003351  5252          5252
+1940 003352  0001          1               /1X2525=0000 2525
+1941 003353  2525          2525
+1942 003354  0000          0
+1943 003355  2525          2525
+1944 003356  5252          5252            /5252X1=0000 5252
+1945 003357  0001          1
+1946 003360  0000          0
+1947 003361  5252          5252
+1948 003362  2525          2525            /252X1=0000 2525
+1949 003363  0001          1
+1950 003364  0000          0
+1951 003365  2525          2525
+1952 003366  5252          5252            /5252X2525=1615 6162
+1953 003367  2525          2525
+1954 003370  1615          1615
+1955 003371  6162          6162
+1956 003372  2525          2525            /2525X5252=1615 6162
+1957 003373  5252          5252
+1958 003374  1615          1615
+1959 003375  6162          6162
+1960 003376  0000  FDOPR,  0               /0000 0000/0000=1 0000 0001
+1961 003377  0000          0
+1962 003400  0000          0
+1963 003401  0001          1
+1964 003402  0000          0
+1965 003403  0001          1
+1966 003404  7777          7777            /7777 0000/7777=1 7777 0001
+1967 003405  0000          0
+1968 003406  7777          7777
+1969 003407  0001          1
+1970 003410  7777          7777
+1971 003411  0001          1
+1972 003412  0000          0               /0000 0000/0001=0 0000 0000
+1973 003413  0000          0
+1974 003414  0001          1
+1975 003415  0000          0
+1976 003416  0000          0
+1977 003417  0000          0
+1978 003420  0000          0               /0000 0000/0003=0 0000 0000
+1979 003421  0000          0
+1980 003422  0003          3
+1981 003423  0000          0
+1982 003424  0000          0
+1983 003425  0000          0
+1984 003426  0000          0               /0000 0000/0007=0 0000 0000
+1985 003427  0000          0
+1986 003430  0007          7
+1987 003431  0000          0
+1988 003432  0000          0
+1989 003433  0000          0
+1990 003434  0000          0               /0000 0000/0017=0 0000 0000
+1991 003435  0000          0
+1992 003436  0017          17
+1993 003437  0000          0
+1994 003440  0000          0
+1995 003441  0000          0
+1996 003442  0000          0               /0000 0000/0037=0 0000 0000
+1997 003443  0000          0
+1998 003444  0037          37
+1999 003445  0000          0
+2000 003446  0000          0
+2001 003447  0000          0
+2002 003450  0000          0               /0000 0000/0077=0 0000 0000
+2003 003451  0000          0
+2004 003452  0077          77
+2005 003453  0000          0
+2006 003454  0000          0
+2007 003455  0000          0
+2008 003456  0000          0               /0000 0000/0177=0 0000 0000
+2009 003457  0000          0
+2010 003460  0177          177
+2011 003461  0000          0
+2012 003462  0000          0
+2013 003463  0000          0
+2014 003464  0000          0               /0000 0000/0377=0 0000 0000
+2015 003465  0000          0
+2016 003466  0377          377
+2017 003467  0000          0
+2018 003470  0000          0
+2019 003471  0000          0
+2020 003472  0000          0               /0000 0000/0777=0 0000 0000
+2021 003473  0000          0
+2022 003474  0777          777
+2023 003475  0000          0
+2024 003476  0000          0
+2025 003477  0000          0
+2026 003500  0000          0               /0000 0000/1777=0 0000 0000
+2027 003501  0000          0
+2028 003502  1777          1777
+2029 003503  0000          0
+2030 003504  0000          0
+2031 003505  0000          0
+2032 003506  0000          0               /0000 0000/3777=0 0000 0000
+2033 003507  0000          0
+2034 003510  3777          3777
+2035 003511  0000          0
+2036 003512  0000          0
+2037 003513  0000          0
+2038 003514  0000          0               /0000 0000/7777=0 0000 0000
+2039 003515  0000          0
+2040 003516  7777          7777
+2041 003517  0000          0
+2042 003520  0000          0
+2043 003521  0000          0
+2044 003522  0000          0               /0000 0001/7777=0 0001 0000
+2045 003523  0001          1
+2046 003524  7777          7777
+2047 003525  0000          0
+2048 003526  0001          1
+2049 003527  0000          0
+2050 003530  0000          0               /0000 0003/7777=0 0003 0000
+2051 003531  0003          3
+2052 003532  7777          7777
+2053 003533  0000          0
+2054 003534  0003          3
+2055 003535  0000          0
+2056 003536  0000          0               /0000 0007/7777=0 0007 0000
+2057 003537  0007          7
+2058 003540  7777          7777
+2059 003541  0000          0
+2060 003542  0007          7
+2061 003543  0000          0
+2062 003544  0000          0               /0000 0017/7777=0 0017 0000
+2063 003545  0017          17
+2064 003546  7777          7777
+2065 003547  0000          0
+2066 003550  0017          17
+2067 003551  0000          0
+2068 003552  0000          0               /0000 0037/7777=0 0037 0000
+2069 003553  0037          37
+2070 003554  7777          7777
+2071 003555  0000          0
+2072 003556  0037          37
+2073 003557  0000          0
+2074 003560  0000          0               /0000 0077/7777=0 0077 0000
+2075 003561  0077          77
+2076 003562  7777          7777
+2077 003563  0000          0
+2078 003564  0077          77
+2079 003565  0000          0
+2080 003566  0000          0               /0000 0377/7777=0 0377 0000
+2081 003567  0377          377
+2082 003570  7777          7777
+2083 003571  0000          0
+2084 003572  0377          377
+2085 003573  0000          0
+2086 003574  0000          0               /0000 0777/7777=0 0777 0000
+2087 003575  0777          777
+2088 003576  7777          7777
+2089 003577  0000          0
+2090 003600  0777          777
+2091 003601  0000          0
+2092 003602  0000          0               /0000 1777/7777=0 1777 0000
+2093 003603  1777          1777
+2094 003604  7777          7777
+2095 003605  0000          0
+2096 003606  1777          1777
+2097 003607  0000          0
+2098 003610  0000          0               /0000 3777/7777=0 3777 0000
+2099 003611  3777          3777
+2100 003612  7777          7777
+2101 003613  0000          0
+2102 003614  3777          3777
+2103 003615  0000          0
+2104 003616  0001          1               /0001 0000/7777=0 0001 0001
+2105 003617  0000          0
+2106 003620  7777          7777
+2107 003621  0000          0
+2108 003622  0001          1
+2109 003623  0001          1
+2110 003624  0003          3               /0003 0000/7777=0 0003 0003
+2111 003625  0000          0
+2112 003626  7777          7777
+2113 003627  0000          0
+2114 003630  0003          3
+2115 003631  0003          3
+2116 003632  0007          7               /0007 0000/7777=0 0007 0007
+2117 003633  0000          0
+2118 003634  7777          7777
+2119 003635  0000          0
+2120 003636  0007          7
+2121 003637  0007          7
+2122 003640  0017          17              /0017 0000/7777=0 0017 0017
+2123 003641  0000          0
+2124 003642  7777          7777
+2125 003643  0000          0
+2126 003644  0017          17
+2127 003645  0017          17
+2128 003646  0037          37              /0037 0000/7777=0 0037 0037
+2129 003647  0000          0
+2130 003650  7777          7777
+2131 003651  0000          0
+2132 003652  0037          37
+2133 003653  0037          37
+2134 003654  0077          77              /0077 0000/7777=0 0077 0077
+2135 003655  0000          0
+2136 003656  7777          7777
+2137 003657  0000          0
+2138 003660  0077          77
+2139 003661  0077          77
+2140 003662  0177          177             /0177 0000/7777=0 0177 0177
+2141 003663  0000          0
+2142 003664  7777          7777
+2143 003665  0000          0
+2144 003666  0177          177
+2145 003667  0177          177
+2146 003670  0377          377             /0377 0000/7777=0 0777 0000
+2147 003671  0000          0
+2148 003672  7777          7777
+2149 003673  0000          0
+2150 003674  0377          377
+2151 003675  0377          377
+2152 003676  0777          777             /0777 0000/7777=0 0777 0777
+2153 003677  0000          0
+2154 003700  7777          7777
+2155 003701  0000          0
+2156 003702  0777          777
+2157 003703  0777          777
+2158 003704  1777          1777            /1777 0000/7777=0 1777 1777
+2159 003705  0000          0
+2160 003706  7777          7777
+2161 003707  0000          0
+2162 003710  1777          1777
+2163 003711  1777          1777
+2164 003712  3777          3777            /3777 0777/7777=0 3777 3777
+2165 003713  0000          0
+2166 003714  7777          7777
+2167 003715  0000          0
+2168 003716  3777          3777
+2169 003717  3777          3777
+2170 003720  0000          0               /0000 7777/0001=0 0000 7777
+2171 003721  7777          7777
+2172 003722  0001          1
+2173 003723  0000          0
+2174 003724  0000          0
+2175 003725  7777          7777
+2176 003726  0001          1               /0001 2525/0002=0 0001 5252
+2177 003727  2525          2525
+2178 003730  0002          2
+2179 003731  0000          0
+2180 003732  0001          1
+2181 003733  5252          5252
+2182 003734  0000          0               /0000 5252/0002=0 0000 2525
+2183 003735  5252          5252
+2184 003736  0002          2
+2185 003737  0000          0
+2186 003740  0000          0
+2187 003741  2525          2525
+2188 003742  0007          7               /0007 0707/0010=0 0007 7070
+2189 003743  0707          0707
+2190 003744  0010          10
+2191 003745  0000          0
+2192 003746  0007          7
+2193 003747  7070          7070
+2194 003750  0000          0               /0000 7070/0010=0 0000 0707
+2195 003751  7070          7070
+2196 003752  0010          10
+2197 003753  0000          0
+2198 003754  0000          0
+2199 003755  0707          0707
+2200               
+2201               /ROUTINE TO PRINT FAILURE MODE
+2202               
+2203 003756  0000  TYMOD,  OPEN
+2204 003757  7300          CLA CLL 
+2205 003760  1020          TAD MODE
+2206 003761  7040          CMA 
+2207 003762  1377          TAD (4002
+2208 003763  3373          DCA MODEX+2     /STORE A "SPACE" + THE MODE THAT FAILED.
+2209 003764  4445          JMS I UPSPC
+2210 003765  7774          -4
+2211 003766  4426          JMS I XTYPST    /MODE "X"
+2212 003767  3771          MODEX
+2213 003770  5756          JMP I TYMOD     /EXIT
+2214 003771  1517  MODEX,  1517
+2215 003772  0405          0405
+2216 003773  0000          0
+2217 003774  0001          1
+2218               
+2219               
+2220               /KE8I  -  TAPE 4
+2221               /
+2222               
+2223 003777  4002  *. 177+1
+2224 004000  0000  EX1ST,  0               /SET UP OPERANDS IN
+2225                                       /EX1 EXERCISER
+2226 004001  4777          JMS WHATB               /SET "B"
+2227 004002  3212          DCA .+10
+2228 004003  4777          JMS WHATB               /SET "B"
+2229 004004  3214          DCA .+10
+2230 004005  5600          JMP I EX1ST
+2231 004006  0000  EX1,    0               /EXERCISE:
+2232 004007  7200          CLA             /AXB/B=A
+2233 004010  1104          TAD A
+2234 004011  7425          MQL MUY
+2235 004012  0000          0
+2236 004013  7407          DVI
+2237 004014  0000          0
+2238 004015  5606          JMP I EX1
+2239               
+2240 004016  0000  EX2ST,  0               /SET UP OPERANDS IN
+2241                                       /EX2 EXERCISER
+2242 004017  4777          JMS WHATB
+2243 004020  3234          DCA .+14                /SET "B"
+2244 004021  4777          JMS WHATB
+2245 004022  3236          DCA .+14                /SET "B"
+2246 004023  4777          JMS WHATB
+2247 004024  3240          DCA .+14                /SET "B"
+2248 004025  4776          JMS WHATA
+2249 004026  3242          DCA .+14                /SET "A"
+2250 004027  5616          JMP I EX2ST
+2251 004030  0000  EX2,    0               /EXERCISE:
+2252 004031  7200          CLA             /AXB/BXB/A=B
+2253 004032  1104          TAD A
+2254 004033  7425          MQL MUY
+2255 004034  0000          0
+2256 004035  7407          DVI
+2257 004036  0000          0
+2258 004037  7405          MUY
+2259 004040  0000          0
+2260 004041  7407          DVI
+2261 004042  0000          0
+2262 004043  5630          JMP I EX2
+2263               
+2264 004044  0000  EX3ST,  0               /SET UP OPERANDS IN
+2265                                       /EX3 EXERCISER
+2266 004045  4777          JMS WHATB       /SET "B"
+2267 004046  3266          DCA .+20
+2268 004047  4777          JMS WHATB       /SET "B"
+2269 004050  3270          DCA .+20
+2270 004051  4777          JMS WHATB       /SET "B"
+2271 004052  3272          DCA .+20
+2272 004053  4776          JMS WHATA       /SET "A"
+2273 004054  3274          DCA .+20
+2274 004055  4776          JMS WHATA       /SET "A"
+2275 004056  3276          DCA .+20
+2276 004057  4776          JMS WHATA       /SET "A"
+2277 004060  3300          DCA .+20
+2278 004061  5644          JMP I EX3ST
+2279 004062  0000  EX3,    0               /EXERCISE:
+2280                                       /AXB/BXB/AXA/A=B
+2281 004063  7200          CLA 
+2282 004064  1104          TAD A
+2283 004065  7425          MQL MUY
+2284 004066  0000          0
+2285 004067  7407          DVI
+2286 004070  0000          0
+2287 004071  7405          MUY
+2288 004072  0000          0
+2289 004073  7407          DVI
+2290 004074  0000          0
+2291 004075  7405          MUY
+2292 004076  0000          0
+2293 004077  7407          DVI
+2294 004100  0000          0
+2295 004101  5662          JMP I EX3
+2296               
+2297 004102  0000  EX4ST,  0               /SET UP OPERANDS IN
+2298                                       /EX4 EXERCISER
+2299 004103  4777          JMS WHATB       /SET "B"
+2300 004104  3330          DCA .+24
+2301 004105  4777          JMS WHATB       /SET "B"
+2302 004106  3332          DCA .+24
+2303 004107  4777          JMS WHATB       /SET "B"
+2304 004110  3334          DCA .+24
+2305 004111  4776          JMS WHATA       /SET "A"
+2306 004112  3336          DCA .+24
+2307 004113  4776          JMS WHATA       /SET "A"
+2308 004114  3340          DCA .+24
+2309 004115  4776          JMS WHATA       /SET "A"
+2310 004116  3342          DCA .+24
+2311 004117  4776          JMS WHATA       /SET "A"
+2312 004120  3344          DCA .+24
+2313 004121  4777          JMS WHATB       /SET "B"
+2314 004122  3346          DCA .+24
+2315 004123  5702          JMP I EX4ST
+2316 004124  0000  EX4,    0               /EXERCISE:
+2317                                       /AXB/BXB/AXA/AXA/B=A
+2318 004125  7200          CLA 
+2319 004126  1104          TAD A
+2320 004127  7425          MQL MUY
+2321 004130  0000          0
+2322 004131  7407          DVI
+2323 004132  0000          0
+2324 004133  7405          MUY
+2325 004134  0000          0
+2326 004135  7407          DVI
+2327 004136  0000          0
+2328 004137  7405          MUY
+2329 004140  0000          0
+2330 004141  7407          DVI
+2331 004142  0000          0
+2332 004143  7405          MUY
+2333 004144  0000          0
+2334 004145  7407          DVI
+2335 004146  0000          0
+2336 004147  5724          JMP I EX4
+2337               /
+2338               /FILL 2K BUFFER WITH RANDOM NON-ZERO NUMBERS
+2339 004150  0000  FBRM,   0
+2340 004151  4424          JMS I SETCTR    /SET FBCTR
+2341 004152  4167          FBCTR           /TO -1400
+2342 004153  5210          -2570
+2343 004154  1071          TAD UTAB
+2344 004155  3370          DCA FBRT        /STORE TABLE ADDRESS
+2345 004156  4427          JMS I RANDNO    /GENERATE RANDOM NUMBER
+2346 004157  7450          SNA             /IS IT ZERO?
+2347 004160  5356          JMP .-2         /YES, SET ANOTHER NUMBER
+2348 004161  3770          DCA I FBRT      /NO, STORE PER FBRT
+2349 004162  2370          ISZ FBRT                /+1 to FBRT
+2350 004163  2367          ISZ FBCTR               /ALL CHARACTERS GENERATED?
+2351 004164  5356          JMP .-6         /NO, REPEAT
+2352 004165  2135          ISZ TABF                /YES, SET TABLE FULL INDICATOR
+2353 004166  5750          JMP I FBRM      /EXIT
+2354 004167  0000  FBCTR,  0
+2355 004170  0000  FBRT,   0
+2356               
+2357               
+2358 004176  1150  *. 177+1
+     004177  1161  
+2359 004200  0000  MDEXR,  0
+2360 004201  3106          DCA L
+2361 004202  4432          JMS I UMOVE     /CLEAR REGISTERS
+2362 004203  0106          L
+2363 004204  0107          AC
+2364 004205  7752          -26
+2365 004206  1600          TAD I MDEXR
+2366 004207  3323          DCA TSTP                /STORE SETUP ADDRESS
+2367 004210  2200          ISZ MDEXR
+2368 004211  1600          TAD I MDEXR
+2369 004212  3153          DCA TEXR
+2370 004213  2200          ISZ MDEXR
+2371 004214  1600          TAD I MDEXR
+2372 004215  3114          DCA MQSB
+2373 004216  1514          TAD I MQSB
+2374 004217  3114          DCA MQSB                /STORE EXPECTED RESULT
+2375 004220  2200          ISZ MDEXR
+2376 004221  1600          TAD I MDEXR
+2377 004222  3262          DCA PRBX                /STORE PRB PRINTOUT ADDRESS
+2378 004223  2200          ISZ MDEXR               /SET UP EXIT
+2379 004224  4723          JMS I TSTP      /SET UP EXERCISE
+2380 004225  4227          JMS EX          /GO DO EXERCISE
+2381 004226  5237          JMP EXCMP
+2382 004227  0000  EX,     0
+2383 004230  4553          JMS I TEXR      /DO EXERCISE
+2384 004231  3117          DCA ACR         /STORE AC RESULT
+2385 004232  7010          RAR 
+2386 004233  3116          DCA LR          /STORE LINK RESULT
+2387 004234  7501          MQA
+2388 004235  3120          DCA MQR         /STORE MQ RESULT
+2389 004236  5627          JMP I EX
+2390               
+2391 004237  4433  EXCMP,  JMS I UCOMP     /COMPARE RESULTS AND
+2392 004240  7775          -3              /EXPECTED RESULTS (3 WORDS)
+2393 004241  5245          JMP EXER                /ERROR
+2394 004242  4434  EXLT,   JMS I USR4T     /LOCK ON TEST? (SR4 ON)
+2395 004243  5225          JMP EX-2                /YES.
+2396 004244  5600          JMP I MDEXR     /NO, EXIT
+2397 004245  4435  EXER,   JMS I USR5T     /PRINT/HALT?
+2398 004246  5253          JMP .+5         /YES, GO PRINT
+2399 004247  4324          JMS EXEHLT      /GO HALT
+2400 004250  4435          JMS I USR5T     /PRINT?
+2401 004251  7410          SKP             /GO PRINT
+2402 004252  5242          JMP EXLT        /NO PRINT
+2403 004253  4446          JMS I UCRLF     /CRLF TWICE
+2404 004254  7776          -2
+2405 004255  4426          JMS I XTYPST    /PRINT PROB
+2406 004256  0643          PROB
+2407 004257  4445          JMS I UPSPC     /SPACE TWICE
+2408 004260  7776          -2
+2409 004261  4426          JMS I XTYPST    /PRINT PROBLEM DESCRIPTION
+2410 004262  0000  PRBX,   0
+2411 004263  4446          JMS I UCRLF     /CRLF TWICE
+2412 004264  7776          -2
+2413 004265  4331          JMS ASCCN
+2414 004266  0104          A
+2415 004267  0762          AVALUE
+2416 004270  4331          JMS ASCCN
+2417 004271  0105          B
+2418 004272  0767          BVALUE
+2419 004273  4426          JMS I XTYPST
+2420 004274  0760          ABVAL
+2421 004275  4475          JMS I UEXERP
+2422 004276  4436          JMS I USR6T     /HALT AFTER PRINT?
+2423 004277  4324          JMS EXEHLT      /YES, GO HALT
+2424 004300  4437          JMS I UST7T     /PRINT FAILURE RATE?
+2425 004301  5317          JMP EXLOP-2     /NO
+2426 004302  4424          JMS I SETCTR    /SET FRCTR
+2427 004303  0141          FRCTR           /TO -100
+2428 004304  7634          -144
+2429 004305  3140          DCA FCTR                /CLEAR FAILURES COUNTER
+2430 004306  4227          JMS EX          /DO EXERCISE
+2431 004307  4433          JMS I UCOMP     /COMPARE RESULTS
+2432 004310  7775          -3
+2433 004311  2140          ISZ FCTR                /ERROR: +1 to FCTR
+2434 004312  2141          ISZ FRCTR               /DONE 100 TIMES?
+2435 004313  5306          JMP .-5         /NO, REPEAT
+2436 004314  4451          JMS I UMSG2     /YES, PRINT FAILURE RATE
+2437 004315  4436          JMS I USR6T     /HALT AFTER PRINT?
+2438 004316  4324          JMS EXEHLT      /YES GO HALT
+2439 004317  4440          JMS I USATET    /SCOPE LOOP?
+2440 004320  5242          JMP EXLT                /NO
+2441 004321  4553  EXLOP,  JMS I TEXR      /DO EXERCISE
+2442 004322  5321          JMP .-1         /REPEAT
+2443 004323  0000  TSTP,   0
+2444 004324  0000  EXEHLT, 0
+2445 004325  7200          CLA 
+2446 004326  1102          TAD RTNNO               /GET ROUTINE NUMBER
+2447 004327  7402          HLT             /MUY/DVI EXR ERR HALT
+2448 004330  5724          JMP I EXEHLT    /EXIT
+2449               
+2450 004331  0000  ASCCN,  0               /CONVERT TO OCTAL PACKED ASCII
+2451 004332  1731          TAD I ASCCN
+2452 004333  3367          DCA WASC                /STORE ADDRESS OF WORD TO CONVERT
+2453 004334  2331          ISZ ASCCN
+2454 004335  1731          TAD I ASCCN     /STORE ADDRESS OF LOCATION
+2455 004336  3370          DCA SASC                /TO STORE CONVERTED DATA
+2456 004337  2331          ISZ ASCCN               /SET UP EXIT
+2457 004340  1156          TAD K7700
+2458 004341  0767          AND I WASC      /GET TWO HIGH ORDER DIGITS
+2459 004342  7112          RTR CLL 
+2460 004343  7012          RTR             /SHIFT TO LOW ORDER
+2461 004344  7012          RTR             /POSITIVES
+2462 004345  4354          JMS CNV         /GO DO CONVERSION
+2463 004346  2370          ISZ SASC                /+1 TO STORE ADDRESS
+2464 004347  1156          TAD K7700
+2465 004350  7040          CMA 
+2466 004351  0767          AND I WASC      /GET TWO LOW ORDER DIGITS
+2467 004352  4354          JMS CNV         /GO DO CONVERSION
+2468 004353  5731          JMP I ASCCN     /EXIT
+2469 004354  0000  CNV,    0
+2470 004355  3371          DCA ASCT                /SAVE DIGITS
+2471 004356  1371          TAD ASCT                /GET DIGITS BACK AC=00XX
+2472 004357  7006          RTL 
+2473 004360  7004          RAL             /AC=0XX0
+2474 004361  0154          AND K0707               /AC=0X00
+2475 004362  1371          TAD ASCT                /AC=0XXX
+2476 004363  0154          AND K0707               /AC=0X0X
+2477 004364  1155          TAD K6060               /AC=6X6X
+2478 004365  3770          DCA I SASC      /STORE PER STORE ADDRESS
+2479 004366  5754          JMP I CNV               /EXIT
+2480 004367  0000  WASC,   0
+2481 004370  0000  SASC,   0
+2482 004371  0000  ASCT,   0
+2483               
+2484 004372  0007  KE8SP2, 0007            /BELL
+2485 004373  1305          1305            /K;E
+2486 004374  7040          7040            /8;SPACE
+2487 004375  6200          6200            /2;END
+2488 004376  0100          0100            /CODE
+2489               
+2490               *. 177+1
+2491 004400  0000  TST0,   0
+2492 004401  4405          TST1
+2493 004402  4430          JMS I UMUYT
+2494 004403  3042          FMFCT
+2495 004404  7711          -67
+2496 004405  0001  TST1,   1
+2497 004406  4461          TST2
+2498 004407  4424          JMS I SETCTR    /SET RMCTR
+2499 004410  4457          RMCTR           /TO -1400
+2500 004411  5210          -2570
+2501 004412  1071          TAD UTAB                /GET AND STORE
+2502 004413  3260          DCA RMAD
+2503 004414  4427  RMSTP,  JMS I RANDNO    /GENERATE RANDOM NO.
+2504 004415  3660          DCA I RMAD              /STORE
+2505 004416  2260          ISZ RMAD
+2506 004417  2257          ISZ RMCTR
+2507 004420  5214          JMP .-4
+2508 004421  3106          DCA L           /YES CLEAR REGISTERS.
+2509 004422  4432          JMS I UMOVE
+2510 004423  0106          L
+2511 004424  0107          AC
+2512 004425  7751          -27
+2513 004426  4424          JMS I SETCTR    /SET RMCTR
+2514 004427  4457          RMCTR           /TO -350
+2515 004430  7242          -536
+2516 004431  1071          TAD UTAB                /GET AND STORE
+2517 004432  3234          DCA .+2         /TABLE ADDRESS
+2518 004433  4432          JMS I UMOVE     /MOVE TWO FACTORS
+2519 004434  0000  RMSTPA, 0               /TO MQ AND MB.
+2520 004435  0110          MQ
+2521 004436  7776          -2
+2522 004437  4441          JMS I UMUYSM    /SIMULATE MULTIPLY
+2523 004440  1234          TAD RMSTPA
+2524 004441  1147          TAD K2
+2525 004442  3245          DCA .+3
+2526 004443  4432          JMS I UMOVE     /STORE RESULTS
+2527 004444  0127          ACF
+2528 004445  0000          0
+2529 004446  7776          -2
+2530 004447  1245          TAD .-2         /SET UP FOR NEXT
+2531 004450  1147          TAD K2          /TWO FACTORS.
+2532 004451  3234          DCA RMSTPA
+2533 004452  2257          ISZ RMCTR               /DONE SIMULATING?
+2534 004453  5233          JMP RMSTPA-1    /NO, REPEAT
+2535 004454  4430          JMS I UMUYT     /YES GO DO MULTIPLY TEST
+2536 004455  5000          TAB
+2537 004456  7242          -536
+2538 004457  0000  RMCTR,  0
+2539 004460  0000  RMAD,   0
+2540               
+2541 004461  0002  TST2,   2
+2542 004462  4466          TST3
+2543 004463  4431          JMS I UDIVT
+2544 004464  3376          FDOPR
+2545 004465  7730          -50
+2546 004466  0003  TST3,   3
+2547 004467  4542          TST4
+2548 004470  4424          JMS I SETCTR    /SET RDCTR
+2549 004471  4540          RDCTR           /TO -1400
+2550 004472  5210          -2570
+2551 004473  1071          TAD UTAB                /GET AND STORE
+2552 004474  3341          DCA RDAD                /TABLE ADDRESS
+2553 004475  4427  RDSTP,  JMS I RANDNO    /GENERATE RANDOM NO.
+2554 004476  3741          DCA I RDAD              /STORE
+2555 004477  2341          ISZ RDAD
+2556 004500  2340          ISZ RDCTR
+2557 004501  5275          JMP .-4
+2558 004502  3106          DCA L           /YES, CLEAR REGISTERS
+2559 004503  4432          JMS I UMOVE
+2560 004504  0106          L
+2561 004505  0107          AC
+2562 004506  7751          -27
+2563 004507  4424          JMS I SETCTR    /SET RDCTR
+2564 004510  4540          RDCTR           /TO -233
+2565 004511  7427          -351
+2566 004512  1071          TAD UTAB        /GET TABLE ADDR
+2567 004513  3315          DCA RDSTPA      /AND STORE.
+2568 004514  4432          JMS I UMOVE
+2569 004515  0000  RDSTPA, 0               /MOVE DIVIDE OPERANDS TO
+2570 004516  0107          AC              /AC, MQ, AND MB.
+2571 004517  7775          -3
+2572 004520  4442          JMS I UDIVSM    /SIMULATE DIVIDE.
+2573 004521  1315          TAD RDSTPA
+2574 004522  1150          TAD K3
+2575 004523  3326          DCA .+3
+2576 004524  4432          JMS I UMOVE     /STORE RESULTS
+2577 004525  0126          LF
+2578 004526  0000          0
+2579 004527  7775          -3
+2580 004530  1326          TAD .-2         /SET UP FOR NEXT
+2581 004531  1150          TAD K3          /SImULATION.
+2582 004532  3315          DCA RDSTPA
+2583 004533  2340          ISZ RDCTR               /DONE SIMULATING?
+2584 004534  5314          JMP RDSTPA-1    /NO, REPEAT
+2585 004535  4431          JMS I UDIVT     /YES, GO DO DIVIDE TEST.
+2586 004536  5000          TAB
+2587 004537  7427          -351
+2588 004540  0000  RDCTR,  0
+2589 004541  0000  RDAD,   0
+2590               
+2591               
+2592               
+2593               
+2594 004542  0004  TST4,   4
+2595 004543  4600          TST5
+2596 004544  4472          JMS I UFBRM     /FILL 2K BUFFER WITH RANDOM NUMBERS.
+2597 004545  4424          JMS I SETCTR    /SET TCTR
+2598 004546  0144          TCTR            /TO -700
+2599 004547  6504          -1274
+2600 004550  1071          TAD UTAB
+2601 004551  3353          DCA ADR1                /STORE TABLE ADDRESS
+2602 004552  4432          JMS I UMOVE     /MOVE 2 OPERANDS TO A AND B.
+2603 004553  0000  ADR1,   0
+2604 004554  0104          A
+2605 004555  7776          -2
+2606 004556  1353          TAD ADR1        /SET ADDA TO
+2607 004557  3007          DCA ADDA        /ADDRESS OF A.
+2608 004560  4473          JMS I UMDEXR    /GO DO MUY/DVI EXERCISE TEST.
+2609 004561  4000          EX1ST           /EXERCISE SET UP ADDRESS.
+2610 004562  4006          EX1             /EXERCISE ADDRESS.
+2611 004563  0104          A               /CONVERT RESULT ADDRESS
+2612 004564  0714          PRB1            /PROBLEM PRINT OUT ADDRESS.
+2613 004565  2353          ISZ ADR1                /+2 TO ADR1
+2614 004566  2353          ISZ ADR1
+2615 004567  2144          ISZ TCTR                /ALL TESTS DONE?
+2616 004570  5352          JMP ADR1-1      /NO, REPEAT
+2617 004571  5422          JMP I CHAIN     /YES, CHAIN.
+2618               
+2619 004572  7300  LOPSEL, CLA CLL 
+2620 004573  1102          TAD RTNNO       /ROUTINE NUMBER
+2621 004574  7402          HLT             /RTN NUMBER IN AC, SET SR TO
+2622                                       /DESIRED MODE OF OPERATION ANND PRESS
+2623                                       /CONTINUE.
+2624 004575  5777          JMP SELECT      /GO DO THE SELECTION ACCORDING TO SR.
+2625               
+2626 004577  1360          PAGE
+2627               /
+2628 004600  0005  TST5,   5
+2629 004601  4633          TST6
+2630 004602  7200          CLA 
+2631 004603  1135          TAD TABF
+2632 004604  7650          SNA CLA 
+2633 004605  4472          JMS I UFBRM
+2634 004606  4424          JMS I SETCTR
+2635 004607  0144          AND TCTR
+2636 004610  6504          -1274
+2637 004611  1071          TAD UTAB
+2638 004612  3214          DCA ADR2
+2639 004613  4432          JMS I UMOVE
+2640 004614  0000  ADR2,   0
+2641 004615  0104          A
+2642 004616  7776          -2
+2643 004617  1214          TAD ADR2
+2644 004620  3007          DCA ADDA
+2645 004621  4473          JMS I UMDEXR
+2646 004622  4016          EX2ST
+2647 004623  4030          EX2
+2648 004624  0105          B
+2649 004625  0722          PRB2
+2650 004626  2214          ISZ ADR2
+2651 004627  2214          ISZ ADR2
+2652 004630  2144          ISZ TCTR
+2653 004631  5213          JMP ADR2-1
+2654 004632  5422          JMP I CHAIN     /YES, CHAIN.
+2655               
+2656 004633  0006  TST6,   6
+2657 004634  4666          TST7
+2658 004635  7200          CLA 
+2659 004636  1135          TAD TABF
+2660 004637  7650          SNA CLA 
+2661 004640  4472          JMS I UFBRM
+2662 004641  4424          JMS I SETCTR
+2663 004642  0144          TCTR
+2664 004643  6504          -1274
+2665 004644  1071          TAD UTAB
+2666 004645  3247          DCA ADR3
+2667 004646  4432          JMS I UMOVE
+2668 004647  0000  ADR3,   0
+2669 004650  0104          A
+2670 004651  7776          -2
+2671 004652  1247          TAD ADR3
+2672 004653  3007          DCA ADDA
+2673 004654  4473          JMS I UMDEXR
+2674 004655  4044          EX3ST
+2675 004656  4062          EX3
+2676 004657  0105          B
+2677 004660  0732          PRB3
+2678 004661  2247          ISZ ADR3
+2679 004662  2247          ISZ ADR3
+2680 004663  2144          ISZ TCTR
+2681 004664  5246          JMP ADR3-1
+2682 004665  5422          JMP I CHAIN     /YES, CHAIN
+2683               /
+2684 004666  0007  TST7,   7
+2685 004667  7777          7777
+2686 004670  7200          CLA 
+2687 004671  1135          TAD TABF
+2688 004672  7650          SNA CLA 
+2689 004673  4472          JMS I UFBRM
+2690 004674  4424          JMS I SETCTR
+2691 004675  0144          TCTR
+2692 004676  6504          -1274
+2693 004677  1071          TAD UTAB
+2694 004700  3302          DCA ADR4
+2695 004701  4432          JMS I UMOVE
+2696 004702  0000  ADR4,   0
+2697 004703  0104          A
+2698 004704  7776          -2
+2699 004705  1302          TAD ADR4
+2700 004706  3007          DCA ADDA
+2701 004707  4473          JMS I UMDEXR
+2702 004710  4102          EX4ST
+2703 004711  4124          EX4
+2704 004712  0104          A
+2705 004713  0744          PRB4
+2706 004714  2302          ISZ ADR4
+2707 004715  2302          ISZ ADR4
+2708 004716  2144          ISZ TCTR
+2709 004717  5301          JMP ADR4-1
+2710 004720  5422          JMP I CHAIN
+2711               
+2712               /ROUTINE TO DETERMINE MODE OF OPERATION.
+2713               
+2714 004721  7604  DETMOD, LAS
+2715 004722  7132          CLL CML RTR 
+2716 004723  7430          SZL 
+2717 004724  5336          JMP AORB
+2718 004725  0020          AND MODE
+2719 004726  7650          SNA CLA 
+2720 004727  5777          JMP SETB
+2721 004730  3020          DCA MODE
+2722 004731  7604  RDSW1,  LAS
+2723 004732  7106          CLL RTL 
+2724 004733  7430          SZL 
+2725 004734  5776          JMP SW1SET
+2726 004735  5775          JMP CHAINN+2
+2727               
+2728 004736  7510  AORB,   SPA
+2729 004737  5344          JMP .+5
+2730 004740  0020          AND MODE
+2731 004741  7450          SNA 
+2732 004742  5331          JMP RDSW1
+2733 004743  5774          JMP SETA
+2734 004744  0020          AND MODE
+2735 004745  7650          SNA CLA 
+2736 004746  5777          JMP SETB
+2737 004747  5331          JMP RDSW1
+2738               
+2739               
+2740 004750  0000  INTLD,  OPEN
+2741 004751  7300          CLA CLL 
+2742 004752  6224          RIF
+2743 004753  1173          TAD [CDF
+2744 004754  3161          DCA HOMEDF+1
+2745 004755  6201          CDF 0
+2746 004756  1373          TAD (RMF
+2747 004757  3772          DCA I (1
+2748 004760  1371          TAD (5403
+2749 004761  3770          DCA I (2
+2750 004762  1367          TAD (INTSVC
+2751 004763  3766          DCA I (3
+2752 004764  4160          JMS HOMEDF
+2753 004765  5750          JMP I INTLD
+2754               
+2755               
+2756               
+2757               
+2758 004766  0003  *. 177+1
+     004767  1017  
+     004770  0002  
+     004771  5403  
+     004772  0001  
+     004773  6244  
+     004774  1366  
+     004775  0236  
+     004776  0316  
+     004777  1371  
+2759               /
+2760 005000  0000  TAB,    0
+2761               *. +2567
+2762 000173  6201  $
+     000174  6000  
+     000175  0007  
+     000176  0205  
+     000177  0203  
+
+A       0104
+ABLSR   2455
+ABVAL   0760
+AC      0107
+ACB     0123
+ACF     0127
+ACR     0117
+ACSB    0113
+ADAC    3000
+ADDA    0007
+ADDRZA  2134
+ADNAC   3012
+ADR1    4553
+ADR2    4614
+ADR3    4647
+ADR4    4702
+ADSB    3025
+ADSFT   2443
+AMODE   7447
+AORB    4736
+ARROW   2115
+ASCCN   4331
+ASCT    4371
+ASR     7415 unreferenced
+AVALUE  0762
+B       0105
+BAD     0651
+BDCNV   2077
+BELCNT  0145
+BELL    2175
+BELTYP  0170
+BMODE   7431
+BVALUE  0767
+C1      1721
+C100    0467
+C1A     1723
+C2      1722
+C240    0470
+C2A     1724
+CAC     0661
+CAM     7621 unreferenced
+CHAIN   0022
+CHAINN  0234
+CHGTOB  0312
+CMB     0671
+CMPCTR  1725
+CMQ     0665
+CNV     4354
+CNVCTR  2143
+COMP    1676
+COMPA   1706
+CRCTR   1770
+CRLF    1753
+CURTST  0101
+DEHLT   1506
+DERPT   1513
+DERR    1450
+DETMOD  4721
+DFRP    1526
+DIGIT   2142
+DIVD    1462
+DIVERR  0555
+DIVSM   2600
+DIVT    1400
+DLDZMB  1123
+DLT     1437
+DM11    2552
+DSC1    2641
+DSLOOP  1563 unreferenced
+DSMP    1550
+DSMSB   1135
+DSTR    1474
+DVADR   1415
+DVI     7407
+DVOFLO  2627
+ENDTYP  0163
+ERPER   0675
+ERPSB   2014
+EX      4227
+EX1     4006
+EX1ST   4000
+EX2     4030
+EX2ST   4016
+EX3     4062
+EX3ST   4044
+EX4     4124
+EX4ST   4102
+EXCMP   4237
+EXEHLT  4324
+EXER    4245
+EXERP   1046
+EXERR   0710
+EXLOP   4321
+EXLT    4242
+F1TEL   2256
+FADDR   1673
+FBCTR   4167
+FBRM    4150
+FBRT    4170
+FCTR    0140
+FDOPR   3376
+FINDIT  0220
+FLAG    0464
+FMFCT   3042
+FNRSLT  0637
+FORWD   0260
+FRCTR   0141
+GETRDY  0210
+GOOD    0646
+HDD     1432
+HDM     1233
+HDSC0   2400
+HLT     7402
+HOMEDF  0160
+INCRTN  0232 unreferenced
+INTAC   1016
+INTLD   4750
+INTSVC  1017
+ION     6001
+K0707   0154
+K2      0147
+K260    2144
+K3      0150
+K4      0151
+K6      0152
+K6060   0155
+K77     0465
+K7700   0156
+KE8SP2  4372
+KSTART  0021
+L       0106
+L0      0473
+L1      0476
+L10     0531
+L11     0534
+L12     0537
+L13     0542
+L2      0501
+L3      0504
+L4      0507
+L5      0512
+L6      0515
+L7      0520
+LACRT   2760
+LADR    2244
+LATE    0523
+LB      0122
+LCNT    0142
+LCTR    0143
+LF      0126
+LINK    0157
+LNINE   0526
+LOPSEL  4572
+LR      0116
+LSB     0112
+LSR     7417
+LT      0657
+M40     0466
+MB      0111
+MBB     0125
+MBD     1472
+MBF     0131 unreferenced
+MBM     1271
+MBR     0121
+MBSB    0115
+MCTR    1675
+MDEXR   4200
+MEHLT   1305
+MERPT   1312
+MERR    1251
+MFRP    1325
+MLDZMB  1076
+MLT     1240
+MODE    0020
+MODEX   3771
+MOVE    1650
+MOVEA   1663
+MQ      0110
+MQ0S    0133
+MQ10M   0137
+MQA     7501
+MQB     0124
+MQF     0130
+MQL     7421
+MQR     0120
+MQROT   2542
+MQRTA   2563
+MQSB    0114
+MSG1    2000
+MSG1A   1771
+MSG2    2064
+MSLOOP  1356 unreferenced
+MSMBR   1110
+MSMP    1347
+MSTR    1273
+MTADR   1215
+MULT    1263
+MUY     7405
+MUYERR  0551
+MUYSM   2464
+MUYT    1200
+MVR     2741
+NMI     7411 unreferenced
+NXTST   0103
+OFLO    0134
+ONE     0547
+OPEN    0000
+OUT     1036
+P1213   2423
+PFLAG   1015
+PFR     2215
+PL      2200
+PLB     2214
+PLRGS   2230
+PRB     2173
+PRB1    0714
+PRB2    0722
+PRB3    0732
+PRB4    0744
+PRBX    4262
+PRCTR   2174
+PREG    2145
+PRINT   0453
+PROB    0643
+PRT0    1726
+PRT1    1732
+PSPC    1736
+PUNCH   1000
+PXCTR   2255
+R11Z    0136
+RADR    2246
+RANCON  0357
+RANDEX  0356
+RANDNO  0027
+RANGEN  0326
+RANSAV  0372
+RANTAD  0343
+RANTBL  0360
+RANTND  0371
+RDAD    4541
+RDCTR   4540
+RDSTP   4475 unreferenced
+RDSTPA  4515
+RDSW1   4731
+RMAD    4460
+RMCTR   4457
+RMSTP   4414 unreferenced
+RMSTPA  4434
+RTNNO   0102
+SASC    4370
+SATEMK  1647
+SATET   1640
+SC0     0561
+SC1     0564
+SC10    0617
+SC11    0622
+SC12    0625
+SC13    0630
+SC2     0567
+SC3     0572
+SC4     0575
+SC5     0600
+SC6     0603
+SC7     0606
+SCA     7441
+SCAT    0654
+SCATE   0611
+SCCNT   0633
+SCDVS   2753
+SCL     7401 unreferenced
+SCNINE  0614
+SCS     0132
+SELECT  1360
+SELMOD  0303
+SETA    1366
+SETB    1371
+SETCTR  0024
+SHALT   0274
+SHL     7413 unreferenced
+SHLT    0023 unreferenced
+SHORT   0146
+SKIPMA  0471
+SKIPPA  0472
+SPCTR   1752
+SR4MSK  1607
+SR4T    1600
+SR5MSK  1617
+SR5T    1610
+SR6MSK  1627
+SR6T    1620
+SR7MSK  1637
+SR7T    1630
+SRSET   0200
+SRST    0025 unreferenced
+STCTR   1565
+STF     2736
+SW1SET  0316
+SWITCH  0455
+TAB     5000
+TABF    0135
+TADDR   1674
+TCTR    0144
+TEMP    0077
+TEMP1   0100
+TEMQ    0462
+TEMR    0463
+TENPWR  2135
+TEXR    0153
+TSC1    0406
+TSC2    0417
+TST0    4400
+TST1    4405
+TST2    4461
+TST3    4466
+TST4    4542
+TST5    4600
+TST6    4633
+TST7    4666
+TSTP    4323
+TYMOD   3756
+TYPAT   0430
+TYPSP   0434
+TYPSTG  0400
+UADAC   0062
+UADNAC  0063
+UADSB   0064
+UCOMP   0033
+UCRLF   0046
+UDIVSM  0042
+UDIVT   0031
+UERPSB  0054
+UEXERP  0075
+UF1TEL  0057
+UFBRM   0072
+UHDSC0  0056
+UMDEXR  0073
+UMOVE   0032
+UMQROT  0065
+UMQRTA  0066
+UMSG1   0047
+UMSG1A  0050
+UMSG2   0051
+UMUYSM  0041
+UMUYT   0030
+UMVR    0067
+UNXINT  1044
+UP1213  0060
+UPFR    0061
+UPL     0052
+UPLRGS  0055
+UPREG   0053
+UPRT0   0043
+UPRT1   0044
+UPSPC   0045
+UPUNCH  0074
+USATET  0040
+USR4T   0034
+USR5T   0035
+USR6T   0036
+UST7T   0037
+UTAB    0071
+UTYMOD  0076
+UZMQ11  0070
+VALUE   2141
+WASC    4367
+WHATA   1150
+WHATB   1161
+XTYPST  0026
+ZERO    0545
+ZMB     0006
+ZMQ11   2567
