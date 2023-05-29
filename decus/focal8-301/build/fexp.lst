@@ -1,0 +1,136 @@
+   1               /IMPROVED FEXP() FUNCTION  -JVZ
+   2               
+   3                       FEXT=0000
+   4               FIXMRI  FGET=0000
+   5               FIXMRI  FADD=1000
+   6               FIXMRI  FDIV=3000
+   7               FIXMRI  FMUL=4000
+   8               FIXMRI  FPUT=6000
+   9                       FENT=4407
+  10               
+  11                       FIELD 1
+  12                       WORDS=4
+  13                       T3=33
+  14                       EXP=44
+  15                       HORD=45
+  16                       M12=102
+  17                       FLARGP=125
+  18                       FLP5=351
+  19                       FLT1=2406
+  20                       TEMP=4646
+  21                       XSQR=5325
+  22                       RETURN=5536
+  23               
+  24                       *175            /'TOP'
+  25 010175  4644          FEXP-WORDS-2    /ADD A FEW MORE VARIABLES
+  26               
+  27                       *367            /'FNTABF'+12
+  28 010367  4652          FEXP            /NEW ENTRY POINT
+  29               
+  30                       *4652
+  31 014652  7240  FEXP,   CLA CMA         /SET EXIT COUNTER
+  32 014653  3033          DCA T3
+  33 014654  1044          TAD EXP         /CHECK MAGNITUDE OF ARG.
+  34 014655  1102          TAD M12
+  35 014656  7710          SPA CLA         /CHECK FOR UNDERFLOW
+  36 014657  5272          JMP XOK
+  37 014660  1045          TAD HORD        /BUT ONLY IF NEGATIVE!
+  38 014661  7700          SMA CLA
+  39 014662  5272          JMP XOK
+  40 014663  3045          DCA HORD        /SET UP ZERO RESULT
+  41 014664  4407  SQR,    FENT            /RESTORE PROPER VALUE
+  42 014665  4044          FMUL EXP
+  43 014666  0000          FEXT
+  44 014667  2033          ISZ T3
+  45 014670  5264          JMP SQR
+  46 014671  5536          RETURN
+  47               
+  48 014672  7107  XOK,    IAC CLL RTL     /(DOESN'T WORK ON A CLASSIC-8)
+  49 014673  1044          TAD EXP
+  50 014674  7550          SPA SNA         /IS MAGNITUDE < 2^-4?
+  51 014675  5302          JMP .+5         /YES - LEAVE IT ALONE
+  52 014676  7040          CMA             /NO  - SET EXIT COUNTER
+  53 014677  3033          DCA T3
+  54 014700  1323          TAD FOUR        /EFFECTIVELY DIVIDE BY 2^N
+  55 014701  3044          DCA EXP         /SEE DECUS:FOCAL8-89
+  56 014702  4407          FENT            /5TH ORDER SERIES APPROX.
+  57 014703  6246          FPUT TEMP
+  58 014704  4326          FMUL FIVE
+  59 014705  1323          FADD FOUR
+  60 014706  4246          FMUL TEMP
+  61 014707  1320          FADD THREE
+  62 014710  4246          FMUL TEMP
+  63 014711  1731          FADD I TWO
+  64 014712  4246          FMUL TEMP
+  65 014713  1730          FADD I ONE
+  66 014714  4246          FMUL TEMP
+  67 014715  1730          FADD I ONE
+  68 014716  0000          FEXT
+  69 014717  5267          JMP SQR+3
+  70               
+  71 014720  7776  THREE,  -2;2525;2525    /ALL BITS USED
+     014721  2525  
+     014722  2525  
+  72 014723  7774  FOUR,   -4;2525;2525    /ONLY 19 BITS NEEDED
+     014724  2525  
+     014725  2525  
+  73 014726  7772  FIVE,   -6;2104;FLT1    /ONLY 15 BITS NEEDED
+     014727  2104  
+     014730  2406  
+  74 014731  0351  TWO,    FLP5
+  75               ONE=TWO-1
+  76               
+  77               /CHANGES TO THE ARCTANGENT ROUTINE
+  78 014732  4407          FENT
+  79 014733  0525          FGET I FLARGP
+  80 014734  4525          FMUL I FLARGP
+  81 014735  6777          FPUT I (XSQR
+  82               
+  83                       *4740
+  84 014740  4777          FMUL I (XSQR
+  85               
+  86                       *4742
+  87 014742  6246          FPUT TEMP
+  88               
+  89                       *4744
+  90 014744  4777          FMUL I (XSQR
+  91               
+  92                       *4746
+  93 014746  4777          FMUL I (XSQR
+  94               
+  95                       *4750
+  96 014750  4525          FMUL I FLARGP
+  97 014751  3246          FDIV TEMP
+  98 014777  5325          *5037
+  99 015037  2406          FLT1
+ 100               
+ 101                       *5156
+ 102 015156  4646          TEMP
+ 103                       $
+
+EXP     0044
+FADD    1000
+FDIV    3000
+FENT    4407
+FEXP    4652
+FEXT    0000
+FGET    0000
+FIVE    4726
+FLARGP  0125
+FLP5    0351
+FLT1    2406
+FMUL    4000
+FOUR    4723
+FPUT    6000
+HORD    0045
+M12     0102
+ONE     4730
+RETURN  5536
+SQR     4664
+T3      0033
+TEMP    4646
+THREE   4720
+TWO     4731
+WORDS   0004
+XOK     4672
+XSQR    5325

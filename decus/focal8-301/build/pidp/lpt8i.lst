@@ -1,0 +1,62 @@
+   1               /INTERNAL LP08 LPT: HANDLER FOR UWF-4E          -JVZ-
+   2               
+   3               / THIS HANDLER ALLOWS OUTPUT ON A LINEPRINTER WITHOUT
+   4               /SACRIFICING THE OS/8 FILE OUTPUT CAPABILITY FOR THIS
+   5               /PURPOSE.   THIS VERSION WILL NOT WORK WITH THE LATER
+   6               /KL8E-STYLE INTERFACE SINCE IT TAKES ADVANTAGE OF THE
+   7               /'6667' INSTRUCTION TO PREVENT INTERRUPTS.   THE ECHO
+   8               /OPTION MAY BE SPECIFIED IN THE USUAL WAY TO CREATE A
+   9               /COPY OF THE OUTPUT ON THE TERMINAL.  IT IS ALSO POS-
+  10               /SIBLE TO MAKE THE LPT:  THE DEFAULT OUTPUT DEVICE SO
+  11               /THAT ERROR MESSAGES, ECHOING FROM AN OS/8 FILE, ETC.
+  12               /WILL  APPEAR ON THE  LINEPRINTER  RATHER THAN ON THE
+  13               /TERMINAL.   THIS IS SPECIFIED BY THE 'O E'  ('OUTPUT
+  14               /EVERYTHING'!)  COMMAND: 'O E LPT:'.   IF YOU SPECIFY
+  15               /THE ECHO OPTION IN  -THIS-  COMMAND YOU WILL GET -3-
+  16               /COPIES OF THE OUTPUT!  1) ORIGINAL TO THE OS/8 FILE;
+  17               /2) A COPY ON THE LPT: AND 3) A COPY ON THE TERMINAL!
+  18               
+  19                       FIELD 1
+  20                       *14555          /BEFORE 'FEXP'
+  21 014555  0000  LPT,    0               /ENTRY POINT
+  22 014556  6666          6666
+  23 014557  6661          6661            /DONE?
+  24 014560  5357          JMP .-1
+  25 014561  4764          ECKO            /OR '0000'
+  26 014562  7300          CLA CLL
+  27 014563  5755          JMP I LPT
+  28               ECKO=   JMS I .
+  29 014564  3021          XOUTL
+  30               
+  31                       *13133
+  32 013133  6667          6667  /OR 6665  /BANISH INTERRUPTS
+  33               
+  34               IFDEF V  <IFZERO V  <*31;314>>  /12K PATCH TO 'FIRSTV'
+  35               
+  36                       FIELD 0
+  37                       *272
+  38 000272  4555  LPTDEV, LPT             /THE ENTRY POINT
+  39 000273  1420  DEVICE  LPT             /THE DEVICE NAME
+     000274  2400  
+  40               LPTCHK=.
+  41                       *304
+  42 000304  6211          CDF 10          / NOW ADD THE ECHO CHECK:
+  43 000305  2036          ISZ GOSW        /'GOSW' IS SET BY 'GTNAME'
+  44 000306  1312          TAD .+4         /'ECHO' WAS SPECIFIED
+  45 000307  3713          DCA I .+4       / NO ECHO = 0000
+  46 000310  1272          TAD LPTDEV      /RETURN WITH THE ENTRY POINT
+  47 000311  5675          JMP I LPTCHK
+  48 000312  4764          ECKO            /='JMS I (XOUTL'
+  49 000313  4561          LPT+4           /'LPT:' ECHO LOCATION
+  50               
+  51               /       DEFINITIONS:
+  52                       GOSW=36
+  53                       XOUTL=3021
+  54                       $ = $ = $
+
+ECKO    4764
+GOSW    0036
+LPT     4555
+LPTCHK  0275
+LPTDEV  0272
+XOUTL   3021

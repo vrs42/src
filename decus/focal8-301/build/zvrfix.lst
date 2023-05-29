@@ -1,0 +1,240 @@
+   1               /PATCH TO U/W-FOCAL TO FIX ZVR FEATURE  -JVZ-
+   2               
+   3               /THIS PATCH FIXES A SERIOUS PROBLEM IN THE LOGIC OF THE ZVR
+   4               /FEATURE WHICH COULD CAUSE A VARIABLE ON THE LEFT OF AN '='
+   5               /TO BE REPLACED BY A DIFFERENT VARIABLE DURING THE EVALUA-
+   6               /TION OF THE RIGHT-HAND-SIDE.  THIS LEADS TO A COMPLETELY
+   7               /ERRONEOUS RESULT WITHOUT ANY ERROR INDICATION WHATSOEVER!
+   8               /THIS PATCH DOES NOT CURE THE PROBLEM WITH 'FOR' LOOP IN-
+   9               /DICES DISCUSSED ON PAGE 5 OF THE WRITEUP, HOWEVER THIS
+  10               /DIFFICULTY MAY BE AVOIDED BY USING A PROTECTED VARIABLE.
+  11               
+  12               /TO ADD THIS PATCH TO THE ORIGINAL VERSION OF U/W-FOCAL:
+  13               
+  14               /       .DA 12/1/75
+  15               /       .R ABSLDR
+  16               /       *FOCAL,FCMOD,ZVRFIX/1=100$
+  17               /       .SA SYS:UFOCAL
+  18               
+  19                       FIELD 1
+  20                       XRT=11
+  21                       PT1=30
+  22                       LASTV=31
+  23                       EFOP=56
+  24                       GINC=65
+  25                       CHAR=66
+  26                       M240=114
+  27                       M4=117
+  28                       FLARGP=125
+  29                       END=134
+  30                       TOP=175
+  31                       GETC=4545
+  32                       ERROR2=4566
+  33                       RETURN=5536
+  34                       POPJ=5541
+  35               
+  36                       *160
+  37 010160  1471          XSPNOR          /NEED TO MOVE A FEW THINGS
+  38               
+  39                       *3213
+  40 013213  1524          SET20           /FIX THE 'ZERO' COMMAND
+  41               
+  42                       *1430
+  43 011430  3271          DCA SUBS
+  44               
+  45                       *1453
+  46 011453  5353          JMP MAKVAR
+  47               
+  48                       *1456
+  49 011456  1271          TAD SUBS
+  50               
+  51                       *1465
+  52 011465  7430  ZCONT,  SZL             /ORGANIZED TO RETAIN ERROR CODE
+  53 011466  4566          ERROR2          /SYMBOL TABLE FULL
+  54 011467  1031          TAD LASTV       /SETS THE LINK
+  55 011470  5307          JMP ZSERCH
+  56               SUBS=.
+  57 011471  0000  XSPNOR, 0               /'SPNOR' MUST BE RELOCATED
+  58 011472  1066          TAD CHAR
+  59 011473  1114          TAD M240
+  60 011474  7640          SZA CLA
+  61 011475  5671          JMP I XSPNOR
+  62 011476  4545          GETC
+  63 011477  5272          JMP XSPNOR+1
+  64               
+  65 011500  1031  ZLOOP,  TAD LASTV       /CHECK PROGRESS
+  66 011501  7140          CLL CMA
+  67 011502  1011          TAD XRT
+  68 011503  1364          TAD XINC        /XRT=XRT+XINC-1
+  69 011504  5265          JMP ZCONT
+  70               
+  71 011505  7321  ZINITL, CLA STL IAC     /INITIATE SEARCH FOR ZERO
+  72 011506  1134          TAD END
+  73               
+  74 011507  3011  ZSERCH, DCA XRT
+  75 011510  1411          TAD I XRT       /EXPONENT +
+  76 011511  1411          TAD I XRT       /HIGH ORDER
+  77 011512  7650          SNA CLA         /CHECK THAT BOTH ARE ZERO
+  78 011513  7420          SNL             /AND NOT ADDITIVE INVERSES
+  79 011514  5300          JMP ZLOOP
+  80               
+  81 011515  1117  ZFOUND, TAD M4          /POINT TO THE NAME
+  82 011516  1011          TAD XRT         /CLEARS THE LINK
+  83 011517  3011          DCA XRT
+  84 011520  1056          TAD EFOP        /REPLACE IT
+  85 011521  3411          DCA I XRT
+  86 011522  1271          TAD SUBS        /AND THE SUBSCRIPT TOO
+  87 011523  3411          DCA I XRT
+  88               
+  89 011524  3411  SET20,  DCA I XRT       /ZERO THE DATA
+  90 011525  1011          TAD XRT
+  91 011526  3030          DCA PT1         /SET THE DATA POINTER
+  92 011527  3411          DCA I XRT
+  93 011530  3411          DCA I XRT
+  94 011531  3411          DCA I XRT       /'POPJ' FOR 3 WORD VERSION
+  95 011532  5541          POPJ            /LINK=0
+  96               
+  97                       *1541
+  98 011541  1356          TAD M260
+  99               
+ 100                       *1553
+ 101 011553  1175  MAKVAR, TAD TOP         /CREATE A NEW VARIABLE
+ 102 011554  7161          STL CIA
+ 103 011555  1031          TAD LASTV
+ 104 011556  7520  M260,   SNL SMA         /IS THERE ROOM FOR IT?
+ 105 011557  5305          JMP ZINITL      /NO: GO REPLACE SOMETHING
+ 106 011560  1175          TAD TOP
+ 107 011561  1065          TAD GINC        /UPDATE THE STORAGE POINTER
+ 108 011562  3031          DCA LASTV
+ 109 011563  5322          JMP SET20-2     /INSERT THE SUBSCRIPT
+ 110               XINC=.
+ 111               /NOW FOR A LITTLE DIVERSION TO MAKE ROOM FOR ANOTHER PATCH:
+ 112               
+ 113                       *7400
+ 114 017400  7300  XSQRT,  CLA CLL         /WE'RE GOING TO REWRITE 'FSQT'!
+ 115 017401  1045          TAD HORD        /(SHOULD HAVE DONE THIS AGES AGO!)
+ 116 017402  7450          SNA
+ 117 017403  5536          RETURN          /FSQT(0)=0
+ 118 017404  7710          SPA CLA
+ 119 017405  4566          ERROR2          /IMAGINARY ROOTS ARE ILLEGAL
+ 120               
+ 121 017406  1044          TAD EXP         /ADJUST THE MAGNITUDE
+ 122 017407  7510          SPA
+ 123 017410  7020          CML             /MATCH THE SIGN BIT
+ 124 017411  7010          RAR
+ 125 017412  7430          SZL
+ 126 017413  7001          IAC             /ADD 1 IF ITS ODD
+ 127 017414  3044          DCA EXP
+ 128               
+ 129 017415  1267          TAD SQCON1      /STUPID, BUT FOLLOW TRADITION
+ 130 017416  3045          DCA HORD
+ 131 017417  3046          DCA LORD
+ 132 017420  3047          DCA OVER2
+ 133               
+ 134 017421  4407  ROOTGO, FENT            /METHOD DUE TO SIR ISSAC NEWTON
+ 135 017422  6270          FPUT ITER1      /SAVE APPROXIMATION
+ 136 017423  0525          FGET I FLARGP   /LOAD ARGUMENT AGAIN
+ 137 017424  3270          FDIV ITER1
+ 138 017425  1270          FADD ITER1      /ADD THE PREVIOUS ONE
+ 139 017426  0000          FEXT
+ 140 017427  7040          CMA
+ 141 017430  1044          TAD EXP         /AND DIVIDE BY TWO
+ 142 017431  3044          DCA EXP
+ 143               
+ 144 017432  1044          TAD EXP
+ 145 017433  7041          CIA
+ 146 017434  1270          TAD ITER1       /COMPARE EXPONENTS
+ 147 017435  7640          SZA CLA
+ 148 017436  5221          JMP ROOTGO      /NOT EQUAL
+ 149               
+ 150 017437  1045          TAD HORD
+ 151 017440  7041          CIA
+ 152 017441  1271          TAD ITER1+1     /COMPARE HIGH ORDERS
+ 153 017442  7640          SZA CLA
+ 154 017443  5221          JMP ROOTGO      /TRY AGAIN
+ 155 017444  1046          TAD LORD
+ 156 017445  7041          CIA
+ 157 017446  1272          TAD ITER1+2     /ARE LOW-ORDERS EQUAL?
+ 158 017447  7500          SMA
+ 159 017450  7041          CIA
+ 160 017451  7001          IAC             /PLUS OR MINUS ONE BIT
+ 161 017452  7710          SPA CLA
+ 162 017453  5221          JMP ROOTGO
+ 163 017454  5536          RETURN          /YES
+ 164               
+ 165               /THERE IS ACTUALLY A -MUCH- BETTER WAY: SEE VERSION 3 !!
+ 166               /NOW FIX THE 'SET' COMMAND:  ALL THIS TO INSERT 5 WORDS!
+ 167               
+ 168 017455  1030  ZCHECK, TAD PT1         /CHECK FOR A ZERO VARIABLE
+ 169 017456  3011          DCA XRT         /WHICH MIGHT BE REPLACED
+ 170 017457  1411          TAD I XRT       /INAPPROPRIATELY
+ 171 017460  7650          SNA CLA
+ 172 017461  2430          ISZ I PT1       /MAKE IT UN-REPLACEABLE
+ 173 017462  1066          TAD CHAR
+ 174 017463  1266          TAD MEQ
+ 175 017464  5665          JMP I .+1       /AND CONTINUE AS BEFORE
+ 176 017465  1046          1046
+ 177 017466  7503  MEQ,    -"=
+ 178               ITER1=  .+1
+ 179               SQCON1= .
+ 180               
+ 181                       *1044
+ 182 011044  5645          JMP I .+1       /REPLACE 'TAD CHAR'
+ 183 011045  7455          ZCHECK          /        'TAD MEQ'
+ 184               
+ 185               
+ 186                       EXP=44
+ 187                       HORD=45
+ 188                       LORD=46
+ 189                       OVER2=47
+ 190               
+ 191                       FENT=4407
+ 192               FIXMRI  FGET=0000
+ 193               FIXMRI  FADD=1000
+ 194               FIXMRI  FDIV=3000
+ 195               FIXMRI  FPUT=6000
+ 196                       FEXT=0000
+ 197                       $
+
+CHAR    0066
+EFOP    0056
+END     0134
+ERROR2  4566
+EXP     0044
+FADD    1000
+FDIV    3000
+FENT    4407
+FEXT    0000
+FGET    0000
+FLARGP  0125
+FPUT    6000
+GETC    4545
+GINC    0065
+HORD    0045
+ITER1   7470
+LASTV   0031
+LORD    0046
+M240    0114
+M260    1556
+M4      0117
+MAKVAR  1553
+MEQ     7466
+OVER2   0047
+POPJ    5541
+PT1     0030
+RETURN  5536
+ROOTGO  7421
+SET20   1524
+SQCON1  7467
+SUBS    1471
+TOP     0175
+XINC    1564
+XRT     0011
+XSPNOR  1471
+XSQRT   7400 unreferenced
+ZCHECK  7455
+ZCONT   1465
+ZFOUND  1515 unreferenced
+ZINITL  1505
+ZLOOP   1500
+ZSERCH  1507

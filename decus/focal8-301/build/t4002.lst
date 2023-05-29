@@ -1,0 +1,236 @@
+   1               /T-4002 PLOTTING ROUTINES   JVZ
+   2               
+   3               /THESE ROUTINES PROVIDE FDIS(I,X,Y) & FJOY(I) FUNCTIONS FOR
+   4               /CONTROLLING A TEKTRONIX T-4002 GRAPHICS TERMINAL. THEY ARE
+   5               /ADAPTED FROM PS/8 FOCAL VERSIONS $ HAVE NOT BEEN TESTED !!
+   6               /IT APPEARS THAT THEY WILL NOT WORK FOR THE T-4010 TERMINAL
+   7               
+   8               /FLOATING POINT INSTRUCTIONS
+   9               
+  10                       FENT=4407
+  11               FIXMRI  FPUT=6000
+  12               FIXMRI  FNOR=7000
+  13                       FEXT=0000
+  14                       FIXTAB
+  15               
+  16               /FOCAL SYMBOLS:
+  17               
+  18                       FIELD 1
+  19                       PT1=30
+  20                       AC1H=41
+  21                       AC1L=42
+  22                       FLAC=44
+  23                       EXP=44
+  24                       HORD=45
+  25                       LORD=46
+  26                       EFOP=56
+  27                       C214=73
+  28                       P13=110
+  29                       C100=111
+  30                       END=134
+  31                       FNTABF=355
+  32                       GS1=1430
+  33                       EVAL=1613
+  34                       FNTABL=2155
+  35                       OUT=2466
+  36                       XI33=2661
+  37                       FIXIT=4453
+  38                       TYPEC=4463
+  39                       PUSHJ=4540
+  40                       PRINTC=4551
+  41                       FLOAT=5512
+  42                       RETURN=5536
+  43               
+  44                       *END
+  45 010134  3372          STVAR           /FEWER VARIABLES
+  46               
+  47                       *FNTABF+17
+  48 010374  3342          FJOY
+  49                       *FNTABF+22
+  50 010377  3224          FDIS
+  51               
+  52                       *FNTABL+17
+  53 012174  2637          "J^2+"O^2+"Y
+  54                       *FNTABL+22
+  55 012177  2565          "D^2+"I^2+"S
+  56                      *1142           /OVERLAY OLD FDIS
+  57 011142  0000  FCHK,   0               /PRINTC CALL CHANGES TO ALPHA MODE
+  58 011143  3355          DCA TM          /SAVE CHARACTER
+  59 011144  1357          TAD TOUT
+  60 011145  3151          DCA 151         /RESTORE PRINTC
+  61 011146  1356          TAD US
+  62 011147  4463          TYPEC           /RESTORE ALPHA MODE
+  63 011150  1355          TAD TM
+  64 011151  4551          PRINTC
+  65 011152  3754          DCA I .+2       /RESET MODE FLAG
+  66 011153  5742          JMP I FCHK
+  67 011154  3262          FDSW
+  68 011155  0000  TM,     0
+  69 011156  0037  US,     37
+  70 011157  2466  TOUT,   OUT
+  71               
+  72               
+  73                       *3224
+  74 013224  1371  FDIS,   TAD FCHKP       /PRINTC TRAP
+  75 013225  3151          DCA 151
+  76 013226  4453          FIXIT           /BRING 'I' INTO THE AC
+  77 013227  7740          SMA SZA CLA
+  78 013230  1262          TAD FDSW        /GRAPHICS MODE?
+  79 013231  7640  C40,    SZA CLA
+  80 013232  5242          JMP PLOT        /YES, AND I=+1
+  81 013233  1046          TAD LORD
+  82 013234  7710          SPA CLA         /CHECK I AGAIN
+  83 013235  7040          CMA             /CREATE FS=GS-1
+  84 013236  1365          TAD GS
+  85 013237  4463          TYPEC           /SET GRAPHICS MODE
+  86 013240  3257          DCA XHIGH
+  87 013241  3252          DCA YHIGH
+  88 013242  4540  PLOT,   PUSHJ           /EVALUATE X
+  89 013243  1612              EVAL-1
+  90 013244  4453          FIXIT
+  91 013245  3311          DCA XTM         /SAVE X FOR LATER
+  92 013246  4540          PUSHJ
+  93 013247  1612              EVAL-1
+  94 013250  4453          FIXIT
+  95 013251  4262          JMS HIGH        /CHECK FIRST BYTE
+  96 013252  0000  YHIGH,  0
+  97 013253  1231          TAD C40         /FILL IN TAG BIT
+  98 013254  4463          TYPEC
+  99 013255  1311          TAD XTM
+ 100 013256  4262          JMS HIGH        /SEND X BYTES
+ 101 013257  0000  XHIGH,  0
+ 102 013260  4463          TYPEC
+ 103 013261  5536          RETURN
+ 104               FDSW=.
+ 105 013262  0000  HIGH,   0               /CHECK 1ST & 3RD BYTES
+ 106 013263  3041          DCA AC1H        /SAVE COORDINATE
+ 107 013264  1041          TAD AC1H
+ 108 013265  7110          CLL RAR
+ 109 013266  7012          RTR
+ 110 013267  7012          RTR
+ 111 013270  0364          AND J37         /TOP 5 BITS
+ 112 013271  1231          TAD C40         /PLUS TAG BIT
+ 113 013272  3042          DCA AC1L
+ 114 013273  1042          TAD AC1L
+ 115 013274  1662          TAD I HIGH
+ 116 013275  7650          SNA CLA         /SAME AS LAST TIME?
+ 117 013276  5304          JMP HXIT        /YEP
+ 118 013277  1042          TAD AC1L        /NOPE
+ 119 013300  4463          TYPEC
+ 120 013301  1042          TAD AC1L
+ 121 013302  7041          CIA
+ 122 013303  3662          DCA I HIGH      /SAVE FOR NEXT COMPARISON
+ 123               
+ 124 013304  2262  HXIT,   ISZ HIGH
+ 125 013305  1041          TAD AC1H
+ 126 013306  0364          AND J37         /STRIP LOWER 5 BITS
+ 127 013307  1111          TAD C100        /ADD TAG BIT
+ 128 013310  5662          JMP I HIGH
+ 129               
+ 130               XTM=.
+ 131 013311  0000  JLOOK,  0               /VARIABLE LOOKUP FOR FJOY
+ 132 013312  3056          DCA EFOP        /SAVE NAME
+ 133 013313  4540          PUSHJ
+ 134 013314  1430              GS1         /LOOK IT UP
+ 135 013315  4770          JMS I XJ33      /READ FIRST BYTE
+ 136 013316  0364          AND J37
+ 137 013317  7104          CLL RAL
+ 138 013320  7006          RTL
+ 139 013321  7006          RTL
+ 140 013322  3045          DCA HORD        /SAVE TEMPORARILY
+ 141 013323  4770          JMS I XJ33      /READ SECOND BYTE
+ 142 013324  0364          AND J37
+ 143 013325  1045          TAD HORD
+ 144 013326  4334          JMS JFLOAT      /CHANGE TO F.P.
+ 145 013327  4407          FENT
+ 146 013330  7044          FNOR FLAC
+ 147 013331  6430          FPUT I PT1      /STASH IT AWAY
+ 148 013332  0000          FEXT
+ 149 013333  5711          JMP I JLOOK
+ 150               
+ 151 013334  0000  JFLOAT, 0               /FLOAT 10-BIT INTEGER
+ 152 013335  3045          DCA HORD
+ 153 013336  3046          DCA LORD
+ 154 013337  1110          TAD P13
+ 155 013340  3044          DCA EXP
+ 156 013341  5734          JMP I JFLOAT
+ 157 013342  4453  FJOY,  FIXIT           /BRING ARGUMENT INTO AC
+ 158 013343  7650          SNA CLA         /+ OR - 1
+ 159 013344  1073          TAD C214        /C214=DC1-ENQ (ONLY FOR T-4002)
+ 160 013345  1363          TAD J5          /=ENQ
+ 161 013346  4551          PRINTC          /TURN ON THE CURSOR
+ 162 013347  1046          TAD LORD
+ 163 013350  7750          SPA SNA CLA     /CHECK I AGAIN
+ 164 013351  4770          JMS I XJ33      /READ STATUS OR KEYBOARD
+ 165 013352  3771          DCA I FCHKP     /SAVE TO RETURN AS VALUE OF FJOY
+ 166 013353  1366          TAD XJ
+ 167 013354  4311          JMS JLOOK       /PICK UP THE VARIABLE 'XJ'
+ 168 013355  1367          TAD YJ
+ 169 013356  4311          JMS JLOOK
+ 170 013357  1364          TAD J37
+ 171 013360  4463          TYPEC           /RETURN TO ALPHA MODE
+ 172 013361  1771          TAD I FCHKP
+ 173 013362  5512          FLOAT           /RETURN KEYBOARD OR STATUS
+ 174               
+ 175 013363  0005  J5,     5
+ 176 013364  0037  J37,    37
+ 177 013365  0235  GS,     235
+ 178 013366  3012  XJ,     3012
+ 179 013367  3112  YJ,     3112
+ 180 013370  2661  XJ33,   XI33
+ 181 013371  1142  FCHKP,  FCHK
+ 182               STVAR=.
+ 183                       $
+
+AC1H    0041
+AC1L    0042
+C100    0111
+C214    0073
+C40     3231
+EFOP    0056
+END     0134
+EVAL    1613
+EXP     0044
+FCHK    1142
+FCHKP   3371
+FDIS    3224
+FDSW    3262
+FENT    4407
+FEXT    0000
+FIXIT   4453
+FJOY    3342
+FLAC    0044
+FLOAT   5512
+FNOR    7000
+FNTABF  0355
+FNTABL  2155
+FPUT    6000
+GS      3365
+GS1     1430
+HIGH    3262
+HORD    0045
+HXIT    3304
+J37     3364
+J5      3363
+JFLOAT  3334
+JLOOK   3311
+LORD    0046
+OUT     2466
+P13     0110
+PLOT    3242
+PRINTC  4551
+PT1     0030
+PUSHJ   4540
+RETURN  5536
+STVAR   3372
+TM      1155
+TOUT    1157
+TYPEC   4463
+US      1156
+XHIGH   3257
+XI33    2661
+XJ      3366
+XJ33    3370
+XTM     3311
+YHIGH   3252
+YJ      3367

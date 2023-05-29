@@ -1,0 +1,259 @@
+   1               /FX - RANDOM ACCESS FUNCTION:
+   2               
+   3               /THIS OVERLAY TO U/W-FOCAL WAS ADAPTED FROM THE ORIGINAL FX
+   4               /FUNCTION WRITTEN BY LAWRENCE MOSS AND AVAILABLE AS FOCAL8-
+   5               /268.  THIS VERSION IS MODELED AFTER U/W-FOCAL'S FCOM FUNC-
+   6               /TION AND THUS PERMITS RECURSIVE CALLS WHEREAS THE ORIGINAL
+   7               /VERSION DID NOT.  THE PATCH REPORTED IN DECUSCOPE VOL. 13,
+   8               /NO. 2 (PP 19-20) HAS BEEN INCLUDED.  THERE ARE TWO ERRORS
+   9               /ASSOCIATED WITH THIS FUNCTION:
+  10               
+  11               /       ?13.22  INDEX TOO LARGE (>2047)
+  12               /       ?13.75  STORAGE AREA EXCEEDED
+  13               
+  14               /BE EXTREMELY CAREFUL NOT TO USE 'FX' AFTER ANY OF THE LIB-
+  15               /RARY COMMANDS (E.G. LIST, SAVE, CALL, RUN, GOSUB, ETC.)
+  16               /UNTIL THE FILE HAS BEEN REOPENED.  THESE COMMANDS CHANGE
+  17               /VITAL ADDRESSES USED BY 'FX' AND CAN EASILY CAUSE DATA TO
+  18               /BE WRITTEN IN THE WRONG PLACE!  CONSULT THE DECUS WRITEUP.
+  19               /NOTE THE CONVENIENCE OF THE 'XECUTE' COMMAND WHEN STORING
+  20               /VARIABLES:  X FX() FX(I,ARG) FX(FX(J),FX(K)); ETC.
+  21               
+  22               /SYMBOL DEFINITIONS:
+  23               
+  24                       FIELD 0
+  25                       FLNGTH=56
+  26                       STBLK=57
+  27                       INHND=120
+  28                       OUTHND=126
+  29                       OUTFLG=127
+  30                       BLKCNT=3656
+  31                       OBLK=3725
+  32                       O3=3737
+  33                       OPTR1=3751
+  34                       OPTR2=3752
+  35                       ONMTMP=3753
+  36               
+  37                       FIELD 1
+  38                       INDEX=14
+  39                       BLOCK=33
+  40                       EXP=44
+  41                       HORD=45
+  42                       LORD=46
+  43                       CHAR=66
+  44                       MCOM=72
+  45                       C200=123
+  46                       END=134
+  47                       FIXIT=4453
+  48                       POPA=4537
+  49                       PUSHJ=4540
+  50                       PUSHA=4542
+  51                       ERROR2=4566
+  52                       RETURN=5536
+  53                       EVAL=1613
+  54                       FNTABF=355
+  55                       FNTABL=2155
+  56                      *END
+  57 010134  3427          STVAR           /22 FEWER 4-WORD VARIABLES
+  58               
+  59                       *FNTABF
+  60 010355  3224          FX              /USE THE 'FCOM' SLOT
+  61               
+  62                       *FNTABL
+  63 012155  0330          "X              /REPLACE THE FN CODE
+  64               
+  65                       *3224           /USER FUNCTION AREA
+  66               
+  67               SET=(DCA I 3375)&(DCA I 3374)   /LINK TO THE NEXT PAGE
+  68               TEMP=(BLKCNT)&(OBLK)&0+32       /SAVE A FEW LITERALS!
+  69               
+  70 013224  4453  FX,     FIXIT           /BRING INDEX INTO THE AC
+  71 013225  7510          SPA
+  72 013226  4566          ERROR2          /INDEX MUST BE LESS THAN 2048
+  73 013227  4542          PUSHA           /SAVE INDEX - PERMITS FX(FX) CALLS
+  74 013230  1066          TAD CHAR
+  75 013231  1072          TAD MCOM
+  76 013232  7640          SZA CLA         /'GET' OR 'PUT' OPERATION?
+  77 013233  5250          JMP GET
+  78 013234  4540          PUSHJ
+  79 013235  1612              EVAL-1      /PICK UP THE SECOND ARGUMENT
+  80               
+  81 013236  4260  PUT,    JMS FIND        /LOCATE THE CORRECT BLOCK
+  82 013237  1044          TAD EXP
+  83 013240  3414          DCA I INDEX
+  84 013241  1045          TAD HORD
+  85 013242  3414          DCA I INDEX
+  86 013243  1046          TAD LORD
+  87 013244  3414          DCA I INDEX
+  88 013245  7040          CMA
+  89 013246  3343          DCA DISK        /SET THE PROTECT FLAG
+  90 013247  5773          JMP I (EXIT
+  91               
+  92 013250  4260  GET,    JMS FIND        /LOCATE BLOCK & SET INDEX REG.
+  93 013251  1414          TAD I INDEX
+  94 013252  3044          DCA EXP
+  95 013253  1414          TAD I INDEX
+  96 013254  3045          DCA HORD
+  97 013255  1414          TAD I INDEX
+  98 013256  3046          DCA LORD
+  99 013257  5773          JMP I (EXIT     /FX EXIT
+ 100 013260  0000  FIND,  0               /FIND CORRECT BLOCK & SET INDEX REG
+ 101 013261  3033          DCA BLOCK       /CLEAR QUOTIENT FOR DIVIDE LOOP
+ 102 013262  4537          POPA            /RECALL INDEX
+ 103 013263  6201          CDF             /FOR SUBSEQUENT OPERATIONS
+ 104 013264  7450          SNA
+ 105 013265  5376          JMP SET         /'0' TRANSFERS INPUT POINTERS
+ 106 013266  3014          DCA INDEX
+ 107 013267  1014          TAD INDEX
+ 108 013270  1372          TAD (-124       /84(10) VARIABLES/BLOCK
+ 109 013271  7510          SPA
+ 110 013272  5275          JMP .+3         /COULD EASILY USE EAE INST. HERE
+ 111 013273  2033          ISZ BLOCK
+ 112 013274  5266          JMP .-6
+ 113 013275  7304  DERR,   CLA CLL RAL     /REMOVE REMAINDER
+ 114 013276  1033          TAD BLOCK       /THIS IS THE RELATIVE BLOCK NO.
+ 115 013277  1771          TAD I (STBLK    /SET BY 'OPEN OUTPUT' & 'OPEN INPUT'
+ 116 013300  7041          CIA
+ 117 013301  1774          TAD I (OBLK     /THIS IS THE CURRENT BLOCK
+ 118 013302  7650          SNA CLA
+ 119 013303  5334          JMP FOUND       /NO ACCESS REQUIRED
+ 120               
+ 121 013304  1770          TAD I (FLNGTH   /CHECK MAX. BLOCK SIZE
+ 122 013305  7510          SPA             /RK8 FUDGE
+ 123 013306  5311          JMP .+3         /USUAL CASE
+ 124 013307  7200          CLA
+ 125 013310  1312          TAD .+2         /-100
+ 126 013311  1033          TAD BLOCK
+ 127 013312  7700          SMA CLA         /DOES THIS BLOCK FIT?
+ 128 013313  4566          ERROR2          /NO - TOO BIG
+ 129               
+ 130 013314  2343          ISZ DISK        /CHECK SAVE FLAG
+ 131 013315  5320          JMP .+3         /NOTHING WRITTEN
+ 132 013316  1367          TAD (4200       /WRITE CODE
+ 133 013317  4343          JMS DISK        /SAVE CURRENT BLOCK
+ 134 013320  1033          TAD BLOCK
+ 135 013321  1771          TAD I (STBLK
+ 136 013322  3774          DCA I (OBLK     /UPDATE CURRENT BLOCK NO.
+ 137 013323  1123          TAD C200        /READ CODE
+ 138 013324  4343          JMS DISK        /BRING IN THE NEW BLOCK
+ 139               
+ 140 013325  1033          TAD BLOCK       /SET BLKCNT=MAXIMUM SIZE
+ 141 013326  7041          CIA
+ 142 013327  1775          TAD I (BLKCNT
+ 143 013330  7700          SMA CLA         /IS NEW ONE BIGGER?
+ 144 013331  5334          JMP .+3         /NO
+ 145 013332  1033          TAD BLOCK       /YES
+ 146 013333  3775          DCA I (BLKCNT
+ 147               
+ 148 013334  7040  FOUND,  CMA             /SET UP INDEX REGISTER
+ 149 013335  1356          TAD ARG2        /BEGINNING OF BUFFER
+ 150 013336  1014          TAD INDEX
+ 151 013337  1014          TAD INDEX       /YES - IT IS CRUDE!
+ 152 013340  1014          TAD INDEX
+ 153 013341  3014          DCA INDEX
+ 154 013342  5660          JMP I FIND
+ 155 013343  0000  DISK,  0               /READ-WRITE SUBROUTINE
+ 156 013344  3355          DCA ARG1        /AC=FUNCTION
+ 157 013345  1774          TAD I (OBLK
+ 158 013346  3357          DCA ARG3        /FILL IN THE BLOCK NO.
+ 159 013347  1766          TAD I (OUTHND
+ 160 013350  3032          DCA TEMP        /GET HANDLER ENTRY POINT
+ 161 013351  6211          CDF 10
+ 162 013352  6202          CIF
+ 163 013353  6002          IOF             /HANG THE DO-NOT-DISTURB SIGN
+ 164 013354  4432          JMS I TEMP
+ 165 013355  0000  ARG1,   0
+ 166 013356  4400  ARG2,   4400
+ 167 013357  0000  ARG3,   0
+ 168 013360  5364          JMP ERR         /WRITE-LOCK
+ 169 013361  6001          ION             /TAKE DOWN THE SIGN
+ 170 013362  6201          CDF
+ 171 013363  5743          JMP I DISK
+ 172               
+ 173 013364  6203  ERR,    CDF CIF         /DEVICE ERROR = ?29.68
+ 174 013365  5675          JMP I DERR
+ 175               
+ 176 013366  0126          PAGE
+     013367  4200  
+     013370  0056  
+     013371  0057  
+     013372  7654  
+     013373  3411  
+     013374  3725  
+     013375  3656  
+     013376  3774  
+     013377  3775  
+ 177               
+ 178               /SET,   DCA I (OBLK
+ 179               /       DCA I (BLKCNT
+ 180 013400  0120          INHND
+ 181 013401  1600          TAD I .-1       /MOVE INPUT POINTERS
+ 182 013402  3603          DCA I .+1
+ 183 013403  0126          OUTHND
+ 184 013404  3607          DCA I .+3
+ 185 013405  6211          CDF 10
+ 186 013406  5536          RETURN          /FUNCTION RETURN
+ 187 013407  3753          ONMTMP
+ 188 013410  3737         O3
+ 189 013411  7040  EXIT,   CMA             /FUDGE CHARACTER COUNT
+ 190 013412  3610          DCA I .-2
+ 191 013413  7040          CMA
+ 192 013414  3615          DCA I .+1       /SET 'FILE OPEN' FLAG
+ 193 013415  0127          OUTFLG
+ 194 013416  1223          TAD .+5         /KLUDGE OUTPUT POINTERS
+ 195 013417  3624          DCA I .+5
+ 196 013420  1225          TAD .+5         /FOR 'OUTPUT CLOSE'
+ 197 013421  3626          DCA I .+5
+ 198 013422  5205          JMP SET+7       /RETURN
+ 199               
+ 200 013423  4777          4777            /LAST BUFFER LOCATION
+ 201 013424  3751          OPTR1
+ 202 013425  4776          4776
+ 203 013426  3752          OPTR2
+ 204               STVAR=.
+ 205                       $
+
+ARG1    3355
+ARG2    3356
+ARG3    3357
+BLKCNT  3656
+BLOCK   0033
+C200    0123
+CHAR    0066
+DERR    3275
+DISK    3343
+END     0134
+ERR     3364
+ERROR2  4566
+EVAL    1613
+EXIT    3411
+EXP     0044
+FIND    3260
+FIXIT   4453
+FLNGTH  0056
+FNTABF  0355
+FNTABL  2155
+FOUND   3334
+FX      3224
+GET     3250
+HORD    0045
+INDEX   0014
+INHND   0120
+LORD    0046
+MCOM    0072
+O3      3737
+OBLK    3725
+ONMTMP  3753
+OPTR1   3751
+OPTR2   3752
+OUTFLG  0127
+OUTHND  0126
+POPA    4537
+PUSHA   4542
+PUSHJ   4540
+PUT     3236 unreferenced
+RETURN  5536
+SET     3376
+STBLK   0057
+STVAR   3427
+TEMP    0032

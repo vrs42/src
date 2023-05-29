@@ -1,0 +1,55 @@
+   1               / PATCH TO 'FCOM' TO ADDRESS FIELDS 4,5         -JVZ-
+   2               
+   3               /THIS PATCH MODIFIES THE 'INDEX' ROUTINE SO THAT POSITIVE
+   4               /INDICES FROM 0-2047 MAY BE USED TO ADDRESS ALL LOCATIONS
+   5               /IN FIELDS 4 & 5.  THE 'NEGATIVE INDEX' FEATURE HAS BEEN
+   6               /ELIMINATED: ONLY FLOATING-POINT STORAGE IS AVAILABLE.
+   7               
+   8               /THE CHANGES ARE CONSTRUCTED SO THAT THEY DO NOT INTER-
+   9               /FERE WITH 'FRA' WHICH ALSO USES SOME 'FCOM' ROUTINES.
+  10               
+  11                       XRT=14
+  12                       PUT=4410
+  13                       GET=4423
+  14                       INDEX=4437
+  15                       POPA=4521
+  16                       ERROR2=4576
+  17               
+  18                       FIELD 0
+  19                       *45
+  20 000045  6264          6264            /'24K'
+  21               
+  22                       FIELD 1
+  23               
+  24                       *PUT-1
+  25 014407  7000          NOP             /ELIMINATE THE 'NEG.' RETURN
+  26               
+  27                       *GET
+  28 014423  6241          CDF 40          /USE THIS LOC. FOR A CONSTANT
+  29 014424  4237          JMS INDEX       /AND MOVE THIS DOWN ONE
+  30               
+  31                       *INDEX+1
+  32 014440  4521          POPA            /EXAMINE THE ARGUMENT
+  33 014441  7510          SPA             /CHECK FOR STORAGE LIMIT
+  34 014442  5252          JMP .+10        /KEEP THE SAME ERROR CODE
+  35 014443  7106          CLL RTL         /MULTIPLY THE INDEX BY 4
+  36 014444  7440          SZA             /LEAVING THE FIELD INFO
+  37 014445  7041          CIA             /IN THE LINK
+  38 014446  7040          CMA             /SUBTRACT ONE
+  39 014447  3014          DCA XRT         /AND SAVE THE INDEX
+  40 014450  7006          RTL             /SHIFT THE FIELD BIT OVER
+  41 014451  7410          SKP
+  42 014452  4576          ERROR2          /INDEX GREATER THAN 2047(10)
+  43 014453  7006          RTL
+  44 014454  1223          TAD GET         /ADD THE 'CDF' INSTRUCTION
+  45 014455  3256          DCA .+1
+  46 014456  6171          CDF 40-50
+  47 014457  5637          JMP I INDEX     /DF AND XRT ARE BOTH SET
+  48                       $
+
+ERROR2  4576
+GET     4423
+INDEX   4437
+POPA    4521
+PUT     4410
+XRT     0014

@@ -1,0 +1,70 @@
+   1               /LINEFEED PATCH FOR U/W-FOCAL:   -JVZ
+   2               
+   3               /THIS PATCH CAUSES LINEFEED TO RETYPE AN INPUT LINE UPTO THE
+   4               /CURRENT POSITION, FREE OF RUBOUTS AND RESTARTS. THIS ACTION
+   5               /THUS DUPLICATES THE MONITOR SYSTEM USAGE OF LINEFEED.
+   6               
+   7               /FOUR VARIABLES ARE SACRIFICED FOR THIS FEATURE.
+   8               
+   9                       FIELD 1         /SYMBOL DEFINITIONS
+  10                       AXIN=10
+  11                       AXOUT=17
+  12                       XCT=20
+  13                       DEBGSW=26
+  14                       BUFR=60
+  15                       ADD=61
+  16                       XCTIN=62
+  17                       CCR=77
+  18                       TABCNT=166
+  19                       DAXIN=173
+  20                       GETC=4545
+  21                       PRINTC=4551
+  22               
+  23                       *134
+  24 010134  3255          STVAR           /FOUR FEWER VARIABLES
+  25                       *225
+  26 010225  4252          JMS "*          /FOOL THE TAB COUNTER
+  27                       *572
+  28 010572  3224          LNFEED          /PATCH VECTOR
+  29                       *3224           /AFTER THE ZERO COMMAND
+  30 013224  1566  LNFEED, TAD I TABCNT    /WHERE ARE WE?
+  31 013225  7650          SNA CLA
+  32 013226  5477          JMP I CCR       /IGNORE THE LF AFTER A CR
+  33 013227  2026          ISZ DEBGSW      /PREVENT STUTTERING
+  34 013230  1061          TAD ADD
+  35 013231  4573          JMS I DAXIN     /STORE HALF-WORD TEMPORARILY
+  36 013232  7040          CMA
+  37 013233  1010          TAD AXIN
+  38 013234  3010          DCA AXIN        /RESET PACKING POINTER
+  39 013235  1060          TAD BUFR
+  40 013236  3017          DCA AXOUT       /SET 'GETC' POINTERS
+  41 013237  3020          DCA XCT
+  42 013240  1077          TAD CCR         /START WITH A CR
+  43 013241  4551          PRINTC
+  44 013242  4545          GETC            /READ THE NEXT ONE
+  45 013243  1010          TAD AXIN
+  46 013244  7040          CMA
+  47 013245  1017          TAD AXOUT
+  48 013246  7710          SPA CLA         /CURRENT POSITION YET?
+  49 013247  5241          JMP .-6
+  50 013250  1062          TAD XCTIN       /YES, BUT CHECK HALF-WORD
+  51 013251  7640          SZA CLA
+  52 013252  4551          PRINTC
+  53 013253  3026          DCA DEBGSW      /RESET RUBOUT PROTECTION
+  54 013254  5477          JMP I CCR       /THIS GETS US BACK TO 'IGNOR'
+  55               STVAR=.;$
+
+ADD     0061
+AXIN    0010
+AXOUT   0017
+BUFR    0060
+CCR     0077
+DAXIN   0173
+DEBGSW  0026
+GETC    4545
+LNFEED  3224
+PRINTC  4551
+STVAR   3255
+TABCNT  0166
+XCT     0020
+XCTIN   0062

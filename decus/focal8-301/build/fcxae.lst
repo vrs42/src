@@ -1,0 +1,288 @@
+   1               /U/W-FOCAL 8/I EAE PATCHES  JVZ
+   2               
+   3               /THESE ROUTINES UTILIZE THE STANDARD KE8-I (OR KE12) E.A.E.
+   4               /HARDWARE TO IMPROVE FOCAL'S MULTIPLY SPEED BY A FACTOR OF
+   5               /ABOUT FOURTEEN.  THE CODING IS ENTIRELY DIFFERENT FROM THE
+   6               /PATCH SHOWN ON PAGE 89 OF THE LISTING WHICH ONLY GIVES AN
+   7               /IMPROVEMENT OF ABOUT FOUR.  ADVANTAGE IS TAKEN OF TWO FEA-
+   8               /TURES OF THE HARDWARE WHICH ARE NOT WIDELY KNOWN: (1) THE
+   9               /COMBINATION MQA MQL INTERCHANGES THE AC & MQ AND (2) THE
+  10               /MUY INSTRUCTION ADDS THE C(AC) TO THE RESULT.  THE ACTUAL
+  11               /MULTIPLY TIME FOR A 36 BIT PRODUCT IS 230 MICROSECONDS,
+  12               /BUT SIGN-CHECKING AND NORMALIZATION APPROXIMATELY DOUBLE
+  13               /THIS.  A TWO-BIT NORMALIZE REQUIRES 55 MICROSECONDS MORE
+  14               /AND IF THE RESULT IS NEGATIVE A FURTHER 140 MICROSECONDS
+  15               /ARE NEEDED.  THUS THE OVERALL IMPROVEMENT IN PROGRAM SPEED
+  16               /IS CONSIDERABLY LESS THAN FOURTEEN.
+  17               
+  18               /THE HARDWARE DIVIDE INSTRUCTION IS ALSO USED PRIMARILY TO
+  19               /SHORTEN TWO ROUTINES.  A TOTAL OF 43 WORDS ARE MADE AVAIL-
+  20               /ABLE BY THIS PATCH.
+  21               
+  22               /SYSTEM SYMBOLS:
+  23               
+  24                       MUY=7405
+  25                       DVI=7407
+  26                       MQL=7421
+  27                       MQA=7501
+  28                       SWP=MQL MQA
+  29               
+  30                       FIXTAB
+  31               
+  32               /FOCAL SYMBOLS:
+  33               
+  34                       FIELD 1
+  35               
+  36                       AC1H=41
+  37                       AC1L=42
+  38                       OVER1=43
+  39               
+  40                       HORD=45
+  41                       LORD=46
+  42                       OVER2=47
+  43               
+  44                       P177=106
+  45                       P4000=124
+  46                       PRINTC=JMS I 151
+  47               
+  48                       ODG=2501
+  49                       FGO6=6101
+  50                       PTEN=6311
+  51                       DMULT=7004
+  52                       SIGN=7124
+  53                      *2442
+  54               
+  55 012442  0000  PRNT,   0               /PRINT TWO DECIMAL DIGITS
+  56 012443  0106          AND P177
+  57 012444  7427          MQL DVI         /DIVIDE BY TEN
+  58 012445  0012              12
+  59 012446  7521          SWP             /GET QUOTIENT
+  60 012447  4701          JMS I ODG
+  61 012450  7521          SWP             /GET REMAINDER
+  62 012451  4701          JMS I ODG
+  63 012452  5642          JMP I PRNT
+  64               
+  65 012453  0000          ZBLOCK 14       /TWELVE LEFT OVER
+     012454  0000  
+     012455  0000  
+     012456  0000  
+     012457  0000  
+     012460  0000  
+     012461  0000  
+     012462  0000  
+     012463  0000  
+     012464  0000  
+     012465  0000  
+     012466  0000  
+  66               
+  67               
+  68               
+  69                       *FGO6+12        /EXPONENT OUTPUT ROUTINE
+  70               
+  71 016113  7427          MQL DVI         /DIVIDE BY ONE HUNDRED
+  72 016114  0144              144
+  73 016115  7521          SWP             /PRINT QUOTIENT
+  74 016116  7440          SZA             /UNLESS IT'S ZERO
+  75 016117  4334          JMS OUTDG
+  76 016120  7521          SWP             /NOW PRINT REMAINDER
+  77 016121  4723          JMS I .+2
+  78 016122  5701          JMP I FGO6
+  79 016123  2442          PRNT
+  80               
+  81 016124  0000          ZBLOCK 7        /+1 IF "=" SIGN DELETED
+     016125  0000  
+     016126  0000  
+     016127  0000  
+     016130  0000  
+     016131  0000  
+     016132  0000  
+  82               OUTDG=.+1
+  83               
+  84               
+  85                       *PTEN+3
+  86 016314  3147          3147            /COMPENSATE PTEN
+  87               
+  88               
+  89               
+  90               /LETTER ASSIGNMENTS:
+  91               
+  92                       A=HORD
+  93                       B=LORD
+  94                       C=OVER2
+  95               
+  96                       D=AC1H
+  97                       E=AC1L
+  98                       F=OVER1
+  99               /THREE WORD BY THREE WORD UNSIGNED MULTIPLY ROUTINE
+ 100               
+ 101               /  (A+B+C)*(D+E+F) = (ONE+TWO+THREE+FOUR+FIVE+SIX)
+ 102               
+ 103               /THE METHOD GENERATES ALL 6 WORDS BUT IS MODIFIED
+ 104               /HERE TO PRESERVE ONLY THE 3 MOST SIGNIFICANT ONES.
+ 105               /ADDITIONALLY THE RESULT IS ROUNDED OFF RATHER THAN
+ 106               /TRUNCATED WHICH IMPROVES THE ACCURACY.
+ 107               
+ 108                       *DMULT+6
+ 109               
+ 110 017012  1047  CF,     TAD C           /'STL RAR'  FOR 2X2
+ 111 017013  3216          DCA .+3         /'JMP BE-1' FOR 2X2
+ 112 017014  1043          TAD F
+ 113 017015  7425          MQL MUY
+ 114 017016  0000          0
+ 115 017017  7421          MQL             /SAVE HIGH ORDER AND ERASE SIX
+ 116               
+ 117 017020  1046  BF,     TAD B
+ 118 017021  3224          DCA .+3
+ 119 017022  1043          TAD F
+ 120 017023  7525          SWP MUY         /USE PREVIOUS HIGH ORDER AS
+ 121 017024  0000          0               /REMAINDER IN THIS POSITION
+ 122 017025  1124          TAD P4000       /ROUND OFF
+ 123 017026  3301          DCA FOUR        /SAVE INTERMEDIATE RESULT
+ 124 017027  7004          RAL
+ 125 017030  3324          DCA THREE       /SAVE CARRY AND/OR CLEAR THREE
+ 126               
+ 127 017031  1047  CE,     TAD C
+ 128 017032  3235          DCA .+3
+ 129 017033  1042          TAD E
+ 130 017034  7525          SWP MUY         /ADD IN PREVIOUS
+ 131 017035  0000          0               /PARTIAL PRODUCT
+ 132 017036  1301          TAD FOUR        /SUM HIGH ORDER PARTS
+ 133 017037  7421          MQL             /DISCARD FIVE AND SAVE CARRY
+ 134 017040  7430          SZL
+ 135 017041  2324          ISZ THREE       /ACCUMULATE CARRIES
+ 136               
+ 137 017042  1045  AF,     TAD A
+ 138 017043  3246          DCA .+3
+ 139 017044  1043          TAD F
+ 140 017045  7525          SWP MUY
+ 141 017046  0000          0
+ 142 017047  1324          TAD THREE       /BUILD UP LEAST SIGNIFICANT
+ 143 017050  3324          DCA THREE       /PART OF FINAL RESULT
+ 144               
+ 145 017051  1047  CD,     TAD C
+ 146 017052  3255          DCA .+3
+ 147 017053  1041          TAD D
+ 148 017054  7525          SWP MUY
+ 149 017055  0000          0
+ 150 017056  1324          TAD THREE
+ 151 017057  3324          DCA THREE       /ENTRY POINT FOR 2X2
+ 152 017060  1046  BE,    TAD B
+ 153 017061  3264          DCA .+3
+ 154 017062  1042          TAD E
+ 155 017063  7525          SWP MUY         /'MQL MUY'  FOR 2X2
+ 156 017064  0000          0
+ 157 017065  1324          TAD THREE
+ 158 017066  4752          JMS I 7152      /CONTINUE IN MP4 SPACE
+ 159               
+ 160 017067  1045  AD,     TAD A           /FINAL PARTIAL PRODUCT
+ 161 017070  3273          DCA .+3
+ 162 017071  1041          TAD D
+ 163 017072  7525          SWP MUY
+ 164 017073  0000          0
+ 165 017074  3045          DCA HORD        /SAVE ONE
+ 166 017075  7521          SWP
+ 167 017076  3046          DCA LORD        /SAVE TWO
+ 168 017077  4301          JMS MULDIV      /COMPUTE SIGN & NORMALIZE
+ 169 017100  5604          JMP I DMULT
+ 170               MULDIV=.
+ 171               
+ 172               
+ 173                       *7200
+ 174               
+ 175 017200  0000  MP4,    0
+ 176 017201  7421          MQL             /DISCARD FOUR
+ 177 017202  7004          RAL
+ 178 017203  3047          DCA TWO         /BUT SAVE CARRY
+ 179               
+ 180 017204  1045  AE,     TAD A
+ 181 017205  3210          DCA .+3
+ 182 017206  1042          TAD E
+ 183 017207  7525          SWP MUY
+ 184 017210  0000          0
+ 185 017211  1047          TAD TWO         /SUM CARRY BITS
+ 186 017212  3047          DCA TWO         /WITH CARRY WORD
+ 187               
+ 188 017213  1046  BD,     TAD B
+ 189 017214  3217          DCA .+3
+ 190 017215  1041          TAD D
+ 191 017216  7525          SWP MUY
+ 192 017217  0000          0
+ 193 017220  1047          TAD TWO
+ 194 017221  7521          SWP             /'MQL' FOR 2X2
+ 195 017222  3047          DCA OVER2       /SAVE THREE
+ 196 017223  5600          JMP I MP4       /FINISH UP
+ 197               
+ 198 017224  0000          ZBLOCK 30       /TWENTY-FOUR FREE WORDS
+     017225  0000  
+     017226  0000  
+     017227  0000  
+     017230  0000  
+     017231  0000  
+     017232  0000  
+     017233  0000  
+     017234  0000  
+     017235  0000  
+     017236  0000  
+     017237  0000  
+     017240  0000  
+     017241  0000  
+     017242  0000  
+     017243  0000  
+     017244  0000  
+     017245  0000  
+     017246  0000  
+     017247  0000  
+     017250  0000  
+     017251  0000  
+     017252  0000  
+     017253  0000  
+ 199               
+ 200               /NUMBER ASSIGNMENTS:
+ 201               
+ 202                       TWO=OVER2
+ 203                       THREE=SIGN
+ 204                       FOUR=MULDIV
+ 205               
+ 206                       $
+
+A       0045
+AC1H    0041
+AC1L    0042
+AD      7067 unreferenced
+AE      7204 unreferenced
+AF      7042 unreferenced
+B       0046
+BD      7213 unreferenced
+BE      7060 unreferenced
+BF      7020 unreferenced
+C       0047
+CD      7051 unreferenced
+CE      7031 unreferenced
+CF      7012 unreferenced
+D       0041
+DMULT   7004
+DVI     7407
+E       0042
+F       0043
+FGO6    6101
+FOUR    7101
+HORD    0045
+LORD    0046
+MP4     7200
+MQA     7501
+MQL     7421
+MULDIV  7101
+MUY     7405
+ODG     2501
+OUTDG   6134
+OVER1   0043
+OVER2   0047
+P177    0106
+P4000   0124
+PRINTC  4551 unreferenced
+PRNT    2442
+PTEN    6311
+SIGN    7124
+SWP     7521
+THREE   7124
+TWO     0047

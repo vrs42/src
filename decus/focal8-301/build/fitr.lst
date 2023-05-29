@@ -1,0 +1,67 @@
+   1               /IMPROVED FITR() FUNCTION  -JVZ
+   2               
+   3               /THIS ROUTINE REPLACES FOCAL'S NORMAL FITR() FUNCTION WITH
+   4               /ONE WHICH COMPUTES A 35 BIT INTEGER RATHER THAN A 23 BIT
+   5               /ONE.  THIS ELIMINATES THE ROUND-OFF ERRORS WHICH OTHERWISE
+   6               /OCCUR FOR ARGUMENTS WITH MORE THAN 4-5 SIGNIFICANT DIGITS.
+   7               
+   8               /FOCAL SYMBOLS:
+   9               
+  10                       FIELD 1
+  11                       EX1=40
+  12                       EXP=44
+  13                       FNTABF=355
+  14                       NEGATE=4451
+  15                       FLOAT=5512
+  16                       RETURN=5536
+  17                       ABSOLV=5571
+  18                       ALIGN=6623
+  19                       RESOLV=7173
+  20               
+  21                       *34             /PAGE-ZERO SPACE
+  22 010034  6623  ALN,    ALIGN
+  23 010035  5571  ABS,    ABSOLV
+  24 010036  7173  RES,    RESOLV
+  25               
+  26                       *FNTABF+4
+  27 010361  5166          FITR            /NEW LOCATION
+  28               
+  29                       *4724
+  30 014724  5162          FNEG
+  31               
+  32                       *5002
+  33 015002  4362          JMS FNEG
+  34               
+  35                       *5162           /OVERLAP FLAG1
+  36 015162  0000  FNEG,   0
+  37 015163  4451          NEGATE
+  38 015164  7240          CLA CMA
+  39 015165  5762          JMP I FNEG
+  40               
+  41 015166  4435  FITR,   JMS I ABS       /AVOID PROBLEMS
+  42 015167  1044          TAD EXP         /CHECK BINARY POINT
+  43 015170  7750          SPA SNA CLA     /IS ARGUMENT < 1 ?
+  44 015171  5512          FLOAT           /YES, RETURN ZERO
+  45 015172  1375          TAD P43
+  46 015173  3040          DCA EX1
+  47 015174  4434          JMS I ALN       /FORM 35-BIT INTEGER
+  48 015175  0043  P43,    43
+  49 015176  4436          JMS I RES       /CORRECT SIGN
+  50 015177  5536          RETURN
+  51                       $
+
+ABS     0035
+ABSOLV  5571
+ALIGN   6623
+ALN     0034
+EX1     0040
+EXP     0044
+FITR    5166
+FLOAT   5512
+FNEG    5162
+FNTABF  0355
+NEGATE  4451
+P43     5175
+RES     0036
+RESOLV  7173
+RETURN  5536

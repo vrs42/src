@@ -1,0 +1,71 @@
+   1               /UPPER\LOWER CASE SHIFT FOR THE TYPE "" COMMAND         -JVZ-
+   2               
+   3               / THIS PATCH PROVIDES A WAY FOR UPPER CASE DEVICES TO PRODUCE
+   4               /LOWER CASE OUTPUT BY USING A 'SHIFT' CHARACTER (A BACKSLASH)
+   5               /TO TOGGLE BETWEEN UPPER/LOWER CASE. EXAMPLE: T "A\B\C" = AbC
+   6               /THIS IS USEFUL FOR INSTALLATIONS WITH AN UPPER CASE TERMINAL
+   7               /WHO WISH TO MAKE FULL USE OF THE PLOTTER ANNOTATION ROUTINES,
+   8               /OR WHO, PERHAPS, HAVE AN UPPER / LOWER CASE LINEPRINTER.  IT
+   9               /SACRIFICES THE CR QUOTE MATCH, SO ALL QUOTED STRINGS MUST BE
+  10               /TERMINATED PROPERLY.
+  11               
+  12                       FIELD 1
+  13                       CHAR=66
+  14                       START=177
+  15                       AGO=1246
+  16                       TQUOT=1310
+  17                       TLIST2=1626
+  18                       TLIST3=1540
+  19                       PRINTC=4534
+  20               
+  21                       *TLIST2+1
+  22 011627  0334          "\              /CHOOSE ANYTHING YOU LIKE
+  23                       *TLIST3+1
+  24 011541  3343          TSHIFT          /TOGGLE THE SHIFT SWITCH
+  25               
+  26                       *AGO
+  27 011246  3345          TSTART          /CLEAR THE SHIFT SWITCH
+  28               
+  29                       *TQUOT
+  30 011310  3353          SHIFT           /CHECK FOR A CASE SHIFT
+  31                       *TQUOT+7
+  32 011317  5710          JMP I TQUOT     /BEFORE PRINTING THE CHAR
+  33               
+  34                       *3343           /AFTER THE PLOT ROUTINES
+  35 013343  1357  TSHIFT, TAD TSKIP       /TOGGLE THE SHIFT SWITCH
+  36 013344  0350          AND T10
+  37 013345  1177  TSTART, TAD START       /= SKP CLA
+  38 013346  3357          DCA TSKIP
+  39 013347  5764          JMP I QUOTP
+  40               
+  41 013350  0010  T10,    SNL-SKP         /ISOLATE 'SNL' BIT
+  42 013351  0040  T40,    "`-"@
+  43 013352  7440  M340,   -"`             /= 'SZA'
+  44               
+  45 013353  1066  SHIFT,  TAD CHAR        /GET THE TEXT CHARACTER
+  46 013354  1352          TAD M340        /SEE IF IT IS SHIFTABLE
+  47 013355  7120          STL             /( ONLY SHIFT 300-337 )
+  48 013356  1351          TAD T40
+  49 013357  7610  TSKIP,  SKP CLA         /OR 'SNL CLA' AFTER '\'
+  50 013360  1351          TAD T40         /CONVERT TO LOWER CASE
+  51 013361  1066          TAD CHAR
+  52 013362  4534          PRINTC          /PRINT IT
+  53 013363  5764          JMP I QUOTP
+  54 013364  1311  QUOTP,  TQUOT+1         /LOOP UNTIL CLOSING '"'
+  55                       $
+
+AGO     1246
+CHAR    0066
+M340    3352
+PRINTC  4534
+QUOTP   3364
+SHIFT   3353
+START   0177
+T10     3350
+T40     3351
+TLIST2  1626
+TLIST3  1540
+TQUOT   1310
+TSHIFT  3343
+TSKIP   3357
+TSTART  3345

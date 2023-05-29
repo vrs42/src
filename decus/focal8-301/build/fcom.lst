@@ -1,0 +1,130 @@
+   1               /FCOM FUNCTION FOR U/W-FOCAL:  JVZ
+   2               
+   3               /THIS FUNCTION PROVIDES STORAGE AND RETRIEVAL OF VARIABLES
+   4               /IN FIELD 2 AND HENCE REQUIRES A 12K MACHINE.  THIS VER-
+   5               /SION DOES NOT PERFORM ANY ERROR CHECKING AND PRESUMES
+   6               /THAT THE ENTIRE FIELD IS AVAILABLE.  VARIABLES MAY BE
+   7               /STORED EITHER AS 4-WORD FLOATING POINT VALUES OR 2-WORD
+   8               /INTEGERS.  INTEGER STORAGE IS COMPATIBLE WITH THE KE-8E
+   9               /DOUBLE PRECISION EAE INSTRUCTIONS.
+  10               
+  11               /TYPICAL CALLS:  S X=FCOM(N); S X=FCOM(N,Y); X FCOM(N,Z)
+  12               /RECURSIVE CALLS ARE ALLOWED: X FCOM(FCOM(-1,FCOM(-1)+1),Z)
+  13               
+  14               /THE FIRST ARGUMENT IS THE INDEX (SUBSCRIPT) AND DETERMINES
+  15               /THE TYPE AND LOCATION OF STORAGE.  ONLY THE INTEGER PART
+  16               /OF THE INDEX WILL BE USED.  POSITIVE INDEX VALUES: 0,1,2..
+  17               /INDICATE FLOATING POINT (4-WORD) STORAGE, AND NEGATIVE
+  18               /VALUES SPECIFY INTEGER FORMAT (24-BIT).  CONVERSION FROM
+  19               /ONE TYPE TO THE OTHER IS AUTOMATIC.  WHEN ONLY THE
+  20               /INDEX IS GIVEN, 'FCOM' RETURNS THE VALUE OF THAT VARIABLE.
+  21               /IF A SECOND ARGUMENT IS GIVEN ITS VALUE WILL BE STORED
+  22               /AT THAT LOCATION & ALSO RETURNED AS THE FUNCTION VALUE.
+  23               
+  24               /PROVIDING NO INTERVENING PROGRAMS USE FIELD 2, COMMON
+  25               /VARIABLES MAY BE STORED BY ONE FOCAL PROGRAM AND THEN USED
+  26               /LATER BY ANOTHER.  ADDITIONALLY THE APPROPRIATE AREA MAY
+  27               /BE SAVED VIA THE MONITOR 'SAVE' COMMAND AND LATER RELOADED
+  28               /WITH 'GET' BEFORE CALLING IN FOCAL.
+  29               
+  30               /FOCAL SYMBOLS:
+  31               
+  32                       FIELD 1
+  33               
+  34                       AUTO=11
+  35                       EXP=44
+  36                       HORD=45
+  37                       LORD=46
+  38                       OVER2=47
+  39                       CHAR=66
+  40                       MCOM=72
+  41                       END=134
+  42                       EVAL=1613
+  43                       FNTABF=355
+  44                       FNEW=3224
+  45                       FIXIT=4453
+  46                       PUSHA=4542
+  47                       PUSHJ=4540
+  48                       POPA=4537
+  49                       RETURN=5536
+  50               
+  51                       *END
+  52 010134  3302          STVAR           /SYMBOL TABLE ORIGIN
+  53               
+  54                       *FNTABF
+  55 010355  3224          FCOM            /FUNCTION ENTRY POINT
+  56                      *FNEW           /ALSO FITS IN EAE HOLE AT 7250
+  57               
+  58 013224  4453  FCOM,   FIXIT           /FIX INDEX AND SET EXP, OVER2
+  59 013225  4542          PUSHA           /SAVE INDEX ON THE STACK
+  60 013226  1066          TAD CHAR
+  61 013227  1072          TAD MCOM
+  62 013230  7640          SZA CLA         /CHECK FOR A SECOND ARGUMENT
+  63 013231  5251          JMP FETCH
+  64 013232  4540          PUSHJ           /BRING ARGUMENT INTO FLAC
+  65 013233  1612              EVAL-1      /(MAY BE AN EXPRESSION)
+  66 013234  4265          JMS INDEX       /COMPUTE INDEX
+  67 013235  5244          JMP .+7         /NEGATIVE INDEX
+  68               
+  69 013236  1044  STORE,  TAD EXP         /FLOATING STORAGE
+  70 013237  3411          DCA I AUTO
+  71 013240  1047          TAD OVER2
+  72 013241  3411          DCA I AUTO
+  73 013242  1046          TAD LORD
+  74 013243  7410          SKP
+  75 013244  4453          FIXIT           /INTEGER STORAGE
+  76 013245  3411          DCA I AUTO
+  77 013246  1045          TAD HORD
+  78 013247  3411          DCA I AUTO
+  79 013250  5263          JMP INDEX-2     /FUNCTION RETURN
+  80               
+  81 013251  4265  FETCH,  JMS INDEX       /COMPUTE INDEX
+  82 013252  5257          JMP .+5         /NOTE: EXP=27, OVER2=0
+  83 013253  1411          TAD I AUTO      /FLOATING RETRIEVAL
+  84 013254  3044          DCA EXP
+  85 013255  1411          TAD I AUTO
+  86 013256  3047          DCA OVER2
+  87 013257  1411          TAD I AUTO      /INTEGER RETRIEVAL
+  88 013260  3046          DCA LORD
+  89 013261  1411          TAD I AUTO
+  90 013262  3045          DCA HORD
+  91 013263  6211          CDF 10
+  92 013264  5536          RETURN          /RETURN FLOATS INTEGERS
+  93               
+  94 013265  0000  INDEX,  0               /COMPUTE INDEX AND BRANCH
+  95 013266  4537          POPA            /EXAMINE ARGUMENT
+  96 013267  7510          SPA             /FLOATING
+  97 013270  5274          JMP .+4         /INTEGER
+  98 013271  2265          ISZ INDEX       /SET POSITIVE RETURN
+  99 013272  7106          CLL RTL         /MULTIPLY INDEX BY FOUR
+ 100 013273  7410          SKP
+ 101 013274  7144          CMA CLL RAL     /-(I+1)*2 FOR INTEGERS
+ 102 013275  7041          CIA             /SUBTRACT
+ 103 013276  7040          CMA             /ONE
+ 104 013277  3011          DCA AUTO        /LOAD INDEX REGISTER
+ 105 013300  6221          CDF 20          /COMMON STORAGE IN FIELD 2
+ 106 013301  5665          JMP I INDEX
+ 107               STVAR=.
+ 108                       $
+
+AUTO    0011
+CHAR    0066
+END     0134
+EVAL    1613
+EXP     0044
+FCOM    3224
+FETCH   3251
+FIXIT   4453
+FNEW    3224
+FNTABF  0355
+HORD    0045
+INDEX   3265
+LORD    0046
+MCOM    0072
+OVER2   0047
+POPA    4537
+PUSHA   4542
+PUSHJ   4540
+RETURN  5536
+STORE   3236 unreferenced
+STVAR   3302

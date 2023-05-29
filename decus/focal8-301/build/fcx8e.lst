@@ -1,0 +1,523 @@
+   1               /FOCAL PATCHES FOR 8/E EAE  JVZ
+   2               
+   3               /THESE PATCHES SUBSTANTIALLY REWRITE FOCAL'S MULTIPLY AND
+   4               /NORMALIZE ROUTINES IN ORDER TO USE EAE INSTRUCTIONS.  THE
+   5               /HARDWARE ASSUMED IS A PDP-8/E EXTENDED ARITHMETIC ELEMENT
+   6               /TYPE KE8-E.  MODE B INSTRUCTIONS ARE USED EXTENSIVELY. THE
+   7               /MEASURED EXECUTION TIME FOR A 36 BIT BY 36 BIT MULTIPLY
+   8               /IS ONLY 155 MICROSECONDS - ABOUT HALF THE TIME NEEDED FOR
+   9               /ONE 12 BIT PRODUCT (OF WHICH THERE ARE 9) USING THE STAN-
+  10               /DARD SOFTWARE ROUTINES AND FASTER BY A FACTOR OF 4.5 THAN
+  11               /THE PATCH SHOWN ON P. 89 OF THE FOCAL LISTING.  SIMILARLY
+  12               /THE TIME FOR A 1 BIT NORMALIZE HAS BEEN DECREASED BY A
+  13               /FACTOR OF 2.  FOR NEGATIVE NUMBERS A FACTOR OF 3 IS OB-
+  14               /TAINED SINCE NO INVERSION IS REQUIRED.  DIVIDE AND SOME
+  15               /OTHER ROUTINES HAVE ALSO BEEN REWRITTEN IN ORDER TO CON-
+  16               /SOLIDATE EMPTY AREAS.  THESE MODIFICATIONS MAKE AVAILABLE
+  17               /76 WORDS AND CHANGE THE ZERO-DIVISOR ERROR CODE TO 28.<1.
+  18               
+  19               /EAE INSTRUCTIONS:
+  20               
+  21                       MUY=7405
+  22                       DVI=7407
+  23                       NMI=7411
+  24                       SHL=7413
+  25                       MQL=7421
+  26                       SWAB=7431
+  27                       SCA=7441
+  28                       DST=7445
+  29                       SWBA=7447
+  30                       DPSZ=7451
+  31                       SWP=7521
+  32                       DCM=7575
+  33                       CAM=7621
+  34                       ACL=7701
+  35               
+  36                       FIXTAB
+  37               
+  38               /FOCAL INSTRUCTIONS:
+  39               
+  40                       NEGATE=4451     /JMS I  51
+  41                       SHIFTL=4527     /JMS I 127
+  42                       PRINTC=4551     /JMS I 151
+  43                       ERROR2=4566     /JMS I 166
+  44               
+  45               /FOCAL SYMBOLS:
+  46               
+  47                       FLOP=40         /OPERAND
+  48                       FLAC=44         /ACCUMULATOR
+  49                       SIGNF=50        /SIGN OF RESULT
+  50                       P177=106
+  51                       P4000=124
+  52                       ODG=2501
+  53                       FPNT=6400
+  54               
+  55                       REKOVR=5756     /FIELD 0
+  56                      FIELD 0
+  57               
+  58                       *REKOVR
+  59 005756  7447          SWBA            /RESET MODE FOR ERROR PRINTOUT
+  60               
+  61               
+  62                       FIELD 1
+  63               
+  64                       *2442
+  65 012442  0000  PRNT,   0               /PRINT TWO DECIMAL DIGITS
+  66 012443  0106          AND P177
+  67 012444  7427          MQL DVI         /DIVIDE BY TEN
+  68 012445  0012              12
+  69 012446  7521          SWP             /GET QUOTTENT
+  70 012447  4701          JMS I ODG
+  71 012450  7521          SWP             /GET REMAINDER
+  72 012451  4701          JMS I ODG
+  73 012452  5642          JMP I PRNT
+  74               
+  75 012453  0000          ZBLOCK 14       /TWELVE LEFT OVER
+     012454  0000  
+     012455  0000  
+     012456  0000  
+     012457  0000  
+     012460  0000  
+     012461  0000  
+     012462  0000  
+     012463  0000  
+     012464  0000  
+     012465  0000  
+     012466  0000  
+  76               
+  77                       *6113           /EXPONENT OUTPUT ROUTINE
+  78 016113  7427          MQL DVI         /DIVIDE BY ONE HUNDRED
+  79 016114  0144              144
+  80 016115  7521          SWP             /PRINT QUOTIENT
+  81 016116  7440          SZA             /UNLESS IT'S ZERO
+  82 016117  4334          JMS OUTDG
+  83 016120  7521          SWP             /NOW PRINT REMAINDER
+  84 016121  4723          JMS I .+2
+  85 016122  5701          JMP I 6101      /FGO6
+  86 016123  2442          PRNT
+  87               
+  88 016124  0000          ZBLOCK 7        /+1 IF "=" SIGN DELETED
+     016125  0000  
+     016126  0000  
+     016127  0000  
+     016130  0000  
+     016131  0000  
+     016132  0000  
+  89               OUTDG=.+1
+  90               
+  91               /POINTERS REQUIRING CHANGES:
+  92               
+  93                       *6304
+  94 016304  7157  RESOL5, RESOLV          /FOR FLOATING INPUT
+  95               
+  96                       *6314
+  97 016314  3147          3147            /COMPENSATE PTEN
+  98               
+  99                       *6565
+ 100 016565  7142  OPMINS, MINUS           /FOR SUBTRACTION
+ 101               
+ 102                       *6576
+ 103 016576  7165          FLDV            /FOR DIVISION
+ 104               
+ 105                       *6752
+ 106 016752  7157  RESOL,  RESOLV          /FOR FIX
+ 107               /THREE WORD BY THREE WORD UNSIGNED MULTIPLY ROUTINE
+ 108               
+ 109               /  (A+B+C)*(D+E+F) = (ONE+TWO+THREE+FOUR+FIVE+SIX)
+ 110               
+ 111               /THE METHOD GENERATES ALL 6 WORDS, BUT IS MODIFIED
+ 112               /HERE TO PRESERVE ONLY THE 3 MOST SIGNIFICANT ONES.
+ 113               /ADDITIONALLY THE RESULT IS ROUNDED OFF RATHER THAN
+ 114               /SIMPLY TRUNCATED WHICH IMPROVES THE ACCURACY.
+ 115               
+ 116                       *7004
+ 117               
+ 118 017004  0000  MULT,   0
+ 119 017005  1040          TAD EX1
+ 120 017006  4316          JMS SIGN        /ADD EXPONENTS (PLUS 1)
+ 121 017007  7450          SNA             /TEST FOR ZERO OPERAND
+ 122 017010  5335          JMP ZER0
+ 123 017011  7710          SPA CLA         /POSITIVE OPERAND REQUIRED
+ 124 017012  4342          JMS MINUS
+ 125 017013  7431          SWAB            /SET MODE B
+ 126               
+ 127 017014  1047  CF,     TAD C           /(STL RAR) FOR 2X2
+ 128 017015  7425          MQL MUY         /(JMP BE-1) FOR 2X2
+ 129 017016  0043          F
+ 130 017017  7421          MQL             /SAVE HIGH ORDER & ERASE SIX
+ 131               
+ 132 017020  1046  BF,     TAD B
+ 133 017021  7525          SWP MUY         /USE PREVIOUS HIGH ORDER AS
+ 134 017022  0043          F               /REMAINDER IN THIS POSITION
+ 135 017023  1124          TAD P4000       /ROUND OFF
+ 136 017024  3357          DCA FOUR        /SAVE INTERMEDIATE RESULT
+ 137 017025  7004          RAL
+ 138 017026  3342          DCA THREE       /SAVE CARRY AND/OR CLEAR THREE
+ 139               
+ 140 017027  1047  CE,     TAD C
+ 141 017030  7525          SWP MUY         /ADD IN PREVIOUS
+ 142 017031  0042          E               /PARTIAL PRODUCT
+ 143 017032  1357          TAD FOUR        /SUM HIGH ORDER PARTS
+ 144 017033  7421          MQL             /DISCARD FIVE AND SAVE CARRY
+ 145 017034  7430          SZL
+ 146 017035  2342          ISZ THREE       /ACCUMULATE CARRIES
+ 147               
+ 148 017036  1045  AF,     TAD A
+ 149 017037  7525          SWP MUY
+ 150 017040  0043          F
+ 151 017041  1342          TAD THREE       /BUILD UP LEAST SIGNIFICANT
+ 152 017042  3342          DCA THREE       /PART OF FINAL RESULT
+ 153               
+ 154 017043  1047  CD,     TAD C
+ 155 017044  7525          SWP MUY
+ 156 017045  0041          D
+ 157 017046  1342          TAD THREE
+ 158 017047  3342          DCA THREE       /ENTRY POINT FOR 2X2
+ 159 017050  1046  BE,    TAD B
+ 160 017051  7525          SWP MUY
+ 161 017052  0042          E
+ 162 017053  1342          TAD THREE
+ 163 017054  7421          MQL             /DISCARD FOUR
+ 164 017055  7004          RAL
+ 165 017056  3316          DCA TWO         /SAVE CARRY
+ 166               
+ 167 017057  1045  AE,     TAD A
+ 168 017060  7525          SWP MUY
+ 169 017061  0042          E
+ 170 017062  1316          TAD TWO         /SUM CARRY BITS
+ 171 017063  3316          DCA TWO         /WITH CARRY WORD
+ 172               
+ 173 017064  1046  BD,     TAD B
+ 174 017065  7525          SWP MUY
+ 175 017066  0041          D
+ 176 017067  1316          TAD TWO
+ 177 017070  7521          SWP             /(MQL) FOR 2X2
+ 178 017071  3047          DCA OVER2       /SAVE THREE
+ 179               
+ 180 017072  1045  AD,     TAD A
+ 181 017073  7525          SWP MUY
+ 182 017074  0041          D
+ 183 017075  7565          SWP DST         /SAVE ONE & TWO
+ 184 017076  0045              HORD
+ 185               
+ 186 017077  4702          JMS I NORM      /NORMALIZE IF REQUIRED
+ 187 017100  4357          JMS RESOLV      /RESTORE PROPER SIGN
+ 188 017101  5604          JMP I MULT      /AND RETURN
+ 189 017102  7335  NORM,   DNORM
+ 190               
+ 191 017103  0000          ZBLOCK 13       /ELEVEN FREE WORDS
+     017104  0000  
+     017105  0000  
+     017106  0000  
+     017107  0000  
+     017110  0000  
+     017111  0000  
+     017112  0000  
+     017113  0000  
+     017114  0000  
+     017115  0000  
+ 192               
+ 193               /STANDARD DEFINITIONS:
+ 194               
+ 195                       EX1=FLOP
+ 196                       AC1H=FLOP+1
+ 197                       AC1L=FLOP+2
+ 198                       OVER1=FLOP+3
+ 199               
+ 200                       EXP=FLAC
+ 201                       HORD=FLAC+1
+ 202                       LORD=FLAC+2
+ 203                       OVER2=FLAC+3
+ 204               
+ 205               /LETTER ASSIGNMENTS:
+ 206               
+ 207                       A=HORD          /FLAC
+ 208                       B=LORD
+ 209                       C=OVER2
+ 210               
+ 211                       D=AC1H          /OPERAND
+ 212                       E=AC1L
+ 213                       F=OVER1
+ 214               /THESE SUBROUTINES PREPARE MULTIPLY AND DIVIDE FOR
+ 215               /ANY COMBINATION OF SIGNED ARGUMENTS, OR FOR ZERO.
+ 216               /THE RESULT OF EITHER IS ZERO IF FLAC IS ZERO; IF
+ 217               /THE OPERAND IS ZERO THE PRODUCT IS ALSO ZERO, BUT
+ 218               /ATTEMPTED DIVISION BY ZERO RETURNS WITH AN ERROR.
+ 219               
+ 220               /THE SIGN ROUTINE IS ENTERED WITH THE OPERAND EXPO-
+ 221               /NENT IN THE AC AND EXITS WITH THE SIGN OF THE OP-
+ 222               /ERAND THERE TO FACILITATE FURTHER TESTING. THE
+ 223               /SIGN OF THE RESULT IS STORED IN SIGNF.
+ 224               
+ 225 017116  0000  SIGN,   0
+ 226 017117  7001          IAC             /ADD 1 TO EXPONENT OF OP.
+ 227 017120  1044          TAD EXP         /COMPUTE EXPONENT OF RESULT
+ 228 017121  3044          DCA EXP
+ 229 017122  7130          STL RAR         /SET BIT 0
+ 230 017123  0041          AND AC1H        /EXTRACT SIGN
+ 231 017124  1045          TAD HORD        /FORM XOR OF SIGNS
+ 232 017125  3050          DCA SIGNF       /SIGN OF RESULT
+ 233 017126  1045          TAD HORD
+ 234 017127  7450          SNA             /TEST IF RESULT = ZERO
+ 235 017130  5335          JMP ZER0
+ 236 017131  7710          SPA CLA         /ABSOLUTE VALUE REQUIRED
+ 237 017132  4451          NEGATE
+ 238 017133  1041          TAD AC1H        /CHECK THE OPERAND
+ 239 017134  5716          JMP I SIGN      /FOR VARIOUS THINGS
+ 240               
+ 241 017135  3044  ZER0,   DCA FLAC
+ 242 017136  3045          DCA HORD
+ 243 017137  3046          DCA LORD
+ 244 017140  5741          JMP I .+1       /CLEARS 'OVER2'
+ 245 017141  6403          FPNT+3
+ 246               
+ 247 017142  0000  MINUS,  0               /NEGATES OPERAND
+ 248 017143  1043          TAD OVER1
+ 249 017144  7431          SWAB
+ 250 017145  1042          TAD AC1L
+ 251 017146  7575          DCM
+ 252 017147  7565          SWP DST
+ 253 017150  0042              AC1L
+ 254 017151  7447          SWBA
+ 255 017152  7224          CLA CML RAL
+ 256 017153  1041          TAD AC1H
+ 257 017154  7041          CIA
+ 258 017155  3041          DCA AC1H
+ 259 017156  5742          JMP I MINUS
+ 260               
+ 261 017157  0000  RESOLV, 0               /SET PROPER SIGN
+ 262 017160  1050          TAD SIGNF
+ 263 017161  7710          SPA CLA
+ 264 017162  4451          NEGATE
+ 265 017163  5757          JMP I RESOLV
+ 266               
+ 267 017164  7735  M43,    -43             /SHIFT COUNT FOR DIVIDE
+ 268               /THIS IS THE FLOATING DIVIDE ROUTINE (THREE WORDS)
+ 269               
+ 270 017165  1040  FLDV,   TAD EX1         /GET OPERAND EXPONENT
+ 271 017166  7041          CIA             /AND NEGATE
+ 272 017167  4316          JMS SIGN        /CHECK SIGNS & ZERO
+ 273 017170  7450          SNA             /CHECK FOR ZERO DIVISOR
+ 274 017171  4566          ERROR2          /THAT'S A NO-NO!
+ 275 017172  7700          SMA CLA
+ 276 017173  4342          JMS MINUS       /NEGATIVE OPERAND REQUIRED
+ 277 017174  1364          TAD M43         /SET UP LOOP COUNT
+ 278 017175  3040          DCA EX1
+ 279 017176  7431          SWAB            /CLEAR RESULT
+ 280 017177  7410          SKP
+ 281               
+ 282 017200  4527  DLOOP,  SHIFTL          /SHIFT FLAC LEFT
+ 283 017201  7100          CLL             /THREE WORD SUBTRACTION
+ 284 017202  1043          TAD OVER1
+ 285 017203  1047          TAD OVER2
+ 286 017204  3335          DCA DNORM       /TEMPORARY STORAGE
+ 287 017205  7004          RAL
+ 288 017206  1042          TAD AC1L
+ 289 017207  1046          TAD LORD
+ 290 017210  3364          DCA SCNT
+ 291 017211  7004          RAL
+ 292 017212  1041          TAD AC1H
+ 293 017213  1045          TAD HORD
+ 294 017214  7420          SNL             /LINK=1 IF SUCCESSFUL (EG >0)
+ 295 017215  5223          JMP .+6
+ 296 017216  3045          DCA HORD        /SAVE RESULT
+ 297 017217  1364          TAD SCNT
+ 298 017220  3046          DCA LORD
+ 299 017221  1335          TAD DNORM
+ 300 017222  3047          DCA OVER2
+ 301 017223  7701          ACL             /SAVE LINK BITS IN QHI,QLO,MQ
+ 302 017224  7004          RAL
+ 303 017225  7421          MQL
+ 304 017226  1377          TAD QLO
+ 305 017227  7004          RAL
+ 306 017230  3377          DCA QLO
+ 307 017231  1376          TAD QHI
+ 308 017232  7004          RAL
+ 309 017233  3376          DCA QHI
+ 310 017234  2040          ISZ EX1         /INCREMENT STEP COUNTER
+ 311 017235  5200          JMP DLOOP
+ 312               
+ 313 017236  1376          TAD QHI         /SAVE RESULT AT THE END
+ 314 017237  3045          DCA HORD
+ 315 017240  1377          TAD QLO
+ 316 017241  7565          SWP DST
+ 317 017242  0046              LORD
+ 318 017243  4335          JMS DNORM       /NORMALIZE IF NECESSARY
+ 319 017244  4647          JMS I RSLV      /SET PROPER SIGN
+ 320 017245  5646          JMP I .+1
+ 321 017246  6401          FPNT+1
+ 322 017247  7157  RSLV,   RESOLV
+ 323 017250  0000         ZBLOCK 56       /FREE SPACE
+     017251  0000  
+     017252  0000  
+     017253  0000  
+     017254  0000  
+     017255  0000  
+     017256  0000  
+     017257  0000  
+     017260  0000  
+     017261  0000  
+     017262  0000  
+     017263  0000  
+     017264  0000  
+     017265  0000  
+     017266  0000  
+     017267  0000  
+     017270  0000  
+     017271  0000  
+     017272  0000  
+     017273  0000  
+     017274  0000  
+     017275  0000  
+     017276  0000  
+     017277  0000  
+     017300  0000  
+     017301  0000  
+     017302  0000  
+     017303  0000  
+     017304  0000  
+     017305  0000  
+     017306  0000  
+     017307  0000  
+     017310  0000  
+     017311  0000  
+     017312  0000  
+     017313  0000  
+     017314  0000  
+     017315  0000  
+     017316  0000  
+     017317  0000  
+     017320  0000  
+     017321  0000  
+     017322  0000  
+     017323  0000  
+     017324  0000  
+     017325  0000  
+ 324               
+ 325               /EAE SIGNED NORMALIZE ROUTINE: (THREE WORDS)
+ 326               
+ 327 017326  7411  GT13,   NMI             /NORMALIZE LOWER PART
+ 328 017327  7565          SWP DST
+ 329 017330  0045              HORD
+ 330 017331  7661          CAM SCA         /GET NEW SHIFT COUNT
+ 331 017332  1334          TAD P14         /PLUS TWELVE
+ 332 017333  5367          JMP ALL0-2
+ 333 017334  0014  P14,    14
+ 334               
+ 335 017335  0000  DNORM,  0
+ 336 017336  7300          CLA CLL         /CLEAR LINK FOR LATER
+ 337 017337  1046          TAD LORD
+ 338 017340  7421          MQL             /LOAD AC, MQ
+ 339 017341  1045          TAD HORD
+ 340 017342  7447          SWBA            /SET MODE A TO
+ 341 017343  7411          NMI             /PROTECT 4000 0000
+ 342 017344  7431          SWAB            /SAVE RESULT IN MQ
+ 343 017345  7441          SCA             /GET SHIFT COUNT
+ 344 017346  7451          DPSZ            /CHECK FOR ZERO
+ 345 017347  7141          CLL CIA
+ 346 017350  1334          TAD P14         /SET LINK IF < TWELVE
+ 347 017351  7641          CLA SCA
+ 348 017352  3364          DCA SCNT        /SAVE SHIFT COUNT
+ 349 017353  1047          TAD OVER2
+ 350 017354  7571          SWP DPSZ        /CHECK FOR ZERO
+ 351 017355  7410          SKP             /AC=RESULT
+ 352 017356  5371          JMP ALL0
+ 353               
+ 354 017357  3045          DCA HORD
+ 355 017360  1046          TAD LORD
+ 356 017361  7420          SNL             /.GE. TWELVE ?
+ 357 017362  5326          JMP GT13        /YES: IGNORE SIGN BITS
+ 358 017363  7413          SHL             /MODE B
+ 359 017364  0000  SCNT,   0
+ 360 017365  3046          DCA LORD
+ 361 017366  1364          TAD SCNT        /CORRECT EXPONENT
+ 362 017367  7041          CIA
+ 363 017370  1044          TAD EXP
+ 364 017371  3044  ALL0,   DCA EXP
+ 365 017372  7521          SWP             /CLEAR MQ
+ 366 017373  3047          DCA OVER2       /SAVE OR CLEAR LAST WORD
+ 367 017374  7447          SWBA            /RESTORE MODE A
+ 368 017375  5735          JMP I DNORM
+ 369               
+ 370 017376  0000  QHI,    0
+ 371 017377  0000  QLO,    0
+ 372               
+ 373               TWO=    SIGN
+ 374               THREE=  MINUS
+ 375               FOUR=   RESOLV
+ 376                       $
+
+A       0045
+AC1H    0041
+AC1L    0042
+ACL     7701
+AD      7072 unreferenced
+AE      7057 unreferenced
+AF      7036 unreferenced
+ALL0    7371
+B       0046
+BD      7064 unreferenced
+BE      7050 unreferenced
+BF      7020 unreferenced
+C       0047
+CAM     7621
+CD      7043 unreferenced
+CE      7027 unreferenced
+CF      7014 unreferenced
+D       0041
+DCM     7575
+DLOOP   7200
+DNORM   7335
+DPSZ    7451
+DST     7445
+DVI     7407
+E       0042
+ERROR2  4566
+EX1     0040
+EXP     0044
+F       0043
+FLAC    0044
+FLDV    7165
+FLOP    0040
+FOUR    7157
+FPNT    6400
+GT13    7326
+HORD    0045
+LORD    0046
+M43     7164
+MINUS   7142
+MQL     7421
+MULT    7004
+MUY     7405
+NEGATE  4451
+NMI     7411
+NORM    7102
+ODG     2501
+OPMINS  6565 unreferenced
+OUTDG   6134
+OVER1   0043
+OVER2   0047
+P14     7334
+P177    0106
+P4000   0124
+PRINTC  4551 unreferenced
+PRNT    2442
+QHI     7376
+QLO     7377
+REKOVR  5756
+RESOL   6752 unreferenced
+RESOL5  6304 unreferenced
+RESOLV  7157
+RSLV    7247
+SCA     7441
+SCNT    7364
+SHIFTL  4527
+SHL     7413
+SIGN    7116
+SIGNF   0050
+SWAB    7431
+SWBA    7447
+SWP     7521
+THREE   7142
+TWO     7116
+ZER0    7135

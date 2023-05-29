@@ -1,0 +1,55 @@
+   1               / PATCH TO 'FCOM' TO ADDRESS FIELDS 4-7         -JVZ-
+   2               
+   3               /THIS PATCH MODIFIES THE 'INDEX' ROUTINE SO THAT POSITIVE
+   4               /INDICES FROM 0-4095 MAY BE USED TO ADDRESS ALL LOCATIONS
+   5               /IN FIELDS 4-7.  THE 'NEGATIVE INDEX' FEATURE HAS BEEN
+   6               /ELIMINATED: ONLY FLOATING-POINT STORAGE IS AVAILABLE.
+   7               
+   8               /THE CHANGES ARE CONSTRUCTED SO THAT THEY DO NOT INTER-
+   9               /FERE WITH 'FRA' WHICH ALSO USES SOME 'FCOM' ROUTINES.
+  10               
+  11                       XRT=14
+  12                       PUT=4410
+  13                       GET=4423
+  14                       INDEX=4437
+  15                       POPA=4521
+  16                       ERROR2=4576
+  17               
+  18                       FIELD 0
+  19                       *45
+  20 000045  6362          6362            /'32K'
+  21               
+  22                       FIELD 1
+  23               
+  24                       *PUT-1
+  25 014407  7000          NOP             /ELIMINATE THE 'NEG.' RETURN
+  26               
+  27                       *GET
+  28 014423  6241          CDF 40          /USE THIS LOC. FOR A CONSTANT
+  29 014424  4237          JMS INDEX       /AND MOVE THIS DOWN ONE
+  30               
+  31                       *INDEX+1
+  32 014440  4521          POPA            /EXAMINE THE ARGUMENT
+  33 014441  7106          CLL RTL         /MULTIPLY THE INDEX BY 4
+  34 014442  3014          DCA XRT         /LEAVING THE FIELD INFO
+  35 014443  7001          IAC             /IN BIT 11 AND THE LINK
+  36 014444  0014          AND XRT
+  37 014445  7006          RTL             /SHIFT THE FIELD BITS OVER
+  38 014446  7006          RTL
+  39 014447  1223          TAD GET         /ADD THE 'CDF' INSTRUCTION
+  40 014450  3256          DCA .+6         /AND SAVE FOR LATER
+  41 014451  7144          CMA CLL RAL     /=7776
+  42 014452  0014          AND XRT         /CLEAN UP THE INDEX
+  43 014453  7041          CIA
+  44 014454  7040          CMA             /SUBTRACT ONE
+  45 014455  3014          DCA XRT         /AND PUT IT RIGHT BACK
+  46 014456  6151          CDF 40-70
+  47 014457  5637          JMP I INDEX     /DF AND XRT ARE BOTH SET
+  48                       $
+
+ERROR2  4576 unreferenced
+GET     4423
+INDEX   4437
+POPA    4521
+PUT     4410
+XRT     0014

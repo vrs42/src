@@ -1,0 +1,110 @@
+   1               /FOCAL FUNCTIONS FOR A PDP12    -JVZ-
+   2               
+   3               /THESE ROUTINES PROVIDE THREE FUNCTIONS FOR A PDP12
+   4               
+   5               /FDIS(X,Y) DISPLAYS A POINT ON THE OSCILLOSCOPE.
+   6               /FADC(N) READS ANALOG CHANNEL N
+   7               /FRLY(R) SETS THE RELAY REGIISTER: R=1 CLOSES RELAY 5, R=2
+   8               /CLOSES RELAY 4; R=4 CLOSES RELAY 3....R=64 CLOSES RELAY 0
+   9               
+  10               /SYMBOL DEFINITIONS:
+  11               
+  12                       FIELD 1
+  13               
+  14                       ATR=0014
+  15                       C100=111
+  16                       END=134
+  17                       DIS=0140
+  18                       EVAL=1613
+  19                       FIXIT=4453
+  20                       FLOAT=5512
+  21                       FNTABF=355
+  22                       FNTABL=2155
+  23                       FNEW=3224       /MAY BE DIFFERENT
+  24                       LINC=6141
+  25                       PDP=0002
+  26                       PUSHJ=4540
+  27                       RETURN=5536
+  28               
+  29                       *END
+  30 010134  3232          STVAR           /LOSE 1 VARIABLE
+  31               
+  32               
+  33                       *FNTABF+17      /ENTRY POINTS
+  34 010374  1343          FADC
+  35               
+  36                       *FNTABF+22
+  37 010377  1142          FDIS
+  38               
+  39                       *FNTABF+32
+  40 010407  1155          FRLY
+  41               
+  42               
+  43                       *FNTABL+17      /CODED NAMES
+  44 012174  2517          "A^2+"D^2+"C
+  45               
+  46                       *FNTABL+22
+  47 012177  2565          "D^2+"I^2+"S
+  48               
+  49                       *FNTABL+32
+  50 012207  2671          "R^2+"L^2+"Y
+  51                      *1142
+  52 011142  4453  FDIS,   FIXIT           /CONVERT X TO AN INTEGER
+  53 011143  3016          DCA 16          /BETA REGISTER
+  54 011144  4540          PUSHJ
+  55 011145  1612              EVAL-1      /SKIP COMMA, GET Y
+  56 011146  4453          FIXIT           /CONVERT Y TO AN INTEGER
+  57 011147  6002          IOF             /PREVENT LINC MODE INTERRUPTS
+  58 011150  6141          LINC
+  59 011151  0156          DIS 16          /PLOT A POINT AT (X,Y)
+  60 011152  0002          PDP
+  61 011153  6001          ION
+  62 011154  5536          RETURN
+  63               
+  64 011155  4453  FRLY,   FIXIT           /LOAD AC 6-11
+  65 011156  5757          JMP I .+1
+  66 011157  3224          FNEW
+  67               
+  68               
+  69                       *1343
+  70 011343  4453  FADC,   FIXIT           /PUT CHANNEL NUMBER IN AC
+  71 011344  1111          TAD C100        /'SAM'=0100
+  72 011345  3350          DCA SAM
+  73 011346  6002          IOF
+  74 011347  6141          LINC
+  75 011350  0000  SAM,    0               /READ CHANNEL N
+  76 011351  0002          PDP
+  77 011352  6001          ION
+  78 011353  5512          FLOAT           /CONVERT TO F.P.
+  79               
+  80               
+  81               
+  82                       *FNEW           /AFTER THE ZERO COMMAND
+  83 013224  6002          IOF
+  84 013225  6141          LINC
+  85 013226  0014          ATR             /SET RELAYS
+  86 013227  0002          PDP
+  87 013230  6001          ION
+  88 013231  5536          RETURN
+  89               STVAR=.                 /COULD EASILY ADD OTHER FUNCTIONS
+  90                       $
+
+ATR     0014
+C100    0111
+DIS     0140
+END     0134
+EVAL    1613
+FADC    1343
+FDIS    1142
+FIXIT   4453
+FLOAT   5512
+FNEW    3224
+FNTABF  0355
+FNTABL  2155
+FRLY    1155
+LINC    6141
+PDP     0002
+PUSHJ   4540
+RETURN  5536
+SAM     1350
+STVAR   3232

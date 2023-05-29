@@ -1,0 +1,982 @@
+   1               / PDP12 OVERLAY FOR 16K U/W-FOCAL(V-4E)         -JVZ-
+   2               / 16KXII.PA
+   3               /REVISIONS:
+   4               /       I/O PRESET ADDED AT 5400
+   5               /       
+   6               
+   7               /THIS OVERLAY ADDS THE SCOPE HANDLER, THE 'OUTPUT SCOPE',
+   8               /'VIEW', 'HESITATE', AND 'KONTROL' COMMANDS,  AND 8 NEW
+   9               /FUNCTIONS: 'FLS', 'FRS' 'FSS', 'FXL', 'FADC' AND 'FTIM'
+  10               /'FBUF' AND 'FTRG' FOR 16K PDP12 USERS.
+  11               
+  12               /THE FUNCTIONS 'FLS', 'FRS', 'FSS' AND 'FXL' PROVIDE AC-
+  13               /CESS TO THE LEFT AND RIGHT SWITCHES, THE SENSE SWITCHES,
+  14               /AND THE 'EXTERNAL LEVELS'.  'FADC' HAS BEEN MODIFIED TO
+  15               /READ ANY OF THE 16 ANALOG CHANNELS WHILE 'FTIM' CAN BE
+  16               /USED TO KEEP TRACK OF THE CLOCK AND 'FBUF' PROVIDES AC-
+  17               /CESS TO THE POINT-PLOT DISPLAY BUFFER.  'FTRG' MONITORS
+  18               /THE OCCURANCE OF ANY SIGNALS DETECTED BY THE SCHMITTS.
+  19               
+  20               /'FLS' RETURNS AN UNSIGNED VALUE FROM THE LEFT SWITCHES
+  21               /'FRS' (THE SAME AS 'FSR') RETURNS A SIGNED VALUE
+  22               /'FSS(N)' RETURNS -1 IF SWITCH N IS OFF, +1 IF IT IS ON
+  23               /'FXL(N)' RETURNS -1 IF THE LINE IS OPEN, +1 IF LOW
+  24               /'FADC(N)' READS CHANNEL N (RANGE -512 TO +511)
+  25               /'FTIM()' RETURNS THE NUMBER OF CLOCK OVERFLOWS
+  26               /'FTIM(-1)' ZEROS THE COUNTER AND 'FTIM(N)' PRESETS IT
+  27               /'FBUF(I)' RETURNS THE VALUE AT RELATIVE LOCATION 'I'
+  28               /'FUBF(I,J)' STORES VALUE OF EXPRESSION J AT LOC. 'I'
+  29               /'FTRG()' WILL RETURN THE WEIGHTED SUM OF ALL EVENTS.
+  30               /'FTRG(2)' WILL ONLY CHECK (AND CLEAR) INPUT 3, ETC.
+  31               
+  32               /THE 'KONTROL' COMMAND LOADS THE RELAY REGISTER AND THE
+  33               /'HESITATE' COMMAND RUNS THE CLOCK.  THE LATTER IS SOME-
+  34               /WHAT COMPLICATED: BOTH THE OSCILLATOR FREQUENCY AND THE
+  35               /NUMBER OF CLOCK PULSES TO COUNT BEFORE GENERATING AN
+  36               /OVERFLOW CAN BE SET.  THE OSCILLATOR FREQUENCY IS PRO-
+  37               /GRAMMED BY A -NEGATIVE- ARGUMENT WHILE THE NUMBER OF
+  38               /PULSES IS SPECIFIED AS A -POSITIVE- NUMBER; BOTH MAY BE
+  39               /INCLUDED IN A SINGLE 'HESITATE' COMMAND.  IN ADDITION,
+  40               /CALLING 'HESITATE' WITHOUT ANY ARGUMENT (OR WITH ZERO)
+  41               /CAUSES THE PROGRAM TO DELAY UNTIL THE CLOCK OVERFLOWS.
+  42               
+  43               /SPECIFYING TOO HIGH A CLOCK RATE MAY CAUSE THE PROGRAM
+  44               /TO 'HANG' WITH NO TIME FOR PROCESSING.  TO GET OUT OF
+  45               /THIS CONDITION, HIT 'STOP', 'I/O PRESET' IN '8' MODE,
+  46               /AND RESTART AT LOCATION 100.
+  47               
+  48               /PRELIMINARY TESTING INDICATES THAT IT IS MORE OR LESS
+  49               /POSSIBLE TO MAINTAIN A 30 MILLISECOND SAMPLE LOOP IF
+  50               /THE NUMBER OF OPERATIONS WITHIN THE LOOP IS LIMITED TO
+  51               /ONLY 1 OR 2 COMMANDS.  THIS DOES NOT INCLUDE I/O TIME.
+  52               
+  53               /THE 'HESITATE' COMMAND MUST BE USED TO INITIALIZE THE
+  54               /CLOCK BEFORE THE 'FTRG' FUNCTION WILL RESPOND TO ANY
+  55               /INPUT.  AN INNOCUOUS CALL (WHICH LEAVES THE CLOCK OFF)
+  56               /IS: 'H -8,1'.
+  57               /THE 'O S' COMMAND WILL SWITCH OUTPUT TO THE SCOPE ('O S'
+  58               /IS ASSUMED WHEN FOCAL IS LOADED) WHILE THE COMMAND 'O E'
+  59               /WILL RETURN TO THE TERMINAL.  THE 'VIEW' COMMAND MAY BE
+  60               /USED TO CONTROL THE DISPLAY:  'V +1' TURNS IT ON WHILE
+  61               /'V 0' (OR JUST 'V') TURNS IT OFF.  THE DISPLAY IS ACTIVE
+  62               /WHILE WAITING FOR KEYBOARD INPUT AND ALSO DURING A 'HESI-
+  63               /TATE' OR 'LOGICAL BRANCH' COMMAND.  IT IS ALSO REFRESHED
+  64               /WHENEVER A RUNNING PROGRAM COMES TO THE END OF A LINE.
+  65               /THIS LATTER FEATURE CREATES A 'LIVE' DISPLAY, BUT IT DOES
+  66               /SLOW THINGS DOWN QUITE A BIT.  YOU MAY PREFER TO DISABLE
+  67               /THE DISPLAY AND USE AN 'ASK :-1' COMMAND TO PAUSE FOR IN-
+  68               /TERMEDIATE RESULTS.  OR YOU CAN PUT IN A 'HESITATE' TO
+  69               /'FLASH' THE ANSWERS SO THE PROGRAM CAN RUN UNATTENDED.
+  70               
+  71               /UP TO 85 CHARACTERS CAN BE DISPLAYED ON A SINGLE LINE,
+  72               /WITH AUTOMATIC 'WRAP-AROUND' IF NECESSARY.  THE DISPLAY
+  73               /'SCROLLS' (LINES AT THE TOP OF THE SCREEN ARE REMOVED)
+  74               /IF MORE CHARACTERS OR MORE LINES THAN CAN BE ACCOMODATED
+  75               /ARE OUTPUT.  A 'FORMFEED' (CTRL/L) IS USED TO ERASE THE
+  76               /SCREEN.  THIS MAY DONE AT ANY TIME WHILE ENTERING TEXT
+  77               /OR NUMERICAL VALUES WITHOUT AFFECTING THE RESULT.  THE
+  78               /SCREEN IS NOT CLEARED BY 'CTRL/L' DURING A 'MODIFY' OR
+  79               /'MOVE' COMMAND, HOWEVER.  THE '#' OPERATOR IN 'ASK' AND
+  80               /'TYPE' COMMANDS IS THE EASIEST WAY TO CLEAR THE SCREEN
+  81               /IN A PROGRAM, BUT ONE COULD ALSO USE 'FOUT(140)' TO DO
+  82               /THE SAME THING.  TYPING 'RUBOUT' OR 'DELETE' WHILE EDIT-
+  83               /ING WILL REMOVE THE PREVIOUS CHARACTER FROM THE SCREEN!
+  84               /THIS MAY ALSO BE DONE BY EXECUTING A 'FOUT(92)'.
+  85               
+  86               /THE 'VIEW X,Y' COMMAND FOR DISPLAYING DATA IS ALSO IN-
+  87               /CLUDED.  THIS COMMAND WILL CREATE AN ENTRY IN THE VIEW
+  88               /BUFFER WHICH WILL BE INTENSIFIED DURING EACH REFRESH
+  89               /CYCLE.  'VIEW -1' WILL CLEAR ALL POINTS FROM THE BUFFER
+  90               /WHILE 'VIEW 0' (OR JUST 'V') WILL DISABLE THE REFRESH.
+  91               /'VIEW 1' OR ANY INPUT FROM THE KEYBOARD MAY BE USED TO
+  92               /TURN IT ON AGAIN.  SEPARATE CHANNELS ARE USED FOR THE
+  93               /PLOT (CHANNEL 1) AND THE TEXT (CHANNEL 2).
+  94               
+  95               /THE DISPLAY ROUTINES OCCUPY 4000-4177 IN FIELD 1.  THIS
+  96               /ALLOWS THEM TO USE 2 CONVENIENT BETA REGISTERS LOCATED
+  97               /ON THIS PAGE.  THE DISPLAY CODES AND THE DISPLAY BUFFER
+  98               /ARE STORED IN THE UPPER FIELD FROM 6200 TO 7777, REDUC-
+  99               /ING THE MAXIMUM PROGRAM SIZE BY 3 BLOCKS.  THE 'VIEW'
+ 100               /BUFFER USES HALF OF THE SYMBOL TABLE: 33776-37775.
+ 101               
+ 102               /ACKNOWLEDGMENTS:  THE DISPLAY ALGORITHM WAS ADAPTED FROM
+ 103               /ONE WRITTEN BY DOUGLAS E. WREGE OF THE GEORGIA INSTITUTE
+ 104               /OF TECHNOLOGY FOR USE WITH THE OS/8 EDITOR.  THE COMPACT
+ 105               /CHARACTER DISPLAY WAS INVENTED BY TIM CLARK, OF FRELAN
+ 106               /ASSOCIATES (MENLO PARK, CA.), AND THE CHARACTER PATTERNS
+ 107               /(AND SOME OF THE DISPLAY LOGIC) COME FROM THE -SCROLL-
+ 108               /EDITOR WRITTEN BY CLYDE G. ROBY JR. (WEST VIRGINIA UNIV.
+ 109               /MEDICAL CENTER).  PAUL C. DIEGENBACH AT THE UNIVERSITY
+ 110               /OF AMSTERDAM CONTRIBUTED THE ORIGINAL FORMS OF SEVERAL
+ 111               /OF THE FUNCTIONS.
+ 112               /DEFINITIONS FOR VERSION 4E (OCTOBER 1978)
+ 113               
+ 114                       P134=0
+ 115                       P337=2
+ 116                       XRT=14
+ 117                       BUFEND=27
+ 118                       TXTEND=30
+ 119                       TABEND=33
+ 120                       EXP=44
+ 121                       HORD=45
+ 122                       DAY=55
+ 123                       OUTDEV=57
+ 124                       P7=73
+ 125                       P77=77
+ 126                       C100=100
+ 127                       P17=101
+ 128                       M14=107
+ 129                       BETA=163
+ 130                       CRT=223
+ 131                       INLIST=226
+ 132                       ECHOFF=253
+ 133                       GOTO=610
+ 134                       COMGO=722
+ 135                       EVAL=1610
+ 136                       FNTABL=2157
+ 137                       FNTABF=2357
+ 138                       RUB1=2466
+ 139                       KEYCK=3000
+ 140                       XI33=3007
+ 141                       XINT=3127
+ 142                       ACCEPT=5521
+ 143                       FINALZ=5525
+ 144                       ECODEV=6323
+ 145                       FMQ=6563
+ 146                       ACTION=6571
+ 147                       OSCOPE=6722
+ 148               
+ 149                       PUSHA=4520
+ 150                       POPA=4521
+ 151                       PUSHJ=4522
+ 152                       POPJ=5523
+ 153                       SORTJ=4526
+ 154                       TSTCMA=4543
+ 155                       NEGATE=4557
+ 156                       FIXIT=4560
+ 157                       ERROR2=4576
+ 158                       FLOAT=4552
+ 159                       FLOATR=5553
+ 160                       FL0ATR=5554
+ 161                       RETURN=5555
+ 162                       CONTINUE=5434
+ 163                      FENT=4407
+ 164               FIXMRI  FGET=0000
+ 165                       FEXT=0000
+ 166               
+ 167                       P=10
+ 168                       T=20
+ 169                       B=30
+ 170               
+ 171                       FIELD 0
+ 172               
+ 173                       *CRT
+ 174 000223  6722          OSCOPE          /IMPLEMENT 'O S'
+ 175               
+ 176                       *OSCOPE-1
+ 177 006721  4002          SCOPE
+ 178               
+ 179                       *5400
+ 180 005400  6002          IOF
+ 181 005401  6141          6141    /L MODE
+ 182 005402  1020          1020    /LDA I
+ 183 005403  0020          20
+ 184 005404  0004          4       /ESF - ISSUE I/O PRESET
+ 185 005405  0002          2       /PDP MODE
+ 186                               
+ 187                       *FINALZ+2
+ 188 005527  7000          NOP             /CAN'T RUN UNDER ANYTHING
+ 189               
+ 190               
+ 191                       FIELD 1
+ 192               
+ 193                       *BUFEND
+ 194 010027  1601          -6177           /LAST TEXT LOCATION
+ 195               
+ 196                       *TXTEND
+ 197 010030  1557          -6221           /INPUT LIMIT
+ 198               
+ 199                       *OUTDEV
+ 200 010057  4002          SCOPE           /START UP THE DISPLAY!
+ 201               
+ 202                       *113
+ 203 010113  0027  E27,    27              /CLOCK REGISTERS
+ 204 010114  0000  HCNT,   0
+ 205 010115  0000  LCNT,   0
+ 206 010116  0000  OFLO,   0
+ 207 010117  0000  FLAGS,  0
+ 208               
+ 209                       *164
+ 210 010164  3010  DSW,    XI33+1          /DISPLAY SWITCH
+ 211                               
+ 212                      *INLIST+1
+ 213 010227  0253          ECHOFF          /SO WE CAN ERASE THE SCREEN
+ 214               
+ 215                       *1241
+ 216 011241  7040          CMA             /LET '#' CLEAR THE SCREEN
+ 217               
+ 218                       *COMGO-1
+ 219 010721  4051          REFRSH          /ADD REFRESH AT END OF LINE
+ 220               
+ 221                       *COMGO+"H-"@
+ 222 010732  4470          TATE
+ 223                       *COMGO+"K-"@
+ 224 010735  3553          KONTRL
+ 225                       *COMGO+"V-"@
+ 226 010750  3402          VIEW
+ 227               
+ 228                       *FNTABF+15
+ 229 012374  4166          FLS
+ 230                       *FNTABF+31
+ 231 012410  3542          FADC
+ 232 012411  4154          FTRG
+ 233 012412  3443          FBUF
+ 234 012413  4517          FTIM
+ 235 012414  3525          FXL
+ 236 012415  3517          FSS
+ 237                       *FNTABF+43
+ 238 012422  2473          FDA
+ 239               
+ 240                       *FNTABL+16
+ 241 012175  0633          "R-200^4+"S-200 /RS
+ 242                       *FNTABL+35
+ 243 012214  0654          "X-200^4+"L-200 /XL
+ 244 012215  0637          "S-200^4+"S-200 /SS
+ 245               
+ 246                       *KEYCK
+ 247 013000  4047          KDISPL          /PATCH THE INPUT LOOP
+ 248               
+ 249                       *ECODEV
+ 250 016323  4002          SCOPE           /MAKE THIS THE DEFAULT
+ 251               
+ 252                       *ACTION+3
+ 253 016574  5520          ACCEPT-1        /ACTIVATE FF DURING ASK
+ 254               
+ 255                       *7577
+ 256 017577  4046          BDISPL          /DISPLAY ON A BRANCH
+ 257                      *4000           /THE DISPLAY PROCESSOR
+ 258 014000  0000  YVAL,   0               /THE VERTICAL COORDINATE
+ 259 014001  0000  XVAL,   0               /THE HORIZONTAL COORDINATE
+ 260               
+ 261 014002  0000  SCOPE,  0               /FILL THE OUTPUT BUFFER
+ 262 014003  3200          DCA YVAL        /SAVE THE CHARACTER CODE
+ 263 014004  1200          TAD YVAL
+ 264 014005  4526          SORTJ           /CHECK FOR LF,FF,CR,BA,BELL,RUB
+ 265 014006  7777  M1,         P134-1
+ 266 014007  4037              SCOPGO-P134
+ 267 014010  1200  SBA,    TAD YVAL        /NOTHING SPECIAL
+ 268 014011  0077          AND P77         /ONLY USE 6 BITS
+ 269 014012  7104          CLL RAL         /MULTIPLY BY TWO
+ 270 014013  1350          TAD TBS         /ADD START OF THE TABLE
+ 271 014014  3200  SCR,    DCA YVAL        /SAVE PATTERN POINTER
+ 272               
+ 273 014015  1236          TAD CHRCNT      /OK NOW, BUILD POINTER
+ 274 014016  1234          TAD BUF         /TO THE NEXT LOCATION
+ 275 014017  3014          DCA XRT         /-> AUTO INDEX REG.
+ 276 014020  1200          TAD YVAL        /GET THE PATTERN ADDRESS
+ 277 014021  6221          CDF T           /DISPLAY BUFFER LOCATION
+ 278 014022  3414          DCA I XRT       /SAVE IT
+ 279 014023  7126          STL RTL         /ADD ONE TO THE COUNT
+ 280               
+ 281 014024  1236  SRO,    TAD CHRCNT      /RUBOUT = ERASE ONE CHARACTER
+ 282 014025  7440          SZA             /WATCH OUT FOR MISTAKES HERE
+ 283 014026  1206          TAD M1
+ 284 014027  3236  SFF,    DCA CHRCNT      /FF = ERASE THE ENTIRE SCREEN
+ 285               
+ 286 014030  1236          TAD CHRCNT      /DO A LITTLE CHECKING
+ 287 014031  1377          TAD (SBUFR-7600 /YE OLDE BUFFER SIZE!
+ 288 014032  7700          SMA CLA
+ 289 014033  4326          JMS SCROLL      /TIME TO REMOVE A LINE
+ 290 014034  6211  BEL,    CDF P           /BELL: DON'T DISPLAY 'G'
+ 291 014035  5602  SLF,    JMP I SCOPE     /IGNORE LF'S COMPLETELY
+ 292               BUF=    BEL
+ 293               
+ 294 014036  0000  CHRCNT, 0
+ 295               
+ 296 014037  4024  SCOPGO, SRO
+ 297 014040  4034          BEL
+ 298 014041  4010          SBA
+ 299 014042  4027          SFF
+ 300 014043  4035          SLF
+ 301 014044  4014          SCR
+ 302 014045  4010          SBA
+ 303               
+ 304               /RELEVANT LINC-MODE INSTRUCTIONS
+ 305               
+ 306                       LDAI=1020
+ 307                       DSCI=1760
+ 308                       DSC=1740
+ 309                       STC=4000
+ 310                       ADD=2000
+ 311                       LDF=0640
+ 312 014046  1376  BDISPL,        TAD (GOTO-XI33  /DO A DISPLAY CYCLE ON A BRANCH
+ 313 014047  1164  KDISPL, TAD DSW         /WHILE WAITING FOR KEYBOARD INPUT
+ 314 014050  4520          PUSHA           /SAVE THE RETURN ADDRESS
+ 315               
+ 316 014051  1564  REFRSH, TAD I DSW       /CHECK THE 'DISPLAY SWITCH'
+ 317 014052  7750          SPA SNA CLA
+ 318 014053  5523          POPJ            /NOTHING DOING
+ 319 014054  1236          TAD CHRCNT
+ 320 014055  7040          CMA
+ 321 014056  3326          DCA SCROLL      /SAVE NUMBER OF CHARACTERS
+ 322 014057  1234          TAD BUF
+ 323 014060  3014          DCA XRT         /INITIALIZE THE INDEX REGISTER
+ 324 014061  6221          CDF T
+ 325 014062  1002          TAD P337        /START DISPLAY AT THE TOP
+ 326               
+ 327 014063  3200  NULINE, DCA YVAL        /INITIALIZE FOR A NEW LINE
+ 328 014064  1375          TAD (7002       /=2 + UNSEEN SIGN BITS
+ 329 014065  3201          DCA XVAL        /AND ALSO SETS CHANNEL 2
+ 330               
+ 331 014066  2326  RFEND,  ISZ SCROLL      /DONE?
+ 332 014067  5273          JMP RFLUP       /NOT YET
+ 333 014070  7760  SM20,   SNL SMA SZA CLA /THINK IT WILL SKIP?
+ 334 014071  4326          JMS SCROLL      /SCREEN FULL, REMOVE A LINE
+ 335 014072  5774          JMP I (PTPLOT   /REFRESH THE VIEW BUFFER
+ 336               
+ 337 014073  1414  RFLUP,  TAD I XRT       /GET THE NEXT CHARACTER
+ 338 014074  7450          SNA             /CR?
+ 339 014075  5317          JMP RFEOL       /YES
+ 340 014076  3202          DCA SCOPE       /PUT ADDRESS IN LINC REG. 2
+ 341 014077  1200          TAD YVAL
+ 342 014100  6212          CIF P           /INHIBIT INTERRUPTS BRIEFLY
+ 343 014101  6141          LINC
+ 344 014102  0653          LDF 13          /POINT TO THE PATTERN TABLE
+ 345 014103  1742          DSC 2           /DISPLAY COLUMNS 1 & 3
+ 346 014104  1020          LDAI;-4         /-3 IN ONE'S COMPLEMENT
+     014105  7774  
+ 347 014106  2001          ADD 1           /BACKUP THE X-COORDINATE
+ 348 014107  4001          STC 1           /AND SAVE IT AGAIN
+ 349 014110  0004          ESF             /SET SMALL LETTERS
+ 350 014111  2000          YVAL&1777 ADD   /RELOAD THE Y-COORDINATE
+ 351 014112  1762          DSCI 2          /DISPLAY COLUMNS 2 & 4
+ 352 014113  0002          PDP             /BACK TO THE REAL WORLD
+ 353 014114  7200          CLA             /GET RID OF THE Y VALUE
+ 354 014115  2201          ISZ XVAL        /SPACE AND CHECK FOR OVERFLOW
+ 355 014116  5266          JMP RFEND       /CONTINUE WITH THE NEXT ONE
+ 356               
+ 357 014117  1002  RFEOL,  TAD P337        /START A NEW LINE
+ 358 014120  1200          TAD YVAL
+ 359 014121  7710          SPA CLA         /FILLED THE SCREEN?
+ 360 014122  5271          JMP SM20+1      /YES
+ 361 014123  1270          TAD SM20
+ 362 014124  1200          TAD YVAL
+ 363 014125  5263          JMP NULINE      /DO A LINEFEED
+ 364 014126  0000  SCROLL,        0               /REMOVE A LINE FROM THE TOP
+ 365 014127  1234          TAD BUF
+ 366 014130  3014          DCA XRT
+ 367               
+ 368 014131  1236          TAD CHRCNT      /REDUCE THE CHAR COUNT
+ 369 014132  7450          SNA
+ 370 014133  5726          JMP I SCROLL    /NO CR'S IN THE BUFFER!
+ 371 014134  1206          TAD M1
+ 372 014135  3236          DCA CHRCNT
+ 373 014136  1414          TAD I XRT       /LOOK FOR A CR
+ 374 014137  7640          SZA CLA
+ 375 014140  5331          JMP SCROLL+3
+ 376               
+ 377 014141  1234          TAD BUF         /SET THE SECOND POINTER
+ 378 014142  3200          DCA YVAL
+ 379 014143  1236          TAD CHRCNT      /NEW VALUE
+ 380 014144  7041          CIA
+ 381 014145  3201          DCA XVAL        /HANDY REGISTER
+ 382 014146  1414          TAD I XRT       /SHUFFLE THINGS DOWN
+ 383 014147  2200          ISZ YVAL
+ 384 014150  3600  TBS,    DCA I YVAL
+ 385 014151  2201          ISZ XVAL        /COUNT
+ 386 014152  5346          JMP .-4
+ 387 014153  5726          JMP I SCROLL
+ 388               
+ 389               / 'FTRG' TESTS FOR THE OCCURANCE OF ANY SCHMITT TRIGGER
+ 390               / THE ARGUMENT (2,8,32) SERVES AS A MASK; '0'=ALL FLAGS
+ 391               / THE VALUE RETURNED IS THE WEIGHTED SUM OF THE EVENTS.
+ 392               
+ 393 014154  4560  FTRG,   FIXIT           /GET THE MASK
+ 394 014155  7450          SNA
+ 395 014156  7150          CMA CLL RAR     /'0' = ALL
+ 396 014157  0117          AND FLAGS       /COMPARE
+ 397 014160  4552          FLOAT           /SAVE
+ 398 014161  1045          TAD HORD        /RECALL
+ 399 014162  7040          CMA
+ 400 014163  0117          AND FLAGS       /REMOVE THE BITS WE TESTED
+ 401 014164  3117          DCA FLAGS
+ 402 014165  5555          RETURN
+ 403               
+ 404 014166  6212  FLS,    CIF P           /READ THE LEFT SWITCHES
+ 405 014167  6141          LINC
+ 406 014170  0517          LSW
+ 407 014171  0002          PDP
+ 408 014172  5554          FL0ATR          /AS AN UNSIGNED NUMBER
+ 409               
+ 410 014174  3467          PAGE
+     014175  7002  
+     014176  5601  
+     014177  6412  
+ 411               /THE 'VIEW X,Y' POINT-PLOT COMMAND FOR THE PDP12:
+ 412               
+ 413               /'VIEW X,Y' WILL BRIGHTEN THE POINT (X,Y) DURING EACH RE-
+ 414               /FRESH CYCLE.  0<X<1023 AND -512<Y<511.  'VIEW' WITH ONLY
+ 415               /A SINGLE ARGUMENT IS USED TO TURN THE DISPLAY ON AND OFF
+ 416               /OR TO CLEAR THE POINT-DISPLAY BUFFER USING 'V -1'.
+ 417               
+ 418                       *3400           /START A NEW PAGE
+ 419 013400  3777  DISB,   4000-1          /THE STARTING LOCATION
+ 420 013401  3777  PNTR,   4000-1          /THE CURRENT LOCATION
+ 421               
+ 422 013402  4522  VIEW,   PUSHJ           /GET THE FIRST PARAMETER
+ 423 013403  1610              EVAL
+ 424 013404  4543          TSTCMA          /IS THERE ANOTHER ONE?
+ 425 013405  5230          JMP ONLY1       /NO
+ 426 013406  4213          JMS STORE       /PUT 'X' IN THE BUFFER
+ 427 013407  4522          PUSHJ
+ 428 013410  1610              EVAL
+ 429 013411  4213          JMS STORE       /PUT 'Y' IN THE BUFFER
+ 430 013412  5434          CONTINUE
+ 431               
+ 432 013413  0000  STORE,  0               /LOOKS SIMPLE ENOUGH
+ 433 013414  7125          STL IAC RAL     /= -(BEND-1)
+ 434 013415  1201          TAD PNTR        /WATCH OUT FOR OVERFLOW
+ 435 013416  7630          SZL CLA
+ 436 013417  4576          ERROR2          /TOO MANY!
+ 437 013420  2201          ISZ PNTR
+ 438 013421  4560          FIXIT
+ 439 013422  6231          CDF B           /B=T FOR 12K, B=V FOR 16K
+ 440 013423  3601          DCA I PNTR
+ 441 013424  6211          CDF P
+ 442 013425  1200          TAD DISB
+ 443 013426  3033          DCA TABEND      /REDUCE THE NO. OF VARIABLES
+ 444 013427  5613          JMP I STORE
+ 445               
+ 446 013430  4560  ONLY1,  FIXIT           /SPECIAL CASE
+ 447 013431  0101          AND P17         /BE CAREFUL
+ 448 013432  2045          ISZ HORD        /TEST FOR -ANYTHING
+ 449 013433  3564          DCA I DSW       /SET THE DISPLAY SWITCH
+ 450 013434  7650          SNA CLA         /TEST FOR -1
+ 451 013435  5434          CONTINUE        /SOMETHING ELSE
+ 452 013436  7146          CMA CLL RTL     /-3 (16K LIMIT)
+ 453 013437  3033          DCA TABEND      /RESET SYMBOL LIMIT
+ 454 013440  1200          TAD DISB
+ 455 013441  3201          DCA PNTR        /CLEAR THE SCREEN BUT DON'T
+ 456 013442  5434          CONTINUE        /MESS UP THE DISPLAY SWITCH
+ 457               /////
+ 458               BEND=   -1
+ 459               /PROVIDE THE PROGRAM WITH ACCESS TO THE VIEW BUFFER
+ 460               
+ 461 013443  4560  FBUF,   FIXIT           /ACCESS TO THE VIEW BUFFER
+ 462 013444  1200          TAD DISB
+ 463 013445  4520          PUSHA           /SAVE THE INDEX VALUE
+ 464 013446  4543          TSTCMA          /READ OR WRITE?
+ 465 013447  5262          JMP RBUF        /READ
+ 466 013450  4522          PUSHJ           /WRITE
+ 467 013451  1610              EVAL
+ 468 013452  1201          TAD PNTR        /SAVE THE 'VIEW' POINTER
+ 469 013453  3014          DCA XRT
+ 470 013454  4521          POPA
+ 471 013455  3201          DCA PNTR
+ 472 013456  4213          JMS STORE
+ 473 013457  1014          TAD XRT
+ 474 013460  3201          DCA PNTR
+ 475 013461  5555          RETURN
+ 476               
+ 477 013462  4521  RBUF,   POPA            /READ FROM THE BUFFER
+ 478 013463  3014          DCA XRT
+ 479 013464  6231          CDF B
+ 480 013465  1414          TAD I XRT       /NO LIMIT CHECKING
+ 481 013466  5553          FLOATR
+ 482               
+ 483               /EXTEND THE REFRESH CYCLE TO INCLUDE THE VIEW BUFFER
+ 484               
+ 485 013467  1200  PTPLOT, TAD DISB        /SETUP THE ADDRESS REGISTER
+ 486 013470  3014          DCA XRT
+ 487 013471  6231          CDF B
+ 488               
+ 489 013472  1014  PTLOOP, TAD XRT         /CURRENT
+ 490 013473  7160          STL CMA
+ 491 013474  1201          TAD PNTR        /THE END
+ 492 013475  7630          SZL CLA
+ 493 013476  5523          POPJ            /END REFRESH
+ 494 013477  1414          TAD I XRT       /GET X
+ 495 013500  7110          CLL RAR         /ASSUME 10 BITS, BUT ONLY USE 9
+ 496 013501  6213          CDI P           /INHIBIT LINC-MODE INTERRUPTS
+ 497 013502  3563          DCA I BETA      /THIS POINTS TO BETA 14
+ 498 013503  6231          CDF B
+ 499 013504  1414          TAD I XRT       /GET THE Y VALUE IN THE AC
+ 500 013505  7110          CLL RAR         /SO WE CAN DISPLAY A/D READINGS
+ 501 013506  6141          LINC
+ 502 013507  0154          DIS 14          /PLOT IT ON CHANNEL 1
+ 503 013510  0002          PDP
+ 504 013511  7200          CLA
+ 505 013512  5272          JMP PTLOOP
+ 506               /THE 'FSS', 'FXL' AND 'FADC' FUNCTIONS
+ 507               
+ 508                       *3514           /SET THE ERROR CODES
+ 509 013514  7772  N6,     -6
+ 510 013515  0446  P446,   SNS+6
+ 511 013516  0414  P414,   SXL+14
+ 512               
+ 513 013517  4560  FSS,    FIXIT           /CLEARS THE LINK
+ 514 013520  1314          TAD N6          /TEST ARGUMENT
+ 515 013521  7430          SZL
+ 516 013522  4576          ERROR2          /NEGATIVE OR .GT. 5
+ 517 013523  1315          TAD P446
+ 518 013524  5332          JMP TST-3
+ 519               
+ 520 013525  4560  FXL,    FIXIT           /TEST EXTERNAL LEVELS
+ 521 013526  1107          TAD M14
+ 522 013527  7430          SZL
+ 523 013530  4576          ERROR2          /ARGUMENT NOT IN RANGE 0<N<12
+ 524 013531  1316          TAD P414
+ 525 013532  3335          DCA TST
+ 526 013533  6212          CIF P           /PREVENT INTERRUPTS
+ 527 013534  6141          LINC
+ 528 013535  0000  TST,    0               /THIS IS A LINC-MODE SKIP
+ 529 013536  0017          COM             /SET -1 IF OPEN
+ 530 013537  0002          PDP
+ 531 013540  7124          STL RAL         /0 BECOMES +1, -1 IS UNCHANGED!
+ 532 013541  5553          FLOATR          /RETURNS: +1 IF SET, -1 IF NOT
+ 533               
+ 534 013542  4560  FADC,   FIXIT           /GET THE CHANNEL NUMBER
+ 535 013543  6212          CIF P
+ 536 013544  0101          AND P17
+ 537 013545  1100          TAD C100        /COMPUTE THE INSTRUCTION
+ 538 013546  3350          DCA .+2
+ 539 013547  6141          LINC
+ 540 013550  0100          SAM             /'SAM' = '100'
+ 541 013551  0002          PDP
+ 542 013552  5553          FLOATR
+ 543               /////
+ 544               /THE RELAYS ARE TREATED AS A 6-BIT NUMBER SO THEY CAN BE
+ 545               /SET OR CLEARED SIMULTANEOUSLY.  THE TABLE BELOW EXPLAINS:
+ 546               
+ 547               /               RELAY   DECIMAL
+ 548               /                 0       32
+ 549               /                 1       16
+ 550               /                 2        8
+ 551               /                 3        4
+ 552               /                 4        2
+ 553               /                 5        1
+ 554               
+ 555               /THUS DECIMAL 25 WILL CLOSE RELAYS 1,2 & 5, OPEN THE OTHERS
+ 556               
+ 557 013553  4522  KONTRL, PUSHJ           /'K 1' CLOSES RELAY 5, ETC.
+ 558 013554  1610              EVAL
+ 559 013555  4560          FIXIT
+ 560 013556  6212          CIF P           /INHIBIT INTERRUPTS
+ 561 013557  6141          LINC
+ 562 013560  0014          ATR
+ 563 013561  0002          PDP
+ 564 013562  5434          CONTINUE        /COULD CHECK FOR MORE ARGUMENTS
+ 565               /////
+ 566               
+ 567                       *FMQ
+ 568 016563  4560  FMQ,    FIXIT           /LOAD THE MQ WITH A LINC SHIFT
+ 569 016564  6212          CIF P
+ 570 016565  6141          LINC
+ 571 016566  0314          ROR 14          /WITH EAE THIS IS UNNECESSARY-
+ 572 016567  0002          PDP
+ 573 016570  5555          RETURN          /JUST USE THE STANDARD VERSION
+ 574               /////
+ 575               
+ 576                       *RUB1+5
+ 577 012473  4560  FDA,    FIXIT           /MOVE THIS OUT OF THE WAY
+ 578 012474  6222          CIF 20
+ 579 012475  5055          JMP DAY
+ 580               /////
+ 581               
+ 582               /LINC-MODE INSTRUCTIONS:
+ 583               
+ 584                       LSW=0517
+ 585                       SNS=0440
+ 586                       SXL=0400
+ 587                       ROR=0300
+ 588                       DIS=0140
+ 589                       SAM=0100
+ 590                       COM=0017
+ 591                       ATR=0014
+ 592                       ESF=0004
+ 593                       PDP=0002
+ 594               /CLOCK ROUTINE FOR THE KW12A - THE 'HESITATE' COMMAND
+ 595               
+ 596               /START WITH 'H -5,Q' WHERE Q IS THE TIME IN UNITS OF 0.01
+ 597               /SECONDS.  THUS Q=100 IS A 1 SECOND COUNTING PERIOD.  TO
+ 598               /CHOOSE OTHER UNITS, CHANGE THE FIRST PARAMETER (WHICH MUST
+ 599               /BE NEGATIVE) TO SELECT A DIFFERENT TIME BASE.  THUS -4 =
+ 600               /0.001 SECONDS (MILLISECONDS) AND -6 = RATE DETERMINED BY
+ 601               /INPUT #1.  (SEE THE LABORATORY COMPUTER HANDBOOK.)
+ 602               
+ 603               /IT IS NOT NECESSARY TO SET THE UNITS UNLESS YOU WISH TO
+ 604               /CHANGE IT FROM 0.001 SECONDS, BUT IF YOU DO YOU MUST GIVE
+ 605               /A NEW DELAY COUNT TOO. (DELAY MUST BE LESS THAN 4096.)
+ 606               /'H' THEN WAITS UNTIL THE END OF THE NEXT COUNTING CYCLE.
+ 607               
+ 608               /TO RING THE BELL OF THE TTY EVERY 4 SECONDS:
+ 609               
+ 610               /       1.1 H 4000;C OR: H -5,400
+ 611               /       1.2 H FOUT(135);L B 1.2;R
+ 612               
+ 613               /FOR ANOTHER APPROACH SEE DECUSCOPE 14 #2 P.27 (1975)
+ 614               
+ 615                       *4460           /AFTER 'FCOM'
+ 616 014460  4522  WATE,   PUSHJ           /REFRESH WHILE WE'RE WAITING
+ 617 014461  4051              REFRSH
+ 618 014462  1116          TAD OFLO        /CHECK FOR OVERFLOW
+ 619 014463  7650          SNA CLA
+ 620 014464  5260          JMP WATE
+ 621 014465  3116          DCA OFLO        /CLEAR FOR THE NEXT TIME
+ 622               
+ 623 014466  4543  HESI,   TSTCMA          /ANY MORE ARGUMENTS?
+ 624 014467  5434          CONTINUE        /NO
+ 625 014470  4522  TATE,   PUSHJ           /'HESITATE' ENTRY POINT
+ 626 014471  1610              EVAL
+ 627 014472  4557          NEGATE          /AND CHECK FOR ZERO
+ 628 014473  7430          SZL             /ZERO ARGUMENT?
+ 629 014474  5262          JMP WATE+2      /YES, WAIT FOR TIMEOUT
+ 630 014475  4560          FIXIT           /CONVERT TO INTEGER FORMAT
+ 631 014476  2045          ISZ HORD        /RATE OR DELAY?
+ 632 014477  5310          JMP RATE        /SET THE NEW RATE
+ 633 014500  6133          CLAB            /LOAD THE CLOCK BUFFER
+ 634 014501  7200          CLA
+ 635 014502  6132          CLLR            /SET MODE 0, STOP THE CLOCK
+ 636 014503  1316          TAD TIME
+ 637 014504  6132          CLLR
+ 638 014505  7240          STA             /ENABLE ALL INPUTS, INTERRUPTS
+ 639 014506  6134          CLEN
+ 640 014507  5263          JMP WATE+3
+ 641               
+ 642 014510  0073  RATE,   AND P7          /BE PRUDENT
+ 643 014511  7012          RTR             /SHIFT RATE BITS INTO PLACE
+ 644 014512  7012          RTR
+ 645 014513  1100          TAD C100        /MODE 1
+ 646 014514  3316          DCA TIME
+ 647 014515  5266          JMP HESI        /MORE?
+ 648 014516  4100  TIME,   4100            /MILLISECONDS
+ 649               /THE 'FTIM' FUNCTION COUNTS CLOCK OVERFLOWS
+ 650               
+ 651 014517  1045  FTIM,   TAD HORD        /READ OR SET THE ELAPSED TIME
+ 652 014520  7440          SZA
+ 653 014521  5325          JMP CLEAR
+ 654 014522  4407          FENT            /       ARG < 0 -> CLEAR
+ 655 014523  0113          FGET E27        /       ARG = 0 -> READ
+ 656 014524  0000          FEXT            /       ARG > 0 -> PRESET
+ 657               
+ 658 014525  7710  CLEAR,  SPA CLA         /CLEAR OR PRESET?
+ 659 014526  3044          DCA EXP         /CLEAR
+ 660 014527  4560          FIXIT
+ 661 014530  3115          DCA LCNT
+ 662 014531  1045          TAD HORD
+ 663 014532  3114          DCA HCNT
+ 664 014533  5555          RETURN          /ALWAYS RETURNS THE COUNTER!
+ 665               
+ 666               /THIS IS THE CLOCK INTERRUPT HANDLER:
+ 667               
+ 668 014534  6131  CINT,   CLSK            /ANY ACTIVITY?
+ 669 014535  5765          JMP I LINT      /NO
+ 670 014536  7150          CMA CLL RAR     /=3777
+ 671 014537  0117          AND FLAGS       /REMOVE THE CLOCK FLAG
+ 672 014540  6135          CLSA            /MERGE THE EVENT FLAGS
+ 673 014541  3117          DCA FLAGS       /SAVE EVERYTHING
+ 674 014542  1117          TAD FLAGS
+ 675 014543  7700          SMA CLA         /CLOCK OVERFLOW?
+ 676 014544  5765          JMP I LINT      /NO
+ 677 014545  2115          ISZ LCNT        /ADD ONE
+ 678 014546  7410          SKP
+ 679 014547  2114          ISZ HCNT        /ADD 4096
+ 680 014550  2116          ISZ OFLO        /TELL 'HESITATE' ABOUT IT
+ 681 014551  1114          TAD HCNT
+ 682 014552  7710          SPA CLA         /KEEP IT DOWN TO 23 BITS
+ 683 014553  3114          DCA HCNT
+ 684 014554  5765          JMP I LINT
+ 685               
+ 686               /LEAVE ROOM FOR THE INTERNAL LPT: HANDLER...
+ 687               
+ 688                       *4565
+ 689 014565  3131  LINT,   XINT+2
+ 690               
+ 691                       *XINT
+ 692 013127  5730          JMP I .+1       /REPLACE TWO 'NOP'S
+ 693 013130  4534          CINT
+ 694               
+ 695               / '8-MODE' IOT CODES:
+ 696               
+ 697                       CLSK=6131
+ 698                       CLLR=6132
+ 699                       CLAB=6133
+ 700                       CLEN=6134
+ 701                       CLSA=6135
+ 702                       LINC=6141
+ 703                       CDI=6203
+ 704               /PATTERN TABLE FOR THE DSC INSTRUCTION
+ 705               
+ 706                       FIELD 2
+ 707               SBUFR=  CIF P           /'SBUFR-1' = 'CDF P'
+ 708               
+ 709                       *7600           /AFTER THE SCOPE BUFFER
+ 710 027600  5536  STABL,  5536;3541
+     027601  3541  
+ 711 027602  4477          4477;7744
+     027603  7744  
+ 712 027604  5177          5177;2651
+     027605  2651  
+ 713 027606  4136          4136;2241
+     027607  2241  
+ 714 027610  4177          4177;3641
+     027611  3641  
+ 715 027612  4577          4577;4145
+     027613  4145  
+ 716 027614  4477          4477;4044
+     027615  4044  
+ 717 027616  4536          4536;2641
+     027617  2641  
+ 718 027620  1077          1077;7710
+     027621  7710  
+ 719 027622  4141          4141;0077
+     027623  0077  
+ 720 027624  7642          7642;4041
+     027625  4041  
+ 721 027626  2477          2477;4310
+     027627  4310  
+ 722 027630  0177          0177;0301
+     027631  0301  
+ 723 027632  3077          3077;7730
+     027633  7730  
+ 724 027634  0677          0677;7730
+     027635  7730  
+ 725 027636  4177          4177;7741
+     027637  7741  
+ 726 027640  4477          4477;3044
+     027641  3044  
+ 727 027642  4336          4336;3745
+     027643  3745  
+ 728 027644  4677          4677;3144
+     027645  3144  
+ 729 027646  5121          5121;4651
+     027647  4651  
+ 730 027650  7740          7740;4040
+     027651  4040  
+ 731 027652  0177          0177;7701
+     027653  7701  
+ 732 027654  0276          0276;7401
+     027655  7401  
+ 733 027656  0177          0177;7706
+     027657  7706  
+ 734 027660  1463         1463;6314
+     027661  6314  
+ 735 027662  0770          0770;7007
+     027663  7007  
+ 736 027664  5143          5143;6145
+     027665  6145  
+ 737 027666  0077          0077;0041
+     027667  0041  
+ 738 027670  0640          0640;0130
+     027671  0130  
+ 739 027672  4100          4100;7700
+     027673  7700  
+ 740 027674  3700          3700;1010
+     027675  1010  
+ 741 027676  1010          1010;1034
+     027677  1034  
+ 742               
+ 743 027700  0000          0000;0000
+     027701  0000  
+ 744 027702  0000          0000;0075
+     027703  0075  
+ 745 027704  7070          7070;0000
+     027705  0000  
+ 746 027706  7714          7714;1477
+     027707  1477  
+ 747 027710  7121          7121;4657
+     027711  4657  
+ 748 027712  3361          3361;4366
+     027713  4366  
+ 749 027714  2626          2626;0551
+     027715  0551  
+ 750 027716  7000          7000;0000
+     027717  0000  
+ 751 027720  4100          4100;0036
+     027721  0036  
+ 752 027722  3600          3600;0041
+     027723  0041  
+ 753 027724  2424          2424;0010
+     027725  0010  
+ 754 027726  3704          3704;0404
+     027727  0404  
+ 755 027730  0600          0600;0005
+     027731  0005  
+ 756 027732  0404          0404;0404
+     027733  0404  
+ 757 027734  0300          0300;0003
+     027735  0003  
+ 758 027736  3001          3001;4006
+     027737  4006  
+ 759 027740  5136          5136;3645
+     027741  3645  
+ 760 027742  7701          7701;0121
+     027743  0121  
+ 761 027744  5123          5123;2145
+     027745  2145  
+ 762 027746  5122          5122;2641
+     027747  2641  
+ 763 027750  7714          7714;0424
+     027751  0424  
+ 764 027752  5172          5172;0651
+     027753  0651  
+ 765 027754  2506          2506;4215
+     027755  4215  
+ 766 027756  5043          5043;6044
+     027757  6044  
+ 767 027760  5126          5126;2651
+     027761  2651  
+ 768 027762  5122          5122;3651
+     027763  3651  
+ 769 027764  6600          6600;0066
+     027765  0066  
+ 770 027766  6600          6600;0065
+     027767  0065  
+ 771 027770  4210          4210;0024
+     027771  0024  
+ 772 027772  1212          1212;1212
+     027773  1212  
+ 773 027774  2400          2400;1042
+     027775  1042  
+ 774 027776  5520          5520;2040
+     027777  2040  
+ 775                       $$$$;$$$$       /END OF THE PATTERN TABLE
+
+ACCEPT  5521
+ACTION  6571
+ADD     2000
+ATR     0014
+B       0030
+BDISPL  4046
+BEL     4034
+BEND    7777 unreferenced
+BETA    0163
+BUF     4034
+BUFEND  0027
+C100    0100
+CDI     6203
+CHRCNT  4036
+CINT    4534
+CLAB    6133
+CLEAR   4525
+CLEN    6134
+CLLR    6132
+CLSA    6135
+CLSK    6131
+COM     0017
+COMGO   0722
+CONTIN  5434
+CRT     0223
+DAY     0055
+DIS     0140
+DISB    3400
+DSC     1740
+DSCI    1760
+DSW     0164
+E27     0113
+ECHOFF  0253
+ECODEV  6323
+ERROR2  4576
+ESF     0004
+EVAL    1610
+EXP     0044
+FADC    3542
+FBUF    3443
+FDA     2473
+FENT    4407
+FEXT    0000
+FGET    0000
+FINALZ  5525
+FIXIT   4560
+FL0ATR  5554
+FLAGS   0117
+FLOAT   4552
+FLOATR  5553
+FLS     4166
+FMQ     6563
+FNTABF  2357
+FNTABL  2157
+FSS     3517
+FTIM    4517
+FTRG    4154
+FXL     3525
+GOTO    0610
+HCNT    0114
+HESI    4466
+HORD    0045
+INLIST  0226
+KDISPL  4047
+KEYCK   3000
+KONTRL  3553
+LCNT    0115
+LDAI    1020
+LDF     0640
+LINC    6141
+LINT    4565
+LSW     0517
+M1      4006
+M14     0107
+N6      3514
+NEGATE  4557
+NULINE  4063
+OFLO    0116
+ONLY1   3430
+OSCOPE  6722
+OUTDEV  0057
+P       0010
+P134    0000
+P17     0101
+P337    0002
+P414    3516
+P446    3515
+P7      0073
+P77     0077
+PDP     0002
+PNTR    3401
+POPA    4521
+POPJ    5523
+PTLOOP  3472
+PTPLOT  3467
+PUSHA   4520
+PUSHJ   4522
+RATE    4510
+RBUF    3462
+REFRSH  4051
+RETURN  5555
+RFEND   4066
+RFEOL   4117
+RFLUP   4073
+ROR     0300
+RUB1    2466
+SAM     0100
+SBA     4010
+SBUFR   6212
+SCOPE   4002
+SCOPGO  4037
+SCR     4014
+SCROLL  4126
+SFF     4027
+SLF     4035
+SM20    4070
+SNS     0440
+SORTJ   4526
+SRO     4024
+STABL   7600 unreferenced
+STC     4000
+STORE   3413
+SXL     0400
+T       0020
+TABEND  0033
+TATE    4470
+TBS     4150
+TIME    4516
+TST     3535
+TSTCMA  4543
+TXTEND  0030
+VIEW    3402
+WATE    4460
+XI33    3007
+XINT    3127
+XRT     0014
+XVAL    4001
+YVAL    4000
