@@ -1,0 +1,1502 @@
+   1               dial=1
+   2               /unref=1
+   3               /PDP-8E ISZ TEST
+   4               /COPYRIGHT 1970, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.  01754
+   5               /
+   6               /CONSTANTS AND VARIABLES
+   7               *0
+   8 000000  0000          0
+   9 000001  5001          JMP 1           /PERIPHERAL INTERRUPT
+  10 000002  0002  FRMLOC, 2               /ISZ TEST INCTRUCTION LOCATION
+  11 000003  0003  LIMLO,  3               /LOW LIMIT TEST AREA
+  12 000004  0200  LIMHI,  -7600           /HIGH LIMIT TEST AREA
+  13 000005  0547  ASUC,   SUC
+  14 000006  7771          7771
+  15 000007  0007  MSK7,   0007            /OCTAL CONVERSION MASK
+  16 000010  0000  WORK,   0               /IR0
+  17 000011  0000  WORK1,  0               /IR1
+  18 000012  7401  M377,   -377
+  19 000013  3607  NUM,    3607            /THE RANDOM NUMBER LOCATION
+  20 000014  0003  THREE,  3
+  21               
+  22 000015  2420  ISZ1,   ISZ I TOLOC     /MOVING ISZ
+  23 000016  5115  JMP1,   JMP BACK        /TEST INSTRUCTION
+  24 000017  5140  JMP2,   JMP BAKBRN      /GROUP.
+  25 000020  0000  TOLOC,  0               /LOCATION TO BE ISZ'D
+  26 000021  0000  PATRN,  0               /STARTING ISZ PATTERN
+  27 000022  0000  BEFOR,  0               /FAILING PATTERN BEFORE FAILING ISZ
+  28 000023  0000  AFTER,  0               /PREDICTED RESULTS OF EACH ISZ
+  29 000024  0004  K4,     4               /SWITCH REGISTER MASKS
+  30 000025  0400  K0400,  0400
+  31 000026  0200  K0200,  0200
+  32 000027  0100  K0100,  0100
+  33 000030  0000  NOTE,   0               /7'S=ERROR WITH NO SKIP
+  34 000031  0260  PRINT,  INF1-1          /0'S=ERROR WITH SKIP
+  35 000032  0200  AERR1,  ERR1
+  36 000033  0205  AERR2,  ERR2
+  37 000034  0413  APDR,   PDR
+  38 000035  1013  ITADNM, TAD NUM
+  39 000036  0600  ATFCLF, TFCLF
+  40               
+  41               /SR0(0)=HALT AFTER ERROR PRINTOUT
+  42               /SR1(1)=NO PRINTOUTS
+  43               /SR3(1) = HOLD FROM CONSTANT
+  44               /SR4(1) = HOLD TO CONSTANT
+  45               /SR5(1) = HOLD PATTERN CONSTANT
+  46               /SR9(0) = DO ONE ISZ ONLY
+  47               /SR11(1) = DO TEST PART 2
+  48               /
+  49               /
+  50               
+  51               /PROGRAM START
+  52 000037  4440  START,  JMS I .+1       /ION
+  53 000040  0614          PATCH           /LAS
+  54 000041  0014          AND THREE
+  55 000042  7640          SZA CLA         /SKIP IF PART 1
+  56 000043  5425          JMP I K0400     /GO TO PART 2
+  57 000044  1035          TAD ITADNM
+  58 000045  3164          DCA RANUM+1
+  59                       /CHECK FOR FIXED PATTERN
+  60 000046  7604  CHEK1,  LAS
+  61 000047  0027          AND K0100
+  62 000050  7440          SZA
+  63 000051  5054          JMP CHEK2
+  64               
+  65                       /SELECT THE PATTERN
+  66 000052  4163  SELPAT, JMS RANUM
+  67 000053  3021          DCA PATRN
+  68               
+  69                       /CHECK FOR FIXED TO
+  70 000054  7604  CHEK2,  LAS
+  71 000055  0026          AND K0200
+  72 000056  7640          SZA CLA
+  73 000057  5064          JMP CHEKS
+  74               
+  75                       /SELECT THE TO LOCATION
+  76 000060  4163  SELTO,  JMS RANUM
+  77 000061  3020          DCA TOLOC
+  78 000062  1020          TAD TOLOC
+  79 000063  4150          JMS LIMTST
+  80               
+  81                       /CHECK FOR FIXED FROM
+  82 000064  7604  CHEKS,  LAS
+  83 000065  0025          AND K0400
+  84 000066  7640          SZA CLA
+  85 000067  5074          JMP PLCINT
+  86               
+  87                       /SELECT THE FROM LOCATION
+  88 000070  4163  SELFRM, JMS RANUM
+  89 000071  3002          DCA FRMLOC
+  90 000072  1002          TAD FRMLOC
+  91 000073  4150          JMS LIMTST
+  92               
+  93                       /PLACE FROM INSTRUCTIONS
+  94 000074  7240  PLCINT, CLA CMA
+  95 000075  1002          TAD FRMLOC
+  96 000076  3010          DCA WORK
+  97 000077  1015          TAD ISZ1
+  98 000100  3410          DCA I WORK
+  99 000101  1016          TAD JMP1
+ 100 000102  3410          DCA I WORK
+ 101 000103  1017          TAD JMP2
+ 102 000104  3410          DCA I WORK
+ 103               
+ 104                       /DEPOSIT PATTERN IN LOCATION
+ 105 000105  1021          TAD PATRN
+ 106 000106  3420          DCA I TOLOC
+ 107               
+ 108                       /STORE PREDICTED ISZ RESULT
+ 109 000107  1021          TAD PATRN
+ 110 000110  3022          DCA BEFOR
+ 111 000111  1022  LUP1,   TAD BEFOR
+ 112 000112  7001          IAC
+ 113 000113  3023          DCA AFTER
+ 114 000114  5405          JMP I ASUC
+ 115               
+ 116                       /RETURN NO SKIP CONDITION
+ 117 000115  7604  BACK,   LAS
+ 118 000116  7004          RAL
+ 119 000117  7710          SPA CLA
+ 120 000120  5131          JMP LAS1
+ 121 000121  1420          TAD I TOLOC
+ 122 000122  7041          CIA
+ 123 000123  1023          TAD AFTER
+ 124 000124  7640          SZA CLA
+ 125 000125  5432          JMP I AERR1     /ERROR IN ISZ OPERATION
+ 126 000126  1420          TAD I TOLOC
+ 127 000127  7650          SNA CLA
+ 128 000130  5432          JMP I AERR1     /ERROR IN ISZ SKIP DETECTION
+ 129 000131  7604  LAS1,   LAS
+ 130 000132  0024          AND K4
+ 131 000133  7440          SZA             /SKIP IF NOT ONE ISZ (SR9)
+ 132 000134  5046          JMP CHEK1
+ 133 000135  7001          IAC
+ 134 000136  1022          TAD BEFOR
+ 135 000137  5110          JMP LUP1-1
+ 136               
+ 137                       /RETURN FOR SKIP CONDITION
+ 138 000140  7604  BAKBRN, LAS
+ 139 000141  7004          RAL
+ 140 000142  7710          SPA CLA
+ 141 000143  5046          JMP CHEK1
+ 142 000144  1420          TAD I TOLOC
+ 143 000145  7640          SZA CLA         /SKIP IF TO LOCATION OK
+ 144 000146  5433          JMP I AERR2     /ERROR IN ISZ LOCATION
+ 145 000147  5046          JMP CHEK1
+ 146               
+ 147               /TEST HIGH-LOW LIMITS
+ 148               
+ 149 000150  0000  LIMTST, 0
+ 150 000151  7510          SPA
+ 151 000152  5157          JMP .+5
+ 152 000153  1003          TAD LIMLO
+ 153 000154  7700          SMA CLA
+ 154 000155  5550          JMP I LIMTST
+ 155 000156  5164          JMP RANUM+1
+ 156 000157  1004          TAD LIMHI
+ 157 000160  7700          SMA CLA
+ 158 000161  5164          JMP RANUM+1
+ 159 000162  5550          JMP I LIMTST
+ 160               
+ 161                       /RANDOM NUMBER GENERATOR
+ 162 000163  0000  RANUM,  0
+ 163 000164  1013          TAD NUM
+ 164 000165  7104          RAL CLL
+ 165 000166  7430          SZL
+ 166 000167  1014          TAD THREE
+ 167 000170  3013          DCA NUM
+ 168 000171  1013          TAD NUM         /AC=NEW RANDOM NUMBER
+ 169 000172  5563          JMP I RANUM
+ 170               
+ 171 000173  0333  SKDP,   SKPDAT
+ 172 000174  0334          SKPDAT+1
+ 173 000175  1000  K1000,  1000
+ 174 000176  0000  KP,     0
+ 175 000177  0000  CT,     0
+ 176               
+ 177               *200
+ 178               /       JMP START
+ 179               
+ 180                       /ERROR ROUTINE 1
+ 181 000200  1341  ERR1,   TAD SKPDAT+6
+ 182 000201  3333          DCA SKPDAT
+ 183 000202  7040          CMA
+ 184 000203  3030          DCA NOTE
+ 185 000204  5207          JMP KPGO
+ 186               
+ 187                       /ERROR ROUTINE 2
+ 188 000205  1332  ERR2,   TAD SKPDAT-1
+ 189 000206  3333          DCA SKPDAT
+ 190 000207  1342  KPGO,   TAD SKPDAT+7
+ 191 000210  3334          DCA SKPDAT+1
+ 192 000211  1002          TAD FRMLOC
+ 193 000212  3010          DCA WORK
+ 194 000213  1371          TAD A3
+ 195 000214  4343          JMS SETUP
+ 196               
+ 197 000215  1020          TAD TOLOC
+ 198 000216  3010          DCA WORK
+ 199 000217  1372          TAD A4
+ 200 000220  4343          JMS SETUP
+ 201               
+ 202 000221  1021          TAD PATRN
+ 203 000222  3010          DCA WORK
+ 204 000223  1373          TAD A5
+ 205 000224  4343          JMS SETUP
+ 206 000225  1022          TAD BEFOR
+ 207 000226  3010          DCA WORK
+ 208 000227  1374          TAD A6
+ 209 000230  4343          JMS SETUP
+ 210               
+ 211 000231  1420          TAD I TOLOC
+ 212 000232  3010          DCA WORK
+ 213 000233  1375          TAD A7
+ 214 000234  4343          JMS SETUP
+ 215               
+ 216                       /TTY PRINT ROUTINE
+ 217 000235  6002  TTY,    IOF
+ 218 000236  1031          TAD PRINT
+ 219 000237  3010          DCA WORK
+ 220 000240  1410          TAD I WORK
+ 221 000241  6046          TLS
+ 222 000242  6041          TSF
+ 223 000243  5242          JMP .-1
+ 224 000244  1012          TAD M377
+ 225 000245  7640          SZA CLA
+ 226 000246  5240          JMP TTY+3
+ 227 000247  6042          TCF
+ 228 000250  6001          ION
+ 229 000251  7604          LAS
+ 230 000252  7710          SPA CLA
+ 231 000253  7402          HLT             /HALT AFTER ERROR (SR0)
+ 232               
+ 233 000254  1030          TAD NOTE
+ 234 000255  7650          SNA CLA
+ 235 000256  5046          JMP CHEK1
+ 236 000257  3030          DCA NOTE
+ 237 000260  5131          JMP LAS1        /RETURN TO NO SKIP ROUTINE
+ 238               
+ 239                       /ERROR PRINT OUT LINE 1
+ 240 000261  0306  INF1,   306             /F      FROM (INSTRUCTION LOCATION)
+ 241 000262  0240          240             /SPACE
+ 242 000263  0000  INDATA, 0               /X      LOCATION
+ 243 000264  0000          0               /X
+ 244 000265  0000          0               /X
+ 245 000266  0000          0               /X
+ 246 000267  0240          240             /SPACE
+ 247 000270  0240          240             /SPACE
+ 248 000271  0324          324             /T      TO (OPERAND ADDRESS)
+ 249 000272  0240          240             /SPACE
+ 250 000273  0000  ONDATA, 0               /X      ADDRESS
+ 251 000274  0000          0               /X
+ 252 000275  0000          0               /X
+ 253 000276  0000          0               /X
+ 254 000277  0215          215             /CR
+ 255 000300  0212          212             /LF
+ 256 000301  0215          215             /CR
+ 257 000302  0215          215             /CR
+ 258               
+ 259                       /ERROR PRINT OUT LINE 2
+ 260 000303  0317          317             /O      OPERAND (STARTING COUNT)
+ 261 000304  0240          240             /SPACE
+ 262 000305  0000  STDATA, 0               /X      PATTERN
+ 263 000306  0000          0               /X
+ 264 000307  0000          0               /X
+ 265 000310  0000          0               /X
+ 266 000311  0240          240             /SPACE
+ 267 000312  0240          240             /SPACE
+ 268 000313  0306          306             /F      FAILING COUNT
+ 269 000314  0240          240             /SPACE
+ 270 000315  0000  FLDATA, 0               /X      PATTERN BEFORE FAILING ISZ
+ 271 000316  0000          0               /X
+ 272 000317  0000          0               /X
+ 273 000320  0000          0               /X
+ 274 000321  0240          240             /SPACE
+ 275 000322  0240          240             /SPACE
+ 276 000323  0322          322             /R      RESULT AFTER FAILURE
+ 277 000324  0240          240             /SPACE
+ 278 000325  0000  RSDATA, 0               /X      PATTERN AFTER FAILING ISZ
+ 279 000326  0000          0               /X
+ 280 000327  0000          0               /X
+ 281 000330  0000          0               /X
+ 282 000331  0240          240             /SPACE
+ 283 000332  0240          240             /SPACE
+ 284 000333  0316  SKPDAT, 316             /N      NO
+ 285 000334  0323          323             /S      SKIP
+ 286 000335  0215          215             /CR
+ 287 000336  0212          212             /LF
+ 288 000337  0212          212             /LF
+ 289 000340  0377          377             /RUBOUT
+ 290 000341  0316          316             /N
+ 291 000342  0323          323             /S
+ 292               
+ 293 000343  0000  SETUP,  0
+ 294 000344  3011          DCA WORK1
+ 295 000345  1010          TAD WORK
+ 296 000346  7006          RTL
+ 297 000347  7006          RTL
+ 298 000350  4363          JMS MORSU
+ 299 000351  7012          RTR
+ 300 000352  7012          RTR
+ 301 000353  7012          RTR
+ 302 000354  4363          JMS MORSU
+ 303 000355  7012          RTR
+ 304 000356  7010          RAR
+ 305 000357  4363          JMS MORSU
+ 306 000360  4363          JMS MORSU
+ 307 000361  7200          CLA
+ 308 000362  5743          JMP I SETUP
+ 309 000363  0000  MORSU,  0
+ 310 000364  0007          AND MSK7
+ 311 000365  1376          TAD TW6
+ 312 000366  3411          DCA I WORK1
+ 313 000367  1010          TAD WORK
+ 314 000370  5763          JMP I MORSU
+ 315               
+ 316                       /PAGE 1 CONSTANTS
+ 317 000371  0262  A3,     INDATA-1
+ 318 000372  0272  A4,     ONDATA-1
+ 319 000373  0304  A5,     STDATA-1
+ 320 000374  0314  A6,     FLDATA-1
+ 321 000375  0324  A7,     RSDATA-1
+ 322 000376  0260  TW6,    0260
+ 323               ifdef unref <
+ 324               4570    /unref
+ 325               >
+ 326               
+ 327               /PART 2 INITIALIZATION ROUTINE
+ 328               *400
+ 329 000400  1003          TAD LIMLO
+ 330 000401  7041          CIA
+ 331 000402  3310          DCA FROM        /LOW LIMIT TO FROM
+ 332 000403  1003          TAD LIMLO
+ 333 000404  7040          CMA
+ 334 000405  3311          DCA TO
+ 335 000406  1346          TAD A0
+ 336 000407  3313          DCA PATCYC
+ 337 000410  1314          TAD INST1
+ 338 000411  3164          DCA RANUM+1
+ 339               
+ 340 000412  5046          JMP CHEK1       /GO TO PAGE 0 START
+ 341               
+ 342                       /PATH DECISION ROUTINE
+ 343 000413  1163  PDR,    TAD RANUM
+ 344 000414  7041          CIA
+ 345 000415  1305          TAD GFROM
+ 346 000416  7650          SNA CLA         /SKIP IF NOT REQUESTING FROM
+ 347 000417  5303          JMP FRUT                /GO TO TO ADDRESS ROUTINE
+ 348               
+ 349 000420  1163          TAD RANUM
+ 350 000421  7041          CIA
+ 351 000422  1306          TAD GTO
+ 352 000423  7650          SNA CLA         /SKIP IF NOT REQUESTING TO
+ 353 000424  5301          JMP TORUT               /GO TO ADDRESS ROUTINE
+ 354 000425  5226          JMP PRUT                /GO TO PATTERN ROUTINE
+ 355               
+ 356                       /SELECT PATTERN AND OTHER THINGS
+ 357 000426  1713  PRUT,   TAD I PATCYC
+ 358 000427  3312          DCA PATT
+ 359 000430  1312          TAD PATT
+ 360 000431  7450          SNA             /NO SKIP IF END OF PATTERN TABLE
+ 361 000432  5240          JMP .+6         /END PATTERN TABLE LOOK AROUND
+ 362 000433  7201          CLA IAC
+ 363 000434  1313          TAD PATCYC
+ 364 000435  3313          DCA PATCYC
+ 365 000436  1312          TAD PATT
+ 366 000437  5563          JMP I RANUM     /RETURN, AC=NEW PATTERN
+ 367                       /
+ 368 000440  1345          TAD AK7776
+ 369 000441  3313          DCA PATCYC      /RESTOR START ADDRESS OF PATT. TABLE
+ 370 000442  7001          IAC
+ 371 000443  1311          TAD TO
+ 372 000444  3311          DCA TO          /INCREMENT TO
+ 373 000445  1311          TAD TO
+ 374 000446  7041          CIA
+ 375 000447  1310          TAD FROM
+ 376 000450  7640          SZA CLA         /SKIP IF TO = FROM
+ 377 000451  5255          JMP .+4
+ 378 000452  1311          TAD TO
+ 379 000453  1014          TAD THREE
+ 380 000454  3311          DCA TO          /SKIP AROUND FROM
+ 381 000455  1311          TAD TO
+ 382 000456  7500          SMA
+ 383 000457  5276          JMP GOUT
+ 384 000460  1004          TAD LIMHI
+ 385 000461  7710          SPA CLA         /SKIP IF END TEST AREA
+ 386 000462  5276          JMP GOUT
+ 387 000463  7201          CLA IAC
+ 388 000464  1310          TAD FROM
+ 389 000465  3310          DCA FROM        /ADVANCE FROM
+ 390 000466  1003          TAD LIMLO
+ 391 000467  7041          CIA
+ 392 000470  3311          DCA TO          /RESET TO ADDRESS
+ 393 000471  1310          TAD FROM
+ 394 000472  1004          TAD LIMHI
+ 395 000473  7640          SZA CLA
+ 396 000474  5276          JMP GOUT
+ 397 000475  5200          JMP 400
+ 398 000476  7200  GOUT,   CLA
+ 399 000477  1312          TAD PATT
+ 400 000500  5563          JMP I RANUM
+ 401               
+ 402                       /SELECT TO ROUTINE
+ 403 000501  1311  TORUT,  TAD TO
+ 404 000502  5563          JMP I RANUM
+ 405               
+ 406                       /SELECT FROM ROUTINE
+ 407 000503  1310  FRUT,   TAD FROM
+ 408 000504  5563          JMP I RANUM
+ 409               
+ 410                       /PAGE 3 CONSTANTS
+ 411 000505  0071  GFROM,  SELFRM+1        /STORED RETURN ADDRESS WHEN
+ 412                                       /RANDOM FROM IS REQUESTED
+ 413 000506  0061  GTO,    SELTO+1         /STORED RETURN ADDRESS WHEN
+ 414                                       /RANDOM TO IS REQUESTED
+ 415 000507  0053  GPAT,   SELPAT+1        /STORED RETURN ADDRESS WHEN
+ 416                                       /RANDOM PATTERN IS REQUESTED
+ 417 000510  0000  FROM,   0               /CURRENT FROM ADDRESS
+ 418 000511  0000  TO,     0               /CURRENT TO ADDRESS
+ 419 000512  0000  PATT,   0               /CURRENT PATTERN
+ 420 000513  0000  PATCYC, 0               /CURRENT PATTERN ADDRESS
+ 421 000514  5434  INST1,  JMP I APDR
+ 422 000515  7776  K7776,  7776
+ 423 000516  7775          7775
+ 424 000517  7773          7773
+ 425 000520  7767          7767
+ 426 000521  7757          7757
+ 427 000522  7737          7737
+ 428 000523  7677          7677
+ 429 000524  7577          7577
+ 430 000525  7377          7377
+ 431 000526  6777          6777
+ 432 000527  5777          5777
+ 433 000530  3777          3777
+ 434 000531  0001          0001
+ 435 000532  0003          0003
+ 436 000533  0007          0007
+ 437 000534  0017          0017
+ 438 000535  0037          0037
+ 439 000536  0077          0077
+ 440 000537  0177          0177
+ 441 000540  0377          0377
+ 442 000541  0777          0777
+ 443 000542  1777          1777
+ 444 000543  3777  K3777,  3777
+ 445 000544  0000          0
+ 446 000545  0515  AK7776, K7776
+ 447 000546  0544  A0,     K3777+1
+ 448               
+ 449 000547  1177  SUC,    TAD CT
+ 450 000550  7001          IAC
+ 451 000551  3177          DCA CT
+ 452 000552  1177          TAD CT
+ 453 000553  7640          SZA CLA
+ 454 000554  5436          JMP I ATFCLF
+ 455 000555  1176          TAD KP
+ 456 000556  1175          TAD K1000
+ 457 000557  3176          DCA KP
+ 458 000560  1176          TAD KP
+ 459 000561  7640          SZA CLA
+ 460 000562  5436          JMP I ATFCLF
+ 461 000563  6002          IOF
+ 462 000564  1375          TAD INF2+1
+ 463 000565  3573          DCA I SKDP
+ 464 000566  1376          TAD INF2+2
+ 465 000567  3574          DCA I SKDP+1
+ 466 000570  1374          TAD INF2
+ 467 000571  3010          DCA WORK
+ 468 000572  5773          JMP I .+1
+ 469 000573  7602          7602
+ 470 000574  0332  INF2,   332
+ 471 000575  0260          260
+ 472 000576  0267          267
+ 473               ifdef unref <
+ 474               4552    /unref
+ 475               >
+ 476               
+ 477               *600
+ 478               
+ 479               /CHECK FOR TO=FROM CONFLICT
+ 480               
+ 481 000600  1020  TFCLF,  TAD TOLOC
+ 482 000601  7041          CIA
+ 483 000602  1002          TAD FRMLOC
+ 484 000603  7450          SNA
+ 485 000604  5054          JMP CHEK2
+ 486 000605  7001          IAC
+ 487 000606  7450          SNA
+ 488 000607  5054          JMP CHEK2
+ 489 000610  7001          IAC
+ 490 000611  7650          SNA CLA
+ 491 000612  5054          JMP CHEK2
+ 492 000613  5402          JMP I FRMLOC
+ 493               
+ 494 000614  0000  PATCH,  0               /RESTORE THEN GO AWAY
+ 495 000615  3000          DCA 0
+ 496 000616  1232          TAD X
+ 497 000617  3001          DCA 1
+ 498 000620  1233          TAD X1
+ 499 000621  3002          DCA 2
+ 500 000622  1234          TAD X2
+ 501 000623  3003          DCA 3
+ 502 000624  1235          TAD X3
+ 503 000625  3037          DCA START
+ 504 000626  1236          TAD X4
+ 505 000627  3040          DCA START+1
+ 506 000630  6001          ION
+ 507 000631  5614          JMP I PATCH
+ 508               
+ 509 000632  7402  X,      7402
+ 510 000633  0000  X1,     0
+ 511 000634  7157  X2,     7157
+ 512 000635  6001  X3,     ION
+ 513 000636  7604  X4,     LAS
+ 514               ifdef unref <
+ 515               1752    /unref
+ 516               7420    /unref
+ 517               5762    /unref
+ 518               7000    /unref
+ 519               7000    /unref
+ 520               7604    /unref
+ 521               7106    /unref
+ 522               7430    /unref
+ 523               5200    /unref
+ 524               5753    /unref
+ 525               7100    /unref
+ 526               7621    /unref
+ 527               1744    /unref
+ 528               7421    /unref
+ 529               1743    /unref
+ 530               7407    /unref
+ 531               0000    /unref
+ 532               3355    /unref
+ 533               7430    /unref
+ 534               7040    /unref
+ 535               3356    /unref
+ 536               7501    /unref
+ 537               3357    /unref
+ 538               7441    /unref
+ 539               3350    /unref
+ 540               1766    /unref
+ 541               7650    /unref
+ 542               5274    /unref
+ 543               5276    /unref
+ 544               1760    /unref
+ 545               7410    /unref
+ 546               1761    /unref
+ 547               7140    /unref
+ 548               1355    /unref
+ 549               7040    /unref
+ 550               7440    /unref
+ 551               5763    /unref
+ 552               7430    /unref
+ 553               5763    /unref
+ 554               1764    /unref
+ 555               7040    /unref
+ 556               1357    /unref
+ 557               7040    /unref
+ 558               7440    /unref
+ 559               5763    /unref
+ 560               7430    /unref
+ 561               5763    /unref
+ 562               1356    /unref
+ 563               7440    /unref
+ 564               5763    /unref
+ 565               7441    /unref
+ 566               7140    /unref
+ 567               1354    /unref
+ 568               7040    /unref
+ 569               7440    /unref
+ 570               5763    /unref
+ 571               7430    /unref
+ 572               5763    /unref
+ 573               7404    /unref
+ 574               7006    /unref
+ 575               7630    /unref
+ 576               5251    /unref
+ 577               7404    /unref
+ 578               7006    /unref
+ 579               7006    /unref
+ 580               7430    /unref
+ 581               5753    /unref
+ 582               5765    /unref
+ 583               0264    /unref
+ 584               0265    /unref
+ 585               0000    /unref
+ 586               0000    /unref
+ 587               0000    /unref
+ 588               0000    /unref
+ 589               0554    /unref
+ 590               0337    /unref
+ 591               0203    /unref
+ 592               0015    /unref
+ 593               0000    /unref
+ 594               0000    /unref
+ 595               0000    /unref
+ 596               0317    /unref
+ 597               0316    /unref
+ 598               1000    /unref
+ 599               1400    /unref
+ 600               0354    /unref
+ 601               2000    /unref
+ 602               0566    /unref
+ 603               6064    /unref
+ 604               6043    /unref
+ 605               6764    /unref
+ 606               6460    /unref
+ 607               4367    /unref
+ 608               6460    /unref
+ 609               6243    /unref
+ 610               6260    /unref
+ 611               6062    /unref
+ 612               >
+ 613               
+ 614               ifdef dial <
+ 615               /THIS BIT IS UNIQUE TO THE DIAL VERSION.
+ 616               /I SUSPECT IT'S PURPOSE IS TO BRANCH TO START IF
+ 617               /THE PROGRAM IS INVOKED IN LINC MODE.
+ 618               *4000
+ 619 004000  7200  7200    /unref
+ 620 004001  7410  7410    /unref
+ 621 004002  7240  7240    /unref
+ 622 004003  3003  3003    /unref
+ 623 004004  1473  1473    /unref
+ 624 004005  3472  3472    /unref
+ 625 004006  6141  6141    /unref
+ 626 004007  0647  0647    /unref
+ 627 004010  0500  0500    /unref
+ 628 004011  6214  6214    /unref
+ 629 004012  0301  0301    /unref
+ 630 004013  1560  1560    /unref
+ 631 004014  7770  7770    /unref
+ 632 004015  1120  1120    /unref
+ 633 004016  7770  7770    /unref
+ 634 004017  0470  0470    /unref
+ 635 004020  7141  7141    /unref
+ 636 004021  1020  1020    /unref
+ 637 004022  7000  7000    /unref
+ 638 004023  0640  0640    /unref
+ 639 004024  1040  1040    /unref
+ 640 004025  2237  2237    /unref
+ 641 004026  1040  1040    /unref
+ 642 004027  2241  2241    /unref
+ 643 004030  1040  1040    /unref
+ 644 004031  2252  2252    /unref
+ 645 004032  1040  1040    /unref
+ 646 004033  2254  2254    /unref
+ 647 004034  1040  1040    /unref
+ 648 004035  2271  2271    /unref
+ 649 004036  1040  1040    /unref
+ 650 004037  2551  2551    /unref
+ 651 004040  1040  1040    /unref
+ 652 004041  2362  2362    /unref
+ 653 004042  1040  1040    /unref
+ 654 004043  2625  2625    /unref
+ 655 004044  1040  1040    /unref
+ 656 004045  2666  2666    /unref
+ 657 004046  1040  1040    /unref
+ 658 004047  3154  3154    /unref
+ 659 004050  1040  1040    /unref
+ 660 004051  3156  3156    /unref
+ 661 004052  0641  0641    /unref
+ 662 004053  1040  1040    /unref
+ 663 004054  2003  2003    /unref
+ 664 004055  1040  1040    /unref
+ 665 004056  2021  2021    /unref
+ 666 004057  1040  1040    /unref
+ 667 004060  2304  2304    /unref
+ 668 004061  1040  1040    /unref
+ 669 004062  2306  2306    /unref
+ 670 004063  1040  1040    /unref
+ 671 004064  2432  2432    /unref
+ 672 004065  1040  1040    /unref
+ 673 004066  2445  2445    /unref
+ 674 004067  1040  1040    /unref
+ 675 004070  2466  2466    /unref
+ 676 004071  1040  1040    /unref
+ 677 004072  2475  2475    /unref
+ 678 004073  1040  1040    /unref
+ 679 004074  2514  2514    /unref
+ 680 004075  1040  1040    /unref
+ 681 004076  2515  2515    /unref
+ 682 004077  1040  1040    /unref
+ 683 004100  2517  2517    /unref
+ 684 004101  1040  1040    /unref
+ 685 004102  2525  2525    /unref
+ 686 004103  1040  1040    /unref
+ 687 004104  3547  3547    /unref
+ 688 004105  1040  1040    /unref
+ 689 004106  3551  3551    /unref
+ 690 004107  1040  1040    /unref
+ 691 004110  3561  3561    /unref
+ 692 004111  1040  1040    /unref
+ 693 004112  3563  3563    /unref
+ 694 004113  1020  1020    /unref
+ 695 004114  0643  0643    /unref
+ 696 004115  1040  1040    /unref
+ 697 004116  3304  3304    /unref
+ 698 004117  4074  4074    /unref
+ 699 004120  1020  1020    /unref
+ 700 004121  7377  7377    /unref
+ 701 004122  0640  0640    /unref
+ 702 004123  1040  1040    /unref
+ 703 004124  2367  2367    /unref
+ 704 004125  1020  1020    /unref
+ 705 004126  7577  7577    /unref
+ 706 004127  1040  1040    /unref
+ 707 004130  2773  2773    /unref
+ 708 004131  1020  1020    /unref
+ 709 004132  1732  1732    /unref
+ 710 004133  1040  1040    /unref
+ 711 004134  2074  2074    /unref
+ 712 004135  1020  1020    /unref
+ 713 004136  0671  0671    /unref
+ 714 004137  1040  1040    /unref
+ 715 004140  2112  2112    /unref
+ 716 004141  0643  0643    /unref
+ 717 004142  0002  0002    /unref
+ 718 004143  4746  4746    /unref
+ 719 004144  4460  4460    /unref
+ 720 004145  5472  5472    /unref
+ 721 004146  4274  4274    /unref
+ 722 004147  4347  4347    /unref
+ 723 004150  2401  2401    /unref
+ 724 004151  0440  0440    /unref
+ 725 004152  1140  1140    /unref
+ 726 004153  6166  6166    /unref
+ 727 004154  4347  4347    /unref
+ 728 004155  0116  0116    /unref
+ 729 004156  0440  0440    /unref
+ 730 004157  2405  2405    /unref
+ 731 004160  1520  1520    /unref
+ 732 004161  4347  4347    /unref
+ 733 004162  0116  0116    /unref
+ 734 004163  0440  0440    /unref
+ 735 004164  2063  2063    /unref
+ 736 004165  6767  6767    /unref
+ 737 004166  6743  6743    /unref
+ 738 004167  0304  0304    /unref
+ 739 004170  0606  0606    /unref
+ 740 004171  5447  5447    /unref
+ 741 004172  6662  6662    /unref
+ 742 004173  6061  6061    /unref
+ 743 004174  4347  4347    /unref
+ 744 004175  0403  0403    /unref
+ 745 004176  0140  0140    /unref
+ 746 004177  1140  1140    /unref
+ 747 004200  6167  6167    /unref
+ 748 004201  4347  4347    /unref
+ 749 004202  1215  1215    /unref
+ 750 004203  2040  2040    /unref
+ 751 004204  1517  1517    /unref
+ 752 004205  2602  2602    /unref
+ 753 004206  4322  4322    /unref
+ 754 004207  0116  0116    /unref
+ 755 004210  0454  0454    /unref
+ 756 004211  4760  4760    /unref
+ 757 004212  4301  4301    /unref
+ 758 004213  1604  1604    /unref
+ 759 004214  4003  4003    /unref
+ 760 004215  1716  1716    /unref
+ 761 004216  4304  4304    /unref
+ 762 004217  0301  0301    /unref
+ 763 004220  4003  4003    /unref
+ 764 004221  1716  1716    /unref
+ 765 004222  4312  4312    /unref
+ 766 004223  1520  1520    /unref
+ 767 004224  4011  4011    /unref
+ 768 004225  4022  4022    /unref
+ 769 004226  0116  0116    /unref
+ 770 004227  0443  0443    /unref
+ 771 004230  0516  0516    /unref
+ 772 004231  0415  0415    /unref
+ 773 004232  2354  2354    /unref
+ 774 004233  4724  4724    /unref
+ 775 004234  0104  0104    /unref
+ 776 004235  4020  4020    /unref
+ 777 004236  0123  0123    /unref
+ 778 004237  2343  2343    /unref
+ 779 004240  2320  2320    /unref
+ 780 004241  0140  0140    /unref
+ 781 004242  0314  0314    /unref
+ 782 004243  0143  0143    /unref
+ 783 004244  1215  1215    /unref
+ 784 004245  2040  2040    /unref
+ 785 004246  1140  1140    /unref
+ 786 004247  2205  2205    /unref
+ 787 004250  2461  2461    /unref
+ 788 004251  4312  4312    /unref
+ 789 004252  1520  1520    /unref
+ 790 004253  4011  4011    /unref
+ 791 004254  4015  4015    /unref
+ 792 004255  0111  0111    /unref
+ 793 004256  1605  1605    /unref
+ 794 004257  3043  3043    /unref
+ 795 004260  4752  4752    /unref
+ 796 004261  6567  6567    /unref
+ 797 004262  6343  6343    /unref
+ 798 004263  6043  6043    /unref
+ 799 004264  6043  6043    /unref
+ 800 004265  6047  6047    /unref
+ 801 004266  5706  5706    /unref
+ 802 004267  1126  1126    /unref
+ 803 004270  0540  0540    /unref
+ 804 004271  2320  2320    /unref
+ 805 004272  0103  0103    /unref
+ 806 004273  0523  0523    /unref
+ 807 004274  4010  4010    /unref
+ 808 004275  0522  0522    /unref
+ 809 004276  0540  0540    /unref
+ 810 004277  1722  1722    /unref
+ 811 004300  4023  4023    /unref
+ 812 004301  1715  1715    /unref
+ 813 004302  0527  0527    /unref
+ 814 004303  1005  1005    /unref
+ 815 004304  2205  2205    /unref
+ 816 004305  4011  4011    /unref
+ 817 004306  1640  1640    /unref
+ 818 004307  4360  4360    /unref
+ 819 004310  4757  4757    /unref
+ 820 004311  2305  2305    /unref
+ 821 004312  0715  0715    /unref
+ 822 004313  1624  1624    /unref
+ 823 004314  4060  4060    /unref
+ 824 004315  4006  4006    /unref
+ 825 004316  1722  1722    /unref
+ 826 004317  4004  4004    /unref
+ 827 004320  1123  1123    /unref
+ 828 004321  1340  1340    /unref
+ 829 004322  0411  0411    /unref
+ 830 004323  0114  0114    /unref
+ 831 004324  4360  4360    /unref
+ 832 004325  4357  4357    /unref
+ 833 004326  2004  2004    /unref
+ 834 004327  2055  2055    /unref
+ 835 004330  6162  6162    /unref
+ 836 004331  4001  4001    /unref
+ 837 004332  2323  2323    /unref
+ 838 004333  0515  0515    /unref
+ 839 004334  0214  0214    /unref
+ 840 004335  0522  0522    /unref
+ 841 004336  4020  4020    /unref
+ 842 004337  0107  0107    /unref
+ 843 004340  0540  0540    /unref
+ 844 004341  6343  6343    /unref
+ 845 004342  5266  5266    /unref
+ 846 004343  6060  6060    /unref
+ 847 004344  4357  4357    /unref
+ 848 004345  2331  2331    /unref
+ 849 004346  1502  1502    /unref
+ 850 004347  1714  1714    /unref
+ 851 004350  4016  4016    /unref
+ 852 004351  2515  2515    /unref
+ 853 004352  0205  0205    /unref
+ 854 004353  2240  2240    /unref
+ 855 004354  0405  0405    /unref
+ 856 004355  0317  0317    /unref
+ 857 004356  0405  0405    /unref
+ 858 004357  2243  2243    /unref
+ 859 004360  2304  2304    /unref
+ 860 004361  0503  0503    /unref
+ 861 004362  1770  1770    /unref
+ 862 004363  5447  5447    /unref
+ 863 004364  6047  6047    /unref
+ 864 004365  4757  4757    /unref
+ 865 004366  0317  0317    /unref
+ 866 004367  1626  1626    /unref
+ 867 004370  0522  0522    /unref
+ 868 004371  2440  2440    /unref
+ 869 004372  0140  0140    /unref
+ 870 004373  2331  2331    /unref
+ 871 004374  1502  1502    /unref
+ 872 004375  1714  1714    /unref
+ 873 004376  4016  4016    /unref
+ 874 004377  2515  2515    /unref
+ 875               >
+ 876               
+ 877               ifdef unref <
+ 878               *7400
+ 879               6360    /unref
+ 880               6062    /unref
+ 881               4367    /unref
+ 882               6360    /unref
+ 883               6043    /unref
+ 884               6160    /unref
+ 885               6465    /unref
+ 886               4363    /unref
+ 887               6260    /unref
+ 888               6043    /unref
+ 889               6262    /unref
+ 890               6060    /unref
+ 891               4361    /unref
+ 892               6067    /unref
+ 893               6343    /unref
+ 894               6162    /unref
+ 895               6060    /unref
+ 896               4367    /unref
+ 897               6064    /unref
+ 898               6043    /unref
+ 899               6764    /unref
+ 900               6260    /unref
+ 901               4367    /unref
+ 902               6464    /unref
+ 903               6043    /unref
+ 904               6764    /unref
+ 905               6062    /unref
+ 906               4367    /unref
+ 907               6260    /unref
+ 908               6043    /unref
+ 909               6160    /unref
+ 910               6062    /unref
+ 911               4367    /unref
+ 912               6060    /unref
+ 913               6143    /unref
+ 914               6764    /unref
+ 915               6460    /unref
+ 916               4365    /unref
+ 917               6362    /unref
+ 918               6643    /unref
+ 919               6762    /unref
+ 920               6060    /unref
+ 921               4363    /unref
+ 922               6060    /unref
+ 923               6243    /unref
+ 924               6763    /unref
+ 925               6060    /unref
+ 926               4361    /unref
+ 927               6064    /unref
+ 928               6643    /unref
+ 929               6362    /unref
+ 930               6060    /unref
+ 931               4362    /unref
+ 932               6260    /unref
+ 933               6043    /unref
+ 934               6160    /unref
+ 935               6764    /unref
+ 936               4361    /unref
+ 937               6260    /unref
+ 938               6043    /unref
+ 939               6760    /unref
+ 940               6460    /unref
+ 941               4367    /unref
+ 942               6462    /unref
+ 943               6043    /unref
+ 944               6764    /unref
+ 945               6460    /unref
+ 946               4367    /unref
+ 947               6460    /unref
+ 948               6243    /unref
+ 949               6762    /unref
+ 950               6060    /unref
+ 951               4361    /unref
+ 952               6060    /unref
+ 953               6243    /unref
+ 954               6760    /unref
+ 955               6061    /unref
+ 956               4367    /unref
+ 957               6464    /unref
+ 958               6043    /unref
+ 959               6563    /unref
+ 960               6467    /unref
+ 961               4367    /unref
+ 962               6260    /unref
+ 963               6043    /unref
+ 964               5264    /unref
+ 965               6260    /unref
+ 966               6043    /unref
+ 967               6043    /unref
+ 968               6360    /unref
+ 969               6062    /unref
+ 970               4367    /unref
+ 971               6360    /unref
+ 972               6043    /unref
+ 973               6160    /unref
+ 974               6467    /unref
+ 975               4363    /unref
+ 976               6260    /unref
+ 977               6043    /unref
+ 978               6262    /unref
+ 979               6060    /unref
+ 980               4361    /unref
+ 981               6067    /unref
+ 982               6543    /unref
+ 983               6162    /unref
+ 984               6060    /unref
+ 985               4367    /unref
+ 986               6064    /unref
+ 987               6043    /unref
+ 988               6764    /unref
+ 989               6260    /unref
+ 990               4367    /unref
+ 991               6464    /unref
+ 992               6043    /unref
+ 993               6764    /unref
+ 994               6062    /unref
+ 995               4367    /unref
+ 996               6260    /unref
+ 997               6043    /unref
+ 998               6160    /unref
+ 999               6062    /unref
+1000               4367    /unref
+1001               6060    /unref
+1002               6143    /unref
+1003               6764    /unref
+1004               6460    /unref
+1005               4365    /unref
+1006               6260    /unref
+1007               6143    /unref
+1008               6762    /unref
+1009               >
+1010               
+1011               *7602
+1012 007602  1410          TAD I WORK
+1013 007603  6046          TLS
+1014 007604  6041          TSF
+1015 007605  5204          JMP .-1
+1016 007606  1012          TAD M377
+1017 007607  7640          SZA CLA
+1018 007610  5202          JMP .-6
+1019 007611  5217          JMP OVR
+1020               
+1021               ifdef unref <
+1022               6043    /unref
+1023               6362    /unref
+1024               6060    /unref
+1025               4362    /unref
+1026               6260    /unref
+1027               >
+1028               
+1029               *7617
+1030 007617  6042  OVR,    TCF
+1031 007620  6001          ION
+1032 007621  5436          JMP I ATFCLF
+1033               
+1034               ifdef unref <
+1035               4361    /unref
+1036               6260    /unref
+1037               6043    /unref
+1038               6760    /unref
+1039               6460    /unref
+1040               4367    /unref
+1041               6462    /unref
+1042               6043    /unref
+1043               6764    /unref
+1044               6460    /unref
+1045               4367    /unref
+1046               6460    /unref
+1047               6243    /unref
+1048               6762    /unref
+1049               6060    /unref
+1050               4361    /unref
+1051               6060    /unref
+1052               6243    /unref
+1053               6760    /unref
+1054               6061    /unref
+1055               4367    /unref
+1056               6464    /unref
+1057               6043    /unref
+1058               6562    /unref
+1059               6262    /unref
+1060               4367    /unref
+1061               6260    /unref
+1062               6043    /unref
+1063               6360    /unref
+1064               6062    /unref
+1065               4367    /unref
+1066               6360    /unref
+1067               6043    /unref
+1068               6160    /unref
+1069               6561    /unref
+1070               4363    /unref
+1071               6260    /unref
+1072               6043    /unref
+1073               6262    /unref
+1074               6060    /unref
+1075               4367    /unref
+1076               6460    /unref
+1077               6243    /unref
+1078               6160    /unref
+1079               6561    /unref
+1080               4361    /unref
+1081               6260    /unref
+1082               6043    /unref
+1083               6760    /unref
+1084               6460    /unref
+1085               4367    /unref
+1086               6462    /unref
+1087               6043    /unref
+1088               6764    /unref
+1089               6460    /unref
+1090               4367    /unref
+1091               6460    /unref
+1092               6243    /unref
+1093               6762    /unref
+1094               6060    /unref
+1095               4361    /unref
+1096               6060    /unref
+1097               6243    /unref
+1098               6760    /unref
+1099               6061    /unref
+1100               4367    /unref
+1101               6464    /unref
+1102               6043    /unref
+1103               6562    /unref
+1104               6463    /unref
+1105               4367    /unref
+1106               6364    /unref
+1107               6043    /unref
+1108               6260    /unref
+1109               4367    /unref
+1110               6465    /unref
+1111               6043    /unref
+1112               6764    /unref
+1113               6360    /unref
+1114               4367    /unref
+1115               6460    /unref
+1116               6243    /unref
+1117               6262    /unref
+1118               6764    /unref
+1119               4365    /unref
+1120               6266    /unref
+1121               6443    /unref
+1122               6764    /unref
+1123               6160    /unref
+1124               4360    /unref
+1125               4367    /unref
+1126               6360    /unref
+1127               6043    /unref
+1128               6160    /unref
+1129               6460    /unref
+1130               4367    /unref
+1131               6064    /unref
+1132               6043    /unref
+1133               6164    /unref
+1134               6266    /unref
+1135               4367    /unref
+1136               6064    /unref
+1137               6043    /unref
+1138               6764    /unref
+1139               6260    /unref
+1140               4367    /unref
+1141               6464    /unref
+1142               6043    /unref
+1143               6764    /unref
+1144               6062    /unref
+1145               >
+1146               
+1147               ifdef unref <
+1148               /DIAL HEADER BLOCK
+1149               FIELD 1
+1150               *0
+1151               0000    /dial
+1152               6202    /dial
+1153               5777    /dial
+1154               0037    /dial
+1155               6342    /dial
+1156               2411    /dial
+1157               6141    /dial
+1158               6141    /dial
+1159               0641    /dial
+1160               0011    /dial
+1161               0001    /dial
+1162               0721    /dial
+1163               3314    /dial
+1164               0643    /dial
+1165               0721    /dial
+1166               7300    /dial
+1167               0000    /dial
+1168               3224    /dial
+1169               6141    /dial
+1170               0700    /dial
+1171               0000    /dial
+1172               0011    /dial
+1173               0002    /dial
+1174               5620    /dial
+1175               3344    /dial
+1176               7300    /dial
+1177               6141    /dial
+1178               6312    /dial
+1179               0700    /dial
+1180               1364    /dial
+1181               1000    /dial
+1182               0035    /dial
+1183               1460    /dial
+1184               1456    /dial
+1185               6044    /dial
+1186               6200    /dial
+1187               1020    /dial
+1188               0001    /dial
+1189               1140    /dial
+1190               0035    /dial
+1191               0011    /dial
+1192               0002    /dial
+1193               5630    /dial
+1194               1543    /dial
+1195               4500    /dial
+1196               1202    /dial
+1197               3235    /dial
+1198               1202    /dial
+1199               1130    /dial
+1200               3241    /dial
+1201               1310    /dial
+1202               3011    /dial
+1203               1157    /dial
+1204               3715    /dial
+1205               3711    /dial
+1206               1316    /dial
+1207               3717    /dial
+1208               4720    /dial
+1209               3037    /dial
+1210               6141    /dial
+1211               0643    /dial
+1212               0720    /dial
+1213               6342    /dial
+1214               0700    /dial
+1215               7343    /dial
+1216               0643    /dial
+1217               0011    /dial
+1218               0002    /dial
+1219               7040    /dial
+1220               3012    /dial
+1221               5653    /dial
+1222               3402    /dial
+1223               2370    /dial
+1224               3357    /dial
+1225               3666    /dial
+1226               4337    /dial
+1227               7640    /dial
+1228               3362    /dial
+1229               4400    /dial
+1230               3360    /dial
+1231               4030    /dial
+1232               1011    /dial
+1233               4513    /dial
+1234               4712    /dial
+1235               1313    /dial
+1236               3016    /dial
+1237               1013    /dial
+1238               3017    /dial
+1239               3173    /dial
+1240               1416    /dial
+1241               7710    /dial
+1242               2173    /dial
+1243               2017    /dial
+1244               5331    /dial
+1245               1173    /dial
+1246               3713    /dial
+1247               1351    /dial
+1248               4513    /dial
+1249               4601    /dial
+1250               4605    /dial
+1251               4746    /dial
+1252               5517    /dial
+1253               3746    /dial
+1254               4336    /dial
+1255               4400    /dial
+1256               0437    /dial
+1257               5401    /dial
+1258               1030    /dial
+1259               0132    /dial
+1260               5363    /dial
+1261               2020    /dial
+1262               1037    /dial
+1263               7700    /dial
+1264               5366    /dial
+1265               1030    /dial
+1266               4434    /dial
+1267               4504    /dial
+1268               5503    /dial
+1269               1030    /dial
+1270               0137    /dial
+1271               7041    /dial
+1272               1046    /dial
+1273               7640    /dial
+1274               5353    /dial
+1275               1030    /dial
+1276               0144    /dial
+1277               5363    /dial
+1278               7113    /dial
+1279               0002    /dial
+1280               7200    /dial
+1281               1205    /dial
+1282               4476    /dial
+1283               5516    /dial
+1284               0010    /dial
+1285               4142    /dial
+1286               3212    /dial
+1287               6141    /dial
+1288               0714    /dial
+1289               0437    /dial
+1290               0011    /dial
+1291               0002    /dial
+1292               5606    /dial
+1293               0000    /dial
+1294               3234    /dial
+1295               1166    /dial
+1296               3237    /dial
+1297               1037    /dial
+1298               7700    /dial
+1299               5232    /dial
+1300               1234    /dial
+1301               7041    /dial
+1302               1166    /dial
+1303               3166    /dial
+1304               5616    /dial
+1305               6141    /dial
+1306               1020    /dial
+1307               0000    /dial
+1308               0017    /dial
+1309               1120    /dial
+1310               0000    /dial
+1311               0002    /dial
+1312               5230    /dial
+1313               0000    /dial
+1314               3257    /dial
+1315               1166    /dial
+1316               3261    /dial
+1317               1037    /dial
+1318               7700    /dial
+1319               5255    /dial
+1320               1257    /dial
+1321               1166    /dial
+1322               3166    /dial
+1323               5642    /dial
+1324               6141    /dial
+1325               1020    /dial
+1326               0000    /dial
+1327               1120    /dial
+1328               0000    /dial
+1329               0002    /dial
+1330               5253    /dial
+1331               0000    /dial
+1332               3270    /dial
+1333               6141    /dial
+1334               0716    /dial
+1335               0000    /dial
+1336               0011    /dial
+1337               0002    /dial
+1338               5664    /dial
+1339               5144    /dial
+1340               6141    /dial
+1341               1000    /dial
+1342               0777    /dial
+1343               0321    /dial
+1344               1560    /dial
+1345               7774    /dial
+1346               4313    /dial
+1347               0264    /dial
+1348               1620    /dial
+1349               0700    /dial
+1350               4035    /dial
+1351               0002    /dial
+1352               5674    /dial
+1353               1020    /dial
+1354               0000    /dial
+1355               0001    /dial
+1356               0011    /dial
+1357               6000    /dial
+1358               3677    /dial
+1359               3323    /dial
+1360               6141    /dial
+1361               0710    /dial
+1362               2377    /dial
+1363               0011    /dial
+1364               0002    /dial
+1365               5717    /dial
+1366               1136    /dial
+1367               7240    /dial
+1368               1047    /dial
+1369               3047    /dial
+1370               1447    /dial
+1371               5727    /dial
+1372               2217    /dial
+1373               0000    /dial
+1374               0004    /dial
+1375               7777    /dial
+1376               7777    /dial
+1377               0000    /dial
+1378               0000    /dial
+1379               0000    /dial
+1380               0000    /dial
+1381               0000    /dial
+1382               0000    /dial
+1383               7777    /dial
+1384               0000    /dial
+1385               0000    /dial
+1386               0000    /dial
+1387               0000    /dial
+1388               0000    /dial
+1389               0000    /dial
+1390               7777    /dial
+1391               0000    /dial
+1392               0000    /dial
+1393               0000    /dial
+1394               0000    /dial
+1395               0000    /dial
+1396               0000    /dial
+1397               0000    /dial
+1398               0000    /dial
+1399               0000    /dial
+1400               0000    /dial
+1401               0000    /dial
+1402               0000    /dial
+1403               0000    /dial
+1404               0000    /dial
+1405               0000    /dial
+1406               0000    /dial
+1407               >
+1408               $
+
+A0      0546
+A3      0371
+A4      0372
+A5      0373
+A6      0374
+A7      0375
+AERR1   0032
+AERR2   0033
+AFTER   0023
+AK7776  0545
+APDR    0034
+ASUC    0005
+ATFCLF  0036
+BACK    0115
+BAKBRN  0140
+BEFOR   0022
+CHEK1   0046
+CHEK2   0054
+CHEKS   0064
+CT      0177
+DIAL    0001
+ERR1    0200
+ERR2    0205
+FLDATA  0315
+FRMLOC  0002
+FROM    0510
+FRUT    0503
+GFROM   0505
+GOUT    0476
+GPAT    0507 unreferenced
+GTO     0506
+INDATA  0263
+INF1    0261
+INF2    0574
+INST1   0514
+ISZ1    0015
+ITADNM  0035
+JMP1    0016
+JMP2    0017
+K0100   0027
+K0200   0026
+K0400   0025
+K1000   0175
+K3777   0543
+K4      0024
+K7776   0515
+KP      0176
+KPGO    0207
+LAS1    0131
+LIMHI   0004
+LIMLO   0003
+LIMTST  0150
+LUP1    0111
+M377    0012
+MORSU   0363
+MSK7    0007
+NOTE    0030
+NUM     0013
+ONDATA  0273
+OVR     7617
+PATCH   0614
+PATCYC  0513
+PATRN   0021
+PATT    0512
+PDR     0413
+PLCINT  0074
+PRINT   0031
+PRUT    0426
+RANUM   0163
+RSDATA  0325
+SELFRM  0070
+SELPAT  0052
+SELTO   0060
+SETUP   0343
+SKDP    0173
+SKPDAT  0333
+START   0037
+STDATA  0305
+SUC     0547
+TFCLF   0600
+THREE   0014
+TO      0511
+TOLOC   0020
+TORUT   0501
+TTY     0235
+TW6     0376
+WORK    0010
+WORK1   0011
+X       0632
+X1      0633
+X2      0634
+X3      0635
+X4      0636

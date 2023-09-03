@@ -1,0 +1,139 @@
+   1               PDP12=1
+   2               / Kaleidoscope program for the VC8E/VR14 scope.
+   3               / Based on suggestions from page 6-19 of the Small
+   4               / Computer Handbook, 1973.
+   5               
+   6               / The advice given is to experiment with settings
+   7               / of the switch register bit positions 9, 10 and 11,
+   8               / leaving all higher bits zero.  The advice is good;
+   9               / this is a nice "screen saver" for non-storage
+  10               / scopes.
+  11               IFNZRO PDP12 <
+  12               *100
+  13               DISD=   SKP             / VC12 is always ready
+  14               DILX=   JMS I   .       / Call the emulator
+  15 000100  0400          VC8DLX
+  16               DILY=   JMS I   .       / Call the emulator
+  17 000101  0405          VC8DLY
+  18               DIXY=   JMS I   .       / Call the emulator
+  19 000102  0412          VC8DIS
+  20               >
+  21               IFZERO PDP12 <
+  22               DISD=   6052
+  23               DILX=   6053
+  24               DILY=   6054
+  25               DIXY=   6055
+  26               >
+  27                       *200
+  28 000200  1224  START,  TAD     Y
+  29 000201  4225          JMS     SCALE
+  30 000202  7040          CMA
+  31 000203  1223          TAD     X
+  32 000204  3223          DCA     X       / X = X - SCALE(Y)
+  33 000205  1223          TAD     X
+  34 000206  4500          DILX
+  35 000207  4225          JMS     SCALE
+  36 000210  1224          TAD     Y
+  37 000211  4501          DILY
+  38 000212  7410          DISD
+  39 000213  5212          JMP     .-1
+  40 000214  4502          DIXY
+  41 000215  3224          DCA     Y       / Y = Y - SCALE(X)
+  42 000216  6031          KSF             / VRS: Key struck?
+  43 000217  5200          JMP     START
+  44 000220  6032          KCC             / VRS: Toss the character
+  45 000221  5622          JMP I .+1       / VRS: Yes, return to OS/8
+  46 000222  7600          7600
+  47 000223  3777  X,      3777            / any initial value works, but
+  48 000224  0006  Y,      6               / 0,0 is least interesting.
+  49               
+  50               / Divide AC by 2**SR
+  51 000225  0000  SCALE,  .-.
+  52 000226  3242          DCA     TEM
+  53 000227  7404          OSR
+  54 000230  7041          CIA
+  55 000231  3243          DCA     C
+  56 000232  1242          TAD     TEM
+  57 000233  7100          CLL
+  58 000234  7510          SPA
+  59 000235  7020          CML
+  60 000236  7010          RAR             / Arithmetic right shift
+  61 000237  2243          ISZ     C
+  62 000240  5233          JMP     .-5
+  63 000241  5625          JMP I   SCALE
+  64 000242  0000  TEM,    .-.
+  65 000243  0000  C,      .-.
+  66               IFNZRO PDP12 < 
+  67                       PAGE
+  68 000400  0000  VC8DLX, .-.
+  69 000401  3204          DCA     VC8XX
+  70 000402  1204          TAD     VC8XX
+  71 000403  5600          JMP I   VC8DLX
+  72 000404  0000  VC8XX,  .-.
+  73 000405  0000  VC8DLY, .-.
+  74 000406  3211          DCA     VC8YY
+  75 000407  1211          TAD     VC8YY
+  76 000410  5605          JMP I   VC8DLYY
+  77 000411  0000  VC8YY,  .-.
+  78               / X and Y have been set up.  Intensify the point.
+  79               / The available resolution is 1/2 that of the VC8E.
+  80               / Convert the coordinates to unsigned by offsetting by 01000.
+  81               / Then CLL RAR to scale them.
+  82               / Finally, aqdd the VC12 offsets.
+  83               / BUGBUG: Adjust scaling and offset!
+  84               IREG=17                 / PDP-12 index register
+  85 000412  0000  VC8DIS, .-.
+  86 000413  3245          DCA     SAVAC   / Save AC for return
+  87 000414  1017          TAD     IREG    / Save callers register value
+  88 000415  3244          DCA     SAVREG
+  89 000416  1204          TAD     VC8XX   / Get X coord
+  90 000417  1241          TAD     C1000   / Convert to unsigned
+  91 000420  7110          CLL RAR         / Scale
+  92 000421  1242          TAD     C400    / BUGBUG: offsets needed?
+  93 000422  0243          AND     C777    / Ignore stray bits
+  94 000423  3017          DCA     IREG    / Store X in index register
+  95 000424  1211          TAD     VC8YY   / Get Y coord
+  96 000425  1241          TAD     C1000   / Convert to unsigned
+  97 000426  7110          CLL RAR         / Scale it
+  98 000427  1242          TAD     C400    / BUGBUG: offsets needed?
+  99 000430  0243          AND     C777    / Ignore stray bits
+ 100                       LMODE
+ 101 000431  6141          LINC
+ 102 000432  0157          DIS     IREG    / Display the point
+ 103                       PMODE
+ 104 000433  0002          PDP
+ 105 000434  7200          CLA
+ 106 000435  1244          TAD     SAVREG  / Restore index register
+ 107 000436  3017          DCA     IREG
+ 108 000437  1245          TAD     SAVAC   / Restore AC
+ 109 000440  5612          JMP I   VC8DIS  / Return
+ 110 000441  1000  C1000,  01000           / Offset for VC8E
+ 111 000442  0400  C400,   00400           / Offset for VC12
+ 112 000443  0777  C777,   00777           / Mask for VC12
+ 113 000444  0000  SAVREG, .-.
+ 114 000445  0000  SAVAC,  .-.
+ 115               >
+ 116               $
+
+C       0243
+C1000   0441
+C400    0442
+C777    0443
+DILX    4500
+DILY    4501
+DISD    7410
+DIXY    4502
+IREG    0017
+PDP12   0001
+SAVAC   0445
+SAVREG  0444
+SCALE   0225
+START   0200
+TEM     0242
+VC8DIS  0412
+VC8DLX  0400
+VC8DLY  0405
+VC8XX   0404
+VC8YY   0411
+X       0223
+Y       0224

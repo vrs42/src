@@ -1,0 +1,114 @@
+The layout of tracks on DECtape, which had ten tracks, was as follows:
+
+T
+M
+1       (4)
+2       (2)
+3       (1)
+1       (4)
+2       (2)
+3       (1)
+M
+T
+
+The timing track had a transition in the middle of each bit area, and the mark track usually had alternating groups of three ones and three zeroes. Since LINCtape, the ancestor of DECtape, originated when half-inch wide tape still only had seven tracks on it, rather than nine, both were on 3/4" wide tape.
+
+LINCtape was recorded using phase encoding at 420 bpi.
+
+The mark track contained four-bit codes indicating the type of the 12 bits of data repeated on the three data tracks.
+
+These codes were:
+
+0000 indicated the beginning and end of tape
+1111 (repeated 5 times) provided a gap between blocks
+1110 indicated the copy of the block number at the start of the block
+0010 indicated one unused word, to protect the block number
+     from being disturbed when the main portion of the block
+     containing data was re-written
+1001 (repeated 255 times) indicated data words
+1011 indicated the last word of data in a block
+0001 (repeated 3 times) indicated a three-word area containing
+     a checksum for the block in the first word, followed by
+     two unused words
+0111 indicated the copy of the block number at the end of the block
+
+The order in which the 12 bits of a word of data were placed on the three data channels of the tape was as follows, where the bits are numbered using the convention MSB 0 ... 11 LSB:
+
+1)  0  3  6  9
+2)  1  4  7 10
+3)  2  5  8 11
+
+DECtape was recorded using phase encoding at 375 bpi.
+
+In this format, whether the DECtape unit was connected to a PDP-4, PDP-7, PDP-9 or PDP-15 with an 18-bit word, a PDP-6 or PDP-10 with a 36-bit word, a PDP-5 or PDP-8 with a 12-bit word, the codes in the mark track were 6 bits long.
+
+The codes in the mark track were chosen to be symmetrical, so that if one both complemented the bits in any code, and reversed the order of the bits, one obtained the code used in the corresponding position at the other end of the block. This meant that bidirectional reading and writing of blocks, a feature not provided with LINCtape units (although searching for a block with a given number was bidirectional) could be offered with very little additional circuitry.
+
+The codes used with DECtape were:
+
+010010 marks the beginning of the tape
+010110 marks the block number at the start of the block
+011010 indicates blank space to protect the block number
+001000 (repeated four times) indicates first another unused
+       word, then the reverse checksum, and then the first two
+       words of data in the block
+111000 indicates all the words of data in the block except the first
+       two and last two
+111011 (repeated four times) indicates the last two words of
+       data in the block, then the checksum, and then an unused word
+101001 indicates blank space to protect the block number
+100101 marks the block number at the end of the block
+
+Since the block numbers were part of the format of the tape, no space was added between the block number at the end of one block and the block number at the start of the next block.
+
+The block number at the end of the block was recorded so that it would be reflected along the motion of the tape to be readable in the same way when the tape was searched in reverse.
+
+Although much of the format of DECtape was the same for each type of computer to which DECtape units were connected, the order in which data bits were placed on the tape varied depending on the type of computer used.
+
+For the 18-bit computers, the PDP-4, PDP-7, PDP-9, and PDP-15, two arrangements were used.
+
+With the original Type 550 controller, the data bits were put on the tracks like this:
+
+1)  5  4  3  2  1  0
+2) 11 10  9  8  7  6
+3) 17 16 15 14 13 12
+
+but with later controllers, such as the TC15, the data bits were in this order:
+
+1)  0  3  6  9 12 15
+2)  1  4  7 10 13 16
+3)  2  5  8 11 14 17
+
+For the 36-bit computers, the PDP-6 and PDP-10, it was:
+
+1)  0  3  6  9 12 15 18 21 24 27 30 33
+2)  1  4  7 10 13 16 19 22 24 28 31 34
+3)  2  5  8 11 14 17 20 23 26 29 32 35
+
+and for the 12-bit PDP-5 and PDP-8, two arrangements were also used.
+
+With the original Type 552 controller, the data bits were put on the tracks like this:
+
+1)  2  5  8 11
+2)  1  4  7 10
+3)  0  3  6  9
+
+but with later controllers, such as the TC01, the data bits were in this order:
+
+1)  0  3  6  9
+2)  1  4  7 10
+3)  2  5  8 11
+
+Thus, initially, the Type 550, 551, and 552 controllers each used a different direction for recording data for the 18, 36, and 12 bit word architectures respectively, later DECtape controllers standardized on the orientation used with the 36 bit machines.
+
+DECtape drives were also connected to PDP-11 computers, and they used the same data format as later 18-bit interfaces, ignoring the first two bits of each word:
+
+1)  X 14 11  8  5  2
+2)  X 13 10  7  4  1
+3) 15 12  9  6  3  0
+
+using the MSB 17 ... 0 LSB convention of the PDP-11. The controller could read the unused bits with special instructions for reading tapes made by other systems.
+
+While recording three words in a 48-bit block would be possible, three such blocks would need to be treated as a unit to remain synchronized with the mark track codes (just as PDP-8 12-bit words were handled in groups of three) and this is likely why that alternative was avoided.
+
+It was possible, both with DECtape and LINCtape, to use a different number of words (18 bits long and 12 bits long respectively) per block than 256; this was normally considered nonstandard, but with the PDP-8, the normal format was to use 86 18-bit words per block (and therefore 129 12-bit words).

@@ -1,0 +1,609 @@
+   1               /PDP-8E ISZ TEST
+   2               /COPYRIGHT 1970, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.  01754
+   3               /
+   4               /CONSTANTS AND VARIABLES
+   5               *0
+   6 000000  0000          0
+   7 000001  5001          JMP 1           /PERIPHERAL INTERRUPT
+   8 000002  0002  FRMLOC, 2               /ISZ TEST INSTRUCTION LOCATION
+   9 000003  0003  LIMLO,  3               /LOW LIMIT TEST AREA
+  10 000004  0000          0
+  11 000005  0000          0
+  12 000006  0202  LIMHI,  -7576           /HIGH LIMIT TEST AREA
+  13 000007  0547  ASUC,   SUC
+  14 000010  0007  MSK7,   0007            /OCTAL CONVERSION MASK
+  15 000011  0000  WORK,   0               /IR0
+  16 000012  0000  WORK1,  0               /IR1
+  17 000013  7401  M377,   -377
+  18 000014  3607  NUM,    3607            /THE RANDOM NUMBER LOCATION
+  19 000015  0003  THREE,  3
+  20               
+  21 000016  2421  ISZ1,   ISZ I TOLOC     /MOVING ISZ
+  22 000017  5116  JMP1,   JMP BACK        /TEST INSTRUCTION
+  23 000020  5141  JMP2,   JMP BAKBRN      /GROUP.
+  24 000021  0000  TOLOC,  0               /LOCATION TO BE ISZ'D
+  25 000022  0000  PATRN,  0               /STARTING ISZ PATTERN
+  26 000023  0000  BEFOR,  0               /FAILING PATTERN BEFORE FAILING ISZ
+  27 000024  0000  AFTER,  0               /PREDICTED RESULTS OF EACH ISZ
+  28 000025  0004  K4,     4               /SWITCH REGISTER MASKS
+  29 000026  0400  K0400,  0400
+  30 000027  0200  K0200,  0200
+  31 000030  0100  K0100,  0100
+  32 000031  0000  NOTE,   0               /7'S=ERROR WITH NO SKIP
+  33 000032  0257  PRINT,  INF1-1          /0'S=ERROR WITH SKIP
+  34 000033  0201  AERR1,  ERR1
+  35 000034  0206  AERR2,  ERR2
+  36 000035  0413  APDR,   PDR
+  37 000036  1014  ITADNM, TAD NUM
+  38 000037  0600  ATFCLF, TFCLF
+  39               
+  40               /SR0(0)=HALT AFTER ERROR PRINTOUT
+  41               /SR1(1)=NO PRINTOUTS
+  42               /SR3(1) = HOLD FROM CONSTANT
+  43               /SR4(1) = HOLD TO CONSTANT
+  44               /SR5(1) = HOLD PATTERN CONSTANT
+  45               /SR9(0) = DO ONE ISZ ONLY
+  46               /SR11(1) = DO TEST PART 2
+  47               /
+  48               /
+  49               
+  50               /PROGRAM START
+  51 000040  4441  START,  JMS I .+1       /ION
+  52 000041  0614          PATCH           /LAS
+  53 000042  0015          AND THREE
+  54 000043  7640          SZA CLA         /SKIP IF PART 1
+  55 000044  5426          JMP I K0400     /GO TO PART 2
+  56 000045  1036          TAD ITADNM
+  57 000046  3165          DCA RANUM+1
+  58                       /CHECK FOR FIXED PATTERN
+  59 000047  7604  CHEK1,  LAS
+  60 000050  0030          AND K0100
+  61 000051  7440          SZA
+  62 000052  5055          JMP CHEK2
+  63               
+  64                       /SELECT THE PATTERN
+  65 000053  4164  SELPAT, JMS RANUM
+  66 000054  3022          DCA PATRN
+  67               
+  68                       /CHECK FOR FIXED TO
+  69 000055  7604  CHEK2,  LAS
+  70 000056  0027          AND K0200
+  71 000057  7640          SZA CLA
+  72 000060  5065          JMP CHEKS
+  73               
+  74                       /SELECT THE TO LOCATION
+  75 000061  4164  SELTO,  JMS RANUM
+  76 000062  3021          DCA TOLOC
+  77 000063  1021          TAD TOLOC
+  78 000064  4151          JMS LIMTST
+  79               
+  80                       /CHECK FOR FIXED FROM
+  81 000065  7604  CHEKS,  LAS
+  82 000066  0026          AND K0400
+  83 000067  7640          SZA CLA
+  84 000070  5075          JMP PLCINT
+  85               
+  86                       /SELECT THE FROM LOCATION
+  87 000071  4164  SELFRM, JMS RANUM
+  88 000072  3002          DCA FRMLOC
+  89 000073  1002          TAD FRMLOC
+  90 000074  4151          JMS LIMTST
+  91               
+  92                       /PLACE FROM INSTRUCTIONS
+  93 000075  7240  PLCINT, CLA CMA
+  94 000076  1002          TAD FRMLOC
+  95 000077  3011          DCA WORK
+  96 000100  1016          TAD ISZ1
+  97 000101  3411          DCA I WORK
+  98 000102  1017          TAD JMP1
+  99 000103  3411          DCA I WORK
+ 100 000104  1020          TAD JMP2
+ 101 000105  3411          DCA I WORK
+ 102               
+ 103                       /DEPOSIT PATTERN IN TO LOCATION
+ 104 000106  1022          TAD PATRN
+ 105 000107  3421          DCA I TOLOC
+ 106               
+ 107                       /STORE PREDICTED ISZ RESULT
+ 108 000110  1022          TAD PATRN
+ 109 000111  3023          DCA BEFOR
+ 110 000112  1023  LUP1,   TAD BEFOR
+ 111 000113  7001          IAC
+ 112 000114  3024          DCA AFTER
+ 113 000115  5407          JMP I ASUC
+ 114               
+ 115                       /RETURN NO SKIP CONDITION
+ 116 000116  7604  BACK,   LAS
+ 117 000117  7004          RAL
+ 118 000120  7710          SPA CLA
+ 119 000121  5132          JMP LAS1
+ 120 000122  1421          TAD I TOLOC
+ 121 000123  7041          CIA
+ 122 000124  1024          TAD AFTER
+ 123 000125  7640          SZA CLA
+ 124 000126  5433          JMP I AERR1     /ERROR IN ISZ OPERATION
+ 125 000127  1421          TAD I TOLOC
+ 126 000130  7650          SNA CLA
+ 127 000131  5433          JMP I AERR1     /ERROR IN ISZ SKIP DETECTION
+ 128 000132  7604  LAS1,   LAS
+ 129 000133  0025          AND K4
+ 130 000134  7650          SNA CLA         /SKIP IF NOT ONE ISZ (SR9)
+ 131 000135  5047          JMP CHEK1
+ 132 000136  7001          IAC
+ 133 000137  1023          TAD BEFOR
+ 134 000140  5111          JMP LUP1-1
+ 135               
+ 136                       /RETURN FOR SKIP CONDITION
+ 137 000141  7604  BAKBRN, LAS
+ 138 000142  7004          RAL
+ 139 000143  7710          SPA CLA
+ 140 000144  5047          JMP CHEK1
+ 141 000145  1421          TAD I TOLOC
+ 142 000146  7640          SZA CLA         /SKIP IF TO LOCATION OK
+ 143 000147  5434          JMP I AERR2     /ERROR IN ISZ LOCATION
+ 144 000150  5047          JMP CHEK1
+ 145               
+ 146               /TEST HIGH-LOW LIMITS
+ 147               
+ 148 000151  0000  LIMTST, 0
+ 149 000152  7510          SPA
+ 150 000153  5160          JMP .+5
+ 151 000154  1003          TAD LIMLO
+ 152 000155  7700          SMA CLA
+ 153 000156  5551          JMP I LIMTST
+ 154 000157  5165          JMP RANUM+1
+ 155 000160  1006          TAD LIMHI
+ 156 000161  7700          SMA CLA
+ 157 000162  5165          JMP RANUM+1
+ 158 000163  5551          JMP I LIMTST
+ 159               
+ 160                       /RANDOM NUMBER GENERATOR
+ 161 000164  0000  RANUM,  0
+ 162 000165  1014          TAD NUM
+ 163 000166  7104          RAL CLL
+ 164 000167  7430          SZL
+ 165 000170  1015          TAD THREE
+ 166 000171  3014          DCA NUM
+ 167 000172  1014          TAD NUM         /AC=NEW RANDOM NUMBER
+ 168 000173  5564          JMP I RANUM
+ 169               
+ 170 000174  1000  K1000,  1000
+ 171 000175  0000  KP,     0
+ 172               
+ 173               *200
+ 174 000200  5040          JMP START
+ 175               
+ 176                       /ERROR ROUTINE 1
+ 177 000201  1340  ERR1,   TAD SKPDAT+6
+ 178 000202  3332          DCA SKPDAT
+ 179 000203  7040          CMA
+ 180 000204  3031          DCA NOTE
+ 181 000205  5210          JMP KPGO
+ 182               
+ 183                       /ERROR ROUTINE 2
+ 184 000206  1331  ERR2,   TAD SKPDAT-1
+ 185 000207  3332          DCA SKPDAT
+ 186 000210  1002  KPGO,   TAD FRMLOC
+ 187 000211  3011          DCA WORK
+ 188 000212  1370          TAD A3
+ 189 000213  4342          JMS SETUP
+ 190               
+ 191 000214  1021          TAD TOLOC
+ 192 000215  3011          DCA WORK
+ 193 000216  1371          TAD A4
+ 194 000217  4342          JMS SETUP
+ 195               
+ 196 000220  1022          TAD PATRN
+ 197 000221  3011          DCA WORK
+ 198 000222  1372          TAD A5
+ 199 000223  4342          JMS SETUP
+ 200 000224  1023          TAD BEFOR
+ 201 000225  3011          DCA WORK
+ 202 000226  1373          TAD A6
+ 203 000227  4342          JMS SETUP
+ 204               
+ 205 000230  1421          TAD I TOLOC
+ 206 000231  3011          DCA WORK
+ 207 000232  1374          TAD A7
+ 208 000233  4342          JMS SETUP
+ 209               
+ 210                       /TTY PRINT ROUTINE
+ 211 000234  6002  TTY,    IOF
+ 212 000235  1032          TAD PRINT
+ 213 000236  3011          DCA WORK
+ 214 000237  1411          TAD I WORK
+ 215 000240  6046          TLS
+ 216 000241  6041          TSF
+ 217 000242  5241          JMP .-1
+ 218 000243  1013          TAD M377
+ 219 000244  7640          SZA CLA
+ 220 000245  5237          JMP TTY+3
+ 221 000246  6042          TCF
+ 222 000247  6001          ION
+ 223 000250  7604          LAS
+ 224 000251  7700          SMA CLA
+ 225 000252  7402          HLT             /HALT AFTER ERROR (SR0)
+ 226               
+ 227 000253  1031          TAD NOTE
+ 228 000254  7650          SNA CLA
+ 229 000255  5047          JMP CHEK1
+ 230 000256  3031          DCA NOTE
+ 231 000257  5132          JMP LAS1        /RETURN TO NO SKIP ROUTINE
+ 232               
+ 233                       /ERROR PRINT OUT LINE 1
+ 234 000260  0306  INF1,   306             /F      FROM (INSTRUCTION LOCATION)
+ 235 000261  0240          240             /SPACE
+ 236 000262  0000  INDATA, 0               /X      LOCATION
+ 237 000263  0000          0               /X
+ 238 000264  0000          0               /X
+ 239 000265  0000          0               /X
+ 240 000266  0240          240             /SPACE
+ 241 000267  0240          240             /SPACE
+ 242 000270  0324          324             /T      TO (OPERAND ADDRESS)
+ 243 000271  0240          240             /SPACE
+ 244 000272  0000  ONDATA, 0               /X      ADDRESS
+ 245 000273  0000          0               /X
+ 246 000274  0000          0               /X
+ 247 000275  0000          0               /X
+ 248 000276  0215          215             /CR
+ 249 000277  0212          212             /LF
+ 250 000300  0215          215             /CR
+ 251 000301  0215          215             /CR
+ 252               
+ 253                       /ERROR PRINT OUT LINE 2
+ 254 000302  0317          317             /O      OPERAND (STARTING COUNT)
+ 255 000303  0240          240             /SPACE
+ 256 000304  0000  STDATA, 0               /X      PATTERN
+ 257 000305  0000          0               /X
+ 258 000306  0000          0               /X
+ 259 000307  0000          0               /X
+ 260 000310  0240          240             /SPACE
+ 261 000311  0240          240             /SPACE
+ 262 000312  0306          306             /F      FAILING COUNT
+ 263 000313  0240          240             /SPACE
+ 264 000314  0000  FLDATA, 0               /X      PATTERN BEFORE FAILING ISZ
+ 265 000315  0000          0               /X
+ 266 000316  0000          0               /X
+ 267 000317  0000          0               /X
+ 268 000320  0240          240             /SPACE
+ 269 000321  0240          240             /SPACE
+ 270 000322  0322          322             /R      RESULT AFTER FAILURE
+ 271 000323  0240          240             /SPACE
+ 272 000324  0000  RSDATA, 0               /X      PATTERN AFTER FAILING ISZ
+ 273 000325  0000          0               /X
+ 274 000326  0000          0               /X
+ 275 000327  0000          0               /X
+ 276 000330  0240          240             /SPACE
+ 277 000331  0240          240             /SPACE
+ 278 000332  0316  SKPDAT, 316             /N      NO
+ 279 000333  0323          323             /S      SKIP
+ 280 000334  0215          215             /CR
+ 281 000335  0212          212             /LF
+ 282 000336  0212          212             /LF
+ 283 000337  0377          377             /RUBOUT
+ 284 000340  0316          316             /N
+ 285 000341  0323          323             /S
+ 286               
+ 287 000342  0000  SETUP,  0
+ 288 000343  3012          DCA WORK1
+ 289 000344  1011          TAD WORK
+ 290 000345  7006          RTL
+ 291 000346  7006          RTL
+ 292 000347  4362          JMS MORSU
+ 293 000350  7012          RTR
+ 294 000351  7012          RTR
+ 295 000352  7012          RTR
+ 296 000353  4362          JMS MORSU
+ 297 000354  7012          RTR
+ 298 000355  7010          RAR
+ 299 000356  4362          JMS MORSU
+ 300 000357  4362          JMS MORSU
+ 301 000360  7200          CLA
+ 302 000361  5742          JMP I SETUP
+ 303 000362  0000  MORSU,  0
+ 304 000363  0010          AND MSK7
+ 305 000364  1375          TAD TW6
+ 306 000365  3412          DCA I WORK1
+ 307 000366  1011          TAD WORK
+ 308 000367  5762          JMP I MORSU
+ 309               
+ 310                       /PAGE 1 CONSTANTS
+ 311 000370  0261  A3,     INDATA-1
+ 312 000371  0271  A4,     ONDATA-1
+ 313 000372  0303  A5,     STDATA-1
+ 314 000373  0313  A6,     FLDATA-1
+ 315 000374  0323  A7,     RSDATA-1
+ 316 000375  0260  TW6,    0260
+ 317               
+ 318               /PART 2 INITIALIZATION ROUTINE
+ 319               *400
+ 320 000400  1003          TAD LIMLO
+ 321 000401  7041          CIA
+ 322 000402  3310          DCA FROM        /LOW LIMIT TO FROM
+ 323 000403  1003          TAD LIMLO
+ 324 000404  7040          CMA
+ 325 000405  3311          DCA TO
+ 326 000406  1346          TAD A0
+ 327 000407  3313          DCA PATCYC
+ 328 000410  1314          TAD INST1
+ 329 000411  3165          DCA RANUM+1
+ 330               
+ 331 000412  5047          JMP CHEK1       /GO TO PAGE 0 START
+ 332               
+ 333                       /PATH DECISION ROUTINE
+ 334 000413  1164  PDR,    TAD RANUM
+ 335 000414  7041          CIA
+ 336 000415  1305          TAD GFROM
+ 337 000416  7650          SNA CLA         /SKIP IF NOT REQUESTING FROM
+ 338 000417  5303          JMP FRUT                /GO TO TO ADDRESS ROUTINE
+ 339               
+ 340 000420  1164          TAD RANUM
+ 341 000421  7041          CIA
+ 342 000422  1306          TAD GTO
+ 343 000423  7650          SNA CLA         /SKIP IF NOT REQUESTING TO
+ 344 000424  5301          JMP TORUT               /GO TO ADDRESS ROUTINE
+ 345 000425  5226          JMP PRUT                /GO TO PATTERN ROUTINE
+ 346               
+ 347                       /SELECT PATTERN AND OTHER THINGS
+ 348 000426  1713  PRUT,   TAD I PATCYC
+ 349 000427  3312          DCA PATT
+ 350 000430  1312          TAD PATT
+ 351 000431  7450          SNA             /NO SKIP IF END OF PATTERN TABLE
+ 352 000432  5240          JMP .+6         /END PATTERN TABLE LOOK AROUND
+ 353 000433  7201          CLA IAC
+ 354 000434  1313          TAD PATCYC
+ 355 000435  3313          DCA PATCYC
+ 356 000436  1312          TAD PATT
+ 357 000437  5564          JMP I RANUM     /RETURN, AC=NEW PATTERN
+ 358                       /
+ 359 000440  1345          TAD AK7776
+ 360 000441  3313          DCA PATCYC      /RESTOR START ADDRESS OF PATT. TABLE
+ 361 000442  7001          IAC
+ 362 000443  1311          TAD TO
+ 363 000444  3311          DCA TO          /INCREMENT TO
+ 364 000445  1311          TAD TO
+ 365 000446  7041          CIA
+ 366 000447  1310          TAD FROM
+ 367 000450  7640          SZA CLA         /SKIP IF TO = FROM
+ 368 000451  5255          JMP .+4
+ 369 000452  1311          TAD TO
+ 370 000453  1015          TAD THREE
+ 371 000454  3311          DCA TO          /SKIP AROUND FROM
+ 372 000455  1311          TAD TO
+ 373 000456  7500          SMA
+ 374 000457  5276          JMP GOUT
+ 375 000460  1006          TAD LIMHI
+ 376 000461  7710          SPA CLA         /SKIP IF END TEST AREA
+ 377 000462  5276          JMP GOUT
+ 378 000463  7201          CLA IAC
+ 379 000464  1310          TAD FROM
+ 380 000465  3310          DCA FROM        /ADVANCE FROM
+ 381 000466  1003          TAD LIMLO
+ 382 000467  7041          CIA
+ 383 000470  3311          DCA TO          /RESET TO ADDRESS
+ 384 000471  1310          TAD FROM
+ 385 000472  1006          TAD LIMHI
+ 386 000473  7710          SPA CLA
+ 387 000474  5276          JMP GOUT
+ 388 000475  5200          JMP 400
+ 389 000476  7200  GOUT,   CLA
+ 390 000477  1312          TAD PATT
+ 391 000500  5564          JMP I RANUM
+ 392               
+ 393                       /SELECT TO ROUTINE
+ 394 000501  1311  TORUT,  TAD TO
+ 395 000502  5564          JMP I RANUM
+ 396               
+ 397                       /SELECT FROM ROUTINE
+ 398 000503  1310  FRUT,   TAD FROM
+ 399 000504  5564          JMP I RANUM
+ 400               
+ 401                       /PAGE 3 CONSTANTS
+ 402 000505  0072  GFROM,  SELFRM+1        /STORED RETURN ADDRESS WHEN
+ 403                                       /RANDOM FROM IS REQUESTED
+ 404 000506  0062  GTO,    SELTO+1         /STORED RETURN ADDRESS WHEN
+ 405                                       /RANDOM TO IS REQUESTED
+ 406 000507  0054  GPAT,   SELPAT+1        /STORED RETURN ADDRESS WHEN
+ 407                                       /RANDOM PATTERN IS REQUESTED
+ 408 000510  0000  FROM,   0               /CURRENT FROM ADDRESS
+ 409 000511  0000  TO,     0               /CURRENT TO ADDRESS
+ 410 000512  0000  PATT,   0               /CURRENT PATTERN
+ 411 000513  0000  PATCYC, 0               /CURRENT PATTERN ADDRESS
+ 412 000514  5435  INST1,  JMP I APDR
+ 413 000515  7776  K7776,  7776
+ 414 000516  7775          7775
+ 415 000517  7773          7773
+ 416 000520  7767          7767
+ 417 000521  7757          7757
+ 418 000522  7737          7737
+ 419 000523  7677          7677
+ 420 000524  7577          7577
+ 421 000525  7377          7377
+ 422 000526  6777          6777
+ 423 000527  5777          5777
+ 424 000530  3777          3777
+ 425 000531  0001          0001
+ 426 000532  0003          0003
+ 427 000533  0007          0007
+ 428 000534  0017          0017
+ 429 000535  0037          0037
+ 430 000536  0077          0077
+ 431 000537  0177          0177
+ 432 000540  0377          0377
+ 433 000541  0777          0777
+ 434 000542  1777          1777
+ 435 000543  3777  K3777,  3777
+ 436 000544  0000          0
+ 437 000545  0515  AK7776, K7776
+ 438 000546  0544  A0,     K3777+1
+ 439               
+ 440 000547  1375  SUC,    TAD CT
+ 441 000550  7001          IAC
+ 442 000551  3375          DCA CT
+ 443 000552  1375          TAD CT
+ 444 000553  7640          SZA CLA
+ 445 000554  5437          JMP I ATFCLF
+ 446 000555  1175          TAD KP
+ 447 000556  1174          TAD K1000
+ 448 000557  3175          DCA KP
+ 449 000560  1175          TAD KP
+ 450 000561  7640          SZA CLA
+ 451 000562  5437          JMP I ATFCLF
+ 452 000563  6002          IOF
+ 453 000564  1376          TAD INF2
+ 454 000565  3011          DCA WORK
+ 455 000566  5767          JMP I .+1
+ 456 000567  7602          7602
+ 457 000570  0215          215
+ 458 000571  0212          212
+ 459 000572  0306          306
+ 460 000573  0303          303
+ 461 000574  0377          377
+ 462 000575  0000  CT,     0
+ 463 000576  0567  INF2,   567
+ 464               
+ 465               *600
+ 466               
+ 467               /CHECK FOR TO=FROM CONFLICT
+ 468               
+ 469 000600  1021  TFCLF,  TAD TOLOC
+ 470 000601  7041          CIA
+ 471 000602  1002          TAD FRMLOC
+ 472 000603  7450          SNA
+ 473 000604  5055          JMP CHEK2
+ 474 000605  7001          IAC
+ 475 000606  7450          SNA
+ 476 000607  5055          JMP CHEK2
+ 477 000610  7001          IAC
+ 478 000611  7650          SNA CLA
+ 479 000612  5055          JMP CHEK2
+ 480 000613  5402          JMP I FRMLOC
+ 481               
+ 482 000614  0000  PATCH,  0               /RESTORE THEN GO AWAY
+ 483 000615  3000          DCA 0
+ 484 000616  1232          TAD X
+ 485 000617  3001          DCA 1
+ 486 000620  1233          TAD X1
+ 487 000621  3002          DCA 2
+ 488 000622  1234          TAD X2
+ 489 000623  3003          DCA 3
+ 490 000624  1235          TAD X3
+ 491 000625  3040          DCA START
+ 492 000626  1236          TAD X4
+ 493 000627  3041          DCA START+1
+ 494 000630  6001          ION
+ 495 000631  5614          JMP I PATCH
+ 496               
+ 497 000632  7402  X,      7402
+ 498 000633  0000  X1,     0
+ 499 000634  7157  X2,     7157
+ 500 000635  6001  X3,     ION
+ 501 000636  7604  X4,     LAS
+ 502               
+ 503               *7602
+ 504 007602  1411          TAD I WORK
+ 505 007603  6046          TLS
+ 506 007604  6041          TSF
+ 507 007605  5204          JMP .-1
+ 508 007606  1013          TAD M377
+ 509 007607  7640          SZA CLA
+ 510 007610  5202          JMP .-6
+ 511 007611  5217          JMP OVR
+ 512               
+ 513               *7617
+ 514 007617  6042  OVR,    TCF
+ 515 007620  6001          ION
+ 516 007621  5437          JMP I ATFCLF
+ 517               $
+
+A0      0546
+A3      0370
+A4      0371
+A5      0372
+A6      0373
+A7      0374
+AERR1   0033
+AERR2   0034
+AFTER   0024
+AK7776  0545
+APDR    0035
+ASUC    0007
+ATFCLF  0037
+BACK    0116
+BAKBRN  0141
+BEFOR   0023
+CHEK1   0047
+CHEK2   0055
+CHEKS   0065
+CT      0575
+ERR1    0201
+ERR2    0206
+FLDATA  0314
+FRMLOC  0002
+FROM    0510
+FRUT    0503
+GFROM   0505
+GOUT    0476
+GPAT    0507 unreferenced
+GTO     0506
+INDATA  0262
+INF1    0260
+INF2    0576
+INST1   0514
+ISZ1    0016
+ITADNM  0036
+JMP1    0017
+JMP2    0020
+K0100   0030
+K0200   0027
+K0400   0026
+K1000   0174
+K3777   0543
+K4      0025
+K7776   0515
+KP      0175
+KPGO    0210
+LAS1    0132
+LIMHI   0006
+LIMLO   0003
+LIMTST  0151
+LUP1    0112
+M377    0013
+MORSU   0362
+MSK7    0010
+NOTE    0031
+NUM     0014
+ONDATA  0272
+OVR     7617
+PATCH   0614
+PATCYC  0513
+PATRN   0022
+PATT    0512
+PDR     0413
+PLCINT  0075
+PRINT   0032
+PRUT    0426
+RANUM   0164
+RSDATA  0324
+SELFRM  0071
+SELPAT  0053
+SELTO   0061
+SETUP   0342
+SKPDAT  0332
+START   0040
+STDATA  0304
+SUC     0547
+TFCLF   0600
+THREE   0015
+TO      0511
+TOLOC   0021
+TORUT   0501
+TTY     0234
+TW6     0375
+WORK    0011
+WORK1   0012
+X       0632
+X1      0633
+X2      0634
+X3      0635
+X4      0636

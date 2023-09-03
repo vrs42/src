@@ -1,0 +1,261 @@
+/ VC8E/VR14 scope test program.
+
+/ VC8E IOTs
+
+DILC=6050	/ reset
+DICD=6051	/ clear done flag
+DISD=6052	/ skip if done
+DILX=6053	/ load X
+DILY=6054    / load Y
+DIXY=6055    / intensify point
+DILE=6056    / load enable/status reg, clear AC
+DIRE=6056    / read enable/status reg
+
+/ VC8E enable/status register bits
+
+VCDONE=4000	/ done flag (read only)
+VCWRTH=0040	/ write-through (for storage scopes)
+VCSTOR=0020	/ store (for storage scopes)
+VCERAS=0010	/ erase (for storage scopes)
+VCCOLR=0004	/ color (for VR20)
+/VCCOLR=0002	/ channel (for VR14/VR20)
+VCINTE=0001	/ interrupt enable
+
+/ VC8E dot pitch for pixels in text
+VCPICH=0010
+
+/ Index Regs
+*	0010
+X0,	.-.
+
+/ Globals
+*	0020
+
+/ Main program
+*	0200
+START,			/ initialization
+	DILC
+REPLOT,			/ main display refresh loop
+	JMS I	[VCAT]
+	1200
+	300
+	JMS I	[VCTEXT]
+	STR1
+	JMS I	[VCTEXT]
+	STR2
+	JMS I	[VCAT]
+	1400
+	1400
+	JMS I	[VCTEXT]
+	STR3
+	KSF
+	JMP	REPLOT
+	JMP I .+1
+	7600
+
+STR1,	TEXT	'ABCDEFGHIJKLM%NOPQRSTUVWXYZ%"0123456789"%@'
+STR2,	TEXT	"!#$&'()*+,-.%/:;<=>?[\]^_@"
+STR3,	TEXT	'THE BIG DOG ATE%BEANS FOR BREAKFAST@'
+
+	PAGE
+
+VCAT,	.-.	/ Move to X,Y
+		/ Inline param1: X coord
+		/ Inline param2: Y coord
+		/ Return follows with AC = 0
+		/ Uses: VCvariables
+	CLA
+	TAD I	VCAT	/ get X
+	DCA	VCX
+	TAD	VCX
+	DCA	VCXTMP
+	ISZ	VCAT	/ bump
+	TAD I	VCAT	/ get Y
+	DCA	VCY
+	ISZ	VCAT	/ bump
+	JMP I	VCAT
+
+VCTEXT,	.-.	/ Display text on screen, using inline params
+		/ Inline param1: Address of text string
+		/ Return follows with AC = 0
+		/ Text is packed 6-bit stripped ASCII,
+		/ where @ marks end of string and % is CRLF.
+		/ Uses: VCvariables
+	CLA
+	TAD I	VCTEXT	/ get text pointer
+	DCA	VCTXPT
+	ISZ	VCTEXT	/ bump
+VCTLP,
+	TAD I	VCTXPT	/ get a pair of characters
+	BSW
+	AND	C077	/ extract first
+	SNA		/ test for end of string
+	JMP I	VCTEXT	/   if so, return
+	JMS	VCCHAR	/ else display it
+	TAD I	VCTXPT
+	AND	C077	/ extract second
+	SNA		/ test for end of string
+	JMP I	VCTEXT	/   if so, return
+	JMS	VCCHAR	/ else display it
+	ISZ	VCTXPT
+	JMP	VCTLP
+
+C077,	0077	/ mask to extract a byte
+VCTXPT,	.-.	/ pointer to char string
+
+VCCHAR,	.-.	/ Display char from AC on screen
+		/ Char is in 6 bit trimmed ASCII
+		/ returns AC=0
+	TAD	NPCSGN	/ compare with EOL
+	SNA
+	JMP	VCCHCR	/ got a %, use as CRLF
+	TAD	PPCSGN	/ undo the damage
+	CLL RAL		/ 2 words per char
+	TAD	VCTTAP	/ make address of table entry
+	DCA	VCCHPT	/ save pointer to char
+	TAD I	VCCHPT	/ get first 2 columns
+	JMS	VCDCOL	/ display first column
+	JMS	VCDCOL	/ display second column
+	ISZ	VCCHPT
+	TAD I	VCCHPT	/ get second 2 columns
+	JMS	VCDCOL	/ display third column
+	JMS	VCDCOL	/ display final column
+	TAD	VCXTMP
+	TAD	VCDOTS
+	DCA	VCXTMP	/ advance over interchar column
+	JMP I	VCCHAR
+
+VCCHCR,	TAD	VCDPLN	/ get line pitch
+	TAD	VCY	/
+	DCA	VCY	/ update y
+	TAD	VCX
+	DCA	VCXTMP	/ force X to margin
+	JMP I	VCCHAR
+
+VCTTAP,	VCTTAB	/ pointer to table base
+VCDOTS,	VCPICH	/ dot pitch, next is line pitch
+VCDPLN,	0-VCPICH-VCPICH-VCPICH-VCPICH-VCPICH-VCPICH-VCPICH-VCPICH
+NPCSGN, -0045
+PPCSGN, 0045
+VCCHPT,	.-.	/ pointer to column bitmap of char
+
+VCDCOL,	.-.	/ Display one column of char from AC
+		/ Returns AC shift-right 6 bits
+	DCA	VCDCSV	/ save column
+	TAD	VCXTMP
+	DILX		/ set X coord for column
+	TAD	VCDOTS
+	DCA	VCXTMP	/ save updated X coord
+	TAD	VCY	/ get base Y coord
+	DCA	VCYTMP	/ save working copy of Y
+	JMS	VCDROW	/ show row 1
+	JMS	VCDROW	/ show row 2
+	JMS	VCDROW	/ show row 3
+	JMS	VCDROW	/ show row 4
+	JMS	VCDROW	/ show row 5
+	JMS	VCDROW	/ show row 6
+	TAD	VCDCSV	/ recover column
+	JMP I	VCDCOL
+
+VCDROW,	.-.	/ Display a dot in a column
+		/ on entry and exit, AC = 0
+	TAD	VCYTMP
+	DILY		/ set Y coord for column
+	TAD	VCDOTS
+	DCA	VCYTMP	/ save updated Y coord
+	TAD	VCDCSV	/ get column
+	CLL RAR		/ shift a bit into link
+	DCA	VCDCSV	/ save shifted column
+	SNL
+	JMP I	VCDROW	/ return if no dot
+	DISD
+	JMP	.-1	/ wait for ready
+	DIXY		/ intensify
+	JMP I	VCDROW
+
+VCDCSV,	.-.	/ save location for column of char
+	
+VCX,	.-.	/ starting X coord (margin)
+VCXTMP,	.-.	/ working copy of X coord
+VCY,	.-.	/ starting Y coord (baseline)
+VCYTMP,	.-.	/ working copy of Y coord
+
+VCTTAB,	/ array of bitmaps for each character.  Format:
+	/  2 words per character, giving 4 wide by 6 high
+	/  bitmap.  Left column in low byte of first word,
+	/  right column in high byte of last, bottom bit in
+	/  least significant position.
+	/ entries are in trimmed ASCII order
+
+	4136;3455	/ @ NULL
+	4437;3744	/ A
+	5177;2651	/ B
+	4136;2241	/ C
+	4177;3641	/ D
+	5177;4151	/ E
+	4477;4044	/ F
+	4136;2645	/ G
+
+	0477;7704	/ H
+	4100;4177	/ I
+	4102;7641	/ J
+	1477;4122	/ K
+	0177;0101	/ L
+	2077;7720	/ M
+	1077;7704	/ N
+	4136;3641	/ O
+
+	4477;3044	/ P
+	4136;3743	/ Q
+	4477;3146	/ R
+	5122;2245	/ S
+	4040;4077	/ T
+	0176;7601	/ U
+	0374;7403	/ V
+	0277;7702	/ W
+
+	1463;6314	/ X
+	1261;7004	/ Y
+	4543;6151	/ Z
+	7700;0041	/ [
+	3040;0106	/ \
+	4100;0077	/ ]
+	2000;2077	/ ^
+	1604;0404	/ _
+
+	0000;0000	/ space
+	0000;0075	/ !
+	6000;6000	/ "
+	3712;3712	/ #
+	7322;2267	/ $
+	6661;4333	/ % CR
+	5126;0526	/ &
+	5000;0060	/ '
+
+	3600;0041	/ (
+	4100;0036	/ )
+	1422;2214	/ *
+	0404;0437	/ +
+	0500;0006	/ ,
+	0404;0404	/ -
+	0300;0003	/ .
+	0601;4030	/ /
+
+	4537;7651	/ 0
+	2100;0177	/ 1
+	4321;3145	/ 2
+	4122;2651	/ 3
+	0474;0477	/ 4
+	5172;4651	/ 5
+	5136;4651	/ 6
+	4340;6054	/ 7
+
+	5126;2651	/ 8
+	4531;3645	/ 9
+	6600;0066	/ :
+	6500;0066	/ ;
+	0400;2112	/ <
+	1212;1212	/ =
+	1221;0004	/ >
+	5540;2050	/ ?
+$

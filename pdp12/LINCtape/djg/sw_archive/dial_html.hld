@@ -1,0 +1,441 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <time.h>
+#include <signal.h>
+#include <unistd.h>
+#include <memory.h>
+#include <sys/ioctl.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <string.h>
+
+#include "cgi-lib/cgi-lib.h"
+#include "cgi-lib/html-lib.h"
+
+#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
+
+typedef enum {TYPE_OS8_SV, TYPE_BIN, TYPE_IMAGE, TYPE_DUMP} BIN_TYPE;
+
+struct dial_hdr {
+   unsigned short mode;
+   unsigned short field;
+   unsigned short unknown;
+   unsigned short start_addr;
+   unsigned short fill[219];
+   unsigned short nsegs;
+   unsigned short segs[32];
+};
+
+void html_error(int type, char *str, ...)
+{
+   va_list ap;
+
+   mime_header("text/html");
+   html_begin("Error",NULL);
+
+   va_start(ap, str);
+   vprintf(str, ap);
+   va_end(ap);
+
+   html_end();
+   exit(1);
+}
+
+void include_file(char *fn)
+{
+   FILE *in;
+   char *str;
+
+   in = fopen(fn,"r");
+   if (in == NULL) 
+      return;
+
+   while (fgets(str, sizeof(str), in) != NULL) {
+      printf("%s",str);
+   }
+}
+
+char conv(int x)
+{
+   if (x == 037)
+      return '\r';
+   if (x == 043)
+      return '\n';
+   if (x == 047)
+      return '\t';
+   if (x <= 037) 
+      return x + 'A' - 1;
+   else
+      return x + '!' - 041;
+}
+
+dump_image(FILE *out, int size, unsigned short *inbuf) {
+   int cntr;
+   unsigned char outbuf[3];
+
+   for (cntr = 0; cntr < size; cntr += 2) {
+      outbuf[0] = inbuf[cntr];
+      outbuf[1] = inbuf[cntr+1]; 
+      outbuf[2] = ((inbuf[cntr] & 0xf00) >> 4) | (inbuf[cntr+1] >> 8);
+      if (fwrite(&outbuf, sizeof(outbuf), 1, out) < 1)
+         html_error(0, "File write failed\n");
+   }
+}
+
+dump_os8_sv(FILE *out, int mem[], unsigned int start)
+{
+   struct {
+      unsigned short nsegs;
+      unsigned short field;
+      unsigned short start_addr;
+      unsigned short job_status_word;
+      struct {
+         unsigned short origin;
+         unsigned short descr;
+      } core[32];
+      unsigned short fill[188];
+   } hdr;
+   int core_ndx = -1;
+   int used_blk[16][8];
+   int page, block, offset, cntr;
+   int mem_addr;
+   int active;
+
+   memset(&hdr, 0, sizeof(hdr));
+   hdr.field = 06203 | ((start >> 9) & 070);
+   hdr.start_addr = start;
+   for (page = 7; page >= 0; page--) {
+      for (block = 0 ; block < 16; block++) {
+         used_blk[block][page] = 0; 
+         mem_addr = (page << 12) | (block * 256);
+         for (offset = 0; offset < 256; offset++) {
+             if (mem[mem_addr + offset] != 0xffffffff) {
+                used_blk[block][page] = 1;
+                break;
+             }
+         }
+      }
+      active = 0;
+      for (block = 0 ; block < 16; block++) {
+         if (used_blk[block][page]) {
+            if (active) {
+               if ((page == 0 || page == 1) && block == 15) {
+                  hdr.core[core_ndx].descr += 0100;
+                  //printf("Not loading last field page %d\n",page);
+               } else {
+                  if (hdr.core[core_ndx].descr & 03700 >= 03600) 
+                     active = 0; 
+                  else
+                     hdr.core[core_ndx].descr += 0200;
+               }
+            } 
+            if (!active) {
+               core_ndx++;
+               if (core_ndx > ARRAYSIZE(hdr.core))
+                  html_error(0, "Too many core blocks\n");
+               hdr.core[core_ndx].origin = block * 256;
+               hdr.core[core_ndx].descr = 0200 | (page << 3);
+               active = 1;
+            }
+         } else {
+            active = 0;
+         }
+      }
+   }
+   hdr.nsegs = -(core_ndx + 1);
+   if (!used_blk[0][0] && !used_blk[1][0] && !used_blk[2][0] &&
+          !used_blk[3][0])  
+      hdr.job_status_word |= 1;
+   if (!used_blk[0][1] && !used_blk[1][1] && !used_blk[2][1] &&
+          !used_blk[3][1])  
+      hdr.job_status_word |= 2;
+   dump_image(out, sizeof(hdr)/2,(unsigned short *) &hdr);
+   for (page = 7; page >= 0; page--) {
+      for (block = 0 ; block < 16; block++) {
+         if (used_blk[block][page]) {
+            unsigned short buf[256];
+            for (cntr = 0; cntr < 256; cntr++)
+               buf[cntr] = mem[(page << 12) + block * 256 + cntr];
+            dump_image(out, 256, buf);
+         }
+      }
+   }
+}
+
+dump_binary(FILE *in, int block, int size, BIN_TYPE type, FILE *out) {
+   struct dial_hdr hdr;
+   unsigned short buf[256];
+   int cntr;
+   char newfn[100];
+   unsigned int seg_addrs[ARRAYSIZE(hdr.segs)];
+   unsigned int pdp8_mem[32768];
+   unsigned int pdp8_start;
+
+   if (fseek(in,01000 * block, SEEK_SET) != 0) 
+      html_error(0, "file seek failed\n");
+   if (fread(&hdr,sizeof(hdr),1,in) < 1) 
+       html_error(0, "file read failed\n");
+   if (type == TYPE_DUMP) {
+      mime_header("application/octet-stream");
+      if (fwrite(&hdr, sizeof(hdr), 1, out) < 1)
+         html_error(0, "File write failed\n");
+      for (cntr = 1; cntr < size; cntr++) {
+         if (fread(&buf,sizeof(buf),1,in) < 1)
+            html_error(0, "file read failed\n");
+         if (fwrite(&buf, sizeof(buf), 1, out) < 1)
+            html_error(0, "file write failed\n");
+      }
+   } else if (type == TYPE_OS8_SV) {
+      int cntr2 = 0;
+      memset(pdp8_mem, -1, sizeof(pdp8_mem));
+      for (cntr = 0; cntr < ARRAYSIZE(hdr.segs); cntr++) {
+         if (hdr.segs[cntr] != 0) {
+            seg_addrs[cntr2++] = cntr*256; 
+         }
+      }
+      if (cntr2 != hdr.nsegs)
+         html_error(0, "Illegal save file header %d %d\n", cntr2, hdr.nsegs);
+      if (size != hdr.nsegs + 1)
+         html_error(0, "Illegal save file size %d %d\n", size, hdr.nsegs);
+      pdp8_start = hdr.start_addr | ((hdr.field & 070) << 9);
+      for (cntr = 0; cntr < size - 1; cntr++) {
+          unsigned short buf[256];
+          if (fread(buf, 2, 256, in) < 256)
+             html_error(0, "File read failed\n");
+          for (cntr2 = 0; cntr2 < 256; cntr2++) {
+             pdp8_mem[seg_addrs[cntr] + cntr2] = buf[cntr2];
+          }
+      }
+      mime_header("application/octet-stream");
+      dump_os8_sv(out, pdp8_mem, pdp8_start);
+   } else if (type == TYPE_IMAGE) {
+      mime_header("application/octet-stream");
+      dump_image(out, sizeof(hdr)/2,(unsigned short *) &hdr);
+      for (cntr = 1; cntr < size; cntr++) {
+          if (fread(&buf,sizeof(buf),1,in) < 1)
+             html_error(0, "File read failed\n");
+         dump_image(out, sizeof(buf)/2, buf);
+      }
+   } else if (type == TYPE_BIN) {
+   } else {
+      html_error(0, "Unknown conversion type %d\n",type);
+   }
+   fclose(out);
+}
+
+dump_source(FILE *in, int block, int size, FILE *out) {
+   //FILE *out;
+   unsigned short temp;
+   int cntr;
+   char newfn[100];
+
+   if (fseek(in,01000 * block, SEEK_SET) != 0)
+      html_error(0, "File seek failed\n");
+
+   mime_header("text/plain");
+   for (cntr = 0; cntr < size * 256; cntr++) {
+      if (fread(&temp,1,2,in) < 2)
+	 html_error(0, "File read failed\n");
+      if ((temp >> 6) == 0)
+         break;
+      fprintf(out, "%c",conv(temp >> 6));
+      if ((temp & 077) == 0)
+         break;
+      fprintf(out, "%c",conv(temp & 077));
+   }
+   fclose(out);
+}
+
+dial_dir(FILE *in, char *infn) {
+   int cntr;
+   int dirent;
+   unsigned short dir[512];
+   char fn[32];
+
+   if (fseek(in,01000 * 238,SEEK_SET) != 0)
+      html_error(0, "dir seek failed\n");
+   if (fread(dir, sizeof(dir), 1, in) != 1)
+      html_error(0, "dir read failed\n");
+   mime_header("text/html");
+   printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>Directory of %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",infn);
+   printf("<center>Directory of %s</center>\n",infn);
+   printf("<br>");
+   printf("On DIAL tapes each file name can have a source and binary file \n");
+   printf("assocated with it.  The links below will return the file in\n");
+   printf("various format.\n");
+   printf("The BN link will give source files in ASCII and binary files \n");
+   printf("in a choice of formats with more information on file.\n");
+   printf("The BLKS link will return files in \n");
+   printf("<a href='/pip_image.shtml'>PIP image</a> format.\n");
+   printf("<p><pre>\n");
+   printf("           SOURCE     BINARY  \n"); 
+   printf("  Name    BN  BLKS   BN  BLKS\n"); 
+   for (dirent = 0; dirent < 512; dirent += 8) {
+      if (dir[dirent] == 05757) {
+         //printf("Directory entry %d empty\n",dirent/8);
+         continue;
+      }
+      for (cntr = 0; cntr < 4; cntr++) {
+         fn[cntr*2] = conv(dir[dirent+cntr] >> 6);
+         fn[cntr*2+1] = conv(dir[dirent+cntr] & 077);
+      }
+      fn[cntr*2] = 0;
+      for (cntr = 0; cntr < 8; cntr++) {
+         if (fn[cntr] == '?')
+            fn[cntr] = 0;
+      }
+      printf("%-8s ", fn);
+      if (dir[dirent+4] != 05757) {
+         printf("<a href='dial_html/%s?act=file&fn=%s&blk=%d,%d&to=ascii'>%4o</a> <a href='dial_html/%s?act=file&fn=%s&blk=%d,%d&to=image'>%4o</a>  ", fn, infn, 
+             dir[dirent+4],dir[dirent+5], dir[dirent+4], fn, infn, 
+             dir[dirent+4],dir[dirent+5], dir[dirent+5]);
+         //dump_source(fn, dir[dirent+4], dir[dirent+5], in);
+      } else
+         printf("          ");
+      if (dir[dirent+6] != 05757) {
+         printf("<a href='dial_html/%s?act=info&fn=%s&blk=%d,%d'>%4o</a> <a href='dial_html/%s?act=file&fn=%s&blk=%d,%d&to=image'>%4o</a>  ", fn, infn, 
+           dir[dirent+6],dir[dirent+7], dir[dirent+6], fn, infn, 
+           dir[dirent+6],dir[dirent+7], dir[dirent+6]);
+         //dump_binary(fn, dir[dirent+6], dir[dirent+7], in, 1);
+      } else
+         printf("          ");
+      printf("\n");
+   }
+   printf("</pre>\n");
+   include_file("footer.shtml");
+   printf("</body> </html>\n");
+
+}
+
+dial_info(FILE *in, char *tofn, int start, int len, char *infn, 
+      int blk_offset) {
+   struct dial_hdr hdr;
+   int cntr;
+   int cntr2 = 0;
+
+   if (fseek(in,01000 * start,SEEK_SET) != 0) 
+      html_error(0, "file seek failed\n");
+   if (fread(&hdr,sizeof(hdr),1,in) < 1) 
+       html_error(0, "file read failed\n");
+
+   mime_header("text/html");
+   printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>Information on file %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",tofn);
+   printf("<center>Information on file %s</center>\n",tofn);
+
+   if (hdr.mode == 0)
+      printf("Program does not autostart.<br>\n");
+   else
+   if ((hdr.mode & 2))
+      printf("Program starts in PDP-8 mode.<br>\n");
+   else
+      printf("Program starts in LINK mode.<br>\n");
+   printf("Start Address %04o, loads in %d 256 word memory blocks.<br>\n", 
+         hdr.start_addr, hdr.nsegs);
+
+   printf("Memory blocks used:<br>\n");
+   for (cntr = 0; cntr < ARRAYSIZE(hdr.segs); cntr++) {
+      if (hdr.segs[cntr] != 0) {
+         printf("%5o ",cntr*256);
+         cntr2++;
+      }
+   }
+   printf("<br>\n");
+   if (cntr2 != hdr.nsegs) 
+      printf("Illegal save file segment header %d %d<br>\n", cntr2, hdr.nsegs);
+   if (len != hdr.nsegs + 1)
+      printf("Illegal save file size %d %d<br>\n", len, hdr.nsegs);
+   printf("<a href='dial_html/%s?act=file&fn=%s&blk=%d,%d&to=os8_sv'>Convert to OS/8 SV format</a> in 8 bit <a href='/pip_image.shtml'>PIP image</a> format.<br>\n",
+      tofn, infn, start + blk_offset, len);
+   printf("<a href='dial_html/%s?act=file&fn=%s&blk=%d,%d&to=bin'>Convert to BIN loader format</a><br>\n", 
+      tofn, infn, start + blk_offset, len);
+   html_end();
+}
+
+dial_file(FILE *in, char *tofn, int start, int len, char *to) {
+   if (strcmp(to, "ascii") == 0) {
+      dump_source(in, start, len, stdout);
+   } else if (strcmp(to, "image") == 0) {
+      dump_binary(in, start, len, TYPE_IMAGE, stdout);
+   } else if (strcmp(to, "os8_sv") == 0) {
+      dump_binary(in, start, len, TYPE_OS8_SV, stdout);
+   } else {
+      html_error(0, "Unknown conversion %s\n",to);
+   }
+}
+
+main(int argc, char **argv)
+{
+   FILE *in;
+   LIST *head;
+   char *action;
+   char *infn;
+   struct {
+      short first_block;
+      unsigned short block_size;
+   } link_info;
+
+   char fullpath[256];
+#define MAX_LCL_PATH 64
+   
+   head = cgi_input_parse();
+   if (head == NULL) 
+      html_error(0, "ERROR: No action specified\n");
+   action = find_val(head, "act");
+   if (action == NULL) 
+      html_error(0, "ERROR: No action specified\n");
+   infn = find_val(head, "fn");
+   if (infn == NULL) 
+      html_error(0, "ERROR: No file specified\n");
+   if (strstr(infn,"/../") != NULL || strlen(infn) > sizeof(fullpath) - 
+         MAX_LCL_PATH) 
+      html_error(0, "ERROR: Illegal file name %s\n",infn);
+   strcpy(fullpath, "/mnt/data3/link/link/good/");
+   strcat(fullpath,infn);
+   
+   in = fopen(fullpath,"r");
+   if (in == NULL) 
+      html_error(0,"Open %s failed: %s\n",infn, strerror(errno));
+   if (fseek(in, -4, SEEK_END) != 0) 
+      html_error(0, "file seek failed\n");
+   if (fread(&link_info,sizeof(link_info),1,in) < 1) 
+       html_error(0, "file info read failed\n");
+
+   if (strcmp(action,"dir") == 0) {
+      dial_dir(in, infn);
+   } else if (strcmp(action,"file") == 0) {
+      int start,len;
+      char *blk, *to, *tofn;
+
+      blk = find_val(head, "blk");
+      if (blk == NULL) 
+         html_error(0, "ERROR: No block specified on file\n");
+      if (sscanf(blk, "%d,%d",&start, &len) != 2)
+         html_error(0, "ERROR: Illegal block (%s) specified on file\n", blk);
+      to = find_val(head, "to");
+      if (to == NULL) 
+         html_error(0, "ERROR: No conversion specified on file\n");
+      tofn = getenv("PATH_INFO");
+      if (tofn == NULL || strlen(tofn) < 2) 
+         html_error(0, "ERROR: No to file specified\n");
+      tofn++; // Remove leading /
+      dial_file(in, tofn, start - link_info.first_block, len, to);
+   } else if (strcmp(action,"info") == 0) {
+      int start,len;
+      char *blk,*tofn;
+
+      blk = find_val(head, "blk");
+      if (blk == NULL) 
+         html_error(0, "ERROR: No block specified on file\n");
+      if (sscanf(blk, "%d,%d",&start, &len) != 2)
+         html_error(0, "ERROR: Illegal block (%s) specified on file\n", blk);
+      tofn = getenv("PATH_INFO");
+      if (tofn == NULL || strlen(tofn) < 2) 
+         html_error(0, "ERROR: No to file specified\n");
+      tofn++; // Remove leading /
+      dial_info(in, tofn, start - link_info.first_block, len, infn, 
+          link_info.first_block);
+   } else {
+      html_error(0, "ERROR: illegal action %s\n",action);
+   }
+}

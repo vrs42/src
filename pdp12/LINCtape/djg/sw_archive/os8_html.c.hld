@@ -1,0 +1,469 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <time.h>
+#include <signal.h>
+#include <unistd.h>
+#include <memory.h>
+#include <sys/ioctl.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <string.h>
+
+#include "cgi-lib/cgi-lib.h"
+#include "cgi-lib/html-lib.h"
+
+#include "types.h"
+#include "os8.h"
+#include "diskette.h"
+
+#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
+
+typedef enum {TYPE_OS8_SV, TYPE_BIN, TYPE_IMAGE, TYPE_DUMP} BIN_TYPE;
+
+void html_error(int type, char *str, ...)
+{
+   va_list ap;
+
+   mime_header("text/html");
+   html_begin("Error",NULL);
+
+   va_start(ap, str);
+   vprintf(str, ap);
+   va_end(ap);
+
+   html_end();
+   exit(1);
+}
+
+void include_file(char *fn)
+{
+   FILE *in;
+   char str[1024];
+
+   in = fopen(fn,"r");
+   if (in == NULL) 
+      return;
+
+   while (fgets(str, sizeof(str), in) != NULL) {
+      printf("%s",str);
+   }
+   fclose(in);
+}
+
+dump_image(FILE *out, int size, unsigned short *inbuf) {
+   int cntr;
+   unsigned char outbuf[3];
+
+   for (cntr = 0; cntr < size; cntr += 2) {
+      outbuf[0] = inbuf[cntr];
+      outbuf[1] = inbuf[cntr+1]; 
+      outbuf[2] = ((inbuf[cntr] & 0xf00) >> 4) | (inbuf[cntr+1] >> 8);
+      if (fwrite(&outbuf, sizeof(outbuf), 1, out) < 1)
+         html_error(0, "File write failed\n");
+   }
+}
+
+#if 0
+   mime_header("text/html");
+   printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>Directory of %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",infn);
+   printf("<center>Directory of %s</center><br>\n",infn);
+   printf("This directory is in the format the DIAL operating\n");
+   printf("system uses.  The BN column is the number of the first block of the file in octal.  The BLKS column is the number of 256-word blocks occupied by the file.\n");
+   printf("On DIAL tapes each file name can have a source and binary file \n");
+   printf("assocated with it.  The links below will return the file in\n");
+   printf("various formats.\n");
+   printf("<p>Clicking the BN link will give source files in ASCII and binary files \n");
+   printf("in a choice of formats with more information on the file.\n");
+   printf("Clicking the BLKS link will return files in \n");
+   printf("<a href='/pip_image.shtml'>PIP image</a> format.\n");
+   printf("<p><pre>\n");
+             dir[dirent+4],dir[dirent+5], dir[dirent+5]);
+   printf("</pre>\n");
+   include_file("footer.shtml");
+   printf("</body> </html>\n");
+
+}
+
+#endif
+os8_info(FILE *in, char *tofn, int start, int len, char *to, char *infn) {
+  UINT16 awData[OS8_BLOCK_SIZE];  UINT8 abData[OS8_BYTE_BLOCK_SIZE];
+  int cntr;
+
+      OS8BlockToBytes(awData, abData);
+
+   mime_header("text/html");
+   printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>Information on file %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",tofn);
+   printf("<center>Information on file %s</center><br>\n",tofn);
+
+   ReadOS8Block(start, awData);
+   if ((awData[0] >= (07777 - 32)) && (awData[1] & 07707) == 06203) {
+      int num_segs = (awData[0] ^ 07777) + 1;
+      int pages = 0;
+
+      printf("This file is an OS/8 executable save file.<br>\n");
+      printf("Start Address %04o in field %d.<br>\n", awData[2], 
+          ((awData[1] >> 3) & 07));
+      printf("Memory blocks used:<br>\n");
+    
+      for (cntr = 0; cntr < num_segs; cntr++) {
+         int start = awData[4+cntr*2] + ((awData[5+cntr*2] >> 3) & 07);
+         pages += awData[5+cntr*2];
+         printf("%5o-%5o",start, start + (awData[5+cntr*2] * 128));
+      }
+      if (pages != len * 2) {
+         printf("File size does not match header, size %d 256 word pages, header %d",len * 2, pages);
+      }
+   }
+   printf("<br>\n");
+   printf("<a href='os8_html/%s?act=file&fn=%s&blk=%d,%d&to=os8_sv'>Convert to OS/8 SV format</a> in 8 bit <a href='/pip_image.shtml'>PIP image</a> format.<br>\n",
+      tofn, infn, start, len);
+   printf("<a href='os8_html/%s?act=file&fn=%s&blk=%d,%d&to=bin'>Convert to BIN loader format</a><br>\n", 
+      tofn, infn, start, len);
+
+   include_file("footer.shtml");
+   html_end();
+}
+
+#if 0
+      int add_footer = 0;
+      char *host, *referer;
+
+      host = getenv("HTTP_HOST"); 
+      referer = getenv("HTTP_REFERER"); 
+      if (host == NULL || referer == NULL || strstr(referer,host) == NULL) {
+	 mime_header("text/html");
+	 printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>file %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",tofn);
+	 printf("<center>File %s</center><br>\n",tofn);
+	 printf("<p><a href='../os8_html?act=dir&fn=%s'>Directory of image this file is from</a><br>\n",infn);
+         printf("<listing>\n");
+         add_footer = 1;
+      } else {
+	 mime_header("text/plain");
+      }
+      dump_dial_source(in, start, len, stdout);
+      if (add_footer) {
+         printf("</listing>\n");
+         include_file("footer.shtml");
+      }
+#endif
+
+/************************************************************************/
+/****************   D I R E C T O R Y    C O M M A N D   ****************/
+/************************************************************************/
+
+
+/* WriteDate - Write OS/8 date to a file */
+PRIVATE void WriteDate (FILE *f, UINT16 wCDT)
+{
+  static char *apszMonths[12] = {
+    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+  UINT d,m,y;
+  if (wCDT == 0) {
+    fprintf(f, " (none)  ");
+  } else {
+    OS8DateToDMY(wCDT, &d, &m, &y);
+    fprintf(f, "%2d-%s-%2d", d, apszMonths[m-1], y);
+  }
+} /*WriteDate*/
+
+struct dirent {
+   char name[7];
+   char ext[4];
+   int start,len;
+   int used;
+   UINT16 wCDT;
+};
+
+int sort_name = 0;
+int dial_dir_sort(void *comp1,void *comp2)
+{
+   struct dirent *a = comp1;
+   struct dirent *b = comp2;
+   if (sort_name)
+      return(strcmp(a->name, b->name));
+   else
+      return(strcmp(a->ext, b->ext));
+}
+
+typedef enum {SORT_NONE, SORT_NAME, SORT_EXT} SORT_TYPE;
+/* DirOneFile */
+/*   This procedure will print the directory information for a single   */
+/* file specification, which may have wild cards.  It can print in      */
+/* either full or brief mode, and will return the number of files found */
+/* and the total number of blocks.                                      */
+PRIVATE BOOLEAN DirOneFile
+ (FILE *hOut, char *pszMask, BOOLEAN fBrief, UINT *pnFiles, UINT *pnBlocks,
+   UINT *pnTotalBlocks, SORT_TYPE sort, char *infn)
+{
+  OS8_FIND_DATA FindData;  STRING szName;
+  UINT nBlock; int nLength;  UINT16 wCDT;  BOOLEAN fMatch;
+#define MAX_DIR 512
+   struct dirent idir[MAX_DIR];
+   int entry = 0;
+   int cntr;
+   int total_blocks;
+   //char text_ext[] = {"PA", "HL", "FT", "BA", "BI", "MU", "TX"};
+
+  OS8FindFirst(&FindData);  fMatch = FALSE;
+
+  //while (OS8FindFile(&FindData, pszMask, szName, &nBlock, &nLength, &wCDT)) {
+
+  memset(idir, 0, sizeof(idir));
+
+  while (OS8FindNext(&FindData, szName, &nBlock, &nLength, &wCDT)) {
+    char *ext;
+    if (szName[0] == EOS) {
+       *pnTotalBlocks = nBlock + nLength;
+       continue;
+    }
+    ext = strrchr(szName,'.');
+    if (ext != NULL && (ext - szName) < sizeof(idir[entry].name)) {
+       strncpy(idir[entry].name, szName, ext - szName);
+       idir[entry].name[ext - szName] = 0;
+    } 
+    if (entry < MAX_DIR) {
+       strcpy(idir[entry].ext, ext+1);
+       idir[entry].start = nBlock;
+       idir[entry].len = nLength;
+       idir[entry].wCDT = wCDT;
+       idir[entry].used = 1;
+       entry++;
+    } else {
+       html_error(0, "Too many directry entries\n");
+    }
+  }
+  fprintf(hOut, "<br>\n");
+  if (sort != SORT_NONE) { 
+     sort_name = (sort == SORT_NAME);
+     qsort(idir, MAX_DIR, sizeof(idir[0]), dial_dir_sort);
+     fprintf(hOut, "<br><a href='os8_html?act=dir&fn=%s'>Unsorted Directory Listing</a>", infn);
+  }
+  if (sort != SORT_NAME) {
+    fprintf(hOut, "<br><a href='os8_html?act=dir&fn=%s&sort=name'>Sort Directory Listing by file name</a>", infn);
+  }
+  if (sort != SORT_EXT) {
+    fprintf(hOut, "<br><a href='os8_html?act=dir&fn=%s&sort=ext'>Sort Directory Listing by file extension</a>", infn);
+  }
+
+  fprintf(hOut, "<p><pre>\nName  Ext Length   Date\n");
+
+  for (cntr = 0; cntr < MAX_DIR; cntr++) { 
+    char fullname[32];
+    if (!idir[cntr].used)
+       continue;
+    snprintf(fullname, sizeof(fullname), "%s.%s", idir[cntr].name, 
+       idir[cntr].ext);
+    printf("<a href='os8_html/%s?act=file&fn=%s&blk=%d,%d&to=auto'>%-6s.%-3s</a>", 
+       fullname, infn, idir[cntr].start, idir[cntr].len, idir[cntr].name,
+       idir[cntr].ext);
+    //fprintf(hOut, "%-6s%-3s", idir[cntr].name, idir[cntr].ext);
+    if (fBrief) {
+      fprintf(hOut, (*pnFiles % 5) == 0 ? "\n" : "    ");
+    } else {
+      fprintf(hOut, "%5d   ", idir[cntr].len);
+      WriteDate(hOut, idir[cntr].wCDT);
+      //fprintf(hOut, "  (%04o)\n", nBlock);
+      fprintf(hOut, "\n");
+    }
+    ++*pnFiles;  *pnBlocks += idir[cntr].len;  fMatch = TRUE;
+  }
+
+  if (fBrief && ((*pnFiles % 5) != 0)) fprintf(hOut, "\n");
+
+  return fMatch;
+} /*DirOneFile*/
+
+
+/* DirFileList */
+/*   This procedure will handle the directory of a list of files.  It    */
+/* splits the list up into individual files (which are handled by DirOne */
+/* Spec) and maintains the total blocks and files found.                 */
+PRIVATE void DirFileList (FILE *hOut, char *pszList, BOOLEAN fBrief, 
+    SORT_TYPE sort, char *infn)
+{
+  UINT nItem=0, nFiles=0, nBlocks=0;  STRING szItem;
+  UINT nTotalBlocks;
+
+  char chPartition = GetPartition();
+
+  mime_header("text/html");
+  fprintf(hOut, "<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>Directory of %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",infn);
+  fprintf(hOut, "<center>Directory of %s</center><br>\n",infn);
+  fprintf(hOut, "This directory is in the format the OS/8 operating\n");
+  fprintf(hOut, "system uses.  The length column is the number of 256-word blocks occupied by the file.\n");
+  fprintf(hOut, "The links below will return the file in\n");
+  fprintf(hOut, "various formats.\n");
+  fprintf(hOut, "<p>Clicking the BN link will give source files in ASCII and binary files \n");
+  fprintf(hOut, "in a choice of formats with more information on the file.\n");
+  fprintf(hOut, "Clicking the BLKS link will return files in \n");
+  fprintf(hOut, "<a href='/pip_image.shtml'>PIP image</a> format.\n");
+
+  if (chPartition != '\0')  fprintf(hOut, ", partition %c", chPartition);
+  fprintf(hOut, "\n");
+  if (!DirOneFile(hOut, pszList, fBrief, &nFiles, &nBlocks, &nTotalBlocks,
+        sort, infn)) {
+    //  html_error(0, "no files found to match %s", pszList);
+    ++nItem;
+  }
+  fprintf(hOut,"\n %d Files in %d Blocks - %d Free blocks\n", 
+     nFiles, nBlocks, nTotalBlocks - nBlocks);
+
+  fprintf(hOut, "</pre>\n");
+  include_file("footer.shtml");
+  fprintf(hOut, "</body> </html>\n");
+
+} /*DirFileList*/
+
+os8_file(FILE *in, char *tofn, int start, int len, char *to, char *infn) {
+  UINT16 awData[OS8_BLOCK_SIZE];  UINT8 abData[OS8_BYTE_BLOCK_SIZE];
+  int cntr;
+
+   if (strcmp(to, "auto") == 0) {
+      int num_unprint = 0;
+      ReadOS8Block(start, awData);
+      OS8BlockToBytes(awData, abData);
+      for (cntr = 0; cntr < sizeof(abData); cntr++) {
+         int tmp = abData[cntr] & 0x7f;
+         if (!isprint(tmp) && tmp != '\n' && tmp != '\r' && tmp != '\t') {
+//printf("char %d\n",(abData[cntr] & 0x7f));
+            num_unprint++; 
+         }
+      }
+      if (num_unprint > 15)
+         os8_info(in, tofn, start, len, to, infn);
+      else 
+         os8_file(in, tofn, start, len, "ascii", infn);
+   } else
+   if (strcmp(to, "ascii") == 0) {
+      int add_footer = 0;
+      char *host, *referer;
+
+      host = getenv("HTTP_HOST"); 
+      referer = getenv("HTTP_REFERER"); 
+      if (host == NULL || referer == NULL || strstr(referer,host) == NULL) {
+	 mime_header("text/html");
+	 printf("<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>file %s</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n",tofn);
+	 printf("<center>File %s</center><br>\n",tofn);
+	 printf("<p><a href='../os8_html?act=dir&fn=%s'>Directory of image this file is from</a><br>\n",infn);
+         printf("<listing>\n");
+         add_footer = 1;
+      } else {
+	 mime_header("text/plain");
+      }
+      ExtractASCIIFile(start, len, stdout);
+      if (add_footer) {
+         printf("</listing>\n");
+         include_file("footer.shtml");
+      }
+   } else if (strcmp(to, "image") == 0) {
+      //dump_dial_binary(in, start, len, TYPE_IMAGE, stdout);
+   } else if (strcmp(to, "os8_sv") == 0) {
+      //dump_dial_binary(in, start, len, TYPE_OS8_SV, stdout);
+   } else {
+      html_error(0, "Unknown conversion %s\n",to);
+   }
+}
+
+
+main(int argc, char **argv)
+{
+   FILE *in;
+   LIST *head;
+   char *action;
+   char *infn;
+   struct {
+      short first_block;
+      unsigned short block_size;
+   } link_info;
+
+   char fullpath[256];
+#define MAX_LCL_PATH 64
+   
+   head = cgi_input_parse();
+   if (head == NULL) 
+      html_error(0, "ERROR: No action specified\n");
+   action = find_val(head, "act");
+   if (action == NULL) 
+      html_error(0, "ERROR: No action specified\n");
+   infn = find_val(head, "fn");
+   if (infn == NULL) 
+      html_error(0, "ERROR: No file specified\n");
+   if (strstr(infn,"/../") != NULL || strlen(infn) > sizeof(fullpath) - 
+         MAX_LCL_PATH) 
+      html_error(0, "ERROR: Illegal file name %s\n",infn);
+   strcpy(fullpath, "/mnt/data3/link/link/good/");
+   strcat(fullpath,infn);
+   
+   in = fopen(fullpath,"r");
+   if (in == NULL) 
+      html_error(0,"Open %s failed: %s\n",infn, strerror(errno));
+   if (fseek(in, -4, SEEK_END) != 0) 
+      html_error(0, "file seek failed\n");
+   if (fread(&link_info,sizeof(link_info),1,in) < 1) 
+       html_error(0, "file info read failed\n");
+   fclose(in);
+
+   if (strcmp(action,"dir") == 0) {
+      if (OpenDisk(TRUE, TRUE, LINK_OS8, fullpath)) {
+         char *sort_str;
+         SORT_TYPE sort;
+         sort_str = find_val(head, "sort");
+         sort = SORT_NONE;
+         if (sort_str != NULL) {
+            if (strcmp(sort_str,"name")) {
+               sort = SORT_NAME;
+            } else {
+               sort = SORT_EXT;
+            }
+         }
+         DirFileList(stdout, "*.*", FALSE, sort, infn);
+	 CloseDisk();
+      } else {
+         html_error(0,"OpenDisk %s failed: %s\n",infn, strerror(errno));
+      }
+   } else if (strcmp(action,"file") == 0) {
+      int start,len;
+      char *blk, *to, *tofn;
+
+      blk = find_val(head, "blk");
+      if (blk == NULL) 
+         html_error(0, "ERROR: No block specified on file\n");
+      if (sscanf(blk, "%d,%d",&start, &len) != 2)
+         html_error(0, "ERROR: Illegal block (%s) specified on file\n", blk);
+      to = find_val(head, "to");
+      if (to == NULL) 
+         html_error(0, "ERROR: No conversion specified on file\n");
+      tofn = getenv("PATH_INFO");
+      if (tofn == NULL || strlen(tofn) < 2) 
+         html_error(0, "ERROR: No extract file specified\n");
+      tofn++; // Remove leading /
+      if (OpenDisk(TRUE, TRUE, LINK_OS8, fullpath)) {
+         os8_file(in, tofn, start, len, to, infn);
+      } else {
+         html_error(0,"OpenDisk %s failed: %s\n",infn, strerror(errno));
+      }
+   } else if (strcmp(action,"info") == 0) {
+      int start,len;
+      char *blk,*tofn;
+
+      blk = find_val(head, "blk");
+      if (blk == NULL) 
+         html_error(0, "ERROR: No block specified on file\n");
+      if (sscanf(blk, "%d,%d",&start, &len) != 2)
+         html_error(0, "ERROR: Illegal block (%s) specified on file\n", blk);
+      tofn = getenv("PATH_INFO");
+      if (tofn == NULL || strlen(tofn) < 2) 
+         html_error(0, "ERROR: No extract file specified\n");
+      tofn++; // Remove leading /
+      if (OpenDisk(TRUE, TRUE, LINK_OS8, fullpath)) {
+         os8_info(in, tofn, start - link_info.first_block, len, infn, 
+            link_info.first_block);
+      } else {
+         html_error(0,"OpenDisk %s failed: %s\n",infn, strerror(errno));
+      }
+   } else {
+      html_error(0, "ERROR: illegal action %s\n",action);
+   }
+}

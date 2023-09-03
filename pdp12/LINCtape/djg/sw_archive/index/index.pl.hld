@@ -1,0 +1,171 @@
+#!/usr/bin/perl -w -T
+# -T removed so I can glob
+use strict;
+
+my $base = "/mnt/wing/apache/share/htdocs/images";
+my $ftp = "ftp://ftp.pdp8.net";
+
+my @proc_dirs = ( ["misc_dectapes", "/mnt/wing/ftproot", "images"],
+                  ["misc_floppy", "/mnt/wing/ftproot", "images"],
+                  ["os8", "/mnt/wing/ftproot", "images"],
+                  ["dial", "/mnt/wing/ftproot", "linctape-images"],
+                  ["os8", "/mnt/wing/ftproot", "linctape-images"],
+);
+#my @proc_dirs =  ("misc_dectapes", "/mnt/wing/ftproot/images");
+#my @proc_dirs =  ("misc_dectapes", "two");
+
+open OUT,"> $base/index.shtml" or die "unable to open output";
+
+start_html(\*OUT, "PDP-8 Media Images");
+print OUT "The following are directories which contain images of PDP-8 ";
+print OUT "media which you can browse.  Not all files are in this web version, ";
+print OUT "see <a href='ftp://ftp.pdp8.net'>ftp.pdp8.net</a> for all files\n";
+
+print OUT "<p>";
+my $ref;
+print OUT "<table ><tr><td>Image Name</td><td>Description</td></tr>\n";
+
+for $ref (@proc_dirs) {
+#   print "@$ref[0] - @$ref[1] \n";
+   proc_dir(\*OUT, @$ref[0], @$ref[1], @$ref[2], $base);
+}
+print OUT "</table>\n";
+
+footer(\*OUT, 1);
+close OUT;
+exit;
+
+sub proc_dir() {
+   my ($out, $name, $path, $dir, $base) = @_;
+   my (@info, @dir, %dirhash);
+   my $tmp;
+   my $cgi = "/pdp8cgi";
+
+   open INFO,"< $path/$dir/$name/README" or die "unable to open $path/$dir/$name/README $!\n";
+   open OUT2,"> $base/$dir/$name.shtml" or die "unable to open output $base/$dir/$name.shtml: $!\n";
+   start_html(\*OUT2, "PDP-8 File list for $name");
+
+   my $format = <INFO>; chomp($format);
+   $format = substr($format, 2);
+   if ($format =~ m/OS\/8/) {
+      if ($format =~ m/LINKtape/) {
+         $cgi = $cgi . "/os8_html_link";
+      } else {
+         $cgi = $cgi . "/os8_html";
+      }
+   } elsif ($format =~ m/DIAL/) {
+      $cgi = $cgi . "/dial_html";
+   } else {
+      print "Can't find type in format $format\n";
+   }
+   print OUT2 "$format<br>\n";
+   while ($tmp = <INFO>) {
+      chomp($tmp);
+      if ($tmp eq "") {
+         last;
+      }
+      $tmp = substr($tmp,2);
+      push @info, $tmp;
+      print OUT2 "$tmp<br>\n";
+   } 
+   print $out "<tr><td><a href='$dir/$name.shtml'>$name</a> </td><td>$info[0] </td></tr>\n";
+
+   print OUT2 "<br>\n";
+   #@dir = glob("$path/$name/*");
+   opendir DIR, "$path/$dir/$name" or die "Unable to open dir $!";
+   @dir = readdir DIR;
+   closedir DIR;
+   my $ref;
+   for $ref (@dir) {
+      #print "dir $ref\n";
+      if ($ref ne "README" && $ref ne "." && $ref ne "..") {
+         $dirhash{$ref} = 1;
+      }
+   }
+
+   print OUT2 "<p>Clicking on the image name will bring up a directory which you can download or view individual files.\n";
+   #print OUT2 "Clicking on download will download the image.  You may need to do a save as in your browser (right click) to download and not view the binary file.  <p>\n";
+
+   print OUT2 "<table bgcolor='white' border=0 cellspacing=0 cellpadding=2><tr><th>&nbsp</th><th>Image Name</th><th>Description</th><th>&nbsp</th></tr>\n";
+   
+   my $row_cntr = 0;
+   my $row_color;
+   my $first = 1;
+   my ($hole_col,$hole_col2);
+   while ($tmp = <INFO>) {
+      chomp $tmp;
+      if ($tmp ne "") {
+         my ($fn, $desc);
+         ($fn, $desc) = split /[ \t]/, $tmp, 2;
+         if (!defined($desc)) {
+            $desc = "";
+         }
+
+         $desc = strip($desc);
+         #print "fn $fn desc $desc\n";
+         #print OUT2 "<a href='$cgi?fn=$dir/$name/$fn;act=dir;sort=name'>$fn</a> $desc &nbsp;&nbsp <a href='$ftp/$dir/$name/$fn'>download</a><br>\n";
+         if ($row_cntr++ % 6 < 3) { 
+            $row_color = "bgcolor='lightgreen'";
+         } else {
+            $row_color = "";
+         }
+         if ($first == 1) {
+            $first = 0;
+            $hole_col = "<td rowspan=9999 background='/hole.jpg'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>";
+            $hole_col2 = "<td rowspan=9999 background='/hole.jpg'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>";
+         } else {
+            $hole_col = "";
+            $hole_col2 = "";
+         }
+         print OUT2 "$hole_col<tr $row_color><td><a href='$cgi?fn=$dir/$name/$fn;act=dir;sort=name'>$fn</a> </td><td> $desc </td>$hole_col2</tr>\n";
+         if ($dirhash{$fn}) {
+            $dirhash{$fn} = 0;
+         } else {
+            print "File $fn not found in directory listing for $name\n";
+         }
+      }
+   }
+   print OUT2 "</table>\n";
+   my ($key, $value);
+   while (($key, $value) = each %dirhash) {
+      if ($value != 0) {
+         print "File $key not found in README for $name\n";
+      }
+   }
+
+   footer(\*OUT2, 2);
+   close OUT2;
+}
+
+sub footer() {
+   my ($out, $level) = @_;
+#   print $out '<P> <HR WIDTH="100%">';
+#   print $out '<p>Feel free to contact me, David Gesswein <A HREF="mailto:djg@pdp8.net">djg@pdp8.net</A> with any questions, comments on the web site, or you want to donate equipment, documentation, software etc. to this project.&nbsp; I am interested in anything PDP-8 related, computers, peripherals used with them, DEC or third party, or documentation.&nbsp; <BR><BR><A HREF="/query_docs/query.shtml">PDP-8 Documents home</a><BR><A HREF="/index.shtml">PDP-8 Home Page</a> <BR><A HREF="/sitemap.shtml">PDP-8 Site Map</a>';
+   if ($level == 1) {
+      print $out "<!--#include virtual='../footer_l2.shtml' -->\n";
+   } elsif ($level == 2) {
+      print $out "<!--#include virtual='../../footer_l3.shtml' -->\n";
+   } else {
+      die "Bad footer level $level\n";
+   }
+   print $out "</body></html>\n";
+}
+
+sub start_html() {
+   my ($out, $title) = @_;
+   print $out "<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\"> <html> <head> <title>$title</title> <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\"> </head> <body>\n";
+   print $out "<center>$title</center><br>\n";
+}
+
+#########################
+#Remove leading/trailing blanks
+sub strip {
+        my @parms = @_;
+        for (@parms) {
+        if ($_) {
+                s/\s+$//;
+		s/^\s+//; 
+        }
+        }
+        return wantarray ? @parms : $parms[0];
+}

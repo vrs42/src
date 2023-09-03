@@ -1,0 +1,55 @@
+/ Kaleidoscope program for the VC8E/VR14 scope.
+/ Based on suggestions from page 6-19 of the Small
+/ Computer Handbook, 1973.
+
+/ The advice given is to experiment with settings
+/ of the switch register bit positions 9, 10 and 11,
+/ leaving all higher bits zero.  The advice is good;
+/ this is a nice "screen saver" for non-storage
+/ scopes.
+
+DISD=   6052
+DILX=   6053
+DILY=   6054
+DIXY=   6055
+
+	*200
+START,  TAD     Y
+	JMS     SCALE
+	CMA
+	TAD     X
+	DCA     X       / X = X - SCALE(Y)
+	TAD     X
+	DILX
+	JMS     SCALE
+	TAD     Y
+	DILY
+	DISD
+	JMP     .-1
+	DIXY
+	DCA     Y       / Y = Y - SCALE(X)
+	KSF		/ VRS: Key struck?
+	JMP     START
+	KCC		/ VRS: Toss the character
+	JMP I .+1	/ VRS: Yes, return to OS/8
+	7600
+X,      3777            / any initial value works, but
+Y,      6               / 0,0 is least interesting.
+
+/ Divide AC by 2**SR
+SCALE,  .-.
+	DCA     TEM
+	OSR
+	CIA
+	DCA     C
+	TAD     TEM
+	CLL
+	SPA
+	CML
+	RAR             / Arithmetic right shift
+	ISZ     C
+	JMP     .-5
+	JMP I   SCALE
+TEM,    .-.
+C,      .-.
+$

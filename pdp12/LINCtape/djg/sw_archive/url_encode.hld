@@ -1,0 +1,215 @@
+/*
+You're in luck, here is some ANSI C code that I happened to be working on
+before lunch.  I happen to be using MSVC 5.0, but I don't see anything in
+there that shouldn't compile anywhere.  Have fun with it.
+
+Ryan Alyn Porter, President
+Endymion Corporation
+http://www.endymion.com
+
+*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+void CGIEncode(char* strString, int maxlen);
+void RFC1630Encode(char* strString, int maxlen, int loose);
+int  bWordChar(char cChar, int loose);
+int  bWhitespaceChar(char cChar);
+
+/* Helper to determine if a character is a whitespace
+   character.  Returns 1 for true, 0 for false. */
+int bWhitespaceChar(char cChar)
+{
+    if((cChar == 0x0A) || /* Newline. */
+       (cChar == 0x0D) || /* Carriage Return. */
+       (cChar == 0x20) || /* Space. */
+       (cChar == 0x0B) ||
+       (cChar == 0x0C))
+       return 1;
+    else
+       return 0;
+}
+
+/* Performs encoding on a string in accordance with
+   commonly accepted standards set forth in cgi-lib.pl
+   and CGI.pm. */
+void CGIEncode(char* strString, int maxlen)
+{
+    unsigned int uiStrLen,
+                 uiIndex = 0;
+    char cCurrentChar = 0;
+
+    /* Find the initial length of the string. */
+    uiStrLen = strlen(strString);
+    
+    /* Loop through the string, replacing 
+       whitespace characters one-for-one. */
+    for(uiIndex=0;uiIndex<uiStrLen;uiIndex++)
+    {
+        cCurrentChar = strString[uiIndex];
+
+        /* If this is whitespace, replace it
+           with '+', otherwise pass it through. */
+        if(bWhitespaceChar(cCurrentChar))
+            strString[uiIndex] = '+';
+    }
+
+    /* Encode non-word characters according to 
+       RFC 1630. */
+    RFC1630Encode(strString, maxlen, 0);
+}
+
+/* Helper to determine if a character is a non-word
+   character.  Returns 1 for true, 0 for false. */
+int bWordChar(char cChar, int loose)
+{
+    if((cChar >= 'a' && cChar <= 'z') ||
+       (cChar >= 'A' && cChar <= 'Z') ||
+       (cChar >= '0' && cChar <= '9') ||
+       (loose && (cChar == '.'))
+ )
+/*
+        ||
+       (cChar == '+'))
+*/
+       return 1;
+    else
+       return 0;
+}
+/* %-encode a string according to RFC 1630.  This 
+  function assumes that there are not already %-encoded
+  characters present in the string to be encoded. */
+void RFC1630Encode(char* strString, int maxlen, int loose)
+{
+    unsigned int uiStrLen,
+                 uiStrLenEncoded,
+                 uiIndex,
+                 uiCurrentPosition = 0;
+    char cCurrentChar = 0;
+    char *strStringTemp;
+    char strEncodedChar[4];
+
+    /* Find the initial length of the string. */
+    uiStrLen = strlen(strString);
+    uiStrLenEncoded = uiStrLen;
+
+
+    /* Find out how big the %-encoded string will be. */
+    for(uiIndex=0;uiIndex<uiStrLen;uiIndex++)
+    {
+        cCurrentChar = strString[uiIndex];
+
+        /* If this character must be encoded, it will
+           take up an additional two characters in the
+           encoded string. */
+        if(!bWordChar(cCurrentChar, loose))
+            uiStrLenEncoded += 2;
+    }
+
+    if (uiStrLenEncoded >= maxlen) {
+       return;  // Can't encode, too long
+    } 
+    /* Allocate space for a temporary copy of the string. */
+    strStringTemp = (char *)malloc(uiStrLenEncoded);
+
+    /* Copy the un-encoded string to the temp string. */
+    strcpy(strStringTemp,strString);
+
+    /* Empty the original string. */
+    strString[0] = 0;
+
+    /* Encode the string into the new buffer. */
+    for(uiIndex=0;uiIndex<uiStrLen;uiIndex++)
+    {
+        cCurrentChar = strStringTemp[uiIndex];
+        
+        /* If the character doesn't have to be encoded, */
+        if(bWordChar(cCurrentChar, loose))
+        {
+            /* ...then simply copy it into the output. */
+            strString[uiCurrentPosition++] = 
+                strStringTemp[uiIndex];
+            strString[uiCurrentPosition] = 0;
+        }
+        else
+            /* ...otherwise encode it into the output. */
+        {
+            sprintf(strEncodedChar,"%%%X",
+                strStringTemp[uiIndex]);
+            strcat(strString,strEncodedChar);
+            uiCurrentPosition += 3;
+        }
+    }
+    free(strStringTemp);
+
+    return;
+}
+
+/* encode a string for html.  */
+void HtmlEncode(char* strString, int maxlen)
+{
+    unsigned int uiStrLen,
+                 uiStrLenEncoded,
+                 uiIndex,
+                 uiCurrentPosition = 0;
+    char cCurrentChar = 0;
+    char *strStringTemp;
+    char strEncodedChar[4];
+    char *sp_char = "&<>";
+    char *rep_char[] = {"&amp;", "&lt;", &gt;");
+    char *c;
+
+    /* Find the initial length of the string. */
+    uiStrLen = strlen(strString);
+    uiStrLenEncoded = uiStrLen;
+
+
+    /* Find out how big the %-encoded string will be. */
+    for(uiIndex=0;uiIndex<uiStrLen;uiIndex++)
+    {
+        cCurrentChar = strString[uiIndex];
+
+        /* If this character must be encoded, it will
+           take up an additional two characters in the
+           encoded string. */
+        if((c = strchr(cCurrentChar, sp_char)) != NULL)
+            uiStrLenEncoded += strlen(rep_char[c - sp_char]);
+    }
+
+    if (uiStrLenEncoded >= maxlen) {
+       return;  // Can't encode, too long
+    } 
+    /* Allocate space for a temporary copy of the string. */
+    strStringTemp = (char *)malloc(uiStrLenEncoded);
+
+    /* Copy the un-encoded string to the temp string. */
+    strcpy(strStringTemp,strString);
+
+    /* Empty the original string. */
+    strString[0] = 0;
+
+    /* Encode the string into the new buffer. */
+    for(uiIndex=0;uiIndex<uiStrLen;uiIndex++)
+    {
+        cCurrentChar = strStringTemp[uiIndex];
+        
+        /* If the character doesn't have to be encoded, */
+        if((c = strchr(cCurrentChar, sp_char)) != NULL)
+        {
+            /* ...then simply copy it into the output. */
+            strString[uiCurrentPosition++] = 
+                strStringTemp[uiIndex];
+            strString[uiCurrentPosition] = 0;
+        }
+        else
+            /* ...otherwise encode it into the output. */
+        {
+            strcat(strString, rep_char[c - sp_char]);
+            uiCurrentPosition += strlen(rep_char[c - sp_char]);
+        }
+    }
+    free(strStringTemp);
+
+    return;
+}

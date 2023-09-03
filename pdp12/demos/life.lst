@@ -1,0 +1,2726 @@
+   1               / vim: set ts=8 sw=8 noet ff=dos :
+   2               /FUN INITIAL CONDITIONS; USE COMBINATIONS AS YOU LIKE
+   3               /DEFINITIONS ARE AT THE END OF THE FILE
+   4               GLDERS=0
+   5               GOSPER=0
+   6               RPENTO=0
+   7               MWSS=0
+   8               HWSS=0
+   9               DIEHARD=0
+  10               ACORN=0
+  11               BREED=0
+  12               FILLER=0
+  13               MAXFIL=1
+  14               BAKRAK=0
+  15               SPCRAK=0
+  16               KAREL=0
+  17               
+  18               
+  19               /GAME OF LIFE
+  20               /KYLE OWEN - 24 MARCH 2019
+  21               
+  22               /24 AUGUST 2023 - ADDED PDP-12 SUPPORT WITH VR14
+  23               /14 APRIL 2019 - ADDED OS/8 SUPPORT
+  24               /9 APRIL 2019 - ADDED BUGGY FAST RASTER SCAN, STATISTICS, AND NEW RLE PARSER
+  25               /8 APRIL 2019 - ADDED VC8E SUPPORT FOR BOTH STORAGE AND NON-STORAGE 'SCOPES
+  26               
+  27               /FOCAL: 11 BY 11
+  28               /BASIC: 32 BY 32
+  29               /ASSEMBLY: 192 BY 256 (OR BEYOND?)
+  30               /THAT WAS THE MAIN REASON FOR WRITING THIS...
+  31               /PROBABLY WOULD'VE BEEN EASIER TO WRITE IN FORTRAN, THOUGH.
+  32               /I THINK THERE WAS A DECUS VERSION, BUT I CAN'T FIND IT.
+  33               
+  34               /DFIELD SELECTS THE FIELD FOR STORING THE BITMAP
+  35               /BITMAP IS ORGANIZED AS 192 WIDE BY 256 TALL
+  36               /WORD 0 BIT 0 IS TOP LEFT, WORD 7777 BIT 11 IS BOTTOM RIGHT
+  37               /INTERNALLY, BIT NUMBER IS STORED AS A NEGATIVE NUMBER, -14 TO -1 (OCTAL!)
+  38               /HENCE, BIT IN WORD:
+  39               /... -3 -2 -1 | -14 -13 -12 -11 ... -3 -2 -1 | -14 -13 -12 ...
+  40               /  WORD - 1   |         CURRENT WORD         |   WORD + 1
+  41               
+  42               /AND, LOOKING JUST AT THE WORDS IN THE BITMAP:
+  43               /... WORD - WRDCOL - 1 | WORD - WRDCOL | WORD - WRDCOL + 1 ...
+  44               /...     WORD - 1      | CURRENT WORD  |      WORD + 1     ...
+  45               /... WORD + WRDCOL - 1 | WORD + WRDCOL | WORD + WRDCOL + 1 ...
+  46               
+  47               /IN THIS WORLD, THE SCREEN WRAPS FROM LEFT TO RIGHT, TOP TO BOTTOM
+  48               /IT WOULDN'T BE HARD TO TERMINATE LIFE AT SCREEN BOUNDARIES, THOUGH
+  49               
+  50               /A LITTLE SUMMARY OF OPERATION:
+  51               /FIRST, BITMAP IS CLEARED, THEN INITIAL CONDITIONS ARE LOADED.
+  52               /THEN, THREE ROWS ARE COPIED INTO THREE CACHE ROWS.
+  53               /FOR EACH ROW COPIED, A BIT IN LIFDET IS SET OR CLEARED TO INDICATE WHETHER
+  54               /OR NOT THE CACHE ACTUALLY HAS ANY LIFE. IF THERE'S NO LIFE, WE CAN TAKE A
+  55               /SHORTCUT.
+  56               
+  57               /SINCE WE START WITH PIXEL (0,0), AKA THE LEFT PIXEL OF THE FIRST ROW,
+  58               /THE THREE ROWS TO CACHE ARE THE ROW ABOVE US, OUR CURRENT ROW, AND THE
+  59               /ROW BELOW US. THE ROW ABOVE US IS ACTUALLY THE LAST ROW IN THE BITMAP
+  60               /BECAUSE OF WRAPPING.
+  61               
+  62               /NOW, ASSUMING WE HAVE LIFE IN THE CACHE...
+  63               
+  64               /IF YOU ARE INSIDE A WORD SUCH THAT YOU WON'T WRAP TO SURROUNDING WORDS AND THE
+  65               /WORD IS ZERO, YOU CAN SKIP RIGHT ON TO THE END OF THAT WORD...JUST ANOTHER
+  66               /OPTIMIZATION FOR SPEED.
+  67               
+  68               /OTHERWISE, WE ITERATE THROUGH THE CACHE ROWS, COUNTING EVERY NEIGHBORHOOD OF
+  69               /9 PIXELS. WHEN WE ARE AT THE EDGE OF A WORD, EITHER BIT 0 (-14) OR
+  70               /BIT 11 (-1), WE NEED TO COUNT PIXELS IN THE ADJACENT WORDS. OTHERWISE, WE
+  71               /ONLY CONSIDER OUR CURRENT WORD, PLUS THE WORD ABOVE US AND THE WORD BELOW US,
+  72               /OF COURSE.
+  73               
+  74               /ONCE WE HAVE COUNTED THE NEIGHBORHOOD, WE COMPARE THE TOTAL LIVE CELLS TO 3
+  75               /AND 4. IF THE NUMBER OF LIVE CELLS IS 3, THE MIDDLE CELL WILL BE ALIVE. IF
+  76               /THE NUMBER IS 4, THE MIDDLE CELL WILL REMAIN UNCHANGED. EVERY OTHER SUM
+  77               /RESULTS IN...DEATH!
+  78               
+  79               /ONCE WE ARE TO THE END OF THE CURRENT ROW, THE CACHE MUST BE UPDATED.
+  80               /FORTUNATELY, THIS IS PRETTY EASY. THE CURRENT (MIDDLE) CACHE ROW BECOMES
+  81               /THE TOP ROW, THE BOTTOM ROW BECOMES THE CURRENT ROW, AND THE TOP ROW BECOMES
+  82               /THE BOTTOM ROW. THE BOTTOM ROW OF THE CACHE (FORMERLY THE TOP ROW OF THE
+  83               /CACHE) IS COPIED OVER WITH THE ROW BELOW THE CURRENT ROW OF THE BITMAP.
+  84               /INSTEAD OF DOING A BUNCH OF COPYING, WE JUST CHANGE THE POINTERS TO THE CACHE
+  85               /ROWS, AND ONLY COPY THE ONE NEW ROW. NOT TOO BAD, RIGHT? OH, BE SURE TO UPDATE
+  86               /LIFDET TO GIVE US A POSSIBLE SHORTCUT IF THERE'S NO MORE LIFE IN THE CACHE FOR
+  87               /NEXT TIME.
+  88               
+  89               /IF THERE'S NO LIFE IN THE CACHE, UPDATE THE CACHE AND TRY AGAIN.
+  90               
+  91               /THE PROGRAM USES WORDS 0 TO 7 AS A BIT COUNT LOOKUP TABLE FOR EXTRA SPEED.
+  92               /MAYBE THERE'S A FASTER WAY TO COUNT BITS? IF SO, PLEASE FORWARD THIS ON TO ME!
+  93               
+  94               /THE PROGRAM ALSO USES WORDS 7764 TO 7777 (-14 TO -1, RIGHT?) FOR THE BITMASK.
+  95               
+  96               /THERE'S ALSO A ROTATE SUBROUTINE WHICH TRIES TO GO FOR SPEED. MAYBE IT CAN BE
+  97               /OPTIMIZED AS WELL?
+  98               
+  99               /PARTING THOUGHTS: YOU COULD CRAM THIS INTO ONE FIELD IF YOU WANTED TO REDUCE
+ 100               /THE BITMAP SIZE BY A BIT (HEH); WRAPPING VERTICALLY IS NO LONGER QUITE AS
+ 101               /TRIVIAL, THOUGH...FOR AN 8K MACHINE WITH AN OS, I BELIEVE REDUCING THE BITMAP
+ 102               /SIZE WILL BE REQUIRED.
+ 103               
+ 104               /IT TURNS OUT THAT PRINTING TO THE TERMINAL TAKES A...SURPRISINGLY LARGE AMOUNT
+ 105               /OF TIME.
+ 106               
+ 107               /WRDCOL, AKA THE NUMBER OF WORD COLUMNS (AKA THE NUMBER OF WORDS IN A ROW)
+ 108               /SHOULD DEFINITELY BE A POWER OF TWO, AS THE PROGRAM ASSUMES IT WILL BE.
+ 109               /SMALLER WOULD PROBABLY BE FINE, BUT WILL INCREASE THE NUMBER OF ROWS.
+ 110               /BIGGER WOULD BE FINE TOO, GIVEN PAGE ZERO IS DECLUTTERED.
+ 111               
+ 112               /ANOTHER BIG IMPROVEMENT WOULD BE THE ABILITY TO STORE INITIAL CONDITIONS IN
+ 113               /AN EASY TO USE FILE FORMAT, PERHAPS LOADING FROM OS/8 (OR P?S/8).
+ 114               
+ 115               /ADDING THE ABILITY TO NOT PRINT (OR DRAW) TO INCREASE SPEED MAY BE A GOOD
+ 116               /ADDITION.
+ 117               
+ 118               /THE CURLY BRACES IN THE SOURCE COMMENTS ARE SOLELY FOR BRACKET MATCHING, SINCE
+ 119               /GT AND LT SIGNS ARE NOT USED AS MODERN BRACKETS. HELPFUL IF YOU'RE USING VIM
+ 120               /OR EMACS. NOT HELPFUL IF YOU'RE USING EDIT, EDLIN, ETC.
+ 121               
+ 122               /THE FAST RASTER ROUTINE USES MEMORY FROM 8K UP, AND HAS THE POTENTIAL TO WRAP
+ 123               /BACK TO THE ZERO FIELD.  NO CHECK IS MADE THAT YOU ARE ABOUT TO OVERFLOW THE
+ 124               /POINT BUFFER; THIS WAS DONE FOR SPEED, RIGHT?  THAT SAID, THE MAXIMUM NUMBER
+ 125               /OF POINTS FOR A FINITE ARRAY IS ABOUT 50 PERCENT, SO...
+ 126               /  256*192/2 = 24,576 = 24K.
+ 127               /WORST CASE, I THINK YOU'D NEED JUST A HAIR OVER 24K TO STORE 24K POINTS,
+ 128               /SOMETHING LIKE 256*97+1, I BELIEVE, ASSUMING EVERY ROW HAS 96 POINTS, WHICH
+ 129               /MEANS WE'D BE REALLY CLOSE.  FORTUNATELY, THE WORLD WRAPS, SO THE MAX FILLER
+ 130               /AND SUCH DIE BEFORE YOU GET ANYWHERE CLOSE TO 50 PERCENT.  THIS STILL HAS SOME
+ 131               /BUGS TO BE WORKED OUT; IT SEEMS LIKE THE ROUTINE IS SKIPPING TOO MANY LINES
+ 132               /SOMETIMES.  IT DOES SEEM TO BE MUCH FASTER, THOUGH!
+ 133               
+ 134               /STATISTICS INCLUDE THE GENERATION NUMBER AND THE NUMBER OF LIVE CELLS. BOTH 
+ 135               /ARE STORED AS DOUBLE WORDS. IF YOU OVERFLOW EITHER, ALL BETS ARE OFF. I'M NOT
+ 136               /REALLY SURE HOW YOU WOULD GET UP THAT HIGH FOR EITHER, THOUGH.
+ 137               
+ 138               /PRINTING THE NUMBERS WAS FUN. THIS USES A 24-BIT IMPLEMENTATION OF THE
+ 139               /DOUBLE-DABBLE ALGORITHM, ALONG WITH A SIMPLE MEANS OF LEADING ZERO 
+ 140               /SUPPRESSION. THIS CODE COULD BE USEFUL ALL BY ITSELF FOR OTHER APPLICATIONS.
+ 141               
+ 142               /THE NEW RLE PARSER USES INPUT FROM THE TTY AT THE MOMENT. IT DOES VERY LITTLE
+ 143               /ERROR CHECKING, EXCEPT TO CHECK TO SEE IF A NUMBER IS LARGER THAN 255 DECIMAL.
+ 144               /THIS IS A RECOVERABLE ERROR; EITHER GIVE A NEW NUMBER, OR TYPE CTRL-U TO START
+ 145               /THE WHOLE RLE SEQUENCE OVER. MIND YOU, IF YOU TRY TO USE A NUMBER LARGER THAN
+ 146               /192 FOR SOMETHING OTHER THAN THE END OF LINE MARKER ($), RESULTS MAY NOT BE
+ 147               /WHAT YOU EXPECT.
+ 148               
+ 149               /A TYPICAL RLE STRING FOR THE NEW TTY PARSER WOULD LOOK SOMETHING LIKE THIS:
+ 150               /70X192Y2BO4BO2B$2B6O2B$2BO4BO2B4$2B6O2B$BO6BOB$O8BO$BO6BOB$2B6O!
+ 151               /(KAREL'S P15, FOR THE CURIOUS.)
+ 152               /WHERE ALL NUMBERS ARE IN DECIMAL. B IS DEATH, O IS LIFE.
+ 153               /END OF LINE IS $, END OF RLE SEQUENCE IS !
+ 154               /CARRIAGE RETURNS ARE ECHOED AS CRLF; LINEFEEDS ARE IGNORED.
+ 155               /CTRL-U TO START THE SEQUENCE OVER, CTRL-D TO IMMEDIATELY EXIT (USEFUL FOR
+ 156               /REPLAYING THE LAST SEQUENCE)
+ 157               /ALL OTHER CHARACTERS ARE IGNORED AND NOT ECHOED.
+ 158               
+ 159               /OS/8 SUPPORT WORKS SOMETHING LIKE THIS...WHEN THE PROGRAM IS FIRST CALLED, THE
+ 160               /LAST PAGES OF THE FIRST TWO FIELDS (FIRST THREE FIELDS IF FAST RASTER MODE IS
+ 161               /ENABLED) ARE COPIED INTO SAFE SPOTS IN THE FIRST FIELD STARTING AT 7000.
+ 162               /HENCE, 7000-7577 WILL CONTAIN THE OS INFORMATION.  THE BIT MASK TABLE THAT
+ 163               /NEEDS TO RESIDE AT 7764 IS POPULATED AFTER THE COPIES ARE COMPLETE.  WHEN A
+ 164               /CTRL-C IS DETECTED AT THE END OF A GENERATION, THE PAGES ARE RESTORED AND
+ 165               /CONTROL IS RETURNED TO OS/8 AT 7600. YOU COULD MODIFY THE PROGRAM TO RETURN
+ 166               /SOONER IF DESIRED, BUT THIS WILL ADD A FEW CYCLES MULTIPLIED BY THOUSANDS OF
+ 167               /CALCULATIONS, POTENTIALLY, AND WILL SLOW THINGS DOWN.
+ 168               
+ 169               /THE PROGRAM ALSO CHECKS FOR A CTRL-U AT THE END OF A GENERATION. IF IT FINDS
+ 170               /ONE, THE PROGRAM WILL RESTART FROM THE TOP.
+ 171               
+ 172               /BASIC CONFIGURATION
+ 173               PDP12=1  /IF 0, ASSUMES A PDP-8; IF 1, ASSUMES A PDP-12
+ 174               OS8=1    /IF 0, ASSUMES NO OPERATING SYSTEM; IF 1, SHOULD RUN UNDER OS/8
+ 175               MEMORY=7 /TOTAL MEMORY FIELDS MINUS 1; WILL NOT ASSEMBLE IF TOO LITTLE MEMORY
+ 176               PARSER=0 /IF 0, RUNS THE NORMAL INIT ROUTINE; IF 1, TAKES RLE VIA TTY
+ 177               SCOPE=1  /IF 0, ASSUMES A (VERY LARGE!) TERMINAL; IF 1, USE A 'SCOPE
+ 178               STORE=0  /IF 0, ASSUMES A NON-STORAGE 'SCOPE; IF 1, A STORAGE 'SCOPE
+ 179               FASTR=0  /IF 0, SLOW RASTER; IF 1, FAST RASTER (NEEDS 32K); ONLY FOR STORE=0
+ 180               VT100=0  /IF 0, ASSUMES A DUMB TERMINAL; IF 1, A VT100-LIKE TERMINAL
+ 181               STATS=0  /IF 0, NO STATISTICS; IF 1, PRINTS GENERATION AND TOTAL LIFE
+ 182               PRTDOT=0 /IF 0, PRINTS SPACES FOR DEATH; IF 1, DOTS
+ 183               SIMHVC=0 /IF 0, ASSUMES A REAL VC8E; IF 1, ASSUMES VC8 DEVICE IN SIMH
+ 184               
+ 185               
+ 186               IFNZRO RLYNPR < /{
+ 187               TSF=SKP
+ 188               TLS=NOP
+ 189               STATS=0
+ 190               > /}
+ 191               
+ 192               /STUFF THAT PROBABLY SHOULDN'T BE MESSED WITH
+ 193               WRDCOL=20       /16 WORDS TIMES 12 BITS IS 192 ACROSS
+ 194               DFIELD=10       /BITMAP FIELD
+ 195               NOPRT=0         /NO PRINT FOR DEBUGGING (EXCEPT STATS, IF NEEDED)
+ 196               RLYNPR=0        /REALLY DON'T PRINT ANYTHING FOR DEBUGGING
+ 197               RSTRSC=0        /RASTER SHORTCUT FOR DEBUGGING
+ 198               
+ 199               /DEFINING CONSTANTS FOR CONDITIONAL ASSEMBLY
+ 200               NOSTOR=1-STORE
+ 201               SLOWR=1-FASTR
+ 202               USETTY=1-SCOPE
+ 203               
+ 204               /FOR DUMB TERMINALS, OR IF WE PRINT DOTS, DEATH IS SLOW
+ 205               SLODTH=0
+ 206               IFZERO SCOPE < /{
+ 207               IFZERO VT100 < /{
+ 208               SLODTH=1
+ 209               > /}
+ 210               IFNZRO PRTDOT < /{
+ 211               SLODTH=1
+ 212               > /}
+ 213               > /}
+ 214               
+ 215               /4K WON'T WORK (YET)
+ 216               IFZERO MEMORY < /{
+ 217                       ERROR: TOO LITTLE MEMORY; UPGRADE TO 8K AND TRY AGAIN
+ 218               > /}
+ 219               
+ 220               /FAST RASTER ONLY WORKS WITH 32K
+ 221               IFNZRO MEMORY-7 < /{
+ 222               IFNZRO SCOPE&NOSTOR&FASTR < /{
+ 223                       ERROR: TOO LITTLE MEMORY; TRY FASTR=0
+ 224               > /}
+ 225               > /}
+ 226               
+ 227               /SCOPE DISPLAY DEFINITIONS
+ 228               IFNZRO SCOPE < /{
+ 229               IFNZRO PDP12 < /{
+ 230               LINC=   6141
+ 231               PDP=    0002
+ 232               DIS=    140
+ 233               SCALE=  2
+ 234               > /}
+ 235               IFZERO PDP12 < /{
+ 236               SCALE=  4
+ 237               > /}
+ 238               IFZERO PDP12 < /{
+ 239               IFZERO SIMHVC < /{
+ 240               DISD=   6052
+ 241               > /}
+ 242               IFNZRO SIMHVC < /{
+ 243               DISD=   SKP
+ 244               > /}
+ 245               DILX=   6053
+ 246               DILY=   6054
+ 247               DIXY=   6055
+ 248               DILE=   6056
+ 249               DIRE=   6057
+ 250               > /}
+ 251               > /}
+ 252               
+ 253               /BIT COUNT TABLE
+ 254                       *0
+ 255 000000  0000          0
+ 256 000001  0001          1
+ 257 000002  0001          1
+ 258 000003  0002          2
+ 259 000004  0001          1
+ 260 000005  0002          2
+ 261 000006  0002          2
+ 262 000007  0003          3
+ 263               
+ 264                       *10
+ 265 000010  0000  PRIDX,  0
+ 266 000011  0000  CPTR1,  0
+ 267 000012  0000  CPTR2,  0
+ 268 000013  0000  RLEPTR, 0
+ 269               IFNZRO SCOPE&NOSTOR&FASTR < /{
+ 270               FSTPTR, 0
+ 271               > /}
+ 272               
+ 273               /COORDINATES FOR SCOPE DISPLAY
+ 274               IFNZRO SCOPE < /{
+ 275 000014  0000  X,      0
+ 276 000015  0000  Y,      0
+ 277               > /}
+ 278               
+ 279                       *20
+ 280               /CURRENT WORD IN BITMAP
+ 281 000020  0000  ADDR,   0
+ 282               
+ 283               /CURRENT BIT IN WORD
+ 284 000021  0000  CURBIT, 0
+ 285               
+ 286               /NEIGHBORHOOD TOTAL
+ 287 000022  0000  TOTAL,  0
+ 288               
+ 289               /LIFE DETECTED IN CACHE
+ 290 000023  0000  LIFDET, 0
+ 291               
+ 292               /CACHE POINTERS
+ 293 000024  0000  TOPPTR, 0
+ 294 000025  0000  MIDPTR, 0
+ 295 000026  0000  BOTPTR, 0
+ 296               
+ 297               /STATISTICS
+ 298               IFNZRO STATS < /{
+ 299               LIFCNT, 0
+ 300                       0
+ 301               > /}
+ 302               
+ 303               /MISC STUFF
+ 304 000027  0000  CNT,    0
+ 305 000030  0000  TEMP,   0
+ 306 000031  0000  TMPPTR, 0
+ 307               
+ 308               /MORE STUFF FOR VC8E AND PDP-12
+ 309               IFNZRO SCOPE < /{
+ 310               IFZERO PDP12 < /{
+ 311               STARTX, -600
+ 312               STARTY, 1000
+ 313               > /}
+ 314               IFNZRO PDP12 < /{
+ 315 000032  0100  STARTX, 100
+ 316 000033  0400  STARTY, 400
+ 317               > /}
+ 318               > /}
+ 319               
+ 320               /CACHE
+ 321                       *40
+ 322 000040  0000  CACHE1, ZBLOCK WRDCOL
+     000041  0000  
+     000042  0000  
+     000043  0000  
+     000044  0000  
+     000045  0000  
+     000046  0000  
+     000047  0000  
+     000050  0000  
+     000051  0000  
+     000052  0000  
+     000053  0000  
+     000054  0000  
+     000055  0000  
+     000056  0000  
+     000057  0000  
+ 323 000060  0000  CACHE2, ZBLOCK WRDCOL
+     000061  0000  
+     000062  0000  
+     000063  0000  
+     000064  0000  
+     000065  0000  
+     000066  0000  
+     000067  0000  
+     000070  0000  
+     000071  0000  
+     000072  0000  
+     000073  0000  
+     000074  0000  
+     000075  0000  
+     000076  0000  
+     000077  0000  
+ 324 000100  0000  CACHE3, ZBLOCK WRDCOL
+     000101  0000  
+     000102  0000  
+     000103  0000  
+     000104  0000  
+     000105  0000  
+     000106  0000  
+     000107  0000  
+     000110  0000  
+     000111  0000  
+     000112  0000  
+     000113  0000  
+     000114  0000  
+     000115  0000  
+     000116  0000  
+     000117  0000  
+ 325               
+ 326               /ROTATE AC RIGHT BY (2 - BIT) TIMES, WHERE BIT IS -2 TO -11 DECIMAL
+ 327               /THE SUBROUTINE DOES NOT LIKE WHEN YOU CALL IT WITH -1 OR -12, THOUGH...
+ 328               /THEN, AND RESULT WITH 7 AND RETURN
+ 329 000120  0000  DOROT,  0
+ 330 000121  3171          DCA ROT
+ 331                       TAD (ROTTBL+1
+page zero       	    ^
+page zero       	    ^
+     000122  1177  
+ 332 000123  1021          TAD CURBIT
+ 333 000124  3172          DCA JMPLOC
+ 334 000125  1171          TAD ROT
+ 335 000126  5572          JMP I JMPLOC
+ 336               /ROTATE TABLE
+ 337 000127  5143          JMP ERR
+ 338 000130  5146          JMP FOURL
+ 339 000131  5152          JMP FIVEL
+ 340 000132  5145          JMP SIXL
+ 341 000133  5157          JMP SIXR
+ 342 000134  5164          JMP FIVER
+ 343 000135  5160          JMP FOURR
+ 344 000136  5165          JMP THREER
+ 345 000137  5161          JMP TWOR
+ 346 000140  5166          JMP ONER
+ 347 000141  5167          JMP DOAND
+ 348 000142  5143  ROTTBL, JMP ERR
+ 349               
+ 350 000143  7402  ERR,    HLT
+ 351 000144  5520          JMP I DOROT
+ 352               
+ 353 000145  7006  SIXL,   RTL
+ 354 000146  7006  FOURL,  RTL
+ 355 000147  7006  TWOL,   RTL
+ 356                       AND (7
+page zero       	    ^
+page zero       	    ^
+     000150  0176  
+ 357 000151  5520          JMP I DOROT
+ 358               
+ 359 000152  7006  FIVEL,  RTL
+ 360 000153  7006  THREEL, RTL
+ 361 000154  7004  ONEL,   RAL
+ 362                       AND (7
+page zero       	    ^
+page zero       	    ^
+     000155  0176  
+ 363 000156  5520          JMP I DOROT
+ 364               
+ 365 000157  7012  SIXR,   RTR
+ 366 000160  7012  FOURR,  RTR
+ 367 000161  7012  TWOR,   RTR
+ 368                       AND (7
+page zero       	    ^
+page zero       	    ^
+     000162  0176  
+ 369 000163  5520          JMP I DOROT
+ 370               
+ 371 000164  7012  FIVER,  RTR
+ 372 000165  7012  THREER, RTR
+ 373 000166  7010  ONER,   RAR
+ 374               DOAND,  AND (7
+page zero             	    ^
+page zero             	    ^
+     000167  0176  
+ 375 000170  5520          JMP I DOROT
+ 376               
+ 377 000171  0000  ROT,    0
+ 378 000172  0000  JMPLOC, 0
+ 379               
+ 380               /GENERATION COUNTER
+ 381               IFNZRO STATS < /{
+ 382               GENCNT, 0
+ 383                       0
+ 384               > /}
+ 385               
+ 386               /BIT MASK TABLE
+ 387               /IF RUNNING UNDER OS/8, WE'LL HAVE TO COPY THIS HERE
+ 388               IFZERO OS8 < /{
+ 389                       *7764
+ 390                       4000
+ 391                       2000
+ 392                       1000
+ 393                       400
+ 394                       200
+ 395                       100
+ 396                       40
+ 397                       20
+ 398                       10
+ 399                       4
+ 400                       2
+ 401                       1
+ 402               > /}
+ 403               
+ 404                       /PROGRAM STARTS HERE
+ 405                       *200
+ 406               IFNZRO OS8 < /{
+ 407 000200  4777          JMS SAVOS8      /SAVE OS/8
+ 408               > /}
+ 409 000201  6040          6040            /CLEAR TTY FLAG
+ 410               START,
+ 411               IFNZRO STATS < /{
+ 412                       JMS RSTLIF      /RESET LIFE COUNTER
+ 413                       JMS RSTGEN      /RESET CYCLE COUNTER
+ 414               > /}
+ 415 000202  4776          JMS INIT        /INITIALIZE THE BITMAP
+ 416               IFNZRO STATS < /{
+ 417                       JMS PRNTST      /PRINT INITIAL STATISTICS
+ 418                       JMS RSTLIF      /RESET LIFE COUNTER
+ 419               > /}
+ 420               IFNZRO SCOPE&STORE < /{
+ 421                       CLA             /SET SCOPE FOR STORAGE MODE
+ 422                       TAD (20
+ 423                       DILE
+ 424               > /}
+ 425               IFNZRO SCOPE&NOSTOR&FASTR < /{
+ 426                       CLA CMA         /INITIALIZE PREVIOUS Y VALUE FOR FAST RASTER
+ 427                       DCA PREVY
+ 428                       CLA CMA
+ 429                       DCA FSTPTR
+ 430                       JMS RSTDF       /RESET CDF FOR FAST RASTER
+ 431               > /}
+ 432               
+ 433 000203  7200          CLA             /INITIALIZE CURRENT BIT AND ADDRESS
+ 434 000204  1375          TAD (-14
+ 435 000205  3021          DCA CURBIT      /CURBIT = -14 (AKA BIT 0)
+ 436 000206  3020          DCA ADDR        /ADDR = 0
+ 437 000207  3023          DCA LIFDET
+ 438 000210  3030          DCA TEMP
+ 439 000211  1374          TAD (CACHE1     /SET UP THE CACHE
+ 440 000212  3024          DCA TOPPTR
+ 441 000213  1373          TAD (CACHE2
+ 442 000214  3025          DCA MIDPTR
+ 443 000215  1372          TAD (CACHE3
+ 444 000216  3026          DCA BOTPTR
+ 445               
+ 446 000217  1371          TAD (-WRDCOL-1  /COPY INITIAL CACHE
+ 447 000220  3011          DCA CPTR1
+ 448 000221  1370          TAD (CACHE1-1
+ 449 000222  3012          DCA CPTR2
+ 450 000223  1367          TAD (-WRDCOL    /COPYING ONE ROW
+ 451 000224  3027          DCA CNT
+ 452 000225  6211          CDF DFIELD
+ 453 000226  1411          TAD I CPTR1
+ 454 000227  6201          CDF 0
+ 455 000230  7440          SZA
+ 456 000231  2030          ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 457 000232  3412          DCA I CPTR2
+ 458 000233  2027          ISZ CNT
+ 459 000234  5225          JMP .-7
+ 460               
+ 461 000235  1030          TAD TEMP        /ANY LIFE?
+ 462 000236  7640          SZA CLA
+ 463 000237  7001          IAC             /YES
+ 464 000240  1023          TAD LIFDET
+ 465 000241  7104          CLL RAL
+ 466 000242  3023          DCA LIFDET
+ 467 000243  3030          DCA TEMP
+ 468               
+ 469 000244  1367          TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
+ 470 000245  3027          DCA CNT
+ 471 000246  6211          CDF DFIELD
+ 472 000247  1411          TAD I CPTR1
+ 473 000250  6201          CDF 0
+ 474 000251  7440          SZA
+ 475 000252  2030          ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 476 000253  3412          DCA I CPTR2
+ 477 000254  2027          ISZ CNT
+ 478 000255  5246          JMP .-7
+ 479               
+ 480 000256  1030          TAD TEMP        /ANY LIFE?
+ 481 000257  7640          SZA CLA
+ 482 000260  7001          IAC             /YES
+ 483 000261  1023          TAD LIFDET
+ 484 000262  7104          CLL RAL
+ 485 000263  3023          DCA LIFDET
+ 486 000264  3030          DCA TEMP
+ 487               
+ 488 000265  1367          TAD (-WRDCOL    /COPYING ONE ROW TO WHERE WE LEFT OFF
+ 489 000266  3027          DCA CNT
+ 490 000267  6211          CDF DFIELD
+ 491 000270  1411          TAD I CPTR1
+ 492 000271  6201          CDF 0
+ 493 000272  7440          SZA
+ 494 000273  2030          ISZ TEMP        /INCREMENT IF LIFE DETECTED
+ 495 000274  3412          DCA I CPTR2
+ 496 000275  2027          ISZ CNT
+ 497 000276  5267          JMP .-7
+ 498               
+ 499 000277  1030          TAD TEMP        /ANY LIFE?
+ 500 000300  7640          SZA CLA
+ 501 000301  2023          ISZ LIFDET      /YES
+ 502 000302  5766          JMP CHKLIF      /JUMP TO THE MAIN LOOP
+ 503               
+ 504               IFNZRO STATS < /{
+ 505               /INCREMENT LIFE COUNTER FOR STATISTICS
+ 506               INCLIF, 0
+ 507                       ISZ LIFCNT      /INCREMENT BOTTOM 12
+ 508                       JMP I INCLIF    /NO OVERFLOW
+ 509                       ISZ LIFCNT+1    /OVERFLOW
+ 510                       JMP I INCLIF    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
+ 511               
+ 512               /RESET LIFE COUNTER FOR STATISTICS
+ 513               RSTLIF, 0
+ 514                       CLA
+ 515                       DCA LIFCNT
+ 516                       DCA LIFCNT+1
+ 517                       JMP I RSTLIF
+ 518               
+ 519               /INCREMENT CYCLE COUNTER FOR STATISTICS
+ 520               INCGEN, 0
+ 521                       ISZ GENCNT      /INCREMENT BOTTOM 12
+ 522                       JMP I INCGEN    /NO OVERFLOW
+ 523                       ISZ GENCNT+1    /OVERFLOW
+ 524                       JMP I INCGEN    /OVERFLOW ON TOP 12 WOULD BE A SERIOUS PROBLEM!
+ 525               
+ 526               /RESET CYCLE COUNTER FOR STATISTICS
+ 527               RSTGEN, 0
+ 528                       CLA
+ 529                       DCA GENCNT
+ 530                       DCA GENCNT+1
+ 531                       JMP I RSTGEN
+ 532               > /}
+ 533               
+ 534 000366  0400          PAGE
+     000367  7760  
+     000370  0037  
+     000371  7757  
+     000372  0100  
+     000373  0060  
+     000374  0040  
+     000375  7764  
+     000376  1600  
+     000377  6616  
+ 535               
+ 536 000400  1023  CHKLIF, TAD LIFDET      /ANY LIFE IN THE CACHE?
+ 537 000401  7650          SNA CLA
+ 538 000402  5777          JMP NOLIFE      /NOPE, SHORTCUT!
+ 539 000403  1021  DOLIFE, TAD CURBIT      /ARE WE AT A WORD EDGE?
+ 540 000404  1376          TAD (14         /CHECK LEFT WORD EDGE
+ 541 000405  7440          SZA
+ 542 000406  5274          JMP NLBIT       /NO, NOT THE LEFT WORD EDGE
+ 543 000407  1424          TAD I TOPPTR    /YES, GET TOP WORD
+ 544 000410  7450          SNA
+ 545 000411  5217          JMP .+6         /NOTHING TO DO IF WORD IS ZERO
+ 546 000412  7006          RTL             /GET TOP TWO BITS DOWN LOW
+ 547 000413  7004          RAL
+ 548 000414  0375          AND (3          /JUST KEEP THE TWO
+ 549 000415  3030          DCA TEMP
+ 550 000416  1430          TAD I TEMP      /AND COUNT THEM
+ 551 000417  3022          DCA TOTAL
+ 552 000420  1425          TAD I MIDPTR    /DO THE SAME FOR MIDDLE
+ 553 000421  7450          SNA
+ 554 000422  5232          JMP .+10        /NOTHING TO DO IF WORD IS ZERO
+ 555 000423  7006          RTL
+ 556 000424  7004          RAL
+ 557 000425  0375          AND (3
+ 558 000426  3030          DCA TEMP
+ 559 000427  1430          TAD I TEMP
+ 560 000430  1022          TAD TOTAL
+ 561 000431  3022          DCA TOTAL
+ 562 000432  1426          TAD I BOTPTR    /DO THE SAME FOR BOTTOM
+ 563 000433  7450          SNA
+ 564 000434  5244          JMP .+10        /NOTHING TO DO IF WORD IS ZERO
+ 565 000435  7006          RTL
+ 566 000436  7004          RAL
+ 567 000437  0375          AND (3
+ 568 000440  3030          DCA TEMP
+ 569 000441  1430          TAD I TEMP
+ 570 000442  1022          TAD TOTAL
+ 571 000443  3022          DCA TOTAL
+ 572 000444  7040          CMA             /STILL MISSING THE LEFT COLUMN
+ 573 000445  1020          TAD ADDR        /GET WORD TO OUR LEFT, WRAP AS NECESSARY
+ 574 000446  0374          AND (WRDCOL-1
+ 575 000447  1373          TAD (CACHE1     /DON'T CARE ABOUT ORDER OF BITS ANYWAYS!
+ 576 000450  3031          DCA TMPPTR
+ 577 000451  7001          IAC
+ 578 000452  0431          AND I TMPPTR
+ 579 000453  7640          SZA CLA
+ 580 000454  2022          ISZ TOTAL
+ 581 000455  1372          TAD (WRDCOL     /DO NEXT CACHED ROW
+ 582 000456  1031          TAD TMPPTR
+ 583 000457  3031          DCA TMPPTR
+ 584 000460  7001          IAC
+ 585 000461  0431          AND I TMPPTR
+ 586 000462  7640          SZA CLA
+ 587 000463  2022          ISZ TOTAL
+ 588 000464  1372          TAD (WRDCOL     /AND THE LAST CACHED ROW
+ 589 000465  1031          TAD TMPPTR
+ 590 000466  3031          DCA TMPPTR
+ 591 000467  7001          IAC
+ 592 000470  0431          AND I TMPPTR
+ 593 000471  7640          SZA CLA
+ 594 000472  2022          ISZ TOTAL
+ 595 000473  5771          JMP DOCALC      /ALL DONE FOR NOW
+ 596               
+ 597 000474  1370  NLBIT,  TAD (-13        /HOW ABOUT RIGHT WORD EDGE?
+ 598 000475  7640          SZA CLA
+ 599 000476  5767          JMP NOTEDG      /NO, NOT AT EITHER WORD EDGE
+ 600 000477  1424          TAD I TOPPTR    /YES, GET TOP WORD
+ 601 000500  7450          SNA
+ 602 000501  5305          JMP .+4         /NOTHING TO DO IF WORD IS ZERO
+ 603 000502  0375          AND (3          /JUST KEEP THE TWO BOTTOM BITS
+ 604 000503  3030          DCA TEMP
+ 605 000504  1430          TAD I TEMP      /AND COUNT THEM
+ 606 000505  3022          DCA TOTAL
+ 607 000506  1425          TAD I MIDPTR    /DO THE SAME FOR MIDDLE
+ 608 000507  7450          SNA
+ 609 000510  5316          JMP .+6         /NOTHING TO DO IF WORD IS ZERO
+ 610 000511  0375          AND (3
+ 611 000512  3030          DCA TEMP
+ 612 000513  1430          TAD I TEMP
+ 613 000514  1022          TAD TOTAL
+ 614 000515  3022          DCA TOTAL
+ 615 000516  1426          TAD I BOTPTR    /DO THE SAME FOR BOTTOM
+ 616 000517  7450          SNA
+ 617 000520  5326          JMP .+6         /NOTHING TO DO IF WORD IS ZERO
+ 618 000521  0375          AND (3
+ 619 000522  3030          DCA TEMP
+ 620 000523  1430          TAD I TEMP
+ 621 000524  1022          TAD TOTAL
+ 622 000525  3022          DCA TOTAL
+ 623 000526  7001          IAC             /STILL MISSING THE RIGHT COLUMN
+ 624 000527  1020          TAD ADDR        /GET WORD TO OUR RIGHT, WRAP AS NECESSARY
+ 625 000530  0374          AND (WRDCOL-1
+ 626 000531  1373          TAD (CACHE1     /DON'T CARE ABOUT ORDER OF BITS ANYWAYS!
+ 627 000532  3031          DCA TMPPTR
+ 628 000533  1431          TAD I TMPPTR
+ 629 000534  7710          SPA CLA
+ 630 000535  2022          ISZ TOTAL
+ 631 000536  1372          TAD (WRDCOL     /DO NEXT CACHED ROW
+ 632 000537  1031          TAD TMPPTR
+ 633 000540  3031          DCA TMPPTR
+ 634 000541  1431          TAD I TMPPTR
+ 635 000542  7710          SPA CLA
+ 636 000543  2022          ISZ TOTAL
+ 637 000544  1372          TAD (WRDCOL     /AND THE LAST CACHED ROW
+ 638 000545  1031          TAD TMPPTR
+ 639 000546  3031          DCA TMPPTR
+ 640 000547  1431          TAD I TMPPTR
+ 641 000550  7710          SPA CLA
+ 642 000551  2022          ISZ TOTAL
+ 643 000552  5771          JMP DOCALC      /ALL DONE FOR NOW
+ 644               
+ 645 000567  0600          PAGE
+     000570  7765  
+     000571  0634  
+     000572  0020  
+     000573  0040  
+     000574  0017  
+     000575  0003  
+     000576  0014  
+     000577  0712  
+ 646               
+ 647 000600  1424  NOTEDG, TAD I TOPPTR    /GET TOP WORD
+ 648 000601  7450          SNA
+ 649 000602  1425          TAD I MIDPTR    /GET MIDDLE WORD
+ 650 000603  7450          SNA
+ 651 000604  1426          TAD I BOTPTR    /GET BOTTOM WORD
+ 652 000605  7650          SNA CLA         /ANY LIFE?
+ 653 000606  5231          JMP NWRDLF      /NO, NO LIFE IN CURRENT WORD AREA
+ 654 000607  1424          TAD I TOPPTR    /GET TOP WORD
+ 655 000610  4120          JMS DOROT       /ROTATE AS NECESSARY
+ 656 000611  3030          DCA TEMP        /SAVE IT
+ 657 000612  1430          TAD I TEMP      /AND COUNT THE BITS
+ 658 000613  3022          DCA TOTAL       /SAVE THAT AS TOTAL SO FAR
+ 659 000614  1425          TAD I MIDPTR    /GET MIDDLE WORD
+ 660 000615  4120          JMS DOROT
+ 661 000616  3030          DCA TEMP
+ 662 000617  1430          TAD I TEMP
+ 663 000620  1022          TAD TOTAL       /ADD TO TOTAL
+ 664 000621  3022          DCA TOTAL
+ 665 000622  1426          TAD I BOTPTR    /GET BOTTOM WORD
+ 666 000623  4120          JMS DOROT
+ 667 000624  3030          DCA TEMP
+ 668 000625  1430          TAD I TEMP
+ 669 000626  1022          TAD TOTAL       /ADD TO TOTAL
+ 670 000627  3022          DCA TOTAL
+ 671 000630  5234          JMP DOCALC
+ 672               
+ 673 000631  7040  NWRDLF, CMA             /SKIP TO LAST BIT OF WORD
+ 674 000632  3021          DCA CURBIT
+ 675               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 676                       TAD (-12        /SKIPPING 10 DEAD PIXELS
+ 677                       DCA CNT
+ 678               IFNZRO PRTDOT < /{
+ 679                       TAD (56
+ 680               > /}
+ 681               IFZERO PRTDOT < /{
+ 682                       TAD (40
+ 683               > /}
+ 684                       TSF
+ 685                       JMP .-1
+ 686                       TLS
+ 687                       ISZ CNT
+ 688                       JMP .-4
+ 689                       CLA
+ 690               > /}
+ 691 000633  5777          JMP DOLIFE
+ 692               
+ 693 000634  1022  DOCALC, TAD TOTAL
+ 694 000635  1376          TAD (-3
+ 695 000636  7450          SNA
+ 696 000637  5257          JMP BIRTH       /EXACTLY 3
+ 697 000640  1375          TAD (-1
+ 698 000641  7650          SNA CLA
+ 699 000642  5244          JMP SAME        /EXACTLY 4
+ 700 000643  5250          JMP DEATH       /OTHERWISE... :(
+ 701               
+ 702 000644  1421  SAME,   TAD I CURBIT    /GET MASK
+ 703 000645  0425          AND I MIDPTR    /AND WITH CURRENT WORD
+ 704 000646  7640          SZA CLA         /IS IT ALIVE OR DEAD?
+ 705 000647  5257          JMP BIRTH
+ 706               
+ 707               DEATH,
+ 708               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 709                       JMS PRTDTH      /PRINT DEATH (AWW...)
+ 710               > /}
+ 711 000650  1421          TAD I CURBIT    /CLEAR THE BIT IN THE BITMAP
+ 712 000651  7040          CMA
+ 713 000652  6211          CDF DFIELD
+ 714 000653  0420          AND I ADDR
+ 715 000654  3420          DCA I ADDR
+ 716 000655  6201          CDF 0
+ 717 000656  5270          JMP BITLP
+ 718               
+ 719               BIRTH,
+ 720               IFNZRO STATS < /{
+ 721                       JMS INCLIF      /INCREMENT LIFE COUNTER
+ 722               > /}
+ 723               IFNZRO SCOPE&NOSTOR&FASTR < /{
+ 724                       JMS STORPT
+ 725               > /}
+ 726               IFNZRO SCOPE&STORE < /{
+ 727                       JMS DISPT       /STORAGE SCOPE, DISPLAY A POINT
+ 728               > /}
+ 729               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 730                       JMS PRTLIF      /PRINT LIFE (YAY)
+ 731               > /}
+ 732 000657  1421          TAD I CURBIT    /GET MASK
+ 733 000660  7040          CMA
+ 734 000661  6211          CDF DFIELD
+ 735 000662  0420          AND I ADDR      /COMPLEMENT MASK AND 'AND' IT WITH CURRENT WORD
+ 736 000663  6201          CDF 0
+ 737 000664  1421          TAD I CURBIT    /ADD IN LIVE CELL
+ 738 000665  6211          CDF DFIELD
+ 739 000666  3420          DCA I ADDR      /SAVE IT
+ 740 000667  6201          CDF 0
+ 741               
+ 742 000670  2021  BITLP,  ISZ CURBIT      /NEXT BIT
+ 743 000671  5777          JMP DOLIFE      /NOTHING ELSE TO DO HERE!
+ 744 000672  7200          CLA             /NEED TO GO TO NEXT WORD AND RESET CURRENT BIT TO -14
+ 745 000673  1374          TAD (-14
+ 746 000674  3021          DCA CURBIT
+ 747 000675  2020          ISZ ADDR        /FINAL BITMAP ADDRESS?
+ 748 000676  5300          JMP CHKROW      /NO
+ 749 000677  5316          JMP FINAL       /YES
+ 750               
+ 751 000700  1020  CHKROW, TAD ADDR        /END OF ROW?
+ 752 000701  0373          AND (WRDCOL-1
+ 753 000702  7640          SZA CLA
+ 754 000703  5306          JMP NOTDUN      /NO
+ 755               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 756                       JMS DOCRLF      /YES
+ 757               > /}
+ 758 000704  4772          JMS UCACHE      /UPDATE CACHE
+ 759 000705  5771          JMP CHKLIF
+ 760               
+ 761 000706  2024  NOTDUN, ISZ TOPPTR      /NEXT WORDS
+ 762 000707  2025          ISZ MIDPTR
+ 763 000710  2026          ISZ BOTPTR
+ 764 000711  5777          JMP DOLIFE
+ 765               
+ 766               NOLIFE,
+ 767               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 768                       JMS DTHROW      /PRINT A ROW OF DEATH...
+ 769               > /}
+ 770 000712  1020          TAD ADDR        /END OF BITMAP?
+ 771 000713  1370          TAD (WRDCOL
+ 772 000714  7440          SZA
+ 773 000715  5322          JMP NOTFIN      /NO
+ 774               FINAL,
+ 775 000716  6031          KSF             /ANY CHARACTER?
+ 776 000717  7410          SKP             /NOPE
+ 777 000720  4767          JMS CHKCTL      /YES, CHECK FOR A CONTROL CHARACTER
+ 778               IFNZRO STATS < /{
+ 779                       JMS INCGEN      /YES, INCREMENT CYCLE COUNT
+ 780               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 781                       JMS DOCRLF      /GO TO NEXT LINE IF NEEDED
+ 782               > /}
+ 783                       JMS PRNTST      /PRINT STATISTICS
+ 784                       JMS RSTLIF      /AND RESET LIFE COUNTER
+ 785               > /}
+ 786               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 787                       JMS PRTHOM      /GO BACK HOME
+ 788               > /}
+ 789               IFNZRO SCOPE < /{
+ 790 000721  4766          JMS RASERA      /EITHER DISPLAY A RASTER OR ERASE THE SCREEN
+ 791               > /}
+ 792 000722  3020  NOTFIN, DCA ADDR
+ 793 000723  4772          JMS UCACHE      /UPDATE CACHE
+ 794 000724  5771          JMP CHKLIF      /AND TRY AGAIN
+ 795               
+ 796 000766  1263          PAGE
+     000767  6600  
+     000770  0020  
+     000771  0400  
+     000772  1000  
+     000773  0017  
+     000774  7764  
+     000775  7777  
+     000776  7775  
+     000777  0403  
+ 797               
+ 798               /UPDATE CACHE
+ 799 001000  0000  UCACHE, 0
+ 800 001001  7200          CLA             /MID TO TOP, BOT TO MID, TOP TO BOT
+ 801 001002  1024          TAD TOPPTR
+ 802 001003  0377          AND (-WRDCOL
+ 803 001004  3030          DCA TEMP
+ 804 001005  1025          TAD MIDPTR
+ 805 001006  0377          AND (-WRDCOL
+ 806 001007  3024          DCA TOPPTR
+ 807 001010  1026          TAD BOTPTR
+ 808 001011  0377          AND (-WRDCOL
+ 809 001012  3025          DCA MIDPTR
+ 810 001013  1030          TAD TEMP
+ 811 001014  3026          DCA BOTPTR
+ 812 001015  3030          DCA TEMP
+ 813 001016  1023          TAD LIFDET      /UPDATE THE LIFE DETECTION
+ 814 001017  7104          CLL RAL
+ 815 001020  0376          AND (6
+ 816 001021  3023          DCA LIFDET
+ 817               
+ 818                       /NOW, ONLY REFRESH BOTTOM CACHED ROW
+ 819 001022  7040          CMA
+ 820 001023  1020          TAD ADDR        /ADDR IS POINTING TO THE NEXT ROW IN THE BITMAP
+ 821 001024  1375          TAD (WRDCOL     /WE NEED THE NEXT ROW DOWN
+ 822 001025  3011          DCA CPTR1
+ 823 001026  7040          CMA
+ 824 001027  1026          TAD BOTPTR
+ 825 001030  3012          DCA CPTR2
+ 826 001031  1377          TAD (-WRDCOL    /COPYING ONE ROW
+ 827 001032  3027          DCA CNT
+ 828 001033  6211          CDF DFIELD
+ 829 001034  1411          TAD I CPTR1
+ 830 001035  6201          CDF 0
+ 831 001036  7440          SZA             /ANY LIFE DETECTED?
+ 832 001037  2030          ISZ TEMP        /YES
+ 833 001040  3412          DCA I CPTR2
+ 834 001041  2027          ISZ CNT
+ 835 001042  5233          JMP .-7
+ 836               
+ 837 001043  1030          TAD TEMP        /ANY LIFE?
+ 838 001044  7640          SZA CLA
+ 839 001045  2023          ISZ LIFDET      /YES
+ 840               
+ 841 001046  5600          JMP I UCACHE
+ 842               
+ 843               IFZERO SCOPE+NOPRT+RLYNPR < /{
+ 844               /VT100 HOME SEQUENCE, ESC[H
+ 845               PRTHOM, 0
+ 846                       CLA
+ 847                       TAD (HOMSEQ-1
+ 848                       JMS PUTS
+ 849                       JMP I PRTHOM
+ 850               IFNZRO VT100 < /{
+ 851               HOMSEQ, 33
+ 852                       133
+ 853                       110
+ 854               > /}
+ 855               IFZERO VT100 < /{
+ 856               HOMSEQ, 14
+ 857               > /}
+ 858                       0
+ 859               
+ 860               IFNZRO VT100 < /{
+ 861               /VT100 ERASE LINE, ESC[2K, PLUS CRLF
+ 862               ERALIN, 0
+ 863                       CLA
+ 864                       TAD (ERASEQ-1
+ 865                       JMS PUTS
+ 866                       JMP I ERALIN
+ 867               ERASEQ, 33
+ 868                       133
+ 869                       62
+ 870                       113
+ 871                       15
+ 872                       12
+ 873                       0
+ 874               > /}
+ 875               
+ 876               /PRINT NULL-TERMINATED STRING
+ 877               PUTS,   0
+ 878                       DCA PRIDX
+ 879                       TAD I PRIDX
+ 880                       SNA
+ 881                       JMP I PUTS
+ 882                       TSF
+ 883                       JMP .-1
+ 884                       TLS
+ 885                       CLA
+ 886                       JMP .-7
+ 887               
+ 888               /PRINT DEATH
+ 889               PRTDTH, 0
+ 890                       CLA
+ 891               IFNZRO PRTDOT < /{
+ 892                       TAD (56
+ 893               > /}
+ 894               IFZERO PRTDOT < /{
+ 895                       TAD (40
+ 896               > /}
+ 897                       TSF
+ 898                       JMP .-1
+ 899                       TLS
+ 900                       CLA
+ 901                       JMP I PRTDTH
+ 902               
+ 903               /PRINT A ROW OF DEATH
+ 904               DTHROW, 0
+ 905               IFZERO SLODTH < /{
+ 906                       JMS ERALIN
+ 907               > /}
+ 908               /PRTDOT=1 OR VT100=0
+ 909               IFNZRO SLODTH < /{
+ 910                       CLA
+ 911                       TAD (-WRDCOL^14 /12 PIXELS PER WORD
+ 912                       DCA CNT
+ 913               IFNZRO PRTDOT < /{
+ 914                       TAD (56
+ 915               > /}
+ 916               IFZERO PRTDOT < /{
+ 917                       TAD (40
+ 918               > /}
+ 919                       TSF
+ 920                       JMP .-1
+ 921                       TLS
+ 922                       ISZ CNT
+ 923                       JMP .-4
+ 924                       JMS DOCRLF
+ 925               > /}
+ 926                       JMP I DTHROW
+ 927               
+ 928               /PRINT A # FOR LIFE
+ 929               PRTLIF, 0
+ 930                       CLA
+ 931                       TAD (43
+ 932                       TSF
+ 933                       JMP .-1
+ 934                       TLS
+ 935                       CLA
+ 936                       JMP I PRTLIF
+ 937               > /}
+ 938               
+ 939               IFNZRO SCOPE < /{
+ 940               IFNZRO NOSTOR&FASTR < /{
+ 941               RSTDF,  0
+ 942                       CLA
+ 943                       TAD CDFCDF
+ 944                       DCA FSTDF1
+ 945                       TAD CDFCDF
+ 946                       DCA FSTDF2
+ 947                       TAD CDFCDF
+ 948                       DCA FSTDF4
+ 949                       JMP I RSTDF
+ 950               CDFCDF, CDF 10
+ 951               
+ 952               INCDF,  0
+ 953                       CLA
+ 954                       TAD FSTDF1
+ 955                       TAD (10         /NEXT FIELD
+ 956                       DCA FSTDF1
+ 957                       TAD FSTDF1
+ 958                       DCA FSTDF2
+ 959                       TAD FSTDF1
+ 960                       DCA FSTDF4
+ 961                       JMP I INCDF
+ 962               
+ 963               STORPT, 0
+ 964                       CLA
+ 965                       TAD FSTPTR
+ 966                       CMA
+ 967                       SNA
+ 968                       JMS INCDF       /AT THE LAST POINTER IN THE FIELD; INCREMENT DF
+ 969                       CLA CLL
+ 970                       TAD ADDR        /X = (12 * (ADDR & (WRDCOL-1))) + CURBIT + 12 + STARTX
+ 971                       AND (WRDCOL-1
+ 972                       DCA X
+ 973                       TAD X
+ 974                       TAD X
+ 975                       TAD X
+ 976                       RTL
+ 977                       TAD CURBIT
+ 978                       TAD (12
+ 979                       CLL RTL
+ 980                       DCA X
+ 981               
+ 982                       TAD ADDR        /Y = (((ADDR SHR 4) & 0377) + STARTY)
+ 983                       RTR
+ 984                       RTR
+ 985                       AND (377
+ 986                       CLL RTL
+ 987                       DCA Y
+ 988               
+ 989                       TAD Y
+ 990                       CMA IAC
+ 991                       TAD PREVY
+ 992                       SNA CLA
+ 993                       JMP NOSTRY      /DON'T STORE Y
+ 994               
+ 995                       CLA IAC RAL
+ 996                       TAD FSTPTR      /NEED TO STORE TWO VALUES; ARE WE AT 7776?
+ 997                       SNA CLA
+ 998                       JMS INCDF       /YES
+ 999               
+1000                       TAD Y           /SAVE THE NEW Y FOR NEXT TIME
+1001                       DCA PREVY
+1002                       CLA CML RAR     /SET SIGN BIT
+1003                       TAD Y
+1004               FSTDF1, HLT             /ACTUALLY A CDF
+1005                       DCA I FSTPTR    /SAVE THE Y WITH TAG BIT
+1006                       CDF 0
+1007               NOSTRY, TAD X
+1008               FSTDF2, HLT             /ACTUALLY A CDF
+1009                       DCA I FSTPTR    /SAVE THE X WITH NO TAG BIT
+1010                       CDF 0
+1011                       JMP I STORPT
+1012               PREVY,  0
+1013               > /}
+1014               IFNZRO STORE < /{
+1015               DISPT,  0
+1016                       CLA CLL
+1017                       TAD ADDR        /X = (12 * (ADDR & (WRDCOL-1))) + CURBIT + 12 + STARTX
+1018                       AND (WRDCOL-1
+1019                       DCA X
+1020                       TAD X
+1021                       TAD X
+1022                       TAD X
+1023                       RTL
+1024                       TAD CURBIT
+1025                       TAD (12
+1026                       CLL RTL
+1027                       TAD STARTX
+1028                       DILX
+1029                       DCA X
+1030               
+1031                       TAD ADDR        /Y = (((ADDR SHR 4) & 0377) + STARTY)
+1032                       RTR
+1033                       RTR
+1034                       AND (377
+1035                       CLL RTL
+1036                       CMA IAC
+1037                       TAD STARTY
+1038                       DILY
+1039                       DCA Y
+1040               
+1041                       DISD
+1042                       JMP .-1
+1043                       DIXY            /X,Y
+1044                       JMP I DISPT
+1045               > /}
+1046               
+1047 001175  0020          PAGE
+     001176  0006  
+     001177  7760  
+1048               
+1049               IFZERO FASTR+STORE < /{
+1050               /DO A RASTER SCAN OF THE BITMAP AND DISPLAY IT
+1051               /IF THE PREVIOUS WORD HAD ACTIVITY AND WE HAVE NOT YET FINISHED A LINE, THE
+1052               /Y DAC IS ALREADY SET UP FOR US. NO NEED TO RECALCULATE IT. THE X DAC IS
+1053               /ACTUALLY SET UP AS WELL, SO THAT'S HANDY.
+1054 001200  0000  RASTER, 0
+1055 001201  7200          CLA
+1056 001202  3020          DCA ADDR
+1057 001203  1377          TAD (-14
+1058 001204  3021          DCA CURBIT
+1059               IFNZRO RSTRSC < /{
+1060                       TAD STARTX
+1061                       DILX
+1062                       CLA
+1063                       TAD STARTY
+1064                       DILY
+1065                       CLA CMA
+1066                       DCA SHRTCT      /SET UP FOR TAKING SHORTCUT
+1067               > /}
+1068               
+1069 001205  6211  RASLP,  CDF DFIELD
+1070 001206  1420          TAD I ADDR
+1071 001207  6201          CDF 0
+1072 001210  7440          SZA
+1073 001211  5215          JMP DODRAW
+1074               IFNZRO RSTRSC < /{
+1075                       DCA SHRTCT      /CAN'T DO SHORTCUT
+1076               > /}
+1077 001212  2020  RSCONT, ISZ ADDR
+1078 001213  5205          JMP RASLP
+1079 001214  5600          JMP I RASTER    /YES, ALL DONE
+1080               
+1081 001215  3262  DODRAW, DCA DRWWRD      /STORE WORD TO PLOT
+1082               IFNZRO RSTRSC < /{
+1083                       ISZ SHRTCT      /CAN WE DO THE SHORTCUT?
+1084                       JMP CALCXY      /NO, WE CAN'T
+1085               SKPCAL, TAD ADDR        /MAYBE...ARE WE AT A NEW LINE?
+1086                       AND (WRDCOL-1
+1087                       SZA CLA
+1088                       JMP SCTCON      /NO, DON'T CALCULATE Y IF WE DON'T HAVE TO
+1089                       TAD STARTX      /YES, BEGINNING OF LINE
+1090                       DILX            /RESET X
+1091                       DCA X
+1092                       JMP CALCY       /AND JUST CALCULATE Y
+1093               > /}
+1094               
+1095 001216  1020  CALCXY, TAD ADDR        /X = (SCALE * 12 * (ADDR & (WRDCOL-1))) + STARTX
+1096 001217  0376          AND (WRDCOL-1
+1097 001220  3014          DCA X
+1098 001221  1014          TAD X           /MULTIPLY BY 3
+1099 001222  1014          TAD X
+1100 001223  1014          TAD X
+1101 001224  7106          CLL RTL         /MULTIPLY BY 4, SUCH THAT 3 * 4 EQUALS 12
+1102               IFZERO PDP12 < /{
+1103                       CLL RTL         /MULTIPLY BY SCALE = 4
+1104               > /}
+1105               IFNZRO PDP12 < /{
+1106 001225  7104          CLL RAL         /MULTIPLY BY SCALE = 2
+1107               > /}
+1108 001226  1032          TAD STARTX
+1109               IFZERO PDP12 < /{
+1110                       DILX
+1111               > /}
+1112 001227  3014          DCA X
+1113               
+1114 001230  1020  CALCY,  TAD ADDR        /Y = STARTY - (SCALE * ((ADDR SHR 4) & 0377))
+1115               IFZERO PDP12 < /{
+1116                       RTR             /SHIFT RIGHT 4, MULTIPLY BY SCALE (4) MEANS SHIFT RIGHT 2
+1117                       AND (1774
+1118               > /}
+1119               IFNZRO PDP12 < /{
+1120 001231  7012          RTR             /SHIFT RIGHT 4, MULTIPLY BY SCALE (2) MEANS SHIFT RIGHT 3
+1121 001232  7010          RAR
+1122 001233  0375          AND (776
+1123               > /}
+1124 001234  7041          CMA IAC
+1125 001235  1033          TAD STARTY
+1126               IFZERO PDP12 < /{
+1127                       DILY
+1128               > /}
+1129 001236  3015          DCA Y
+1130               
+1131               IFNZRO RSTRSC < /{
+1132               SCTCON, CMA             /WE CAN TAKE A SHORTCUT NEXT TIME, MAYBE...
+1133                       DCA SHRTCT
+1134               > /}
+1135               
+1136               IFNZRO RSTRSC < /{
+1137               WRDLP,  TAD DRWWRD
+1138                       AND I CURBIT
+1139                       SNA CLA         /ARE WE PLOTTING A BIT OR NOT?
+1140                       JMP NEXTX       /NOPE, SKIP AHEAD
+1141                       DIXY
+1142               
+1143               NEXTX,  TAD X           /INCREMENT X BY 4 BECAUSE OF OUR SCALE FOR VC8E, 2 FOR PDP-12
+1144                       TAD (SCALE
+1145                       DILX
+1146                       DCA X
+1147                       ISZ CURBIT
+1148                       JMP WRDLP
+1149                       TAD (-14
+1150                       DCA CURBIT
+1151                       JMP RSCONT
+1152               
+1153               SHRTCT, 0
+1154               > /}
+1155               
+1156               IFZERO RSTRSC < /{
+1157 001237  1262  WRDLP,  TAD DRWWRD
+1158 001240  0421          AND I CURBIT
+1159 001241  7650          SNA CLA         /ARE WE PLOTTING A BIT OR NOT?
+1160 001242  5250          JMP NXTBIT      /NOPE, SKIP AHEAD
+1161               IFZERO PDP12 < /{
+1162                       DISD            /YES, WAIT FOR DACS TO SETTLE
+1163                       JMP .-1
+1164                       DIXY
+1165               > /}
+1166               IFNZRO PDP12 < /{
+1167 001243  1015          TAD Y           /GET Y COORDINATE
+1168 001244  6141          LINC
+1169 001245  0154          DIS X           /DISPLAY X,Y POINT
+1170 001246  0002          PDP
+1171 001247  7200          CLA
+1172               > /}
+1173               
+1174 001250  2021  NXTBIT, ISZ CURBIT
+1175 001251  5255          JMP NEXTX
+1176 001252  1377          TAD (-14
+1177 001253  3021          DCA CURBIT
+1178 001254  5212          JMP RSCONT
+1179               
+1180 001255  1014  NEXTX,  TAD X           /INCREMENT X BY SCALE VALUE
+1181 001256  1374          TAD (SCALE
+1182               IFZERO PDP12 < /{
+1183                       DILX
+1184               > /}
+1185 001257  3014          DCA X
+1186 001260  5237          JMP WRDLP
+1187               
+1188 001261  0000  SHRTCT, 0
+1189               > /}
+1190               
+1191 001262  0000  DRWWRD, 0
+1192               > /}
+1193               
+1194               IFZERO SLOWR+STORE < /{
+1195               RSTDF2, 0
+1196                       CLA
+1197                       TAD CDFCDF
+1198                       DCA FSTDF3
+1199                       JMP I RSTDF2
+1200               
+1201               INCDF2, 0
+1202                       CLA
+1203                       TAD FSTDF3
+1204                       TAD (10
+1205                       DCA FSTDF3
+1206                       JMP I INCDF2
+1207               
+1208               /FAST RASTER IMPLEMENTATION
+1209               /USES TAGGED Y VALUES AND NON-TAGGED X VALUES IN A WHOLE SEPARATE ARRAY
+1210               RASTER, 0
+1211                       JMS RSTDF2      /RESET CDF INSTRUCTIONS
+1212                       CLA CMA
+1213                       DCA FSTPTR      /INITIALIZE POINTER
+1214                       TAD STARTY      /INITIALIZE Y DAC
+1215               IFZERO PDP12 < /{
+1216                       DILY
+1217               > /}
+1218               IFNZRO PDP12 < /{
+1219                       DCA Y
+1220               > /}
+1221               RSTLP,  CLA
+1222                       TAD FSTPTR
+1223                       CMA
+1224                       SNA CLA
+1225                       JMS INCDF2      /AT THE LAST POINTER IN THE FIELD; INCREMENT DF
+1226               FSTDF3, HLT             /ACTUALLY A CDF
+1227                       TAD I FSTPTR    /GET DATA
+1228                       CDF 0
+1229               
+1230                       SPA             /WAS SIGN SET?
+1231                       JMP SETY        /YES, IT'S A Y VALUE OR THE END
+1232               
+1233                       TAD STARTX      /NO, ADD THE START X POSITION
+1234               IFZERO PDP12 < /{
+1235                       DILX
+1236                       DISD
+1237                       JMP .-1
+1238                       DIXY            /AND DISPLAY THE POINT
+1239               > /}
+1240               IFNZRO PDP12 < /{
+1241                       DCA X           /DISPLAY THE POINT
+1242                       TAD Y
+1243                       LINC
+1244                       DIS X
+1245                       PDP
+1246                       CLA
+1247               > /}
+1248                       JMP RSTLP
+1249               
+1250               SETY,   CLL CMA RAL
+1251                       SNA             /WAS IT END OF LIST?
+1252                       JMP I RASTER    /YES, WE'RE DONE
+1253                       CLL CML RAR     /CLEAR TAG BIT
+1254                       IAC             /FINISH TWO'S COMPLEMENT
+1255                       TAD STARTY      /APPLY THE OFFSET
+1256               IFZERO PDP12 < /{
+1257                       DILY            /UPDATE Y DAC
+1258               > /}
+1259               IFNZRO PDP12 < /{
+1260                       DCA Y
+1261               > /}
+1262                       JMP RSTLP
+1263               > /}
+1264               
+1265               /DEPENDING ON IF WE HAVE A STORAGE 'SCOPE OR NOT, EITHER
+1266               /RASTER THE BITMAP HERE FOR SEVERAL LOOPS, OR ERASE THE
+1267               /SCREEN. YOU COULD ADD A DELAY BEFORE THE ERASE TO ADMIRE
+1268               /THE COMPLETED CYCLE LONGER.
+1269 001263  0000  RASERA, 0
+1270               IFNZRO STORE < /{
+1271                       CLA
+1272                       TAD (30         /ERASE VC8E
+1273                       DILE
+1274                       DISD            /WAIT FOR ERASE TO COMPLETE
+1275                       JMP .-1
+1276                       CLA
+1277               > /}
+1278               IFZERO STORE < /{
+1279               IFNZRO FASTR < /{
+1280                       CLA
+1281                       TAD FSTPTR
+1282                       CMA
+1283                       SNA
+1284                       JMS INCDF       /AT THE LAST POINTER IN THE FIELD; INCREMENT DF
+1285                       CLA CMA
+1286               FSTDF4, HLT             /ACTUALLY A CDF
+1287                       DCA I FSTPTR    /MARK THE FINISH
+1288                       CDF 0
+1289                       TAD (-20        /16 LOOPS
+1290                       DCA CNT
+1291                       JMS RASTER      /DO THE RASTER
+1292                       ISZ CNT
+1293                       JMP .-2
+1294                       JMS RSTDF       /RESET CDF INSTRUCTIONS
+1295                       CLA CMA         /INITIALIZE POINTER FOR WRITING
+1296                       DCA FSTPTR
+1297                       CLA CMA         /INITIALIZE PREVIOUS Y VALUE FOR FAST RASTER
+1298                       DCA PREVY
+1299               > /}
+1300               IFZERO FASTR < /{
+1301 001264  7200          CLA
+1302 001265  1373          TAD (-20        /16 LOOPS
+1303 001266  3027          DCA CNT
+1304 001267  4200          JMS RASTER      /DO THE RASTER
+1305 001270  2027          ISZ CNT
+1306 001271  5267          JMP .-2
+1307               > /}
+1308               > /}
+1309 001272  5663          JMP I RASERA
+1310               > /}
+1311               
+1312 001373  7760          PAGE
+     001374  0002  
+     001375  0776  
+     001376  0017  
+     001377  7764  
+1313               
+1314               /RUN-LENGTH ENCODING INITIALIZER
+1315               
+1316               /TAKES MULTIPLES OF THREE ARGUMENTS
+1317               /1. POINTER TO RLE DATA
+1318               /2. X ADDRESS IN BITMAP, 0 TO 191 DECIMAL
+1319               /3. Y ADDRESS IN BITMAP, 0 TO 255 DECIMAL
+1320               /AND REPEAT
+1321               
+1322               /RLE IS SUPPLIED AS:
+1323               /TAG!COUNT; TAG!COUNT; TAG!COUNT; ...ETC.
+1324               
+1325               /WHERE COUNT IS 1 TO 192, AND TAG IS:
+1326               /6000 OCTAL - DEAD
+1327               /4000 OCTAL - ALIVE
+1328               /1000 OCTAL - END OF LINE
+1329               /0 TERMINATES THE SEQUENCE
+1330               /IF COUNT IS ZERO, IT IS ASSUMED TO BE 1
+1331               
+1332               /KEEPS GOING UNTIL THE POINTER TO RLE DATA IS ZERO
+1333 001400  0000  RLE,    0
+1334 001401  7240  NXTRLE, CLA CMA
+1335 001402  1600          TAD I RLE       /GET POINTER TO RLE
+1336 001403  3013          DCA RLEPTR
+1337 001404  1013          TAD RLEPTR      /WAS IT ZERO?
+1338 001405  7040          CMA
+1339 001406  7650          SNA CLA
+1340 001407  5325          JMP RLEDUN
+1341 001410  2200          ISZ RLE
+1342 001411  1600          TAD I RLE       /GET X VALUE
+1343 001412  3332          DCA SBIT
+1344 001413  3331          DCA SADDR
+1345 001414  1332          TAD SBIT
+1346 001415  1377          TAD (-14        /DIVIDE BY 12
+1347 001416  7510          SPA
+1348 001417  5222          JMP DIVDUN      /NO MORE TO DIVIDE
+1349 001420  2331          ISZ SADDR
+1350 001421  5215          JMP .-4
+1351 001422  3332  DIVDUN, DCA SBIT
+1352 001423  1332          TAD SBIT
+1353 001424  3021          DCA CURBIT
+1354 001425  2200          ISZ RLE
+1355 001426  1600          TAD I RLE       /GET Y VALUE
+1356 001427  7106          CLL RTL         /MULTIPLY BY 16
+1357 001430  7006          RTL
+1358 001431  1331          TAD SADDR       /ADD TO X OFFSET
+1359 001432  3331          DCA SADDR
+1360 001433  1331          TAD SADDR
+1361 001434  3020          DCA ADDR
+1362 001435  2200          ISZ RLE         /POINT TO RETURN
+1363               
+1364 001436  3327  RMAIN,  DCA CURSTA      /RESET CURRENT STATE
+1365 001437  1413          TAD I RLEPTR    /GET DATA
+1366 001440  7450          SNA             /END OF SEQUENCE?
+1367 001441  5201          JMP NXTRLE      /GET NEXT RLE
+1368 001442  7104          CLL RAL
+1369 001443  7420          SNL             /NOPE, WHAT WAS IT?
+1370 001444  2327          ISZ CURSTA
+1371 001445  7500          SMA
+1372 001446  2327          ISZ CURSTA      /CURSTA = 0 FOR DEAD, 1 FOR LIFE, 2 FOR EOL
+1373 001447  7010          RAR             /GO BACK THE OTHER WAY
+1374 001450  0376          AND (377        /KEEP JUST THE COUNT
+1375 001451  7041          CMA IAC         /NEGATE IT
+1376 001452  7450          SNA             /IF IT IS ZERO
+1377 001453  7040          CMA             /MAKE IT ONE
+1378 001454  3333          DCA RLECNT      /STORE IT
+1379               
+1380 001455  1327  RLOOP,  TAD CURSTA      /LIFE OR DEATH OR EOL?
+1381 001456  7450          SNA
+1382 001457  5275          JMP RCONT       /0 FOR DEATH
+1383 001460  7010          RAR
+1384 001461  7630          SZL CLA
+1385 001462  5264          JMP RLIVE       /1 FOR LIFE
+1386 001463  5315          JMP NEXTLN      /2 FOR NEXT LINE
+1387               
+1388               RLIVE,
+1389               IFNZRO STATS < /{
+1390                       JMS INCLIF      /INCREMENT LIFE COUNTER
+1391               > /}
+1392 001464  1421          TAD I CURBIT    /GET MASK
+1393 001465  7040          CMA
+1394 001466  6211          CDF DFIELD
+1395 001467  0420          AND I ADDR      /COMPLEMENT MASK AND 'AND' IT WITH CURRENT WORD
+1396 001470  6201          CDF 0
+1397 001471  1421          TAD I CURBIT    /ADD IN LIVE CELL
+1398 001472  6211          CDF DFIELD
+1399 001473  3420          DCA I ADDR      /SAVE IT
+1400 001474  6201          CDF 0
+1401               
+1402 001475  2021  RCONT,  ISZ CURBIT      /NEXT BIT
+1403 001476  5312          JMP RCHECK
+1404 001477  7200          CLA             /NEED TO GO TO NEXT WORD AND RESET CURRENT BIT TO -14
+1405 001500  1377          TAD (-14
+1406 001501  3021          DCA CURBIT
+1407 001502  1020          TAD ADDR
+1408 001503  7001          IAC
+1409 001504  0375          AND (WRDCOL-1
+1410 001505  3030          DCA TEMP
+1411 001506  1020          TAD ADDR
+1412 001507  0374          AND (-WRDCOL
+1413 001510  1030          TAD TEMP
+1414 001511  3020          DCA ADDR
+1415 001512  2333  RCHECK, ISZ RLECNT      /ANY MORE TO DO?
+1416 001513  5255          JMP RLOOP       /YES
+1417 001514  5236          JMP RMAIN       /NOPE, GET MORE DATA
+1418               
+1419 001515  1332  NEXTLN, TAD SBIT
+1420 001516  3021          DCA CURBIT
+1421 001517  1331          TAD SADDR
+1422 001520  1373          TAD (WRDCOL
+1423 001521  3331          DCA SADDR
+1424 001522  1331          TAD SADDR
+1425 001523  3020          DCA ADDR
+1426 001524  5312          JMP RCHECK
+1427               
+1428 001525  2200  RLEDUN, ISZ RLE
+1429 001526  5600          JMP I RLE
+1430               
+1431 001527  0000  CURSTA, 0
+1432 001530  0000  CURDAT, 0
+1433 001531  0000  SADDR,  0
+1434 001532  0000  SBIT,   0
+1435 001533  0000  RLECNT, 0
+1436               
+1437 001573  0020          PAGE
+     001574  7760  
+     001575  0017  
+     001576  0377  
+     001577  7764  
+1438               
+1439               IFNZRO STATS < /{
+1440               /DOUBLE DABBLE IMPLEMENTATION FOR 24-BIT UNSIGNED INPUT
+1441               /BINARY TO BCD CONVERSION
+1442               
+1443               /TAKES POINTER TO DOUBLE WORD IN AC
+1444               /RETURNS ASCII STRING POINTER IN AC OF CONVERSION
+1445               DUBDAB, 0
+1446                       DCA DUBPTR      /STORE POINTER
+1447                       TAD I DUBPTR    /GET DOUBLE LSW
+1448                       DCA SCRATC      /STORE IT IN SCRATCH
+1449                       ISZ DUBPTR
+1450                       TAD I DUBPTR    /GET DOUBLE MSW
+1451                       DCA SCRATC+1    /STORE IT NEXT
+1452                       DCA SCRATC+2    /CLEAR REST OF SCRATCH
+1453                       DCA SCRATC+3
+1454                       DCA SCRATC+4
+1455                       TAD (-30        /LOOP 24 TIMES
+1456                       DCA CNT
+1457               
+1458               DABLP,  TAD SCRATC+2    /CHECK FOR NECESSARY ADDITIONS
+1459                       JMS DABADD
+1460                       DCA SCRATC+2
+1461                       TAD SCRATC+3
+1462                       JMS DABADD
+1463                       DCA SCRATC+3
+1464                       TAD SCRATC+4
+1465                       JMS DABADD
+1466                       DCA SCRATC+4
+1467               
+1468                       TAD SCRATC      /ROTATE EVERYTHING LEFT
+1469                       RAL
+1470                       DCA SCRATC
+1471                       TAD SCRATC+1
+1472                       RAL
+1473                       DCA SCRATC+1
+1474                       TAD SCRATC+2
+1475                       RAL
+1476                       DCA SCRATC+2
+1477                       TAD SCRATC+3
+1478                       RAL
+1479                       DCA SCRATC+3
+1480                       TAD SCRATC+4
+1481                       RAL
+1482                       DCA SCRATC+4
+1483               
+1484                       ISZ CNT         /KEEP GOING?
+1485                       JMP DABLP       /YES
+1486               
+1487                       /TIME TO DISH UP SOME ASCII
+1488               
+1489                       TAD (ASCOUT     /PUT OUTPUT POINTER
+1490                       DCA DUBPTR      /IN OUR POINTER
+1491               
+1492                       TAD SCRATC+4    /ADD DIGITS TO OUTPUT
+1493                       JMS DABASC
+1494                       TAD SCRATC+3
+1495                       JMS DABASC
+1496                       TAD SCRATC+2
+1497                       JMS DABASC
+1498                       DCA I DUBPTR    /NULL TERMINATOR
+1499               
+1500                       TAD (ASCOUT     /DO ZERO SUPPRESSION
+1501                       DCA DUBPTR
+1502               
+1503                       TAD I DUBPTR    /IS IT ASCII ZERO?
+1504                       TAD (-60
+1505                       SZA
+1506                       JMP DABDUN      /NOT ASCII ZERO
+1507                       ISZ DUBPTR      /YES, TRY AGAIN
+1508                       JMP .-5
+1509               DABDUN, TAD (60         /WAS IT OUR TERMINATION?
+1510                       SNA CLA
+1511                       CMA             /YES, SUBTRACT ONE FROM POINTER
+1512                       TAD DUBPTR      /RETURN POINTER
+1513                       JMP I DUBDAB
+1514               
+1515               /DECOMPOSES EACH NIBBLE OF WORD INTO THREE ASCII BYTES
+1516               /IF LINK IS SET AND ASCII POINTER HASN'T CHANGED, PUT A ZERO
+1517               /OTHERWISE, DO LEADING ZERO SUPPRESSION
+1518               DABASC, 0
+1519                       DCA TEMP        /STORE THE DIGITS
+1520               
+1521                       TAD TEMP        /GET TOP BCD DIGIT
+1522                       RTL
+1523                       RTL
+1524                       RAL
+1525                       AND (17
+1526                       TAD (60         /ADD ASCII ZERO
+1527                       DCA I DUBPTR
+1528                       ISZ DUBPTR
+1529               
+1530                       TAD TEMP        /GET MIDDLE BCD DIGIT
+1531                       RTR
+1532                       RTR
+1533                       AND (17
+1534                       TAD (60         /ADD ASCII ZERO
+1535                       DCA I DUBPTR
+1536                       ISZ DUBPTR
+1537               
+1538                       TAD TEMP        /GET BOTTOM BCD DIGIT
+1539                       AND (17
+1540                       TAD (60         /ADD ASCII ZERO
+1541                       DCA I DUBPTR
+1542                       ISZ DUBPTR
+1543                       JMP I DABASC
+1544               
+1545               DUBPTR, 0
+1546               SCRATC, ZBLOCK 5
+1547               ASCOUT, ZBLOCK 12       /9 BCD DIGITS IN 3 WORDS, PLUS NULL TERMINATION
+1548               
+1549                       PAGE
+1550               
+1551               /ADDS 3 TO EACH NIBBLE OF WORD IF NIBBLE IS GREATER THAN 4
+1552               DABADD, 0
+1553                       DCA TEMP
+1554                       TAD TEMP        /IS BOTTOM BCD DIGIT GREATER THAN 4?
+1555                       AND (17
+1556                       TAD (-5
+1557                       SMA CLA
+1558                       TAD (3          /YES, ADD 3
+1559                       TAD TEMP        /TO THE BOTTOM BCD DIGIT
+1560                       DCA TEMP        /AND SAVE IT
+1561               
+1562                       TAD TEMP        /IS MIDDLE BCD DIGIT GREATER THAN 4?
+1563                       RTR
+1564                       RTR
+1565                       AND (17
+1566                       TAD (-5
+1567                       SMA CLA
+1568                       TAD (60         /YES, ADD 3
+1569                       TAD TEMP        /TO THE MIDDLE BCD DIGIT
+1570                       DCA TEMP        /AND SAVE IT
+1571               
+1572                       TAD TEMP        /IS TOP BCD DIGIT GREATER THAN 4?
+1573                       RTL
+1574                       RTL
+1575                       RAL
+1576                       AND (17
+1577                       TAD (-5
+1578                       SMA CLA
+1579                       TAD (1400       /YES, ADD 3
+1580                       TAD TEMP        /TO THE TOP BCD DIGIT
+1581                       JMP I DABADD    /AND RETURN
+1582               
+1583               /PRINT STATISTICS
+1584               PRNTST, 0
+1585                       CLA
+1586                       TAD (GENTXT
+1587                       JMS PUTSIX
+1588                       TAD (GENCNT
+1589                       JMS DUBDAB
+1590                       JMS PUTS2
+1591                       TAD TAB
+1592                       JMS PUTC
+1593                       TAD (LIFTXT
+1594                       JMS PUTSIX
+1595                       TAD (LIFCNT
+1596                       JMS DUBDAB
+1597                       JMS PUTS2
+1598                       JMS DOCRLF
+1599                       JMP I PRNTST
+1600               
+1601               GENTXT, TEXT"GENERATION: "
+1602               LIFTXT, TEXT"LIVE CELLS: "
+1603               TAB,    11
+1604               > /}
+1605               
+1606               IFNZRO STATS+PARSER < /{
+1607               /LIKE PUTS, BUT TAKES POINTER, NOT POINTER-1
+1608               PUTS2,  0
+1609                       TAD (-1
+1610                       DCA PRIDX
+1611                       TAD I PRIDX
+1612                       SNA
+1613                       JMP I PUTS2
+1614                       JMS PUTC
+1615                       JMP .-4
+1616               
+1617               /PRINT A SIXBIT STRING
+1618               PUTSIX, 0
+1619                       DCA TMPPTR
+1620                       TAD I TMPPTR    /GET WORD
+1621                       RTR             /GET TOP SIX IN BOTTOM
+1622                       RTR
+1623                       RTR
+1624                       AND (77
+1625                       SNA             /WAS IT ZERO?
+1626                       JMP I PUTSIX    /YES, RETURN
+1627                       JMS PUTCSX      /CONVERT AND PRINT
+1628                       TAD I TMPPTR    /GET WORD
+1629                       AND (77         /KEEP BOTTOM SIX
+1630                       SNA             /WAS IT ZERO?
+1631                       JMP I PUTSIX    /YES, RETURN
+1632                       JMS PUTCSX      /CONVERT AND PRINT
+1633                       ISZ TMPPTR      /LOOP
+1634                       JMP PUTSIX+2
+1635               
+1636               /SIXBIT CONVERSION AND PRINT
+1637               PUTCSX, 0
+1638                       TAD (-40        /WAS IT GTE 40?
+1639                       SMA
+1640                       TAD (-100       /YES
+1641                       TAD (140        /MAKE IT ASCII
+1642                       JMS PUTC        /PRINT IT
+1643                       JMP I PUTCSX
+1644               
+1645               /PRINT A CHARACTER
+1646               PUTC,   0
+1647                       TSF
+1648                       JMP .-1
+1649                       TLS
+1650                       CLA
+1651                       JMP I PUTC
+1652               
+1653                       PAGE
+1654               > /}
+1655               
+1656               IFNZRO STATS+USETTY < /{
+1657               DOCRLF, 0
+1658                       CLA
+1659                       TAD (CRLF-1
+1660                       DCA PRIDX
+1661                       TAD I PRIDX
+1662                       SNA
+1663                       JMP I DOCRLF
+1664                       TSF
+1665                       JMP .-1
+1666                       TLS
+1667                       CLA
+1668                       JMP .-7
+1669               CRLF,   15
+1670                       12
+1671                       0
+1672               > /}
+1673               
+1674                       /INITIALIZATION ROUTINE
+1675 001600  0000  INIT,   0
+1676 001601  7200          CLA             /ZERO PLAYING FIELD
+1677 001602  3020          DCA ADDR
+1678 001603  6211          CDF DFIELD
+1679 001604  3420          DCA I ADDR
+1680 001605  6201          CDF 0
+1681 001606  2020          ISZ ADDR
+1682 001607  5203          JMP .-4
+1683               IFNZRO PARSER < /{
+1684                       JMS PARSE
+1685               > /}
+1686 001610  4777          JMS RLE
+1687               IFZERO PARSER < /{
+1688               IFNZRO GLDERS < /{
+1689                       RGLIDR; 0; 0
+1690                       /RGLIDR; 0; 7
+1691               > /}
+1692               IFNZRO GOSPER < /{
+1693                       RGSPER; 10; 10
+1694                       /RGSPER; 40; 0
+1695                       /RGSPER; 100; 0
+1696               > /}
+1697               IFNZRO RPENTO < /{
+1698                       RRPENT; 137; 176
+1699               > /}
+1700               IFNZRO MWSS < /{
+1701                       RMWSS; 200; 200
+1702               > /}
+1703               IFNZRO HWSS < /{
+1704                       RHWSS; 200; 220
+1705               > /}
+1706               IFNZRO DIEHARD < /{
+1707                       RDIHRD; 137; 176
+1708               > /}
+1709               IFNZRO ACORN < /{
+1710                       RACORN; 137; 176
+1711               > /}
+1712               IFNZRO BREED < /{
+1713                       RBREED; 0; 0
+1714               > /}
+1715               IFNZRO FILLER < /{
+1716                       RFILL; 110; 163
+1717               > /}
+1718               IFNZRO MAXFIL < /{
+1719 001611  2000          RMAX; 110; 163
+     001612  0110  
+     001613  0163  
+1720               > /}
+1721               IFNZRO BAKRAK < /{
+1722                       RBAKRK; 137; 176
+1723               > /}
+1724               IFNZRO SPCRAK < /{
+1725                       RSPCRK; 137; 176
+1726               > /}
+1727               IFNZRO KAREL < /{
+1728                       RKAREL; 137; 176
+1729               > /}
+1730               > /}
+1731               IFNZRO PARSER < /{
+1732                       RPARSE
+1733               XPARSE, 0
+1734               YPARSE, 0
+1735               > /}
+1736 001614  0000          0               /END OF INITIALIZATION
+1737 001615  5600          JMP I INIT
+1738               
+1739               /RLE INFORMATION
+1740               
+1741               B=6000  /DEAD
+1742               O=4000  /ALIVE
+1743               L=1000  /END OF LINE
+1744               E=0     /END OF RLE
+1745               
+1746               /PARSES TYPICAL RLE STRINGS
+1747               /CTRL-U TO START OVER
+1748               /CTRL-D TO END IMMEDIATELY
+1749               /B FOR DEATH
+1750               /O FOR LIFE
+1751               /$ FOR END OF LINE
+1752               /! FOR END OF FILE
+1753               /X FOR INITIAL X POSITION
+1754               /Y FOR INITIAL Y POSITION
+1755               IFNZRO PARSER < /{
+1756               PARSE,  0
+1757                       JMS DOCRLF      /PRINT A FRIENDLY PROMPT
+1758                       TAD (PROMPT
+1759                       JMS PUTSIX
+1760                       JMS DOCRLF
+1761                       TAD (RPARSE-1   /SET UP OUR POINTER
+1762                       DCA RLEPTR
+1763               PARSLP, DCA NUMBUF      /CLEAR THE NUMBER BUFFER
+1764               GETCH,  KSF             /AWAIT A CHARACTER
+1765                       JMP .-1
+1766                       KRB             /READ IT
+1767                       AND (177        /KEEP BOTTOM 7 BITS
+1768                       DCA TEMP        /STORE IT
+1769                       TAD TEMP
+1770               IFNZRO OS8 < /{
+1771                       TAD (-3         /IS IT A CTRL-C?
+1772                       SNA
+1773                       JMP EXIT        /YES, EXIT TO OS/8
+1774                       TAD (-4+3       /IS IT A CTRL-D?
+1775               > /}
+1776               IFZERO OS8 < /{
+1777                       TAD (-4         /IS IT A CTRL-D?
+1778               > /}
+1779                       SNA
+1780                       JMP CTRLD       /YES
+1781                       TAD (-15+4      /IS IT A CR?
+1782                       SNA
+1783                       JMP CR          /YES
+1784                       TAD (-25+15     /IS IT A CTRL-U?
+1785                       SNA
+1786                       JMP CTRLU       /YES
+1787                       TAD (-41+25     /IS IT AN EXCLAMATION MARK?
+1788                       SNA
+1789                       JMP EXCLAM      /YES
+1790                       TAD (-44+41     /IS IT A DOLLAR SIGN?
+1791                       SNA
+1792                       JMP DOLLAR      /YES
+1793                       TAD (-100+44    /IS IT GEQ TO THE AT SIGN?
+1794                       SPA
+1795                       JMP CHKNUM      /NO, MAYBE IT'S A NUMBER
+1796                       AND (37         /YES, MAYBE A LETTER, MAKE IT UPPERCASE
+1797                       TAD (-2         /WAS IT A B?
+1798                       SNA
+1799                       JMP PARSEB      /YES
+1800                       TAD (-17+2      /HOW ABOUT AN O?
+1801                       SNA
+1802                       JMP PARSEO      /YES
+1803                       TAD (-30+17     /HOW ABOUT AN X?
+1804                       SNA
+1805                       JMP PARSEX      /YES
+1806                       TAD (-31+30     /HOW ABOUT A Y?
+1807                       SNA CLA
+1808                       JMP PARSEY      /YES
+1809                       JMP GETCH       /NOPE, IGNORE IT
+1810               
+1811               CR,     JMS DOCRLF      /DO FULL CRLF
+1812                       JMP GETCH       /AND CONTINUE
+1813               
+1814               EXCLAM, JMS DOECHO      /ECHO CHAR
+1815                       JMS DOCRLF
+1816                       DCA I RLEPTR    /MARK END OF FILE
+1817                       JMP I PARSE     /AND RETURN
+1818               
+1819               CTRLD,  CLA
+1820                       TAD (CTRLDP
+1821                       JMS PUTSIX
+1822                       JMS DOCRLF
+1823                       JMP I PARSE     /GET OUTTA HERE NOW!
+1824               CTRLDP, TEXT"^D"
+1825               
+1826               CTRLU,  CLA
+1827                       TAD (CTRLUP
+1828                       JMS PUTSIX
+1829                       JMS DOCRLF
+1830                       JMP PARSE+1     /GO BACK TO THE START
+1831               CTRLUP, TEXT"^U"
+1832               
+1833                       PAGE
+1834               
+1835               DOLLAR, JMS DOECHO      /ECHO CHAR
+1836                       JMS NUMCHK      /CHECK NUMBER
+1837                       TAD (L          /GET END OF LINE
+1838                       DCA I RLEPTR    /STORE IT
+1839                       JMP PARSLP      /AND LOOP AGAIN
+1840               
+1841               CHKNUM, CLA
+1842                       TAD TEMP        /IS IT POSSIBLY A NUMBER?
+1843                       TAD (-60
+1844                       SPA CLA
+1845                       JMP GETCH       /NOPE, IGNORE IT
+1846                       TAD TEMP        /WELL, MAYBE...
+1847                       TAD (-72
+1848                       SMA CLA
+1849                       JMP GETCH       /NOPE, IGNORE IT
+1850                       JMS DOECHO      /YES IT IS, ECHO IT
+1851                       TAD TEMP
+1852                       AND (17         /KEEP BOTTOM NIBBLE
+1853                       DCA TEMP
+1854                       TAD NUMBUF      /MULTIPLY EXISTING NUMBER BUFFER BY 10 DECIMAL
+1855                       CLL RTL
+1856                       TAD NUMBUF
+1857                       CLL RAL
+1858                       TAD TEMP        /ADD OUR NIBBLE TO IT
+1859                       DCA NUMBUF      /AND STORE IT
+1860                       JMP GETCH       /GO GET SOME MORE
+1861               
+1862               PARSEB, JMS DOECHO      /ECHO CHAR
+1863                       JMS NUMCHK      /CHECK NUMBER
+1864                       TAD (B          /GET DEATH
+1865                       DCA I RLEPTR    /STORE IT
+1866                       JMP PARSLP      /AND LOOP AGAIN
+1867               
+1868               PARSEO, JMS DOECHO      /ECHO CHAR
+1869                       JMS NUMCHK      /CHECK NUMBER
+1870                       TAD (O          /GET LIFE
+1871                       DCA I RLEPTR    /STORE IT
+1872                       JMP PARSLP      /AND LOOP AGAIN
+1873               
+1874               PARSEX, JMS DOECHO      /ECHO CHAR
+1875                       JMS NUMCHK      /CHECK NUMBER
+1876                       DCA XPARSE      /STORE IT
+1877                       JMP PARSLP      /AND LOOP AGAIN
+1878               
+1879               PARSEY, JMS DOECHO      /ECHO CHAR
+1880                       JMS NUMCHK      /CHECK NUMBER
+1881                       DCA YPARSE      /STORE IT
+1882                       JMP PARSLP      /AND LOOP AGAIN
+1883               
+1884               NUMBUF, 0
+1885               
+1886               /PRINT CHARACTER IN BUFFER
+1887               DOECHO, 0
+1888                       CLA
+1889                       TAD TEMP
+1890                       TSF
+1891                       JMP .-1
+1892                       TLS
+1893                       CLA
+1894                       JMP I DOECHO
+1895               
+1896               /CHECK NUMBER FOR LESS THAN 256 DECIMAL
+1897               NUMCHK, 0
+1898                       CLA CLL
+1899                       TAD NUMBUF      /GET THE NUMBER FROM THE BUFFER
+1900                       TAD (7400       /OUT OF BOUNDS?
+1901                       SZL CLA
+1902                       JMP NUMERR      /YES, WE HAVE AN ERROR
+1903                       TAD NUMBUF      /NOPE, RETURN IT
+1904                       JMP I NUMCHK
+1905               NUMERR, JMS DOCRLF
+1906                       TAD (NUMMSG     /PRINT THE ERROR MESSAGE
+1907                       JMS PUTSIX
+1908                       JMS DOCRLF
+1909                       JMP PARSLP      /AND TRY TO CONTINUE
+1910               NUMMSG, TEXT"NUMBER TOO BIG"
+1911               
+1912               PROMPT, TEXT"ENTER RLE:"
+1913               
+1914               > /}
+1915               
+1916 001777  1400          PAGE
+1917               
+1918               IFZERO PARSER < /{
+1919               IFNZRO GLDERS < /{
+1920               RGLIDR, DECIMAL
+1921                       1!B;1!O;L
+1922                       2!B;1!O;L
+1923                       3!O;E
+1924                       OCTAL
+1925               > /}
+1926               
+1927               IFNZRO GOSPER < /{
+1928               RGSPER, DECIMAL
+1929                       24!B;O;L
+1930                       22!B;O;B;O;L
+1931                       12!B;2!O;6!B;2!O;12!B;2!O;L
+1932                       11!B;O;3!B;O;4!B;2!O;12!B;2!O;L
+1933                       2!O;8!B;O;5!B;O;3!B;2!O;L
+1934                       2!O;8!B;O;3!B;O;B;2!O;4!B;O;B;O;L
+1935                       10!B;O;5!B;O;7!B;O;L
+1936                       11!B;O;3!B;O;L
+1937                       12!B;2!O;E
+1938                       OCTAL
+1939               > /}
+1940               
+1941               IFNZRO RPENTO < /{
+1942               RRPENT, DECIMAL
+1943                       B;2!O;L;2!O;B;L;B;O;E
+1944                       OCTAL
+1945               > /}
+1946               
+1947               IFNZRO MWSS < /{
+1948               RMWSS,  DECIMAL
+1949                       3!B;O;2!B;L;B;O;3!B;O;L;O;5!B;L;O;4!B;O;L;5!O;E
+1950                       OCTAL
+1951               > /}
+1952               
+1953               IFNZRO HWSS < /{
+1954               RHWSS,  DECIMAL
+1955                       3!B;2!O;2!B;L;B;O;4!B;O;L;O;6!B;L;O;5!B;O;L;6!O;E
+1956                       OCTAL
+1957               > /}
+1958               
+1959               IFNZRO DIEHARD < /{
+1960               RDIHRD, DECIMAL
+1961                       6!B;O;B;L;2!O;6!B;L;B;O;3!B;3!O;E
+1962                       OCTAL
+1963               > /}
+1964               
+1965               IFNZRO ACORN < /{
+1966               RACORN, DECIMAL
+1967                       B;O;5!B;L;3!B;O;3!B;L;2!O;2!B;3!O;E
+1968                       OCTAL
+1969               > /}
+1970               
+1971               IFNZRO BREED < /{
+1972               RBREED, DECIMAL
+1973                       133!B;O;L;134!B;O;L;130!B;O;3!B;O;L;131!B;4!O;3!L;130!B;O;L;131!B;O;L
+1974                       132!B;O;L;132!B;O;L;131!B;2!O;4!L;133!B;O;L;134!B;O;L;130!B;O;3!B;O;L
+1975                       131!B;4!O;9!L;96!B;O;L;97!B;O;L;93!B;O;3!B;O;L;94!B;4!O;8!L;3!B;O;L
+1976                       4!B;O;L;O;3!B;O;L;B;4!O;E
+1977                       OCTAL
+1978               > /}
+1979               
+1980               IFNZRO FILLER < /{
+1981               RFILL,  DECIMAL
+1982                       20!B;3!O;3!B;3!O;L;19!B;O;B;B;O;3!B;O;B;B;O;L;4!O;18!B;O;3!B;O;18!B
+1983                       4!O;L;O;3!B;O;17!B;O;3!B;O;17!B;O;3!B;O;L;O;8!B;O;12!B;O;3!B;O;12!B;O
+1984                       8!B;O;L;B;O;B;B;O;B;B;O;O;B;B;O;25!B;O;B;B;O;O;B;B;O;B;B;O;L;6!B;O;5!B
+1985                       O;7!B;3!O;3!B;3!O;7!B;O;5!B;O;L;6!B;O;5!B;O;8!B;O;5!B;O;8!B;O;5!B;O;L
+1986                       6!B;O;5!B;O;8!B;7!O;8!B;O;5!B;O;L;B;O;B;B;O;B;B;O;O;B;B;O;B;B;O;O;4!B
+1987                       O;7!B;O;4!B;O;O;B;B;O;B;B;O;O;B;B;O;B;B;O;L;O;8!B;O;3!B;O;O;4!B;11!O
+1988                       4!B;O;O;3!B;O;8!B;O;L;O;3!B;O;9!B;O;O;17!B;O;O;9!B;O;3!B;O;L;4!O;11!B
+1989                       19!O;11!B;4!O;L;16!B;O;B;O;11!B;O;B;O;L;19!B;11!O;L;19!B;O;9!B;O;L
+1990                       20!B;9!O;L;24!B;O;L;20!B;3!O;3!B;3!O;L;22!B;O;3!B;O;L;L;21!B;3!O;B;3!O
+1991                       L;21!B;3!O;B;3!O;L;20!B;O;B;O;O;B;O;O;B;O;L;20!B;3!O;3!B;3!O;L;21!B;O
+1992                       5!B;O;E
+1993                       OCTAL
+1994               > /}
+1995               
+1996               IFNZRO MAXFIL < /{
+1997               RMAX,   DECIMAL
+1998 002000  6022          18!B;O;8!B;L;17!B;3!O;7!B;L;12!B;3!O;4!B;2!O;6!B;L;11!B;O;2!B;3!O;2!B
+     002001  4000  
+     002002  6010  
+     002003  1000  
+     002004  6021  
+     002005  4003  
+     002006  6007  
+     002007  1000  
+     002010  6014  
+     002011  4003  
+     002012  6004  
+     002013  4002  
+     002014  6006  
+     002015  1000  
+     002016  6013  
+     002017  4000  
+     002020  6002  
+     002021  4003  
+     002022  6002  
+1999 002023  4000          O;B;2!O;4!B;L;10!B;O;3!B;O;B;O;2!B;O;B;O;5!B;L;10!B;O;4!B;O;B;O;B;O;B
+     002024  6000  
+     002025  4002  
+     002026  6004  
+     002027  1000  
+     002030  6012  
+     002031  4000  
+     002032  6003  
+     002033  4000  
+     002034  6000  
+     002035  4000  
+     002036  6002  
+     002037  4000  
+     002040  6000  
+     002041  4000  
+     002042  6005  
+     002043  1000  
+     002044  6012  
+     002045  4000  
+     002046  6004  
+     002047  4000  
+     002050  6000  
+     002051  4000  
+     002052  6000  
+     002053  4000  
+     002054  6000  
+2000 002055  4000          O;B;2!O;2!B;L;12!B;O;4!B;O;B;O;3!B;2!O;2!B;L;4!O;5!B;O;B;O;4!B;O;3!B;O
+     002056  6000  
+     002057  4002  
+     002060  6002  
+     002061  1000  
+     002062  6014  
+     002063  4000  
+     002064  6004  
+     002065  4000  
+     002066  6000  
+     002067  4000  
+     002070  6003  
+     002071  4002  
+     002072  6002  
+     002073  1000  
+     002074  4004  
+     002075  6005  
+     002076  4000  
+     002077  6000  
+     002100  4000  
+     002101  6004  
+     002102  4000  
+     002103  6003  
+     002104  4000  
+2001 002105  6000          B;3!O;2!B;L;O;3!B;2!O;B;O;B;3!O;B;2!O;9!B;2!O;B;L;O;5!B;2!O;5!B;O;13!B
+     002106  4003  
+     002107  6002  
+     002110  1000  
+     002111  4000  
+     002112  6003  
+     002113  4002  
+     002114  6000  
+     002115  4000  
+     002116  6000  
+     002117  4003  
+     002120  6000  
+     002121  4002  
+     002122  6011  
+     002123  4002  
+     002124  6000  
+     002125  1000  
+     002126  4000  
+     002127  6005  
+     002130  4002  
+     002131  6005  
+     002132  4000  
+     002133  6015  
+2002 002134  1000          L;B;O;2!B;2!O;B;O;2!B;O;2!B;O;B;2!O;10!B;L;7!B;O;B;O;B;O;B;O;B;O;B;O
+     002135  6000  
+     002136  4000  
+     002137  6002  
+     002140  4002  
+     002141  6000  
+     002142  4000  
+     002143  6002  
+     002144  4000  
+     002145  6002  
+     002146  4000  
+     002147  6000  
+     002150  4002  
+     002151  6012  
+     002152  1000  
+     002153  6007  
+     002154  4000  
+     002155  6000  
+     002156  4000  
+     002157  6000  
+     002160  4000  
+     002161  6000  
+     002162  4000  
+     002163  6000  
+     002164  4000  
+     002165  6000  
+     002166  4000  
+2003 002167  6005          5!B;4!O;L;B;O;2!B;2!O;B;O;2!B;O;2!B;O;2!B;2!O;B;O;B;2!O;3!B;O;L;O;5!B
+     002170  4004  
+     002171  1000  
+     002172  6000  
+     002173  4000  
+     002174  6002  
+     002175  4002  
+     002176  6000  
+     002177  4000  
+     002200  6002  
+     002201  4000  
+     002202  6002  
+     002203  4000  
+     002204  6002  
+     002205  4002  
+     002206  6000  
+     002207  4000  
+     002210  6000  
+     002211  4002  
+     002212  6003  
+     002213  4000  
+     002214  1000  
+     002215  4000  
+     002216  6005  
+2004 002217  4002          2!O;3!B;O;B;O;B;O;3!B;2!O;5!B;O;L;O;3!B;2!O;B;O;B;2!O;2!B;O;2!B;O;2!B
+     002220  6003  
+     002221  4000  
+     002222  6000  
+     002223  4000  
+     002224  6000  
+     002225  4000  
+     002226  6003  
+     002227  4002  
+     002230  6005  
+     002231  4000  
+     002232  1000  
+     002233  4000  
+     002234  6003  
+     002235  4002  
+     002236  6000  
+     002237  4000  
+     002240  6000  
+     002241  4002  
+     002242  6002  
+     002243  4000  
+     002244  6002  
+     002245  4000  
+     002246  6002  
+2005 002247  4000          O;B;2!O;2!B;O;B;L;4!O;5!B;O;B;O;B;O;B;O;B;O;B;O;7!B;L;10!B;2!O;B;O;2!B
+     002250  6000  
+     002251  4002  
+     002252  6002  
+     002253  4000  
+     002254  6000  
+     002255  1000  
+     002256  4004  
+     002257  6005  
+     002260  4000  
+     002261  6000  
+     002262  4000  
+     002263  6000  
+     002264  4000  
+     002265  6000  
+     002266  4000  
+     002267  6000  
+     002270  4000  
+     002271  6000  
+     002272  4000  
+     002273  6007  
+     002274  1000  
+     002275  6012  
+     002276  4002  
+     002277  6000  
+     002300  4000  
+     002301  6002  
+2006 002302  4000          O;2!B;O;B;2!O;2!B;O;B;L;13!B;O;5!B;2!O;5!B;O;L;B;2!O;9!B;2!O;B;3!O;B;O
+     002303  6002  
+     002304  4000  
+     002305  6000  
+     002306  4002  
+     002307  6002  
+     002310  4000  
+     002311  6000  
+     002312  1000  
+     002313  6015  
+     002314  4000  
+     002315  6005  
+     002316  4002  
+     002317  6005  
+     002320  4000  
+     002321  1000  
+     002322  6000  
+     002323  4002  
+     002324  6011  
+     002325  4002  
+     002326  6000  
+     002327  4003  
+     002330  6000  
+     002331  4000  
+2007 002332  6000          B;2!O;3!B;O;L;2!B;3!O;B;O;3!B;O;4!B;O;B;O;5!B;4!O;L;2!B;2!O;3!B;O;B;O
+     002333  4002  
+     002334  6003  
+     002335  4000  
+     002336  1000  
+     002337  6002  
+     002340  4003  
+     002341  6000  
+     002342  4000  
+     002343  6003  
+     002344  4000  
+     002345  6004  
+     002346  4000  
+     002347  6000  
+     002350  4000  
+     002351  6005  
+     002352  4004  
+     002353  1000  
+     002354  6002  
+     002355  4002  
+     002356  6003  
+     002357  4000  
+     002360  6000  
+     002361  4000  
+2008 002362  6004          4!B;O;12!B;L;2!B;2!O;B;O;B;O;B;O;B;O;4!B;O;10!B;L;5!B;O;B;O;2!B;O;B;O
+     002363  4000  
+     002364  6014  
+     002365  1000  
+     002366  6002  
+     002367  4002  
+     002370  6000  
+     002371  4000  
+     002372  6000  
+     002373  4000  
+     002374  6000  
+     002375  4000  
+     002376  6000  
+     002377  4000  
+     002400  6004  
+     002401  4000  
+     002402  6012  
+     002403  1000  
+     002404  6005  
+     002405  4000  
+     002406  6000  
+     002407  4000  
+     002410  6002  
+     002411  4000  
+     002412  6000  
+     002413  4000  
+2009 002414  6003          3!B;O;10!B;L;4!B;2!O;B;O;2!B;3!O;2!B;O;11!B;L;6!B;2!O;4!B;3!O;12!B;L
+     002415  4000  
+     002416  6012  
+     002417  1000  
+     002420  6004  
+     002421  4002  
+     002422  6000  
+     002423  4000  
+     002424  6002  
+     002425  4003  
+     002426  6002  
+     002427  4000  
+     002430  6013  
+     002431  1000  
+     002432  6006  
+     002433  4002  
+     002434  6004  
+     002435  4003  
+     002436  6014  
+     002437  1000  
+2010 002440  6007          7!B;3!O;17!B;L;8!B;O;E
+     002441  4003  
+     002442  6021  
+     002443  1000  
+     002444  6010  
+     002445  4000  
+     002446  0000  
+2011                       OCTAL
+2012               > /}
+2013               
+2014               IFNZRO SPCRAK < /{
+2015               RSPCRK, DECIMAL
+2016                       11!B;2!O;5!B;4!O;L;9!B;2!O;B;2!O;3!B;O;3!B;O;L;9!B;4!O;8!B;O;L;10!B
+2017                       2!O;5!B;O;2!B;O;B;2!L;8!B;O;13!B;L;7!B;2!O;8!B;2!O;3!B;L;6!B;O;9!B;O
+2018                       2!B;O;2!B;L;7!B;5!O;4!B;O;2!B;O;2!B;L;8!B;4!O;3!B;2!O;B;2!O;2!B;L;11!B
+2019                       O;4!B;2!O;4!B;4!L;18!B;4!O;L;O;2!B;O;13!B;O;3!B;O;L;4!B;O;16!B;O;L;O
+2020                       3!B;O;12!B;O;2!B;O;B;L;B;4!O;E
+2021                       OCTAL
+2022               > /}
+2023               
+2024               IFNZRO BAKRAK < /{
+2025               RBAKRK, DECIMAL
+2026                       3!B;O;15!B;L;2!B;3!O;14!B;L;B;2!O;B;O;5!B;O;8!B;L;B;3!O;5!B;3!O;7!B;L
+2027                       2!B;2!O;4!B;O;2!B;2!O;3!B;3!O;L;8!B;3!O;4!B;O;2!B;O;L;18!B;O;L;18!B;O
+2028                       L;18!B;O;L;2!B;3!O;12!B;O;B;L;2!B;O;2!B;O;13!B;L;2!B;O;16!B;L;2!B;O
+2029                       16!B;L;3!B;O;15!B;7!L;3!O;16!B;L;O;2!B;O;11!B;O;3!B;L;O;13!B;3!O;2!B;L
+2030                       O;12!B;2!O;B;O;2!B;L;O;12!B;3!O;3!B;L;B;O;12!B;2!O;E
+2031                       OCTAL
+2032               > /}
+2033               
+2034               IFNZRO KAREL < /{
+2035               RKAREL, DECIMAL
+2036                       53!B;O;113!B;L;53!B;O;B;O;111!B;L;53!B;2!O;112!B;2!L;17!B;O;B;O;147!B
+2037                       L;18!B;2!O;147!B;L;18!B;O;45!B;O;102!B;L;62!B;2!O;103!B;L;63!B;2!O
+2038                       102!B;8!L;38!B;O;128!B;L;38!B;O;B;O;42!B;O;51!B;2!O;6!B;2!O;22!B;L
+2039                       38!B;2!O;41!B;2!O;47!B;2!O;2!B;O;2!B;O;4!B;O;2!B;O;2!B;2!O;17!B;L;82!B
+2040                       2!O;45!B;O;2!B;2!O;B;2!O;6!B;2!O;B;2!O;2!B;O;16!B;L;127!B;2!O;B;3!O
+2041                       14!B;3!O;B;2!O;14!B;L;126!B;O;4!B;O;16!B;O;4!B;O;13!B;L;129!B;O;20!B;O
+2042                       16!B;L;6!B;O;B;O;158!B;L;7!B;2!O;33!B;O;82!B;O;3!B;O;20!B;O;3!B;O;12!B
+2043                       L;7!B;O;32!B;2!O;84!B;3!O;22!B;3!O;13!B;L;41!B;2!O;124!B;3!L;120!B;O
+2044                       38!B;O;7!B;L;117!B;O;3!B;O;36!B;O;3!B;O;4!B;L;42!B;O;73!B;O;4!B;O;36!B
+2045                       O;4!B;O;3!B;L;B;O;40!B;O;B;O;71!B;O;4!B;O;36!B;O;4!B;O;3!B;L;2!B;O
+2046                       39!B;2!O;71!B;O;2!B;O;B;O;38!B;O;B;O;2!B;O;2!B;L;3!O;111!B;O;B;O;46!B
+2047                       O;B;O;B;L;114!B;O;B;2!O;44!B;2!O;B;O;B;L;115!B;2!O;46!B;2!O;2!B;L
+2048                       115!B;O;48!B;O;2!B;L;69!B;3!O;42!B;O;50!B;O;B;L;69!B;O;43!B;O;B;O;48!B
+2049                       O;B;O;L;62!B;O;7!B;O;42!B;O;B;O;48!B;O;B;O;L;61!B;2!O;51!B;O;50!B;O;B
+2050                       L;54!B;3!O;4!B;O;B;O;103!B;L;32!B;O;21!B;O;112!B;L;33!B;O;21!B;O;111!B
+2051                       L;24!B;O;B;O;4!B;3!O;133!B;L;25!B;2!O;87!B;O;50!B;O;B;L;17!B;O;7!B;O
+2052                       87!B;O;B;O;48!B;O;B;O;L;18!B;O;94!B;O;B;O;48!B;O;B;O;L;16!B;3!O;95!B;O
+2053                       50!B;O;B;L;115!B;O;48!B;O;2!B;L;115!B;2!O;46!B;2!O;2!B;L;114!B;O;B;2!O
+2054                       44!B;2!O;B;O;B;L;85!B;3!O;26!B;O;B;O;46!B;O;B;O;B;L;44!B;2!O;39!B;O
+2055                       29!B;O;2!B;O;B;O;38!B;O;B;O;2!B;O;2!B;L;43!B;O;B;O;40!B;O;29!B;O;4!B;O
+2056                       36!B;O;4!B;O;3!B;L;45!B;O;70!B;O;4!B;O;36!B;O;4!B;O;3!B;L;117!B;O;3!B
+2057                       O;36!B;O;3!B;O;4!B;L;120!B;O;38!B;O;7!B;3!L;45!B;2!O;120!B;L;46!B;2!O
+2058                       32!B;O;45!B;3!O;22!B;3!O;13!B;L;45!B;O;33!B;2!O;44!B;O;3!B;O;20!B;O
+2059                       3!B;O;12!B;L;79!B;O;B;O;85!B;L;129!B;O;20!B;O;16!B;L;126!B;O;4!B;O
+2060                       16!B;O;4!B;O;13!B;L;127!B;2!O;B;3!O;14!B;3!O;B;2!O;14!B;L;4!B;2!O
+2061                       123!B;O;2!B;2!O;B;2!O;6!B;2!O;B;2!O;2!B;O;16!B;L;5!B;2!O;41!B;2!O;80!B
+2062                       2!O;2!B;O;2!B;O;4!B;O;2!B;O;2!B;2!O;17!B;L;4!B;O;42!B;O;B;O;85!B;2!O
+2063                       6!B;2!O;22!B;L;49!B;O;117!B;8!L;23!B;2!O;142!B;L;24!B;2!O;141!B;L;23!B
+2064                       O;45!B;O;97!B;L;68!B;2!O;97!B;L;68!B;O;B;O;96!B;2!L;33!B;2!O;132!B;L
+2065                       32!B;O;B;O;132!B;L;34!B;O;E
+2066                       OCTAL
+2067               > /}
+2068               > /}
+2069               
+2070               IFNZRO PARSER < /{
+2071               RPARSE, 0
+2072               > /}
+2073               
+2074                       *6600
+2075               /CHECK FOR CONTROL CHARACTERS
+2076 006600  0000  CHKCTL, 0
+2077 006601  6036          KRB             /READ IT
+2078 006602  0377          AND (177        /KEEP BOTTOM 7 BITS
+2079               IFNZRO OS8 < /{
+2080 006603  3030          DCA TEMP        /STORE IT
+2081 006604  1030          TAD TEMP
+2082 006605  1376          TAD (-3         /IS IT A CTRL-C?
+2083 006606  7450          SNA
+2084 006607  5214          JMP EXIT        /YES, EXIT TO OS/8
+2085 006610  1375          TAD (-25+3      /IS IT A CTRL-U?
+2086               > /}
+2087               IFZERO OS8 < /{
+2088                       TAD (-25        /IS IT A CTRL-U?
+2089               > /}
+2090 006611  7650          SNA CLA
+2091 006612  5774          JMP START       /YES, RESTART THE PROGRAM
+2092 006613  5600          JMP I CHKCTL    /NOT A CTRL-C OR CTRL-U
+2093               
+2094               IFNZRO OS8 < /{
+2095 006614  4247  EXIT,   JMS RSTOS8      /PUT THINGS BACK THE WAY WE FOUND IT
+2096 006615  5773          JMP I (7600     /AND RETURN TO OS/8
+2097               
+2098 006616  0000  SAVOS8, 0
+2099 006617  7200          CLA             /HAS THE SYSTEM ALREADY BEEN SAVED?
+2100 006620  1322          TAD OS8SAV
+2101 006621  7440          SZA
+2102 006622  5616          JMP I SAVOS8    /YES, RETURN
+2103 006623  4270          JMS COPY        /NO, DO THE COPIES
+2104 006624  0000          0               /COPY FROM 07600
+2105 006625  7577          7600-1
+2106 006626  0000          0               /TO 07400
+2107 006627  7377          7400-1
+2108 006630  4270          JMS COPY
+2109 006631  0010          10              /COPY FROM 17600
+2110 006632  7577          7600-1
+2111 006633  0000          0               /TO 07200
+2112 006634  7177          7200-1
+2113               /MORE THAN 8K AND USING FAST RASTER?
+2114               IFNZRO MEMORY-1 < /{
+2115               IFNZRO SCOPE&NOSTOR&FASTR < /{
+2116                       JMS COPY
+2117                       20              /COPY FROM 27600
+2118                       7600-1
+2119                       0               /TO 07000
+2120                       7000-1
+2121               > /}
+2122               > /}
+2123 006635  2322          ISZ OS8SAV      /THE SYSTEM HAS BEEN SAVED
+2124               
+2125 006636  1372          TAD (7764       /PUT THE MASK TABLE AT 7764
+2126 006637  3020          DCA ADDR
+2127 006640  7330          CLA CLL CML RAR /AC=4000
+2128 006641  3420          DCA I ADDR      /SAVE IT
+2129 006642  1420          TAD I ADDR      /GET IT
+2130 006643  7110          CLL RAR         /ROTATE IT
+2131 006644  2020          ISZ ADDR        /ANY MORE TO DO?
+2132 006645  5241          JMP .-4         /NOPE
+2133               
+2134 006646  5616          JMP I SAVOS8
+2135               
+2136 006647  0000  RSTOS8, 0
+2137 006650  7200          CLA             /HAS THE SYSTEM ACTUALLY BEEN SAVED?
+2138 006651  1322          TAD OS8SAV
+2139 006652  7450          SNA
+2140 006653  5647          JMP I RSTOS8    /NOPE, RETURN
+2141 006654  4270          JMS COPY        /YES, COPY BACK
+2142 006655  0000          0               /COPY FROM 07400
+2143 006656  7377          7400-1
+2144 006657  0000          0               /TO 07600
+2145 006660  7577          7600-1
+2146 006661  4270          JMS COPY
+2147 006662  0000          0               /COPY FROM 07200
+2148 006663  7177          7200-1
+2149 006664  0010          10              /TO 17600
+2150 006665  7577          7600-1
+2151               /MORE THAN 8K AND USING FAST RASTER?
+2152               IFNZRO MEMORY-1 < /{
+2153               IFNZRO SCOPE&NOSTOR&FASTR < /{
+2154                       JMS COPY
+2155                       0               /COPY FROM 07000
+2156                       7000-1
+2157                       20              /TO 27600
+2158                       7600-1
+2159               > /}
+2160               > /}
+2161 006666  3322          DCA OS8SAV      /THE SYSTEM HAS BEEN RESTORED
+2162 006667  5647          JMP I RSTOS8
+2163               
+2164               /BLOCK PAGE COPY BETWEEN FIELDS
+2165               /ARGUMENTS FOLLOW JMS:
+2166               /FROM FIELD
+2167               /FROM ADDR MINUS 1
+2168               /TO FIELD
+2169               /TO ADDR MINUS 1
+2170 006670  0000  COPY,   0
+2171 006671  7200          CLA
+2172 006672  1373          TAD (-200
+2173 006673  3027          DCA CNT         /JUST COPY ONE PAGE
+2174 006674  1670          TAD I COPY      /GET FROM FIELD
+2175 006675  1316          TAD CDFI
+2176 006676  3312          DCA FRMCDF      /SELF MODIFY FOR FIELD CHANGES
+2177 006677  2270          ISZ COPY
+2178 006700  1670          TAD I COPY      /GET FROM ADDR MINUS 1
+2179 006701  3011          DCA CPTR1
+2180 006702  2270          ISZ COPY
+2181 006703  1670          TAD I COPY      /GET TO FIELD
+2182 006704  1316          TAD CDFI
+2183 006705  3314          DCA TOCDF       /SELF MODIFY FOR FIELD CHANGES
+2184 006706  2270          ISZ COPY
+2185 006707  1670          TAD I COPY      /GET TO ADDR MINUS 1
+2186 006710  3012          DCA CPTR2
+2187 006711  2270          ISZ COPY        /POINT TO RETURN
+2188               
+2189 006712  7402  FRMCDF, HLT             /BETTER BE A CDF!
+2190 006713  1411          TAD I CPTR1     /GET DATA
+2191 006714  7402  TOCDF,  HLT             /BETTER BE A CDF!
+2192 006715  3412          DCA I CPTR2     /SAVE DATA
+2193 006716  6201  CDFI,   CDF 0
+2194 006717  2027          ISZ CNT
+2195 006720  5312          JMP .-6         /DO THE LOOP
+2196 006721  5670          JMP I COPY      /ALL DONE
+2197               
+2198 006722  0000  OS8SAV, 0
+2199               > /}
+2200               
+2201 006772  7764  $
+     006773  7600  
+     006774  0202  
+     006775  7756  
+     006776  7775  
+     006777  0177  
+     000176  0007  
+     000177  0143  
+
+ACORN   0000
+ADDR    0020
+B       6000
+BAKRAK  0000
+BIRTH   0657
+BITLP   0670
+BOTPTR  0026
+BREED   0000
+CACHE1  0040
+CACHE2  0060
+CACHE3  0100
+CALCXY  1216 unreferenced
+CALCY   1230 unreferenced
+CDFI    6716
+CHKCTL  6600
+CHKLIF  0400
+CHKROW  0700
+CNT     0027
+COPY    6670
+CPTR1   0011
+CPTR2   0012
+CURBIT  0021
+CURDAT  1530 unreferenced
+CURSTA  1527
+DEATH   0650
+DFIELD  0010
+DIEHAR  0000
+DIS     0140
+DIVDUN  1422
+DOAND   0167
+DOCALC  0634
+DODRAW  1215
+DOLIFE  0403
+DOROT   0120
+DRWWRD  1262
+E       0000
+ERR     0143
+EXIT    6614
+FASTR   0000
+FILLER  0000
+FINAL   0716
+FIVEL   0152
+FIVER   0164
+FOURL   0146
+FOURR   0160
+FRMCDF  6712
+GLDERS  0000
+GOSPER  0000
+HWSS    0000
+INIT    1600
+JMPLOC  0172
+KAREL   0000
+L       1000
+LIFDET  0023
+LINC    6141
+MAXFIL  0001
+MEMORY  0007
+MIDPTR  0025
+MWSS    0000
+NEXTLN  1515
+NEXTX   1255
+NLBIT   0474
+NOLIFE  0712
+NOPRT   0000
+NOSTOR  0001
+NOTDUN  0706
+NOTEDG  0600
+NOTFIN  0722
+NWRDLF  0631
+NXTBIT  1250
+NXTRLE  1401
+O       4000
+ONEL    0154 unreferenced
+ONER    0166
+OS8     0001
+OS8SAV  6722
+PARSER  0000
+PDP     0002
+PDP12   0001
+PRIDX   0010 unreferenced
+PRTDOT  0000 unreferenced
+RASERA  1263
+RASLP   1205
+RASTER  1200
+RCHECK  1512
+RCONT   1475
+RLE     1400
+RLECNT  1533
+RLEDUN  1525
+RLEPTR  0013
+RLIVE   1464
+RLOOP   1455
+RLYNPR  0000
+RMAIN   1436
+RMAX    2000
+ROT     0171
+ROTTBL  0142
+RPENTO  0000
+RSCONT  1212
+RSTOS8  6647
+RSTRSC  0000
+SADDR   1531
+SAME    0644
+SAVOS8  6616
+SBIT    1532
+SCALE   0002
+SCOPE   0001
+SHRTCT  1261 unreferenced
+SIMHVC  0000 unreferenced
+SIXL    0145
+SIXR    0157
+SLODTH  0000 unreferenced
+SLOWR   0001
+SPCRAK  0000
+START   0202
+STARTX  0032
+STARTY  0033
+STATS   0000
+STORE   0000
+TEMP    0030
+THREEL  0153 unreferenced
+THREER  0165
+TLS     7000 unreferenced
+TMPPTR  0031
+TOCDF   6714
+TOPPTR  0024
+TOTAL   0022
+TSF     7410 unreferenced
+TWOL    0147 unreferenced
+TWOR    0161
+UCACHE  1000
+USETTY  0000
+VT100   0000 unreferenced
+WRDCOL  0020
+WRDLP   1237
+X       0014
+Y       0015

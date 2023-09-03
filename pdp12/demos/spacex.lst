@@ -1,0 +1,2645 @@
+   1               /       SPACE WAR
+   2               /
+   3               /       INTERPLANETARY DEATH AND DESTRUCTION ON YOUR PDP8
+   4               /
+   5               /       HARDWARE NEEDED:
+   6               /       PDP8/E /F /M /A
+   7               /       VC8E  M869/M855
+   8               /       DK8EA M882
+   9               /       DR8EA M863 (OPTIONAL FOR /E /F /M TO CONNECT JOYSTICKS)
+  10               /
+  11               /       ORIGINAL WRITTEN BY EVAN SUITS
+  12               /       MODIFIED BY ROLAND HUISMAN FOR VC8E, DK8EA, DR8EA
+  13               /
+  14               /       THIS VERSION WORKS OFF EITHER THE M863 DR8EA OR THE SR.
+  15               /       WHEN THE PROGRAM IS STARTED (AT 0200) OR RESTARTED THE
+  16               /       SR WILL BE TESTED AND IF =0000 WILL BE USED FOR THE COMMAND 
+  17               /       INPUT.  OTHERWISE, THE M863 DR8EA INPUTS WILL BE USED.
+  18               /
+  19               /       WHEN THE PROGRAM IS STARTED THE TWO SHIPS SHOULD
+  20               /       APPEAR ON THE SCREEN WITH SHIP 'ONE' ON THE LEFT, SHIP
+  21               /       'TWO' ON THE RIGHT.
+  22               /
+  23               /       THE COMMAND WORD BIT ASSIGNMENTS ARE:
+  24               /
+  25               /       SR BIT: M863:   FUNCTION:
+  26               /
+  27               /       0               0               SHIP ONE ROTATES LEFT
+  28               /       1               1               SHIP ONE ROTATES RIGHT
+  29               /       2               2               SHIP ONE ACCELERATES
+  30               /       3               3               SHIP ONE FIRES
+  31               /
+  32               /       8               4               SHIP TWO ROTATES LEFT
+  33               /       9               5               SHIP TWO ROTATES RIGHT
+  34               /       10              6               SHIP TWO ACCELERATES
+  35               /       11              7               SHIP TWO FIRES
+  36               /
+  37               /
+  38               /       NOTE THAT TURNING RIGHT AND LEFT SIMULTANEOUSLY THROWS
+  39               /       THE SHIP INTO HYPERSPACE.  IN THE CURRENT VERSION THE ODDS
+  40               /       ARE IN FAVOR OF YOUR MAKING IT BACK SAFELY.  THE GAME IS OVER
+  41               /       WHEN ONE OR BOTH OF THE SHIPS HAVE BEEN DESTROYED AND THE
+  42               /       WINNER (IF ANY) IS IN NORMAL SPACE.  WHEN THE WINNER
+  43               /       HAS BEEN ANNOUNCED, HIT ANY TTY KEY TO RESTART.
+  44               /
+  45               
+  46               
+  47               
+  48               /       SYMBOL DEFINITIONS FOR PAL8-PAL10
+  49               
+  50               /DK8-EA DEFINITIONS
+  51               CLEI=6131       / ENABLE INTERRUPTS FROM M882
+  52               CLDI=6132       / CLEAR INTERRUPT
+  53               CLSK=6133       / SKIP ON CLOCK FLAG AND CLEAR FLAG
+  54               
+  55               IFDEF DR8E <
+  56               /DR8-EA DEFINITIONS
+  57               DBDI=6500       / DISABLE INTERRUPUS CAUSED BY LOGICAL ONES
+  58               DBCI=6503       / CLEAR SELECTIVE INPUT REGISTER. ONES IN AC CLEAR CORRESPONDING BITS
+  59               DBRI=6504       / TRANSFERS ALL INPUT BITS TO AC
+  60               >
+  61               /VC8E DEFINITIONS
+  62               DILC=6050       / DISPLAY LOGIC CLEAR
+  63               DICD=6051       / DISPLAY CLEAR DONE FLAG
+  64               DISD=6052       / WAIT FOR SETTLING
+  65               DILX=6053       / LOAD X FROM AC
+  66               DILY=6054       / LOAD Y FROM AC
+  67               DIXY=6055       / INTENSIFY POINT
+  68               
+  69               
+  70               
+  71               
+  72               
+  73               /
+  74               /       THIS PROGRAM RELIES ON THE PROGRAM INTERUPT FACILITY FOR
+  75               /       REAL WORLD TIMING PURPOSES.
+  76               /
+  77               
+  78                       *0
+  79               
+  80 000000  0000          0                       /EFFECTIVE JMS 0 ON PROGRAM INTERUPT
+  81 000001  5402          JMP I 2                 /EXIT IMMEDIATLY TO SERVICE ROUTINE
+  82 000002  0330          INTSER
+  83               
+  84 000003  0000  EMPTY,  0                       /THESE LOCATIONS ARE RESERVED FOR
+  85 000004  0000  ODT1,   0                       /DEBUGGERS, ETC.
+  86 000005  0000  ODT2,   0
+  87 000006  0000  ODT3,   0
+  88               
+  89               /
+  90               /       ALL THE AUTO INDEX REGISTERS ARE NAMED BUT NOT ALL OF
+  91               /       THEM ARE USED. THE STATUS OF ANY GIVEN REGISTER CANNOT
+  92               /       BE DETERMINED AT ANY TIME EXCEPT BY CAREFUL INSPECTION OF
+  93               /       THE CODE.
+  94               /
+  95               
+  96                       *10
+  97               
+  98 000010  0000  AUTO10, 0
+  99 000011  0000  AUTO11, 0
+ 100 000012  0000  AUTO12, 0
+ 101 000013  0000  AUTO13, 0
+ 102 000014  0000  AUTO14, 0
+ 103 000015  0000  AUTO15, 0
+ 104 000016  0000  AUTO16, 0
+ 105 000017  0000  AUTO17, 0
+ 106               
+ 107               /
+ 108               /       THE FOLLOWING ARE THE DATA FILES FOR THE TWO SPACE SHIPS
+ 109               /       AS WELL AS CERTAIN OTHER PARAMETERS FOR CALCULATING POSITIONS
+ 110               /       AND SO ON.  THE ORDER OF THE LOCATIONS MUST BE PRESERVED 
+ 111               /       ALTHOUGH THE SIZE OF THE TABLES MAY BE VARIED
+ 112               /
+ 113               
+ 114                       *20
+ 115               
+ 116 000020  0000  ONEOUT, 0                       /IF NON-ZERO CONTAINS REAMINING TIME OF EXPLOSION
+ 117 000021  0000  ONECNT, 0                       /NUMBER OF POINTS IN FIGURE TO BE DISPLAYED
+ 118 000022  0000  ONEFLG, 0                       /IN OR OUT OF NORMAL SPACE
+ 119 000023  0000  ONETHE, 0                       /ANGLE OF ORIENTATION ON SCREEN
+ 120 000024  0000  ONEVEX, 0                       /X COMPONENT OF VELOCITY
+ 121 000025  0000  ONEVEY, 0                       /Y COMPONENT OF VELOCITY
+ 122 000026  0000  ONEPEX, 0                       /X POSITION (12 BITS)
+ 123 000027  0000  ONEPEY, 0                       /Y POSITION (12 BITS)
+ 124 000030  0000  ONESIN, 0                       /SINE OF ANGLE
+ 125 000031  0000  ONECOS, 0                       /COSINE OF ANGLE
+ 126 000032  0000  ONEFIN, 0                       /SET WHEN EXPLOSION DIES OUT
+ 127               
+ 128 000033  0000  TWOOUT, 0                       /SAME CONTENT AND ORDER
+ 129 000034  0000  TWOCNT, 0                       /AS ABOVE
+ 130 000035  0000  TWOFLG, 0
+ 131 000036  0000  TWOTHE, 0
+ 132 000037  0000  TWOVEX, 0
+ 133 000040  0000  TWOVEY, 0
+ 134 000041  0000  TWOPEX, 0
+ 135 000042  0000  TWOPEY, 0
+ 136 000043  0000  TWOSIN, 0
+ 137 000044  0000  TWOCOS, 0
+ 138 000045  0000  TWOFIN, 0
+ 139               
+ 140               
+ 141               /
+ 142               /       THESE LOCATIONS ARE USED BY THE "VECTOR GENERATOR" IN 
+ 143               /       DISPLAYING THE FIGURES.  A FOUR DOT VECTOR WILL BE DRAWN
+ 144               /       FROM XONE,YONE TO XTWO,YTWO WITH STEPS OF SIZE DIXTEM,DIYTEM
+ 145               /
+ 146               
+ 147 000046  0000  XONEDS, 0
+ 148 000047  0000  YONEDS, 0
+ 149 000050  0000  XTWODS, 0
+ 150 000051  0000  YTWODS, 0
+ 151 000052  0000  DIXTEM, 0
+ 152 000053  0000  DIYTEM, 0
+ 153 000054  0000  DISCNT, 0
+ 154               
+ 155               
+ 156               /
+ 157               /       THE NEXT LOCATIONS ARE USED BY CALPOS TO DO A FAST
+ 158               /       MULTIPLY TO HELP CALCULATE THE DISPLAY FILES.
+ 159               /
+ 160 000055  0000  T10SIN, 0
+ 161 000056  0000  T20SIN, 0
+ 162 000057  0000  T30SIN, 0
+ 163 000060  0000  T10COS, 0
+ 164 000061  0000  T20COS, 0
+ 165 000062  0000  T30COS, 0
+ 166               
+ 167 000063  0000  CALSIN, 0
+ 168 000064  0000  CALCOS, 0
+ 169               
+ 170               
+ 171               /
+ 172               /       NOW COME THE VARIOUS ODDS AND ENDS ONE USUALLY FINDS ON
+ 173               /       PAGE ZERO
+ 174               /
+ 175               
+ 176 000065  6400  SINE,   SINEIN
+ 177 000066  6463  COSINE, COSINI
+ 178 000067  6621  MULT,   MULTI
+ 179 000070  6675  RSHIFT, SHIFTR
+ 180 000071  1474  VECTOR, DISPLY
+ 181 000072  6703  CALPOS, POSCAL
+ 182 000073  0000  INTWRD, 0
+ 183 000074  0000  CLOCK,  0
+ 184 000075  2200  HYPER,  HYPSET
+ 185 000076  7000  MESOUT, CHARS
+ 186 000077  2510  THEADJ, THEAJI
+ 187 000100  2464  VEESCL, VEELIM
+ 188 000101  1547  ISHFT,  DISHFT
+ 189 000102  1712  RESET1, RESE1
+ 190 000103  0000  GAMOVR, 0
+ 191 000104  0000  ACCFLG, 0
+ 192 000105  7750  ACCPER, -30
+ 193 000106  7400  MEXP,   -400
+ 194               
+ 195 000107  0000  PROX,   0
+ 196 000110  0000  PROY,   0
+ 197 000111  7420  PROLIF, -360
+ 198 000112  0000  BUFTMP, 0
+ 199 000113  7400  ONEFIL, DISBUF
+ 200 000114  7440  TWOFIL, DISBUF+40
+ 201               
+ 202 000115  0005  P5,     5
+ 203 000116  0010  P10,    10
+ 204 000117  0017  P17,    17
+ 205 000120  0020  P20,    20
+ 206 000121  0037  P37,    37
+ 207 000122  0040  P40,    40
+ 208 000123  0100  P100,   100
+ 209 000124  0132  P132,   132
+ 210 000125  0200  P200,   200
+ 211 000126  0400  P400,   400
+ 212 000127  0550  P550,   550
+ 213 000130  3777  P3777,  3777
+ 214               
+ 215 000131  7774  M4,     -4
+ 216 000132  7772  M6,     -6
+ 217 000133  7770  M10,    -10
+ 218 000134  7767  M11,    -11
+ 219 000135  7514  M264,   -264
+ 220 000136  7600  M200,   -200
+ 221 000137  7400  M400,   -400
+ 222 000140  7230  M550,   -550
+ 223 000141  1000  TWOCOMP, 1000
+ 224               
+ 225               
+ 226               /
+ 227               /       THE PROGRAM MAY BE STARTED OR RESTARTED AT ANYTIME AT 0200.
+ 228               /       THE DATA FILE ON PAGE ZERO IS CLEARED, ALL FLAGS INITIALIZED,
+ 229               /       AND THE SR EXAMINED.  IF THE SR=0 THE DISPLAY UPDATE ROUTINES
+ 230               /       ARE SET TO PICK UP THE STATUS WORD FROM THE SR.  IF THE SR
+ 231               /       DOES NOT EQUAL ZERO, THE STATUS WORD IS READ FROM THE EIGHT
+ 232               /       CONTINGENCY INPUTS ON THE BLUE RIBBON CONNECTOR OF THE AX08
+ 233               /       (XR OPTION ONLY).  JUMP IS THEN TO THE DISPLAY
+ 234               /       FILE UPDATE TO START OFF THE GAME.
+ 235               /
+ 236               
+ 237                       *200
+ 238               
+ 239 000200  7300  START,  CLA CLL                 /START OR RESTART HERE ANY OLD TIME
+ 240               IFDEF DR8E <
+ 241                       LAS                             /SR
+ 242                       SNA CLA
+ 243                       TAD SWRD                /USE THE SR
+ 244                       TAD XROPT               /USE THE BLUE RIBBON CONNECTOR
+ 245                       DCA COLDST              /AND LEAVE IN THE TRAP LOCATION
+ 246               >
+ 247               
+ 248               RESTRT,
+ 249               IFDEF DR8E <
+ 250                       CLA CMA
+ 251                       DBCI                    /CLEAR INPUT REGISTER M863
+ 252                       DBDI                    /DISABLE INTERRUPTS FROM M863
+ 253               >
+ 254 000201  7300          CLA CLL
+ 255               
+ 256 000202  1117          TAD P17                 /FIRST CLEAR THE POSITION AND DATA
+ 257 000203  3010          DCA AUTO10              /TABLES OF THE TWO SHIPS
+ 258 000204  1315          TAD TABLEN
+ 259 000205  3011          DCA AUTO11
+ 260 000206  3410          DCA I AUTO10
+ 261 000207  2011          ISZ AUTO11
+ 262 000210  5206          JMP .-2
+ 263               
+ 264 000211  1321          TAD STRT1               /SET THE STARTING POSITIONS OF THE
+ 265 000212  3026          DCA ONEPEX              /TWO SHIPS
+ 266 000213  1322          TAD STRT2
+ 267 000214  3041          DCA TWOPEX
+ 268 000215  1323          TAD STRTY
+ 269 000216  3027          DCA ONEPEY
+ 270 000217  1323          TAD STRTY
+ 271 000220  3042          DCA TWOPEY      
+ 272 000221  1121          TAD P37                 /SET TRIG FUNCTIONS JUST IN CASE
+ 273 000222  3031          DCA ONECOS
+ 274 000223  1121          TAD P37
+ 275 000224  3044          DCA TWOCOS              /ZERO DEGREES IS POINTING STRAIGHT UP
+ 276 000225  1105          TAD ACCPER              /SET COUNT FOR VELOCITY INCREASE
+ 277 000226  3104          DCA ACCFLG
+ 278 000227  3032          DCA ONEFIN              /CLEAR ALL GAME END FLAGS
+ 279 000230  3045          DCA TWOFIN
+ 280 000231  3103          DCA GAMOVR
+ 281 000232  4714          JMS I BUFSET            /RESET ALL PROJECTILE DISPLAY BUFFERS
+ 282 000233  6131          CLEI            /START UP THE M882 CLOCK
+ 283 000234  6042          TCF                     /CLEAR OTHER REMAINING LIKELY FLAGS
+ 284 000235  6022          PCF
+ 285 000236  6012          RRB
+ 286 000237  6050          DILC
+ 287 000240  6051          DICD
+ 288 000241  7200          CLA
+ 289 000242  5244          JMP COLDST              /AND GO TO IT
+ 290               
+ 291               
+ 292               /
+ 293               /       UPDATE IS REACHED WHENEVER THE PROGRAM IS STARTED OR THE
+ 294               /       CLOCK COUNT OVERFLOWS INDICATING TIME TO RECALCULATE THE
+ 295               /       THE DISPLAY FILES AND REFRESH THE DISPLAY.  THE INTERUPT
+ 296               /       COUNT IS RESTORED, THE STATUS WORD IS PICKED UP FROM EITHER
+ 297               /       THE SR OR BRC, AND THE RECALCULATION PROCESS BEGUN.
+ 298               /
+ 299               
+ 300 000243  7300  UPDATE, CLA CLL         /HERE ON CLOCK COUNT OVERFLOW.
+ 301                                                       /START NEXT SWEEP
+ 302               COLDST,
+ 303               IFDEF DR8E <
+ 304                       0                       /TRAP TO READ SR OR BRC
+ 305               >
+ 306 000244  7604          LAS                     /HERE FOR /SR
+ 307               IFNDEF DR8E <
+ 308 000245  6144          6144                    /VRS: READ M1703, IF ANY
+ 309               /VRS: BITS FROM MY JOYSTICKS ARE ORDERED FRLA, NOT LRAF AS
+ 310               /VRS: EXPECTED.  FIX THAT UP HERE.
+ 311 000246  3073          DCA INTWRD              /VRS: SAVE CONTROL BITS
+ 312 000247  1073          TAD INTWRD              /VRS: GET CONTROL BITS
+ 313 000250  0324          AND C4010               /VRS: EXTRACT F BITS
+ 314 000251  7112          CLL RTR; RAR            /VRS: ...AND MOVE THEM DOWN
+     000252  7010  
+ 315 000253  3316          DCA INTTEM              /VRS: SAVE THEM A MOMENT
+ 316 000254  1073          TAD INTWRD              /VRS: GET CONTROL BITS AGAIN
+ 317 000255  0325          AND C3006               /VRS: GET RL BITS
+ 318 000256  3327          DCA RLBITS              /VRS: SAVE RL BITS
+ 319 000257  1327          TAD RLBITS              /VRS: GET RL BITS
+ 320 000260  7112          CLL RTR                 /VRS: REPOSITION
+ 321 000261  1327          TAD RLBITS              /VRS: FORM RLRL
+ 322 000262  7104          CLL RAL                 /VRS: REPOSITION
+ 323 000263  0325          AND C3006               /VRS: GET LR BITS
+ 324 000264  3327          DCA RLBITS              /VRS: SAVE LR BITS
+ 325 000265  1073          TAD INTWRD              /VRS: GET CONTROL BITS AGAIN
+ 326 000266  0326          AND C0401               /VRS: ISOLATE A BITS
+ 327 000267  1327          TAD RLBITS              /VRS: MERGE SAVED LR BITS
+ 328 000270  7104          CLL RAL                 /VRS: REPOSITION A BITS
+ 329 000271  1316          TAD INTTEM              /VRS: MERGE SAVED F BITS
+ 330               >
+ 331 000272  3073          DCA INTWRD              /STORE TEMPORARILY
+ 332 000273  1073          TAD INTWRD              /MASK OUT LEFTMOST 4 BITS
+ 333 000274  7012          RTR                     /FOR NUMBER ONE
+ 334 000275  7012          RTR
+ 335 000276  0317          AND LFTHAF
+ 336 000277  3316          DCA INTTEM              /AND STORE
+ 337 000300  1073          TAD INTWRD              /MASK OUT RIGHTMOST BITS FOR NUMBER TWO
+ 338 000301  0320          AND RYTHAF
+ 339 000302  1316          TAD INTTEM              /ADD TOGETHER
+ 340               IFDEF DR8E <
+ 341                       JMP .+2                 /AND CONTINUE
+ 342               CODST,  DBRI                    /HERE FOR BRC - PICK UP AND CLEAR
+ 343               >
+ 344 000303  3073          DCA INTWRD              /CONTINUE
+ 345 000304  1140          TAD M550                /RESTORE INTERUPT COUNT BEFORE NEXT
+ 346 000305  6001          ION                             /GET READY FOR THE NEXT CYCLE
+ 347 000306  7200          CLA                             /COUNTER BYPASSED TO RUN ON 100HZ INSTEAD OF 10KHZ
+ 348 000307  7540          SMA SZA                 /(SKIP ON MINUS AC /SKIP ON ZERO AC)
+ 349 000310  1105          TAD ACCPER              /IF ZERO, RESET COUNT
+ 350 000311  3104          DCA ACCFLG
+ 351               
+ 352 000312  5713          JMP I .+1               /NOW GET DOWN TO WORK.
+ 353 000313  0400          ONEUP
+ 354               
+ 355 000314  1743  BUFSET, SETBUF
+ 356 000315  7733  TABLEN, AUTO17-CALCOS
+ 357 000316  0000  INTTEM, 0
+ 358 000317  0360  LFTHAF, 0360
+ 359 000320  0017  RYTHAF, 0017
+ 360 000321  1000  STRT1,  1000    / X START POSITION SHIP 1
+ 361 000322  7000  STRT2,  -1000   / X START POSITION SHIP 2
+ 362 000323  3000  STRTY,  3000    / Y START POSITION 
+ 363               IFDEF DR8E <
+ 364               SWRD,   2000-CODST
+ 365               XROPT,  JMP CODST
+ 366               >
+ 367               IFNDEF DR8E <
+ 368 000324  4010  C4010,  4010    /VRS: FIRE BITS
+ 369 000325  3006  C3006,  3006    /VRS: RIGHT-LEFT BITS
+ 370 000326  0401  C0401,  0401    /VRS: ACCELERATE BITS
+ 371 000327  0000  RLBITS, .-.     /VRS: SAVED RIGHT-LEFT BITS
+ 372               >
+ 373               
+ 374               /
+ 375               /       THIS IS THE INTERUPT SERVICE ROUTINE.  MOST OF THE
+ 376               /       INTERUPTS WILL BE FROM THE CRYSTAL CLOCK WHICH WILL BE
+ 377               /       COUNTED AND UNLESS THE COUNT OVERFLOWS THE INTERUPT IS
+ 378               /       DISMISSED IMMEDIATLY.  IF THE COUNT OVER FLOWS, JMP IS TO
+ 379               /       UPDATE WITH IOF.  
+ 380               /
+ 381               /       SPECIAL CASE IS KEYBOARD INTERUPT WHEN THE GAMOVR FLAG IS
+ 382               /       SET IN WHICH CASE THE GAME IS RESTARTED.  
+ 383               /
+ 384               /       UNEXPECTED INTERUPTS ARE COUNTED AND AFTER ENOUGH OF THEM
+ 385               /       HAPPEN THE PROGRAM HALTS.  IF THIS HAPPENS RELOAD OR FIND THE
+ 386               /       STRANGE FLAG
+ 387               /
+ 388               
+ 389 000330  3365  INTSER, DCA INTACC              /HERE RIGHT AFTER INTERUPT - STORE
+ 390 000331  7010          RAR                             /AC AND LINK
+ 391 000332  3366          DCA INTLNK              /FOR POSSIBLE CONTINUATION
+ 392 000333  6133          CLSK                    /WAS IT THE CRYSTAL CLOCK?
+ 393 000334  5340          JMP INTBUS              /NO TRY SOMETHING ELSE
+ 394 000335  2074          ISZ CLOCK               /AND BUMP CLOCK COUNTER
+ 395 000336  7000          NOP                             /IGNORE OVERFLOW
+ 396 000337  5243          JMP UPDATE              /YES, GO TO IT
+ 397               
+ 398               
+ 399 000340  6031  INTBUS, KSF                     /HERE ON NON-CLOCK INTERUPT
+ 400 000341  5353          JMP SPURIO              /NOT THE KEYBOARD
+ 401 000342  6036          KRB                     /CLEAR KEYBOARD FLAG
+ 402 000343  1352          TAD N203                /VRS: ^C?
+ 403 000344  7650          SNA CLA
+ 404 000345  5746          JMP I .+1               /VRS: YES: TRY FOR OS/8
+ 405 000346  7600          7600                    /VRS: CLA
+ 406 000347  1103          TAD GAMOVR              /IS THE GAMEOVER
+ 407 000350  7640          SZA CLA
+ 408 000351  5201          JMP RESTRT              /YES, RESTART
+ 409 000352  7575  N203,   -203                    /VRS: -'^C
+ 410 000353  6042  SPURIO, TCF                     /NO, HELL WITH IT
+ 411 000354  2367          ISZ INTGLH              /COUNT ONE BADDIE
+ 412 000355  7410          SKP
+ 413 000356  7402          HLT                             /HALT IF TOO MANY BADDIES
+ 414               
+ 415 000357  7300  INTRET, CLA CLL         /HERE TO DISMISS THE INTERUPT
+ 416 000360  1366          TAD INTLNK
+ 417 000361  7004          RAL
+ 418 000362  1365          TAD INTACC
+ 419 000363  6001          ION
+ 420 000364  5400          JMP I 0
+ 421               
+ 422 000365  0000  INTACC, 0
+ 423 000366  0000  INTLNK, 0
+ 424 000367  0000  INTGLH, 0
+ 425               
+ 426               
+ 427               
+ 428               
+ 429               
+ 430               /
+ 431               /       NOW BEGINS THE GREAT UPDATE PROCEEDURE, FIRST FOR SHIP
+ 432               /       NUMBER ONE (THE DELTA SHAPED SHIP WHICH APPEARS ON
+ 433               /       THE LEFT AT THE START OF THE GAME).  IF ALIVE THE STATUS
+ 434               /       WORD (INTWRD) IS TESTED FOR REQUESTS FOR LEFT TURN,
+ 435               /       RIGHT TURN, THRUST ON, AND LAUNCH PROJECTILE.  THESE ACTIONS
+ 436               /       MAY OR MAY NOT BE ACTED UPON DEPENDING ON COUNTS AND FLAGS.
+ 437               /       WHEN THIS IS COMPLETE THE SAME OPERATION IS PERFORMED FOR
+ 438               /       NUMBER TWO.
+ 439               /
+ 440               
+ 441                       *400
+ 442               
+ 443 000400  1022  ONEUP,  TAD ONEFLG              /FIRST SEE IF IT'S IN NORMAL SPACE
+ 444 000401  7450          SNA
+ 445 000402  5210          JMP ONEOK               /YES IT IS
+ 446 000403  7001          IAC                     /NO, BUT IS IT JUST COMING OUT?
+ 447 000404  7450          SNA
+ 448 000405  1032          TAD ONEFIN              /YES, THROW BACK IN IF ALREADY DESTROYED
+ 449 000406  3022          DCA ONEFLG              /OTHERWISE JUST COUNT ONE
+ 450 000407  5752          JMP I ITWOUP            /AND GO TO FIX UP NUMBER TWO
+ 451               
+ 452 000410  1020  ONEOK,  TAD ONEOUT              /IN NORMAL SPACE - IS IT EXPLODING?
+ 453 000411  7640          SZA CLA
+ 454 000412  5237          JMP ONEFIG              /IF YES, ALLOW NO CONTROLS
+ 455 000413  1045          TAD TWOFIN              /HAS THE ENEMY BEEN VANQUISHED?
+ 456 000414  7640          SZA CLA
+ 457 000415  4756          JMS I ONEWN             /YES, SIGNAL VICTORY
+ 458 000416  1073          TAD INTWRD              /NOW BEGIN TEST OF REQUEST
+ 459 000417  0354          AND OP300               /LEFT AND RIGHT TURN TOGETHER MEAN HYPERSPACE!
+ 460 000420  1355          TAD OM300               /TEST BITS 4 AND 5
+ 461 000421  7640          SZA CLA
+ 462 000422  5225          JMP ONELEF              /NOPE, CONTINUE
+ 463 000423  7040          CMA                     /YES, CALL HYPER WITH AC=-1 FOR NUMBER ONE
+ 464 000424  5475          JMP I HYPER
+ 465 000425  1073  ONELEF, TAD INTWRD              /REQUEST FOR LEFT TURN?
+ 466 000426  0125          AND P200                /TEST BIT 4
+ 467 000427  7650          SNA CLA
+ 468 000430  5233          JMP ONERYT              /NO
+ 469 000431  7340          CLA CLL CMA             /YES DECREMENT ANGLE
+ 470 000432  5237          JMP ONEFIG
+ 471               
+ 472 000433  1073  ONERYT, TAD INTWRD              /HOW ABOUT RIGHT TURN
+ 473 000434  0123          AND P100                /TEST BIT 5
+ 474 000435  7640          SZA CLA
+ 475 000436  7001          IAC                     /YES, INCREMENT ANGLE
+ 476               
+ 477 000437  1023  ONEFIG, TAD ONETHE              /PICK UP AND ADJUST ANGLE (MAYBE)
+ 478 000440  4477          JMS I THEADJ            /BRING BACK WITHIN LIMITS OF TRIG FUNCTIONS
+ 479 000441  3023          DCA ONETHE              /AND STORE
+ 480 000442  1023          TAD ONETHE              /FIND THEM TRIG FUNCTIONS
+ 481 000443  4465          JMS I SINE              /AND STORE ONCE AND FOR ALL
+ 482 000444  3030          DCA ONESIN              /IN THE APPROPRIATE PLACES
+ 483 000445  1023          TAD ONETHE
+ 484 000446  4466          JMS I COSINE
+ 485 000447  3031          DCA ONECOS
+ 486 000450  1020          TAD ONEOUT              /DO NOT ALLOW THRUST IF EXPLODING
+ 487 000451  7640          SZA CLA
+ 488 000452  5272          JMP ONEVEL
+ 489               
+ 490               
+ 491               
+ 492 000453  1104  ONEMOV, TAD ACCFLG              /ALLOW ANY VELOCITY INCREASE THIS CYCLE?
+ 493 000454  7640          SZA CLA
+ 494 000455  5272          JMP ONEVEL              /NOPE
+ 495 000456  1073          TAD INTWRD              /YES, ANY REQUESTED?
+ 496 000457  0122          AND P40                 /TEST BIT 6
+ 497 000460  7650          SNA CLA
+ 498 000461  5272          JMP ONEVEL              /NONE REQUESTED
+ 499 000462  1031          TAD ONECOS              /YES, ADD IN VELOCITY INCREMENT DEPENDING 
+ 500 000463  1025          TAD ONEVEY              /ON ORIENTATION
+ 501 000464  4500          JMS I VEESCL            /BUT DO NOT ALLOW TO EXCEED MAXIMUM
+ 502 000465  3025          DCA ONEVEY              /AND STORE
+ 503 000466  1030          TAD ONESIN              /DO THE SAME FOR THE OTHER (X) COMPONENT
+ 504 000467  1024          TAD ONEVEX
+ 505 000470  4500          JMS I VEESCL
+ 506 000471  3024          DCA ONEVEX
+ 507               
+ 508               
+ 509               
+ 510 000472  1024  ONEVEL, TAD ONEVEX              /NOW UPDATE THE POSITION WITH THE 
+ 511 000473  4501          JMS I ISHFT             /VELOCITY COMPONENTS DIVIDED BY 4
+ 512 000474  4501          JMS I ISHFT             /THIS MAINTAINS MAXIMUM RESOLUTION
+ 513 000475  1026          TAD ONEPEX
+ 514 000476  3026          DCA ONEPEX              /IGNORE ANY OVERFLOW
+ 515 000477  1025          TAD ONEVEY              /DO THE SAME FOR Y COORDINATE
+ 516 000500  4501          JMS I ISHFT             /AND VELOCITY COMPONENT
+ 517 000501  4501          JMS I ISHFT
+ 518 000502  1027          TAD ONEPEY
+ 519 000503  3027          DCA ONEPEY
+ 520 000504  1020          TAD ONEOUT              /DO NOT ALLOW PROJECTILE LAUNCH IF
+ 521 000505  7640          SZA CLA                 /EXPLODING
+ 522 000506  5752          JMP I ITWOUP
+ 523               
+ 524               
+ 525               
+ 526 000507  1353  ONELNC, TAD LNC1FG              /OTHERWISE, SEE IF RELOAD IS FINISHED
+ 527 000510  7650          SNA CLA
+ 528 000511  5314          JMP .+3
+ 529 000512  2353          ISZ LNC1FG              /NO, CONTINUE RELOADING
+ 530 000513  5752          JMP I ITWOUP            /AND EXIT
+ 531 000514  1073          TAD INTWRD              /YES, READY TO LAUNCH, TRIGGER BEEN PULLED?
+ 532 000515  0120          AND P20                 /TEST BIT7
+ 533 000516  7650          SNA CLA
+ 534 000517  5752          JMP I ITWOUP            /NO, WAIT FOR A BETTER SHOT
+ 535                                               /.....I GUESS.....
+ 536 000520  1111          TAD PROLIF              /YES, SET CYCLE COUNT FOR THIS LAUNCH
+ 537 000521  3416          DCA I AUTO16            /AUTO16 ALWAYS POINTS AT THE NEXT SLOT IN THE FILE
+ 538 000522  1024          TAD ONEVEX              /ADD SHIPS VELOCITY (SCALED OF COURSE)
+ 539 000523  4501          JMS I ISHFT             /TO ORIENTATION TO EXTABLISH X VELOCITY
+ 540 000524  4470          JMS I RSHIFT            /COMPONENT OF PROJECTILE
+ 541 000525  1030          TAD ONESIN
+ 542 000526  4470          JMS I RSHIFT            /AND STICK IT IN THE FILE
+ 543 000527  3416          DCA I AUTO16
+ 544 000530  1030          TAD ONESIN              /MOVE THE LAUNCH POINT OUTSIDE THE
+ 545 000531  7106          CLL RTL                 /SHIP OF ORIGIN
+ 546 000532  1026          TAD ONEPEX
+ 547 000533  3416          DCA I AUTO16            /AND STORE X POSITION
+ 548 000534  1025          TAD ONEVEY              /NOW DO THE SAME FOR THE Y VELOCITY AND
+ 549 000535  4501          JMS I ISHFT             /POSITION
+ 550 000536  4470          JMS I RSHIFT
+ 551 000537  1031          TAD ONECOS
+ 552 000540  4470          JMS I RSHIFT
+ 553 000541  3416          DCA I AUTO16
+ 554 000542  1031          TAD ONECOS
+ 555 000543  7106          CLL RTL
+ 556 000544  1027          TAD ONEPEY
+ 557 000545  3416          DCA I AUTO16
+ 558 000546  1136          TAD M200                /START RELOAD CYCLE
+ 559 000547  3353          DCA LNC1FG
+ 560 000550  4502          JMS I RESET1            /RESET AUTO16 TO NEXT HOLE
+ 561               
+ 562 000551  5752          JMP I .+1               /NOW TO FIX IT UP WITH NUMBER TWO
+ 563 000552  0600  ITWOUP, TWOUP
+ 564               
+ 565 000553  0000  LNC1FG, 0                       /PROJECTILE LAUNCH ENABLE
+ 566               
+ 567 000554  0300  OP300,  300                     /HYPERSPACE REQUEST CODE BITS 4 AND 5
+ 568 000555  7500  OM300,  -300
+ 569 000556  2522  ONEWN,  ONEWIN                  /POINTER TO VICTORY MESSAGE
+ 570               
+ 571               
+ 572               /
+ 573               /       HERE BEGINS THE UPDATE PROCEEDURE FOR SHIP NUMBER TWO.
+ 574               /       OPERATION IS THE SAME AS FOR NUMBER ONE ABOVE.
+ 575               /
+ 576               
+ 577                       *600
+ 578               
+ 579 000600  1035  TWOUP,  TAD TWOFLG              /FIRST SEE IF IT'S IN NORMAL SPACE
+ 580 000601  7450          SNA
+ 581 000602  5210          JMP TWOOK               /YES, CONTINUE
+ 582 000603  7001          IAC                     /NO, BUMP COUNT AND TEST FOR REENTRY
+ 583 000604  7450          SNA
+ 584 000605  1045          TAD TWOFIN              /IF RE-ENTERING THROW BACK OUT IF FINISHED
+ 585 000606  3035          DCA TWOFLG              /AND CONTINUE
+ 586 000607  5750          JMP I IONEST
+ 587               
+ 588 000610  1033  TWOOK,  TAD TWOOUT              /HERE WHEN READY TO UPDATE IN NORMAL SPACE
+ 589 000611  7640          SZA CLA                 /IS IT EXPLODING?
+ 590 000612  5235          JMP TWOFIG              /YES DO NOT ALLOW HYPERSPACE
+ 591 000613  1032          TAD ONEFIN              /DID WE JUST WIN?
+ 592 000614  7640          SZA CLA
+ 593 000615  4754          JMS I TWOWN             /YES ENABLE END OF GAME MESSAGE
+ 594 000616  1073          TAD INTWRD              /TEST FOR HYPERSPACE REQUEST
+ 595 000617  0352          AND OP14
+ 596 000620  1353          TAD OM14                /BITS 8 AND 9 MUST BE SET
+ 597 000621  7650          SNA CLA
+ 598 000622  5475          JMP I HYPER             /8 AND 9 SET. ENTER HYPER ROUTINE WITH AC=0
+ 599                                               /FOR SHIP NUMBER 2
+ 600 000623  1073  TWOLEF, TAD INTWRD              /TEST FOR LEFT TURN - BIT 8
+ 601 000624  0116          AND P10
+ 602 000625  7650          SNA CLA
+ 603 000626  5231          JMP TWORYT              /NOT SET
+ 604 000627  7340          CLA CLL CMA             /SET, DECREMENT TWOTHE BY 1 DEGREE
+ 605 000630  5235          JMP TWOFIG              /SKIP TEST FOR RIGHT TURN
+ 606               
+ 607 000631  7307  TWORYT, CLA CLL IAC RTL         /TEST FOR RIGHT TURN - BIT 9
+ 608 000632  0073          AND INTWRD
+ 609 000633  7640          SZA CLA
+ 610 000634  7001          IAC                     /IF SET INCREMENT TWOTHE BY 1 DEGREE
+ 611               
+ 612 000635  1036  TWOFIG, TAD TWOTHE              /UPDTAE TWOTHE
+ 613 000636  4477          JMS I THEADJ            /BRING TO WITHIN LIMITS OF SINE,COSINE
+ 614 000637  3036          DCA TWOTHE              /AND STORE
+ 615 000640  1036          TAD TWOTHE
+ 616 000641  4465          JMS I SINE              /CALCULATE SINE AND COSINE FUNCTIONS
+ 617 000642  3043          DCA TWOSIN              /AND STORE IN DATA TABLE
+ 618 000643  1036          TAD TWOTHE
+ 619 000644  4466          JMS I COSINE
+ 620 000645  3044          DCA TWOCOS
+ 621 000646  1033          TAD TWOOUT              /DO NOT ALLOW VELOCITY CHANGE IF EXPLODING
+ 622 000647  7640          SZA CLA
+ 623 000650  5270          JMP TWOVEL
+ 624               
+ 625               
+ 626               
+ 627 000651  1104  TWOMOV, TAD ACCFLG              /NOW FOR ACCELERATION.  TEST TO SEE IF ALLOWED
+ 628 000652  7640          SZA CLA                 /DURING THIS UPDATE CYCLE
+ 629 000653  5270          JMP TWOVEL              /NOPE
+ 630 000654  7105          CLL IAC RAL             /YES, TEST FOR BIT 2 SET
+ 631 000655  0073          AND INTWRD
+ 632 000656  7650          SNA CLA
+ 633 000657  5270          JMP TWOVEL              /NOT SET
+ 634               
+ 635 000660  1043          TAD TWOSIN              /UPDATE X VELOCITY COMPONENT BY SINE OF
+ 636 000661  1037          TAD TWOVEX              /ANGLE OF ORIENTATION
+ 637 000662  4500          JMS I VEESCL            /AND SCALE TO NOT EXCEED MAX
+ 638 000663  3037          DCA TWOVEX              /UPDATE Y COMPONENT WITH COSINE
+ 639               
+ 640 000664  1044          TAD TWOCOS
+ 641 000665  1040          TAD TWOVEY
+ 642 000666  4500          JMS I VEESCL
+ 643 000667  3040          DCA TWOVEY
+ 644               
+ 645               
+ 646               
+ 647 000670  1037  TWOVEL, TAD TWOVEX              /NOW UPDATE THE POSITION WITH THE VELOCITY
+ 648 000671  4501          JMS I ISHFT             /COMPONENTS/16
+ 649 000672  4501          JMS I ISHFT
+ 650 000673  1041          TAD TWOPEX
+ 651 000674  3041          DCA TWOPEX
+ 652 000675  1040          TAD TWOVEY
+ 653 000676  4501          JMS I ISHFT
+ 654 000677  4501          JMS I ISHFT
+ 655 000700  1042          TAD TWOPEY
+ 656 000701  3042          DCA TWOPEY
+ 657 000702  1033          TAD TWOOUT
+ 658 000703  7640          SZA CLA
+ 659 000704  5750          JMP I IONEST
+ 660               
+ 661               
+ 662               
+ 663 000705  1351  TWOLNC, TAD LNC2FG              /NOW CHECK FOR PROJECTILE LAUNCH. FIRST
+ 664 000706  7650          SNA CLA                 /TEST TO SEE IF RELOAD COMPLETE
+ 665 000707  5312          JMP .+3
+ 666 000710  2351          ISZ LNC2FG              /NO, COUNT ONE CYCLE AND EXIT
+ 667 000711  5750          JMP I IONEST
+ 668 000712  7001          IAC                     /YES, TEST TRIGGER BIT 11
+ 669 000713  0073          AND INTWRD
+ 670 000714  7650          SNA CLA
+ 671 000715  5750          JMP I IONEST            /NOT SET, HELL WITH IT
+ 672               
+ 673 000716  1111          TAD PROLIF              /OK, SET PROJECTILE LIFE
+ 674 000717  3416          DCA I AUTO16            /AUTO16 IS ALWAYS POINTING AT THE NEXT SLOT
+ 675 000720  1037          TAD TWOVEX              /ADD SHIPS VELOCITY
+ 676 000721  4501          JMS I ISHFT             /(ADJUSTED)
+ 677 000722  4470          JMS I RSHIFT
+ 678 000723  1043          TAD TWOSIN              /TO THAT OF PROJECTILE  - AGAIN X COMPONENT
+ 679 000724  4470          JMS I RSHIFT            /FROM SINE OF ANGLE OF ORIENTATION
+ 680 000725  3416          DCA I AUTO16
+ 681 000726  1043          TAD TWOSIN              /SET INITIAL POSITION TO BE JUST AHEAD
+ 682 000727  7106          CLL RTL                 /OF THE SHIP
+ 683 000730  1041          TAD TWOPEX              /X COMPONENT
+ 684 000731  3416          DCA I AUTO16
+ 685 000732  1040          TAD TWOVEY              /NOW THE Y COMPONENTS FROM Y VELOCITY
+ 686 000733  4501          JMS I ISHFT             /Y POSITION AND COSINE
+ 687 000734  4470          JMS I RSHIFT
+ 688 000735  1044          TAD TWOCOS
+ 689 000736  4470          JMS I RSHIFT
+ 690 000737  3416          DCA I AUTO16
+ 691 000740  1044          TAD TWOCOS
+ 692 000741  7106          CLL RTL
+ 693 000742  1042          TAD TWOPEY
+ 694 000743  3416          DCA I AUTO16
+ 695 000744  1136          TAD M200
+ 696 000745  3351          DCA LNC2FG              /200 CYCLES OF RELOAD
+ 697 000746  4502          JMS I RESET1            /DRINK LEADEN DEATH, NUMBER ONE!
+ 698               
+ 699 000747  5750          JMP I .+1               /FINAL EXIT TO DISPLAY FILE CALCULATIONS
+ 700 000750  1000  IONEST, ONESET
+ 701               
+ 702 000751  0000  LNC2FG, 0                       /RELOAD COUNT
+ 703               
+ 704 000752  0014  OP14,   14                      /HYPERSPACE CODE
+ 705 000753  7764  OM14,   -14
+ 706 000754  2530  TWOWN,  TWOWIN
+ 707               
+ 708               
+ 709               /
+ 710               /       HERE BEGINS THE DISPLAY CALCULATIONS FOR THE TWO SHIPS.  AT
+ 711               /       THIS POINT ONLY THE POSITION AND ORIENTATION OF EACH VESSEL
+ 712               /       IS ONF INTEREST SINCE THE VELOCITY AND ALL THAT HAVE ALREADY
+ 713               /       BEEN TAKEN CARE OF.  FOR THE BOTH SHIPS THE DISPLAY FILES ARE
+ 714               /       CALCULATED AS A SERIES OF PAIRS OF X,Y COORDINATES.  BETWEEN
+ 715               /       EACH PAIR OF POINTS A FOUR POINT VECTOR WILL BE DRAWN.  THE
+ 716               /       ACTUAL COORDINATES ARE CALCULATED AS DISPLACEMENTS
+ 717               /       FROM THE CENTRAL PSOTION OF THE SHIP, TAKING INTO ACCOUNT THE
+ 718               /       ANGLE OF ORIENTATION.  THE FORMULAS FOLLOWED ARE:
+ 719               /
+ 720               /       X(POINT)=X(BASE)+X(REL)*COS[THE]+Y(REL)*SINE[THE]
+ 721               /
+ 722               /       Y(POINT)=Y(BASE)+Y(REL)*COS[THE]-X(REL)*SINE[THE]
+ 723               /
+ 724               /       WHERE SINE[THE] AND COS[THE] ARE THE FUNCTIONS OF THE
+ 725               /       ANGLE OF ORIENTATION, X(BASE) AND Y(BASE) ARE THE 
+ 726               /       COORDINATES OF THE SHIPS POSITION AND X(REL) AND Y(REL)
+ 727               /       CORRESPOND TO DISPLACEMENT PAIRS DEPENDING ON THE SHAPE
+ 728               /       OF THE FIGURE.  ALL X AND Y RELS LIE WITHIN THE RANGE 0-3 AND
+ 729               /       THERE FORE ALL NECESSARY DISPLACEMENTS FROM BASE COORDINATES
+ 730               /       MAY BE CALCULATEDFROM DIFFERENT COMBINATIONS OF T10SIN, T20COS
+ 731               /       ETC.  THESE VALUES ARE CALCULATED BY A CALL TO POSCAL WITH THE SINE 
+ 732               /       AND COSINE OF THE ANGLE OF INTEREST IN CALSIN AND CALCOS.
+ 733               /
+ 734               /       FOLLOWING THIS METHOD ANY FIGURE DESCRIBABLE WITH A 7 BY 7
+ 735               /       MATRIX OF POINTS MAY BE QUICKLY CALCULATED.
+ 736               /
+ 737               /       BEGINNING AT ONESET DIFFERENT DISPLACEMENT PAIRS ARE CALCULATED
+ 738               /       AND DEPOSITIED THROUGH AUTO10 TO FORM THE DISPLAY FILE FOR SHIP NUMBER ONE.
+ 739               /
+ 740               
+ 741               
+ 742                       *1000
+ 743               
+ 744 001000  7300  ONESET, CLA CLL                 /BEGIN DISPLAY FILE FOR NUMBER ONE
+ 745 001001  1022          TAD ONEFLG              /DONT BOTHER IF NOT IN NORMAL SPACE
+ 746 001002  7640          SZA CLA
+ 747 001003  5753          JMP I ITWOST
+ 748 001004  1030          TAD ONESIN              /SET UP FOR MATRIX COMPONENT CALCULATIONS
+ 749 001005  3063          DCA CALSIN
+ 750 001006  1031          TAD ONECOS
+ 751 001007  3064          DCA CALCOS
+ 752 001010  4472          JMS I CALPOS            /CALL THE CALCULATOR
+ 753               
+ 754               /
+ 755               /       CONSIDER THE 7 BY 7 MATRIX OF DISPLACEMENT POINTS WITH THE
+ 756               /       CENTER AT 0,0 CORRESPONDING TO THE SHIPS POSITION.  A SERIES
+ 757               /       OF POINTS IS NOW DESCRIBED AROUND THIS CENTER USING THE
+ 758               /       MULTIPLES OF THE TRIG FUNCTIONS JUST CALCULATED
+ 759               /       SO THAT ANY POINT ON THE OUTLINE IS DESCRIBABLE AS X,Y
+ 760               /       DISPLACED BY X,Y OF THE SHIP ITSELF
+ 761               /
+ 762               
+ 763 001011  1113          TAD ONEFIL              /SET UP AUTO10 AS THE DISPLAY FILE
+ 764 001012  3010          DCA AUTO10              /POINTER
+ 765 001013  1026          TAD ONEPEX              /THE FIRST POINT OF THE OUTLINE IS
+ 766 001014  1057          TAD T30SIN
+ 767 001015  3410          DCA I AUTO10            /       0,3     OR TOP CENTER
+ 768 001016  1027          TAD ONEPEY
+ 769 001017  1062          TAD T30COS
+ 770 001020  3410          DCA I AUTO10
+ 771               
+ 772 001021  1060          TAD T10COS
+ 773 001022  7041          CIA                     /THE SECOND IS 
+ 774 001023  1026          TAD ONEPEX
+ 775 001024  3410          DCA I AUTO10            /       -1,0
+ 776 001025  1055          TAD T10SIN              /OR JUST LEFT OF DEAD CENTER
+ 777 001026  1027          TAD ONEPEY              /AND SO ON
+ 778 001027  3410          DCA I AUTO10
+ 779               
+ 780 001030  1057          TAD T30SIN
+ 781 001031  1062          TAD T30COS              /THE THIRD POINT IS
+ 782 001032  7041          CIA
+ 783 001033  1026          TAD ONEPEX              /       -3,-3
+ 784 001034  3410          DCA I AUTO10
+ 785 001035  1062          TAD T30COS              /OR BOTTOM LEFT HAND CORNER
+ 786 001036  7041          CIA
+ 787 001037  1057          TAD T30SIN
+ 788 001040  1027          TAD ONEPEY
+ 789 001041  3410          DCA I AUTO10
+ 790               
+ 791               
+ 792               
+ 793 001042  1055          TAD T10SIN
+ 794 001043  7041          CIA                     /FOURTH POINT
+ 795 001044  1026          TAD ONEPEX
+ 796 001045  3410          DCA I AUTO10            /       0,-1
+ 797 001046  1060          TAD T10COS
+ 798 001047  7041          CIA                     /OR JUST BELOW CENTER
+ 799 001050  1027          TAD ONEPEY
+ 800 001051  3410          DCA I AUTO10
+ 801               
+ 802 001052  1073  FLAM1,  TAD INTWRD              /TEST FOR POWER ON. IF ON, DRAW THE
+ 803 001053  0122          AND P40                 /FLAME WITH AN EXTRA POINT SOME 
+ 804 001054  7650          SNA CLA                 /DISTANCE DIRECTLY BELOW THE SHIP
+ 805 001055  5321          JMP ONECON              /POWER NOT ON - CONTINUE
+ 806 001056  1020          TAD ONEOUT              /DO NOT ALLOW IF EXPLODING
+ 807 001057  7640          SZA CLA
+ 808 001060  5321          JMP ONECON
+ 809               
+ 810 001061  1354          TAD ONFG1               /USE ONFG1 TO TURN THE FLAME ON AND 
+ 811 001062  7450          SNA                     /OFF TO MAKE IT FLICKER.  DISPLAY THE
+ 812 001063  7344          CLA CLL CMA RAL         /FLAME ONE TIME OUT OF THREE
+ 813 001064  3354          DCA ONFG1
+ 814               
+ 815 001065  2354          ISZ ONFG1
+ 816 001066  5321          JMP ONECON              /ONE OUT OF THREE TIMES THIS WILL SKIP
+ 817               
+ 818 001067  1355          TAD ONFG2               /VARY ALSO THE LENGHT OF THE FLAME
+ 819 001070  7040          CMA                     /WITH LONG SHORT LONG SHORT
+ 820 001071  3355          DCA ONFG2
+ 821               
+ 822 001072  1355          TAD ONFG2               /TIP OF FLAME AT EITHER
+ 823 001073  7650          SNA CLA
+ 824 001074  1055          TAD T10SIN              /       0,-4    OR
+ 825 001075  1057          TAD T30SIN              /       0,-3
+ 826 001076  7041          CIA
+ 827 001077  1026          TAD ONEPEX
+ 828 001100  3410          DCA I AUTO10
+ 829 001101  1355          TAD ONFG2
+ 830 001102  7650          SNA CLA
+ 831 001103  1060          TAD T10COS
+ 832 001104  1062          TAD T30COS
+ 833 001105  7041          CIA
+ 834 001106  1027          TAD ONEPEY
+ 835 001107  3410          DCA I AUTO10
+ 836               
+ 837 001110  1055          TAD T10SIN
+ 838 001111  7041          CIA
+ 839 001112  1026          TAD ONEPEX              /RETURN DISPLAY TO 0,-1
+ 840 001113  3410          DCA I AUTO10
+ 841 001114  1060          TAD T10COS
+ 842 001115  7041          CIA
+ 843 001116  1027          TAD ONEPEY
+ 844 001117  3410          DCA I AUTO10
+ 845 001120  7344          CLA CLL CMA RAL         /ADD -2 TO POINT COUNT
+ 846               
+ 847               
+ 848               
+ 849 001121  1132  ONECON, TAD M6                  /SET POINT COUNT TO -6 OR -8
+ 850 001122  3021          DCA ONECNT
+ 851               
+ 852 001123  1057          TAD T30SIN              /CONTINUE WITH DISPLAY FILE - THIS POINT
+ 853 001124  7041          CIA
+ 854 001125  1062          TAD T30COS              /       AT 3,-3
+ 855 001126  1026          TAD ONEPEX              / 
+ 856 001127  3410          DCA I AUTO10            /OR LOWER RIGHT HAND CORNER
+ 857 001130  1057          TAD T30SIN
+ 858 001131  1062          TAD T30COS
+ 859 001132  7041          CIA
+ 860 001133  1027          TAD ONEPEY
+ 861 001134  3410          DCA I AUTO10
+ 862               
+ 863 001135  1060          TAD T10COS              /NEXT
+ 864 001136  1026          TAD ONEPEX              / 
+ 865 001137  3410          DCA I AUTO10            /       1,0
+ 866 001140  1055          TAD T10SIN              / 
+ 867 001141  7041          CIA                     / OR JUST RIGHT OF CENTER
+ 868 001142  1027          TAD ONEPEY
+ 869 001143  3410          DCA I AUTO10
+ 870               
+ 871 001144  1057          TAD T30SIN              /FINALLY BACK TO
+ 872 001145  1026          TAD ONEPEX              / 
+ 873 001146  3410          DCA I AUTO10            /       0,3
+ 874 001147  1062          TAD T30COS              / 
+ 875 001150  1027          TAD ONEPEY              / TOP CENTE
+ 876 001151  3410          DCA I AUTO10
+ 877               
+ 878 001152  5753          JMP I ITWOST            /NOW FOR NUMBER TWO
+ 879 001153  1200  ITWOST, TWOSET
+ 880               
+ 881 001154  0000  ONFG1,  0                       /USED TO COUNT FLICKERS
+ 882 001155  0000  ONFG2,  0                       /SHORT OR LONG FLAG
+ 883               
+ 884               
+ 885               /
+ 886               /       HERE BEGINS THE DISPLAY FILE GENERATOR FOR SHIP TWO.
+ 887               /       IT WORKS JUST LIKE THE ONE FOR NUMBER ONE BUT WITH
+ 888               /       DIFFERENT DISPLACEMENT PAIRS AND TWO EXTRA POINTS
+ 889               /
+ 890               
+ 891                       *1200
+ 892               
+ 893 001200  7300  TWOSET, CLA CLL                 /DONT BOTHER IF NOT IN NORMAL SPACE
+ 894 001201  1035          TAD TWOFLG
+ 895 001202  7640          SZA CLA
+ 896 001203  5775          JMP I IFILDS
+ 897 001204  1043          TAD TWOSIN              /SET UP TO HAVE DISPLACEMENT INCREMENTS
+ 898 001205  3063          DCA CALSIN              /CALCULATED
+ 899 001206  1044          TAD TWOCOS
+ 900 001207  3064          DCA CALCOS
+ 901 001210  4472          JMS I CALPOS
+ 902               
+ 903 001211  1114          TAD TWOFIL              /SET AUTO10 TO POINT TO SECOND DISPLAY
+ 904 001212  3010          DCA AUTO10              /FILE
+ 905 001213  1057          TAD T30SIN              /FIRST POINT AT
+ 906 001214  1041          TAD TWOPEX              / 
+ 907 001215  3410          DCA I AUTO10            /       0,3
+ 908 001216  1062          TAD T30COS              / 
+ 909 001217  1042          TAD TWOPEY              / OR TOP CENTER
+ 910 001220  3410          DCA I AUTO10
+ 911               
+ 912 001221  1061          TAD T20COS
+ 913 001222  7041          CIA
+ 914 001223  1056          TAD T20SIN
+ 915 001224  1041          TAD TWOPEX
+ 916 001225  3410          DCA I AUTO10
+ 917 001226  1056          TAD T20SIN
+ 918 001227  1061          TAD T20COS              /SECOND POINT
+ 919 001230  1042          TAD TWOPEY              /       -2,2
+ 920 001231  3410          DCA I AUTO10
+ 921               
+ 922 001232  1061          TAD T20COS              /THIRD POINT
+ 923 001233  7041          CIA                     /       -2,0
+ 924 001234  1041          TAD TWOPEX
+ 925 001235  3410          DCA I AUTO10
+ 926 001236  1056          TAD T20SIN
+ 927 001237  1042          TAD TWOPEY
+ 928 001240  3410          DCA I AUTO10
+ 929               
+ 930               
+ 931               
+ 932 001241  1061          TAD T20COS
+ 933 001242  1057          TAD T30SIN
+ 934 001243  7041          CIA
+ 935 001244  1041          TAD TWOPEX              /FOURTH POINT
+ 936 001245  3410          DCA I AUTO10            /       -2,-3
+ 937 001246  1062          TAD T30COS
+ 938 001247  7041          CIA
+ 939 001250  1056          TAD T20SIN
+ 940 001251  1042          TAD TWOPEY
+ 941 001252  3410          DCA I AUTO10
+ 942               
+ 943               
+ 944               
+ 945 001253  1056          TAD T20SIN
+ 946 001254  7041          CIA                     /NEXT
+ 947 001255  1041          TAD TWOPEX              /       0,-2
+ 948 001256  3410          DCA I AUTO10
+ 949 001257  1061          TAD T20COS
+ 950 001260  7041          CIA
+ 951 001261  1042          TAD TWOPEY
+ 952 001262  3410          DCA I AUTO10
+ 953               
+ 954 001263  7305  FLAM2,  CLA CLL IAC RAL         /NOW THE FLAME BIT. CHECK FOR POWER ON
+ 955 001264  0073          AND INTWRD
+ 956 001265  7650          SNA CLA
+ 957 001266  5332          JMP TWOCON              /NO, FORGET IT
+ 958 001267  1033          TAD TWOOUT              /NOT ALLOWED IF EXPLODING
+ 959 001270  7640          SZA CLA
+ 960 001271  5332          JMP TWOCON
+ 961               
+ 962 001272  1376          TAD TWFG1               /SET THE 1-3 FLICKER AS WITH #1
+ 963 001273  7450          SNA
+ 964 001274  7344          CLA CLL CMA RAL
+ 965 001275  3376          DCA TWFG1
+ 966               
+ 967 001276  2376          ISZ TWFG1               /ALSO THE LENGHT VARIATION
+ 968 001277  5332          JMP TWOCON
+ 969               
+ 970 001300  1377          TAD TWFG2               /EVERY OTHER TIME LONG
+ 971 001301  7040          CMA
+ 972 001302  3377          DCA TWFG2
+ 973                                               /FLAME TIP AT EITHER
+ 974 001303  1377          TAD TWFG2               /       0,-3
+ 975 001304  7650          SNA CLA                 /OR
+ 976 001305  1056          TAD T20SIN              /       0,-5
+ 977 001306  1057          TAD T30SIN
+ 978 001307  7041          CIA
+ 979 001310  1041          TAD TWOPEX
+ 980 001311  3410          DCA I AUTO10
+ 981 001312  1377          TAD TWFG2
+ 982 001313  7650          SNA CLA
+ 983 001314  1061          TAD T20COS
+ 984 001315  1062          TAD T30COS
+ 985 001316  7041          CIA
+ 986 001317  1042          TAD TWOPEY
+ 987 001320  3410          DCA I AUTO10
+ 988               
+ 989 001321  1056          TAD T20SIN              /NOW BACK UP TO THE SHIP
+ 990 001322  7041          CIA
+ 991 001323  1041          TAD TWOPEX
+ 992 001324  3410          DCA I AUTO10
+ 993 001325  1061          TAD T20COS
+ 994 001326  7041          CIA
+ 995 001327  1042          TAD TWOPEY
+ 996 001330  3410          DCA I AUTO10
+ 997               
+ 998 001331  7344          CLA CLL CMA RAL         /ADD -2 TO POINT COUNT
+ 999               
+1000               
+1001               
+1002 001332  1133  TWOCON, TAD M10                 /SET POINT COUNT TO -8 OR -10
+1003 001333  3034          DCA TWOCNT
+1004               
+1005 001334  1057          TAD T30SIN              /CONTINUE WITH DISPLAY FILE
+1006 001335  7041          CIA                     /NEXT POINT AT 2,-3
+1007 001336  1061          TAD T20COS
+1008 001337  1041          TAD TWOPEX
+1009 001340  3410          DCA I AUTO10
+1010 001341  1062          TAD T30COS
+1011 001342  1056          TAD T20SIN
+1012 001343  7041          CIA
+1013 001344  1042          TAD TWOPEY
+1014 001345  3410          DCA I AUTO10
+1015               
+1016               
+1017               
+1018 001346  1061          TAD T20COS              /NEXT POINT
+1019 001347  1041          TAD TWOPEX              / 
+1020 001350  3410          DCA I AUTO10            /       2,0
+1021 001351  1056          TAD T20SIN
+1022 001352  7041          CIA
+1023 001353  1042          TAD TWOPEY
+1024 001354  3410          DCA I AUTO10
+1025               
+1026 001355  1061          TAD T20COS              /AND THE NEXT AT
+1027 001356  1056          TAD T20SIN
+1028 001357  1041          TAD TWOPEX              /       2,2
+1029 001360  3410          DCA I AUTO10
+1030 001361  1056          TAD T20SIN
+1031 001362  7041          CIA
+1032 001363  1061          TAD T20COS
+1033 001364  1042          TAD TWOPEY
+1034 001365  3410          DCA I AUTO10
+1035               
+1036 001366  1057          TAD T30SIN
+1037 001367  1041          TAD TWOPEX
+1038 001370  3410          DCA I AUTO10
+1039 001371  1062          TAD T30COS              /AND THE LAST AT
+1040 001372  1042          TAD TWOPEY              / 
+1041 001373  3410          DCA I AUTO10            /       0,3
+1042               
+1043 001374  5775          JMP I IFILDS            /NOW TO DISPLAY THE WHOLE MESS
+1044 001375  1400  IFILDS, FILDIS
+1045               
+1046 001376  0000  TWFG1,  0                       /FLIK THE FLAME
+1047 001377  0000  TWFG2,  0                       /LONG OR SHORT
+1048               
+1049               
+1050               /
+1051               /       HERE TO DISPLAY THE TWO SHIPS.  CHECK FIRST FOR COLLISION
+1052               /       AND THEN SET THE TWO PAIRS OF COORDENATES FOR THE END
+1053               /       POINTS AND CALL THE "VECTOR GENERATOR" TO DRAW THE DOTS
+1054               /       IN BETWEEN.  WHEN THE COUNT OVERFLOWS DO THE SAME FOR
+1055               /       NUMBER TWO.  THEN EXIT TO DISPLAY ALL THE PROJECTILES.
+1056               /
+1057               
+1058                       *1400
+1059               
+1060 001400  7300  FILDIS, CLA CLL                 /ALL SET TO GO
+1061 001401  4671          JMS I COLIDE            /TEST FOR COLLISION FIRST
+1062 001402  1022          TAD ONEFLG              /SKIP NUMBER ONE IF NOT IN NORMAL 
+1063 001403  7640          SZA CLA                 /SPACE
+1064 001404  5235          JMP TWODIS
+1065               
+1066 001405  1113          TAD ONEFIL              /SET UP POINTERS TO DISPLAY FILE
+1067 001406  3010          DCA AUTO10              /FOR NUMBER ONE
+1068 001407  1021          TAD ONECNT              /ALONG WITH VECTOR COUNT
+1069 001410  3011          DCA AUTO11
+1070 001411  1410          TAD I AUTO10            /SET OUT THE FIRST POINT PAIR
+1071 001412  3046          DCA XONEDS
+1072 001413  1410          TAD I AUTO10
+1073 001414  3047          DCA YONEDS
+1074 001415  1020          TAD ONEOUT              /NORMAL DISPLAY OR EXPLOSION?
+1075 001416  7640          SZA CLA
+1076 001417  5672          JMP I IONEEX            /GO ELSE WHERE FOR EXPLOSION
+1077               
+1078 001420  1410  FILONE, TAD I AUTO10            /STEP TO NEXT PAIR OF POINTS
+1079 001421  3050          DCA XTWODS              /SET X AND Y TO NEW POINT
+1080 001422  1410          TAD I AUTO10
+1081 001423  3051          DCA YTWODS
+1082 001424  4471          JMS I VECTOR            /CALL THE DOT DRAWING MACHINE
+1083 001425  2011          ISZ AUTO11
+1084 001426  7410          SKP                     /COUNT 
+1085 001427  5235          JMP TWODIS              /DO NUMBER TWO ON OVERFLOW
+1086 001430  1050          TAD XTWODS              /SWAP POINTS FOR NEXT PAIR
+1087 001431  3046          DCA XONEDS
+1088 001432  1051          TAD YTWODS              /THE GENERATOR DRAWS FROM ONE
+1089 001433  3047          DCA YONEDS              /TOWARDS TWO
+1090 001434  5220          JMP FILONE
+1091               
+1092               
+1093               
+1094 001435  1035  TWODIS, TAD TWOFLG              /HERE TO DO NUMBER TWO
+1095 001436  7640          SZA CLA                 /BUT NOT IF IN HYPER SPACE
+1096 001437  5663          JMP I IPRODS
+1097               
+1098 001440  1114          TAD TWOFIL              /SET UP FILE POINTER AS IN ONE
+1099 001441  3010          DCA AUTO10
+1100 001442  1034          TAD TWOCNT              /AND THE COUNT
+1101 001443  3011          DCA AUTO11
+1102 001444  1410          TAD I AUTO10            /I SUPPOSE THIS COULD BE A SUBROUTINE TOO
+1103 001445  3046          DCA XONEDS
+1104 001446  1410          TAD I AUTO10
+1105 001447  3047          DCA YONEDS
+1106 001450  1033          TAD TWOOUT              /IS IT EXPLODING?
+1107 001451  7640          SZA CLA
+1108 001452  5673          JMP I ITWOEX            /YES, HOW EXCITING
+1109               
+1110 001453  1410  TWDLOP, TAD I AUTO10            /NO HOW DULL, STICK IN NEXT PAIR OF
+1111 001454  3050          DCA XTWODS              /POINTS
+1112 001455  1410          TAD I AUTO10
+1113 001456  3051          DCA YTWODS              /AND CALL THE VECTOR SEQUENCE
+1114 001457  4471          JMS I VECTOR
+1115 001460  2011          ISZ AUTO11
+1116 001461  5264          JMP .+3
+1117               
+1118 001462  5663          JMP I .+1               /WHEN COUNT OVERFLOWS GO ON TO 
+1119 001463  1600  IPRODS, PRODIS                  /DO THE PROJECTILE THING
+1120               
+1121 001464  1050          TAD XTWODS              /OTHERWISE SWAP ON TO THE NEXT PAIR 
+1122 001465  3046          DCA XONEDS              /OF POINTS
+1123 001466  1051          TAD YTWODS
+1124 001467  3047          DCA YONEDS
+1125 001470  5253          JMP TWDLOP
+1126               
+1127 001471  2074  COLIDE, COLLID
+1128 001472  2271  IONEEX, ONEEXP
+1129 001473  2310  ITWOEX, TWOEXP
+1130               
+1131               
+1132               /
+1133               /       THIS IS THE SO CALLED "VECTOR GENERATOR" WHICH DRAWS A 
+1134               /       SERIES OF DOTS FROM XONEDS,YONEDS TO XTWODS,YTWODS.
+1135               /       THE COORDINATE COMPONENTS ARE DIVIDED INTO FOURTHS  AND
+1136               /       FOUR DOTS DRAWN ON THE SCOPE SCREEN.  NOTE THAT NO DOT
+1137               /       IS DRAWN AT XONEDS,YONEDS.  THIS IS COMPENSATED FOR ELSEWHERE.
+1138               /
+1139               
+1140               
+1141 001474  0000  DISPLY, 0                       /ENTER TO DRAW A FOUR POINT VECTOR
+1142 001475  1046          TAD XONEDS              /FROM XONEDS,YONEDS
+1143 001476  7041          CIA                     /TO XTWODS,YTWODS
+1144 001477  1050          TAD XTWODS              /DIVIDE COORDINATE DIFERENCES INTO
+1145 001500  4347          JMS DISHFT              /FOURTHS
+1146 001501  3052          DCA DIXTEM              /AND STORE INCREMENT
+1147 001502  1047          TAD YONEDS
+1148 001503  7041          CIA
+1149 001504  1051          TAD YTWODS
+1150 001505  4347          JMS DISHFT
+1151 001506  3053          DCA DIYTEM
+1152 001507  1131          TAD M4                  /FOR FOUR DOTS
+1153 001510  3054          DCA DISCNT
+1154               
+1155 001511  1046  DISLOP, TAD XONEDS              /ADD INCREMENT TO CURRENT X AND Y
+1156 001512  1052          TAD DIXTEM
+1157 001513  3046          DCA XONEDS              /NOTE THAT THIS ROUTINE DESTROYS
+1158 001514  1047          TAD YONEDS              /XONEDS AND YONEDS
+1159 001515  1053          TAD DIYTEM
+1160 001516  3047          DCA YONEDS
+1161 001517  1046          TAD XONEDS
+1162 001520  7012          RTR                     /DIVIDE BY 8 TO FIT SCREEN SIZE
+1163 001521  7010          RAR
+1164 001522  7100          CLL 
+1165 001523  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1166 001524  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1167 001525  7100          CLL
+1168 001526  6053          DILX                    /SET X VALUE
+1169 001527  7200          CLA
+1170 001530  1047          TAD YONEDS              /DO THE SAME FOR Y
+1171 001531  7012          RTR
+1172 001532  7010          RAR
+1173 001533  7100          CLL
+1174 001534  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1175 001535  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1176 001536  7100          CLL
+1177 001537  6054          DILY                    /SET Y VALUE
+1178               
+1179 001540  6052          DISD                    / CHECK VC8E READY
+1180 001541  5340          JMP .-1                 /
+1181 001542  6055          DIXY                    /AT LAST SOMETHING TO SEE!!
+1182 001543  7200          CLA
+1183 001544  2054          ISZ DISCNT              /DONE YET?
+1184 001545  5311          JMP DISLOP              /NOPE
+1185 001546  5674          JMP I DISPLY            /YUP
+1186               
+1187               
+1188 001547  0000  DISHFT, 0                       /A GENERALIZED SHIFT ROUTINE CALLED
+1189 001550  7100          CLL                     /FROM EVERYWHERE TO DIVIDE THE
+1190 001551  7510          SPA                     /AC BY FOUR WITH AN ASR RIGHT
+1191 001552  7021          CML IAC                 /NOTE THAT NEGATIVE NUMBERS ARE
+1192 001553  7010          RAR                     /ROUNDED UPWARDS (TOWARD ZERO)
+1193 001554  7100          CLL                     /TO MAKE IT COME OUT RIGHT
+1194 001555  7510          SPA
+1195 001556  7021          CML IAC                 /EVEN SO THERE ARE SOME ROUNDING ERRORS
+1196 001557  7010          RAR                     /SOMEWHERE.  SO MUCH FOR 12 BIT MACHINES
+1197 001560  5747          JMP I DISHFT
+1198               
+1199               
+1200               /
+1201               /       HERE TO DISPLAY ALL THE PROJECTILES AND TEST FOR HITS.
+1202               /       THE PROJECTILE DISPLAY FILE IS SEARCHED FOR PROJECTILES WITH
+1203               /       NON-ZERO COUNTS AND WHEN ONE IS FOUND THE POSITION IS
+1204               /       UPDATED BY THE VELOCITY, THE POINT DISPLAYED AND TESTED FOR
+1205               /       A HIT.
+1206               /
+1207               
+1208                       *1600
+1209               
+1210 001600  7300  PRODIS, CLA CLL                 / BEGIN DISPLAY OF THE PROJECTILES
+1211 001601  1307          TAD BUFST               /POINT TO BEGINNING OF DISPLAY FILE
+1212 001602  3112          DCA BUFTMP
+1213               
+1214 001603  1512  PROLOP, TAD I BUFTMP            /PICK UP NEXT COUNT
+1215 001604  7450          SNA
+1216 001605  5277          JMP EXPIRE              /THIS ONE IS DEAD - GO TO THE NEXT
+1217 001606  7001          IAC                     /INCREMENT COUNT AND REPLACE
+1218 001607  3512          DCA I BUFTMP
+1219 001610  2112          ISZ BUFTMP              /BUMP POINTER TO X VELOCITY
+1220 001611  1512          TAD I BUFTMP
+1221 001612  2112          ISZ BUFTMP              /THEN TO XPOSITION AND UPDATE X POSITION
+1222 001613  1512          TAD I BUFTMP            /WITH THE VELOCITY WHICH IS CONSTANT
+1223 001614  3512          DCA I BUFTMP
+1224 001615  1512          TAD I BUFTMP
+1225 001616  3107          DCA PROX                /AND STORE X POSITION FOR DISPLAY AND TEST
+1226 001617  2112          ISZ BUFTMP              /NOW TO Y POSITION AND VELOCITY
+1227 001620  1512          TAD I BUFTMP
+1228 001621  2112          ISZ BUFTMP
+1229 001622  1512          TAD I BUFTMP            /SAME LITTLE GAME
+1230 001623  3512          DCA I BUFTMP
+1231 001624  1512          TAD I BUFTMP
+1232 001625  3110          DCA PROY                /STORE THE NEW Y VALUE
+1233               
+1234 001626  1107          TAD PROX                /DISPLAY THE POINT WITH 
+1235 001627  7012          RTR                     /THE SAME SHIFT AS FOR THE SHIPS
+1236 001630  7010          RAR                     /FOR THE SMALL SCREEN
+1237 001631  7104          CLL RAL                         / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1238 001632  1141          TAD TWOCOMP                     / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1239 001633  7100          CLL
+1240 001634  6053          DILX                            /SET X VALUE
+1241 001635  7200          CLA
+1242 001636  1110          TAD PROY
+1243 001637  7012          RTR                     
+1244 001640  7010          RAR
+1245 001641  7104          CLL RAL                         / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1246 001642  1141          TAD TWOCOMP
+1247 001643  7100          CLL
+1248 001644  6054          DILY                            /SET Y VALUE
+1249 001645  6052          DISD                            / CHECK VC8E READY
+1250 001646  5245          JMP .-1                         /
+1251 001647  6055          DIXY                            /THERE IT IS!!
+1252 001650  7200          CLA
+1253 001651  4711          JMS I CHKOUT            /TEST  FOR A HIT
+1254 001652  2112          ISZ BUFTMP              /MOVE POINTER ON AND TEST FOR END
+1255 001653  1112          TAD BUFTMP              /OF BUFFER
+1256 001654  1310          TAD BUFLIM
+1257 001655  7640          SZA CLA
+1258 001656  5203          JMP PROLOP              /NOT AT END - CONTINUE
+1259               
+1260               
+1261               
+1262               
+1263               /
+1264               /       HERE AT THE END OF THE PROJECTILE DISPLAY.  IF THE GAMOVR
+1265               /       FLAG IS SET, GO ON TO THE MESSAGE DISPLAY - VICTORY LAP
+1266               /       SECTION.  OTHERWISE PICK UP THE REMAINING CLOCK COUNT
+1267               /       TO GIVE THE FANS SOMETHING TO LOOK AT, AND MOVE THE
+1268               /       ELECTRON BEAM TO A LOWER CORNER.  THE COUNT DISPLAYED
+1269               /       IN THE AC IS THE NUMBER OF 100 USEC CLOCK TICKS REMAINING
+1270               /       WHEN THIS CODE IS REACHED BEFORE THE NEXT UPDATE WOULD 
+1271               /       BEGIN.  TURNS OUT THAT ROUGHLY 2/3 OF THE CPU IS LEFT
+1272               /       OVER SHOULD ANYONE WANT TO DO ANYTHING VERY FANCY.
+1273               /
+1274               
+1275               
+1276 001657  1103  FINISH, TAD GAMOVR              /IS THIS THE VICTORY LAP OR WHAT?
+1277 001660  7640          SZA CLA
+1278 001661  5676          JMP I ENDGAM            /YES, GO TO PUT UP THE MESSAGE
+1279 001662  1137          TAD M400                /MOVE THE BEAM OFF SCREEN
+1280 001663  7100          CLL 
+1281 001664  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1282 001665  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1283 001666  7100          CLL
+1284               /       DILY                    / SET Y VALUE
+1285 001667  7200          CLA 
+1286 001670  7100          CLL
+1287 001671  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1288 001672  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1289 001673  7100          CLL
+1290               /       DILX                    / SET X VALYE
+1291               /       DISD                    / CHECK VC8E READY
+1292               /       JMP .-1                 / CHECK VC8E READY
+1293 001674  7041          CIA
+1294 001675  5275          JMP .
+1295               
+1296               
+1297 001676  2542  ENDGAM, JOBLOP
+1298               
+1299               
+1300               
+1301 001677  1112  EXPIRE, TAD BUFTMP              /HERE TO ADVANCE THE BUFFER
+1302 001700  1115          TAD P5                  /POINTER TO THE NEXT PROJECTILE
+1303 001701  3112          DCA BUFTMP              /UNLESS THE END
+1304 001702  1112          TAD BUFTMP              /OF THE BUFFER
+1305 001703  1310          TAD BUFLIM              /IS REACHED
+1306 001704  7640          SZA CLA                 /IN WHICH CASE
+1307 001705  5203          JMP PROLOP              /IT
+1308 001706  5257          JMP FINISH              /QUITS
+1309               
+1310 001707  7501  BUFST,  DISBUF+101
+1311 001710  0203  BUFLIM, -DISBUF-175
+1312 001711  2000  CHKOUT, CHECK
+1313               
+1314 001712  0000  RESE1,  0                       /THIS IS CALLED TO SET THE POINTER
+1315 001713  1340          TAD MRES                /(AUTO16) TO THE NEXT FREE SLOT
+1316 001714  3341          DCA RESCNT              /FOR A PROJECTILE LAUNCH. 12 POSSIBLE
+1317               
+1318 001715  1342  RESLOP, TAD RESPNT              /MOVE THE POINTER TO THE NEXT SLOT
+1319 001716  1115          TAD P5
+1320 001717  3342          DCA RESPNT
+1321 001720  1342          TAD RESPNT              /RESTE IF AT END OF BUFFER
+1322 001721  1310          TAD BUFLIM
+1323 001722  7640          SZA CLA
+1324 001723  5326          JMP RESCON
+1325 001724  1307          TAD BUFST
+1326 001725  3342          DCA RESPNT
+1327               
+1328 001726  1742  RESCON, TAD I RESPNT            /FIND A HOLE YET?
+1329 001727  7650          SNA CLA
+1330 001730  5334          JMP RESFND              /YES, SET UP AUTO16
+1331 001731  2341          ISZ RESCNT              /NO COUNT
+1332 001732  5315          JMP RESLOP              /AND TRY AGAIN
+1333 001733  7402          HLT                     /NO HOLES AT ALL?
+1334               
+1335 001734  7040  RESFND, CMA                     /BACK THE POINTER FOR AUTO INDEXING
+1336 001735  1342          TAD RESPNT
+1337 001736  3016          DCA AUTO16
+1338 001737  5712          JMP I RESE1
+1339               
+1340 001740  7764  MRES,   -14
+1341 001741  0000  RESCNT, 0
+1342 001742  0000  RESPNT, 0
+1343               
+1344 001743  0000  SETBUF, 0
+1345 001744  7040          CMA                     /THIS ROUTINE IS CALLED FROM THE 
+1346 001745  1307          TAD BUFST               /STARTING SEQUENCE TO INITIALIZE ALL
+1347 001746  3016          DCA AUTO16              /THE BUFFER POINTERS AND SO ON
+1348 001747  1307          TAD BUFST
+1349 001750  3112          DCA BUFTMP
+1350 001751  1307          TAD BUFST
+1351 001752  3342          DCA RESPNT
+1352 001753  1307          TAD BUFST
+1353 001754  3364          DCA SETPNT
+1354 001755  3764  SETLOP, DCA I SETPNT
+1355 001756  2364          ISZ SETPNT
+1356 001757  1364          TAD SETPNT
+1357 001760  1310          TAD BUFLIM
+1358 001761  7640          SZA CLA
+1359 001762  5355          JMP SETLOP
+1360 001763  5743          JMP I SETBUF
+1361               
+1362 001764  0000  SETPNT, 0
+1363               
+1364               
+1365               /
+1366               /       THIS HERE NOW THING CHECKS THE COORDINATES OF THE MOST RECENTLY
+1367               /       DISPLAYED PROJECTILE AGAINST THOSE OF THE SHIPS ON THE SCREEN.
+1368               /       IF WITH A COLLISION LIMIT  A HIT IS RECORDED AND THE LIFE
+1369               /       COUNT OF THE PROJECTILE ZEROED TO REMOVE IT.  A HIT SHIP
+1370               /       IS SUITABLY FLAGGED
+1371               /
+1372               
+1373                       *2000
+1374               
+1375 002000  0000  CHECK,  0                       /HERE TO TEST FOR A PROJECTILE HIT
+1376 002001  1022          TAD ONEFLG              /CANT HIT SOMETHING IN HYPERSPACE
+1377 002002  7640          SZA CLA
+1378 002003  5232          JMP CHECK2
+1379 002004  1020          TAD ONEOUT              /OR SOMETHING THAT'S BEEN HIT
+1380 002005  7640          SZA CLA
+1381 002006  5232          JMP CHECK2
+1382               
+1383 002007  1107          TAD PROX                /CHECK X COORDINATES OF SHIP ONE
+1384 002010  7041          CIA                     /AND PROJECTILE
+1385 002011  1026          TAD ONEPEX              /THIS SORT OF THING IS WHY THE
+1386 002012  7510          SPA                     /COORDINATES HAVE TO BE MAINTAINED TO 12
+1387 002013  7041          CIA                     /BITS
+1388 002014  1264          TAD LIMIT               /CLOSE ENOUGH?
+1389 002015  7700          SMA CLA
+1390 002016  5232          JMP CHECK2              /IF X ISN' CLOSE ENOUGH THEN NO HIT
+1391 002017  1110          TAD PROY                /X WAS CLOSE ENOUGH, HOW ABOUT Y?
+1392 002020  7041          CIA
+1393 002021  1027          TAD ONEPEY
+1394 002022  7510          SPA
+1395 002023  7041          CIA
+1396 002024  1264          TAD LIMIT
+1397 002025  7700          SMA CLA
+1398 002026  5232          JMP CHECK2              /NO HIT
+1399               
+1400 002027  1106          TAD MEXP                /DEPOSIT EXPLOSION COUNT  IN ONEOUT
+1401 002030  3020          DCA ONEOUT              /ALL THAT IS NECESSARY
+1402 002031  4265          JMS CUTOUT              /REMOVE PROJECTILE
+1403               
+1404               
+1405               
+1406 002032  1035  CHECK2, TAD TWOFLG              /NO HIT ON NUMBER ONE, TRY NUMBER TWO
+1407 002033  7640          SZA CLA
+1408 002034  5600          JMP I CHECK             /BUT NOT IF IN HYPERSPACE
+1409 002035  1033          TAD TWOOUT              /OR IF ALREADY HIT
+1410 002036  7640          SZA CLA
+1411 002037  5600          JMP I CHECK
+1412               
+1413 002040  1107          TAD PROX                /CHECK X'S FIRST
+1414 002041  7041          CIA
+1415 002042  1041          TAD TWOPEX
+1416 002043  7510          SPA                     /GET ABSOLUTE VALUE OF DIFFERENCE
+1417 002044  7041          CIA
+1418 002045  1264          TAD LIMIT               /AND TEST MAGNITUDE AGAINST PROXIMITY
+1419 002046  7700          SMA CLA                 /LIMIT
+1420 002047  5600          JMP I CHECK             /NOWHERE NEAR CLOSE
+1421               
+1422 002050  1110          TAD PROY                /NYAH, NYAH
+1423 002051  7041          CIA                     /TRY THE Y'S
+1424 002052  1042          TAD TWOPEY
+1425 002053  7510          SPA
+1426 002054  7041          CIA                     /ABSOLUTE VALUE OF DIFFERENCE
+1427 002055  1264          TAD LIMIT
+1428 002056  7700          SMA CLA
+1429 002057  5600          JMP I CHECK             /CLEAN MISS!
+1430               
+1431 002060  1106          TAD MEXP                /HIT ON TWO - END EVERYTHING BY SETTING
+1432 002061  3033          DCA TWOOUT              /TWOOUT TO NON-ZERO EXPLOSION COUNT
+1433 002062  4265          JMS CUTOUT
+1434 002063  5600          JMP I CHECK             /EXIT AFTER DESTOYING PROJECTILE
+1435               
+1436 002064  7660  LIMIT,  -120                    /PROXIMITY LIMIT FOR WHAT CONSTITUTES A HIT
+1437               
+1438 002065  0000  CUTOUT, 0                       /THIS ROUTINE ZEROES OUT THE MOST RECENTLY
+1439 002066  1131          TAD M4                  /DISPLAYED PROJECTILE BY ZEROEING THE
+1440 002067  1112          TAD BUFTMP              /COUNT
+1441 002070  3273          DCA CUTPNT
+1442 002071  3673          DCA I CUTPNT
+1443 002072  5665          JMP I CUTOUT
+1444               
+1445 002073  0000  CUTPNT, 0
+1446               
+1447               
+1448               /
+1449               /       THIS ROUTINE IS CALLED TO TEST FOR A COLLISION BETWEEN THE
+1450               /       TWO SHIPS.  THE COORDINATES OF BOTH ARE COMPARED
+1451               /       AND IFF SUFFICIENTLY CLOSE BOTH ARE DESTROYED BY SETTING
+1452               /       THEIR EXPLOSION COUNTS NON-ZERO.
+1453               /
+1454               
+1455               
+1456 002074  0000  COLLID, 0                       /HERE TO TEST FOR COLLISION
+1457 002075  1022          TAD ONEFLG              /NO TEST IF EITHER SHIP IS IN
+1458 002076  7640          SZA CLA                 /HYPERSPACE OR EXPLODING
+1459 002077  5674          JMP I COLLID
+1460 002100  1035          TAD TWOFLG
+1461 002101  7640          SZA CLA
+1462 002102  5674          JMP I COLLID
+1463 002103  1020          TAD ONEOUT
+1464 002104  7640          SZA CLA
+1465 002105  5674          JMP I COLLID
+1466 002106  1033          TAD TWOOUT
+1467 002107  7640          SZA CLA
+1468 002110  5674          JMP I COLLID
+1469               
+1470 002111  1026          TAD ONEPEX              /BOTH SHIPS AVAILABLE FOR COLLISION
+1471 002112  7041          CIA                     /CHECK X COORDINATES FIRST
+1472 002113  1041          TAD TWOPEX
+1473 002114  7510          SPA                     /GET ABSOLUTE VALUE OF DIFFERENCE
+1474 002115  7041          CIA
+1475 002116  1336          TAD COLLIM              /CLOSE ENOUGH?
+1476 002117  7700          SMA CLA
+1477 002120  5674          JMP I COLLID            /NOPE, FORGET IT
+1478               
+1479 002121  1027          TAD ONEPEY              /YES, NOW TRY THE Y COORDINATES
+1480 002122  7041          CIA
+1481 002123  1042          TAD TWOPEY
+1482 002124  7510          SPA
+1483 002125  7041          CIA                     /GET MAGNITUDE ONLY
+1484 002126  1336          TAD COLLIM
+1485 002127  7700          SMA CLA                 /CLOSE ENOUGH?
+1486 002130  5674          JMP I COLLID
+1487 002131  1106          TAD MEXP                /YES, SET BOTH EXPLOSION COUNTS
+1488 002132  3020          DCA ONEOUT
+1489 002133  1106          TAD MEXP
+1490 002134  3033          DCA TWOOUT
+1491 002135  5674          JMP I COLLID
+1492               
+1493 002136  7500  COLLIM, -300
+1494               
+1495               /
+1496               /       THIS ROUTINE IS CALLED TO SET ONE OF THE TWO SHIPS INTO 
+1497               /       HYPERSPACE.  ON ENTRY THE AC=-1 FOR SHIP #1, 0 FOR SHIP
+1498               /       NUMBER 2.  THE LOCATION CLOCK IS USED FOR A RANDOM
+1499               /       ADDRESS POINTER FROM WHICH WILL BE DRAWN THE 
+1500               /       VARIOUS PARAMETERS FOR REENTRY.
+1501               /
+1502               
+1503                       *2200
+1504               
+1505 002200  3253  HYPSET, DCA RTNFLG              /HERE WITH AC=-1 OR 0
+1506 002201  1253          TAD RTNFLG                      /SET UP LIST POINTER
+1507 002202  7640          SZA CLA
+1508 002203  1251          TAD ONEDIF                      /TO APPROPRIATE SHIP FILE
+1509 002204  1252          TAD TWOLST
+1510 002205  3015          DCA AUTO15
+1511               
+1512 002206  1074          TAD CLOCK                       /SET UP "RANDOM NUMBER GENERATOR"
+1513 002207  3017          DCA AUTO17
+1514 002210  1417          TAD I AUTO17            /PICK UP FIRST THE AMOUNT OF TIME
+1515 002211  0250          AND TIMOUT                      /OUT OF NOMAL SPACE LIMITED TO -777
+1516 002212  7041          CIA                                     /UPDATE CYCLES ( ABOUT 15 SECONDS)
+1517 002213  3415          DCA I AUTO15            /AND STORE IN ONEOUT OR TWO OUT
+1518               
+1519 002214  1417          TAD I AUTO17            /THE NEXT RANDOM NUMBER BECOMES THE
+1520 002215  4477          JMS I THEADJ            /ANGLE OR ORIENTATION ON REENTRY
+1521 002216  3415          DCA I AUTO15
+1522 002217  1417          TAD I AUTO17            /AND THE NEXT BECOMES THE X VELOCITY 
+1523 002220  4260          JMS VEESET                      /COMPONENT
+1524 002221  3415          DCA I AUTO15
+1525 002222  1417          TAD I AUTO17            /AND THEN THE Y COMPONENT
+1526 002223  4260          JMS VEESET
+1527 002224  3415          DCA I AUTO15
+1528 002225  1417          TAD I AUTO17
+1529 002226  3415          DCA I AUTO15
+1530               
+1531 002227  1417          TAD I AUTO17
+1532 002230  3415          DCA I AUTO15
+1533               
+1534 002231  1417          TAD I AUTO17            /FINALLY SEE IF RETURN WILL BE SUCCESSFLY
+1535 002232  0250          AND TIMOUT
+1536 002233  1257          TAD MHYP                /ABOUT 3/4 CHANCE
+1537 002234  7700          SMA CLA
+1538 002235  5245          JMP HYPRET              /OK
+1539 002236  1253          TAD RTNFLG              /THIS IS THE ONE TIME IN FOUR.  SET
+1540 002237  7640          SZA CLA                 /UP FOR EXPLOSION ON REENTRY
+1541 002240  1251          TAD ONEDIF
+1542 002241  1256          TAD OUTLOC
+1543 002242  3260          DCA VEESET
+1544 002243  1106          TAD MEXP
+1545 002244  3660          DCA I VEESET
+1546               
+1547 002245  2253  HYPRET, ISZ RTNFLG
+1548 002246  5655          JMP I TWORTN
+1549 002247  5654          JMP I ONERTN
+1550               
+1551 002250  0777  TIMOUT, 777
+1552 002251  7765  ONEDIF, ONEFLG-TWOFLG
+1553 002252  0034  TWOLST, TWOFLG-1
+1554 002253  0000  RTNFLG, 0
+1555 002254  0600  ONERTN, TWOUP
+1556 002255  1000  TWORTN, ONESET
+1557 002256  0033  OUTLOC, TWOOUT
+1558 002257  7600  MHYP,   -200
+1559               
+1560               
+1561               
+1562 002260  0000  VEESET, 0                       /HERE TO LIMIT VELOCITY COMPONENTS
+1563 002261  7100          CLL
+1564 002262  7510          SPA                     /GET MAGNITUDE
+1565 002263  7020          CML
+1566 002264  0270          AND HM177               /LIMIT TO 177
+1567 002265  7530          SZL CLL
+1568 002266  7041          CIA
+1569 002267  5660          JMP I VEESET            /AND EXIT 
+1570               
+1571 002270  0177  HM177,  177
+1572               
+1573 002271  7300  ONEEXP, CLA CLL                 /HERE TO DISPLAY SHIP NUMBER ONE AS
+1574 002272  1023          TAD ONETHE              /AN EXPLOSION
+1575 002273  1333          TAD INCONE              /FIRST ROTATE IT BY A GOOD DOLLOP
+1576 002274  3023          DCA ONETHE
+1577 002275  4732          JMS I IXPDIS            /THEN CALL THE EXPLOSION GENERATOR
+1578 002276  2020          ISZ ONEOUT              /DONE WITH THE EXPLOSION?
+1579 002277  5727          JMP I NOWTWO            /NO, NORMAL RETURN
+1580               
+1581 002300  7001          IAC                     /YES, SET INTO PSEUDO HYPER SPACE
+1582 002301  3022          DCA ONEFLG
+1583 002302  7001          IAC                     /DISABLE RETURN FROM HYPER SPACE
+1584 002303  3032          DCA ONEFIN
+1585               
+1586 002304  1045          TAD TWOFIN              /IS NUMBER TWO STILL AROUND?
+1587 002305  7650          SNA CLA
+1588 002306  5727          JMP I NOWTWO            /YES, RETURN
+1589 002307  5731          JMP I TIEUP             /NO, TIE BALL GAME
+1590               
+1591               
+1592 002310  7300  TWOEXP, CLA CLL                 /HERE TO DISPLAY SHIP NUMBER TWO 
+1593 002311  1036          TAD TWOTHE              /AS AN EXPLOSION.  BASH IT AROUND
+1594 002312  1334          TAD INCTWO
+1595 002313  3036          DCA TWOTHE
+1596 002314  4732          JMS I IXPDIS            /THEN DISPLAY IT
+1597 002315  2033          ISZ TWOOUT              /DONE WITH EXPLOSION?
+1598 002316  5730          JMP I NOWPRO            /NO, NORMAL RETURN
+1599               
+1600 002317  7001          IAC                     /YES, SEND INTO PSEUDO HYPER SPACE
+1601 002320  3035          DCA TWOFLG
+1602 002321  7001          IAC                     /DISABLE NORMAL RETURN FROM HYPERSPACE
+1603 002322  3045          DCA TWOFIN
+1604                                               /CHECK NUMBER ONE
+1605 002323  1032          TAD ONEFIN
+1606 002324  7640          SZA CLA                 /STILL ALIVE AND WELL?
+1607 002325  5731          JMP I TIEUP             /NO, TIE GAME
+1608 002326  5730          JMP I NOWPRO            /YES, CONTINUE ON
+1609 002327  1435  NOWTWO, TWODIS
+1610 002330  1600  NOWPRO, PRODIS
+1611 002331  2536  TIEUP,  NOWIN
+1612 002332  2400  IXPDIS, EXPDIS
+1613 002333  0055  INCONE, 55
+1614 002334  0055  INCTWO, 55
+1615               
+1616               
+1617               /
+1618               /       HERE TO DISPLAY THE FIGURE POINTED TO BY AUTO10 AS
+1619               /       AN EXPLOSION.  THIS WORKS THE SAME WAY AS THE NORMAL
+1620               /       DISPLAY ROUTINE EXCEPT THAT THE COORDINATE INCREMENTS
+1621               /       ARE INVERTED TURNING THE FIGURE INSIDE OUT FOR S 
+1622               /       A SORT OF CLOBBY EXPLOSION.
+1623               /
+1624               
+1625                       *2400
+1626               
+1627 002400  0000  EXPDIS, 0                       /HERE TO DISPLAY A FIGURE INSIDE OUT
+1628 002401  1410          TAD I AUTO10            /WITH THE POINTERS AND COUNTS ALREADY
+1629 002402  3050          DCA XTWODS              /SET UP BY FILDIS OR TWODIS
+1630 002403  1410          TAD I AUTO10            /STICK NEXT TWO POINTS INTO LINE
+1631 002404  3051          DCA YTWODS
+1632               
+1633 002405  1050          TAD XTWODS
+1634 002406  7041          CIA                     /CALCULATE INCREMENT THE WRONG WAY
+1635 002407  1046          TAD XONEDS
+1636 002410  3052          DCA DIXTEM              /AND STORE
+1637 002411  1051          TAD YTWODS
+1638 002412  7041          CIA
+1639 002413  1047          TAD YONEDS
+1640 002414  3053          DCA DIYTEM              /SAME FOR Y
+1641               
+1642 002415  1131          TAD M4                  /4 DOTS IN THE VECTOR"
+1643 002416  3054          DCA DISCNT              /COULD HAVE CALLED THE OTHER 
+1644                                               /VECTOR GENERATOR I SUPPOSE
+1645 002417  1046  EXPLOP, TAD XONEDS
+1646 002420  1052          TAD DIXTEM              /ADD X AND Y INCREMENTS TO THE RUNNING
+1647 002421  3046          DCA XONEDS              /TOTALS AND DISPLAY THE RUNNING
+1648 002422  1047          TAD YONEDS              /TOTALS NORMAL SIZE
+1649 002423  1053          TAD DIYTEM
+1650 002424  3047          DCA YONEDS
+1651               
+1652 002425  1046          TAD XONEDS
+1653 002426  7012          RTR                     /COULD MAKE TWICE AS BIG BY NOP-ING
+1654 002427  7010          RAR                     /THE RAR'S BUT THE SCREEN IS SMALL ENOUGH
+1655 002430  7100          CLL 
+1656 002431  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1657 002432  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1658 002433  7100          CLL
+1659 002434  6053          DILX                    / SET X POSITION
+1660 002435  7200          CLA
+1661 002436  1047          TAD YONEDS
+1662 002437  7012          RTR
+1663 002440  7010          RAR
+1664 002441  7100          CLL 
+1665 002442  7004          RAL                     / SHIFT ONE BIT TO THE LEFT TO MAKE A 10 BIT PICTURE
+1666 002443  1141          TAD TWOCOMP             / MAKE DATA SUITABLE FOR VC8E TWO COMPLEMENT
+1667 002444  7100          CLL
+1668 002445  6054          DILY                    / SET Y POSITION
+1669 002446  6052          DISD                    / CHECK VC8E READY
+1670 002447  5246          JMP .-1                 /
+1671 002450  6055          DIXY                    / DISPLAY DATA
+1672 002451  7200          CLA
+1673 002452  2054          ISZ DISCNT              /DONE 4 DOTS?
+1674 002453  5217          JMP EXPLOP              /NO
+1675               
+1676 002454  2011          ISZ AUTO11              /DONE ALL VECTORS IN THE FILE?
+1677 002455  7410          SKP
+1678 002456  5600          JMP I EXPDIS            /YES, EXIT
+1679               
+1680 002457  1050          TAD XTWODS              /NO SWAP TO NEXT PAIR OF POINTS
+1681 002460  3046          DCA XONEDS
+1682 002461  1051          TAD YTWODS
+1683 002462  3047          DCA YONEDS
+1684 002463  5201          JMP EXPDIS+1
+1685               
+1686               
+1687               
+1688               /
+1689               /       VEELIM IS THE SCALING ROUTINE FOR VELOCITY COMPONENTS.
+1690               /       THE COMPONENTS ARE SCALED TO REMAIN IN THE RANGE 140
+1691               /       TO -140.  THIS IS NECESSARY TO AVOID ASTRONOMICAL SPPED
+1692               /       BUILDUP ON THE SMALL SCREEN.  UNFORTUNATELY THE X AND Y
+1693               /       COMPONENTS ARE SCALED SEPARATELY WHICH GIVES SLIGHT BUT
+1694               /       NOTICABLE DISTORTIONS IN DIAGONAL FLIGHT PATHS.  IN THE
+1695               /       NORMAL HEAT OF THE BATTLE NO ONE WILL REALLY NOTICE.
+1696               /
+1697               
+1698               
+1699 002464  0000  VEELIM, 0                       /ENTER TO SCALE VELOCITY HELD IN
+1700 002465  3305          DCA VEEHLD              /AC
+1701 002466  1305          TAD VEEHLD
+1702 002467  7500          SMA                     /BRANCH FOR POSITIVE OR NEGATIV
+1703 002470  5276          JMP VEEPOS
+1704 002471  1307          TAD VEEMAX
+1705 002472  7700          SMA CLA                 /GREATER THAN MAXIMUM POSITIVE?
+1706 002473  5303          JMP VEECLR              /NO
+1707 002474  1306          TAD VEEMIN              /I MEAN MAXIMUM NEGATIVE - YES SET
+1708 002475  5664          JMP I VEELIM            /TO MAX NEGATIV
+1709               
+1710 002476  1306  VEEPOS, TAD VEEMIN              /GREATER THAN MAX?
+1711 002477  7710          SPA CLA
+1712 002500  5303          JMP VEECLR              /NO
+1713 002501  1307          TAD VEEMAX              /YES SET TO MAX
+1714 002502  5664          JMP I VEELIM
+1715               
+1716 002503  1305  VEECLR, TAD VEEHLD              /IT WAS IN RANGE ALL ALONG
+1717 002504  5664          JMP I VEELIM
+1718               
+1719 002505  0000  VEEHLD, 0
+1720 002506  7640  VEEMIN, -140
+1721 002507  0140  VEEMAX, 140
+1722               
+1723 002510  0000  THEAJI, 0                       /HERE TO ADJUST THE ANGLE TO A RANGE
+1724 002511  7500          SMA                     /0-550 OR 0-360 DEGREES.  THIS IS
+1725 002512  5315          JMP .+3                 /NECESSARY TO INSURE THAT PUSHDOWN OVERFLOW
+1726 002513  1127          TAD P550                /WILL NOT HAPPEN IN THE SINE AND COSINE
+1727 002514  5311          JMP .-3                 /ROUTINES.  THIS SIMPLY TAKES THE AC 
+1728 002515  1140          TAD M550                /MODULO 360 AND EXITS
+1729 002516  7500          SMA
+1730 002517  5315          JMP .-2
+1731 002520  1127          TAD P550                /FOLLOW IT THROUGH AND SEE IF IT DOESN'T
+1732 002521  5710          JMP I THEAJI
+1733               
+1734               
+1735               /
+1736               /       ONE OF THESE ROUTINE IS ENTERED WHEN A WINNER IS DECLARED.
+1737               /       THE ADDRESS OF THE VICTORY MESSAGE IS PLACED IN MESS AND 
+1738               /       THE GAMOVR FLAG SET TO CAUSE A BRANCH TO JOBLOP WHEN THE
+1739               /       DISPLAY CYCLE IS COMPLETED.  THE ROUTINE WILL THEN DISPLAY
+1740               /       THE APPROPRIATE MESSAGE OVER THE REMAINING SHIPS IF
+1741               /       ANY UNTIL THE KEYBOARD IS MOLESTED OR THE CLOCK RUNS OUT
+1742               /       AND THE NEXT DISPLAY UPDATE CYCLE IS SET.   AT ANY RATE THE
+1743               /       PROGRAM WILL REACH HERE ONLY WHEN SOMEONE HAS BITTEN THE
+1744               /       INTERGALACTIC DUST.
+1745               /
+1746               
+1747               
+1748 002522  0000  ONEWIN, 0                       /THIS IS CALLED WHEN TWOFIN IS SET
+1749 002523  1355          TAD MES1                /AND ONE FIN IS NOT.  SET ONE TO VICTOR
+1750 002524  3362          DCA MESS                /AND SET GAMOVR FLAG
+1751 002525  7001          IAC
+1752 002526  3103          DCA GAMOVR
+1753 002527  5722          JMP I ONEWIN            /THEN RETURN TO UPDATE CYCLE
+1754               
+1755 002530  0000  TWOWIN, 0                       /THIS IS CALLED WHEN ONEFIN IS SET
+1756 002531  1356          TAD MES2                /AND TWO FIN IS NOT
+1757 002532  3362          DCA MESS                /SET ALSO GAMOVR
+1758 002533  7001          IAC
+1759 002534  3103          DCA GAMOVR
+1760 002535  5730          JMP I TWOWIN
+1761               
+1762 002536  1360  NOWIN,  TAD MES4                /GET HERE WHEN BOTH ONEFIN AND TWOFIN
+1763 002537  3362          DCA MESS                /ARE SET .
+1764 002540  7001          IAC
+1765 002541  3103          DCA GAMOVR              /NOBODY EVER REALLY WINDS
+1766                                               /UP THE WINNER IN THESE THINGS
+1767 002542  0000  JOBLOP, 0                       /THIS IS ENTERED FROM FINISH WHEN
+1768 002543  1354          TAD MES0                /GAMOVR IS SET AND SERVES TO DISPLAY
+1769 002544  4476          JMS I MESOUT            /THE VICTORY MESSAGE ON THE SCREEN
+1770 002545  1362          TAD MESS                /USING THE CHARACTER GENERATOR SOMEWHAT
+1771 002546  4476          JMS I MESOUT            /FURTHER ON UNTIL THE GAME IS RESTARTED
+1772 002547  1361          TAD MES5                /OR UNTIL THE INTERRUPT COUNT OVERFLOWS
+1773 002550  4476          JMS I MESOUT            /AND THE UPDATE CYCLE IS RESTARTED
+1774 002551  1357          TAD MES3
+1775 002552  4476          JMS I MESOUT
+1776 002553  5342  FINITO, JMP JOBLOP
+1777               
+1778 002554  7344  MES0,   MESS0
+1779 002555  7351  MES1,   MESS1
+1780 002556  7353  MES2,   MESS2
+1781 002557  7355  MES3,   MESS3
+1782 002560  7360  MES4,   MESS4
+1783 002561  7345  MES5,   MESS5
+1784 002562  0000  MESS,   0
+1785               
+1786               
+1787               /
+1788               /       THE FOLLOWING ARE THE SINE AND COSINE ROUTINES CUSTOMIZED
+1789               /       FOR THIS PROGRAM FROM ANOTHER I WORKED ON.  CALL EITHER
+1790               /       SINE OR COSINE WITH ANGLE IN DEGREES IN AC.  THE ARGUEMENT
+1791               /       IS REDUCED THROUGH RECURSION UNTIL BETWEEN 0-89 DEGREES 
+1792               /       AND THEN A TABLE LOOKUP DONE TO OBTAIN THE VALUE.  IT TAKES
+1793               /       UP A FAIR AMOUNT OF SPACE BUT IT WORKS JUST FASTER
+1794               /       THAN SHEEP.  THE COSINE CALL JUST TRANSFORMS THE ARGUEMENT 
+1795               /       THROUGH SOME TRIGONOMETRIC GARBAGE AND CALLS THE SINE
+1796               /       ROUTINE.  NOTE THAT CALLING EITHER ROUTINE WITH TOO 
+1797               /       LARGE AN ARGUEMENT WILL CAUSE PUSHDOWN OVERFLOW AND THEN
+1798               /       ALL HELL WILL BREAK LOOSE.  THE ORIGINAL ROUTINE FROM WHICH
+1799               /       THIS WAS STOLEN HAD FULL WORD PRECISION.
+1800               /
+1801               
+1802                       *6400
+1803               
+1804 006400  0000  SINEIN, 0                       /I REALLY CANT BRING MYSELF TO COMMENT
+1805 006401  3252          DCA SINARG              /THIS.  IT'S VERY STRAIGHFORWARD
+1806 006402  1200          TAD SINEIN
+1807 006403  3653          DCA I SINPSH
+1808 006404  2253          ISZ SINPSH
+1809 006405  1252          TAD SINARG
+1810 006406  7440          SZA 
+1811 006407  5217          JMP SINNG2
+1812               
+1813 006410  7340  SINPOP, CLA CLL CMA
+1814 006411  1253          TAD SINPSH
+1815 006412  3253          DCA SINPSH
+1816 006413  1653          TAD I SINPSH
+1817 006414  3200          DCA SINEIN
+1818 006415  1252          TAD SINARG
+1819 006416  5600          JMP I SINEIN
+1820               
+1821 006417  7500  SINNG2, SMA
+1822 006420  5226          JMP SINPOS
+1823 006421  7041          CIA
+1824 006422  4200          JMS SINEIN
+1825               
+1826 006423  7041  SINNEG, CIA
+1827 006424  3252          DCA SINARG
+1828 006425  5210          JMP SINPOP
+1829               
+1830 006426  1135  SINPOS, TAD M264
+1831 006427  7510          SPA
+1832 006430  5232          JMP .+2
+1833 006431  5222          JMP SINNEG-1
+1834 006432  1124          TAD P132
+1835 006433  7510          SPA
+1836 006434  5244          JMP SINELK
+1837 006435  7640          SZA CLA
+1838 006436  5241          JMP .+3
+1839 006437  1121          TAD P37
+1840 006440  5224          JMP SINNEG+1
+1841               
+1842 006441  1252          TAD SINARG
+1843 006442  1135          TAD M264
+1844 006443  5222          JMP SINNEG-1
+1845               
+1846 006444  1124  SINELK, TAD P132
+1847 006445  1262          TAD SINTAB
+1848 006446  3200          DCA SINEIN
+1849 006447  1600          TAD I SINEIN
+1850 006450  3252          DCA SINARG
+1851 006451  5210          JMP SINPOP
+1852               
+1853               
+1854               
+1855 006452  0000  SINARG, 0
+1856 006453  6454  SINPSH, SINLST
+1857 006454  0000  SINLST, 0
+1858 006455  0000          0
+1859 006456  0000          0
+1860 006457  0000          0
+1861 006460  0000          0
+1862 006461  0000          0
+1863               
+1864 006462  6467  SINTAB, SINES-1
+1865               
+1866 006463  0000  COSINI, 0
+1867 006464  7041          CIA
+1868 006465  1124          TAD P132
+1869 006466  4200          JMS SINEIN
+1870 006467  5663          JMP I COSINI
+1871               
+1872               
+1873               
+1874 006470  0000  SINES,  00      /1
+1875 006471  0001          01      /2
+1876 006472  0001          01      /3
+1877 006473  0002          02      /4
+1878 006474  0002          02      /5
+1879 006475  0003          03      /6
+1880 006476  0003          03      /7
+1881 006477  0004          04      /8
+1882 006500  0005          05      /9
+1883 006501  0005          05      /10
+1884 006502  0006          06      /11
+1885 006503  0006          06      /12
+1886 006504  0007          07      /13
+1887 006505  0007          07      /14
+1888 006506  0010          10      /15
+1889 006507  0010          10      /16
+1890 006510  0011          11      /17
+1891 006511  0011          11      /18
+1892 006512  0012          12      /19
+1893 006513  0012          12      /20
+1894 006514  0013          13      /21
+1895 006515  0013          13      /22
+1896 006516  0014          14      /23
+1897 006517  0015          15      /24
+1898 006520  0015          15      /25
+1899 006521  0016          16      /26
+1900 006522  0016          16      /27
+1901 006523  0017          17      /28
+1902 006524  0017          17      /29
+1903 006525  0020          20      /30
+1904 006526  0020          20      /31
+1905 006527  0020          20      /32
+1906 006530  0021          21      /33
+1907 006531  0021          21      /34
+1908 006532  0022          22      /35
+1909 006533  0022          22      /36
+1910 006534  0023          23      /37
+1911 006535  0023          23      /38
+1912 006536  0024          24      /39
+1913 006537  0024          24      /40
+1914 006540  0025          25      /41
+1915 006541  0025          25      /42
+1916 006542  0025          25      /43
+1917 006543  0026          26      /44
+1918 006544  0026          26      /45
+1919 006545  0027          27      /46
+1920 006546  0027          27      /47
+1921 006547  0027          27      /48
+1922 006550  0030          30      /49
+1923 006551  0030          30      /50
+1924 006552  0030          30      /51
+1925 006553  0031          31      /52
+1926 006554  0031          31      /53
+1927 006555  0031          31      /54
+1928 006556  0032          32      /55
+1929 006557  0032          32      /56
+1930 006560  0032          32      /57
+1931 006561  0033          33      /58
+1932 006562  0033          33      /59
+1933 006563  0033          33      /60
+1934 006564  0033          33      /61
+1935 006565  0034          34      /62
+1936 006566  0034          34      /63
+1937 006567  0034          34      /64
+1938 006570  0035          35      /65
+1939 006571  0035          35      /66
+1940 006572  0035          35      /67
+1941 006573  0035          35      /68
+1942 006574  0035          35      /69
+1943 006575  0036          36      /70
+1944 006576  0036          36      /71
+1945 006577  0036          36      /72
+1946 006600  0036          36      /73
+1947 006601  0036          36      /74
+1948 006602  0036          36      /75
+1949 006603  0037          37      /76
+1950 006604  0037          37      /77
+1951 006605  0037          37      /78
+1952 006606  0037          37      /79
+1953 006607  0037          37      /80
+1954 006610  0037          37      /81
+1955 006611  0037          37      /82
+1956 006612  0037          37      /83
+1957 006613  0037          37      /84
+1958 006614  0037          37      /85
+1959 006615  0037          37      /86
+1960 006616  0037          37      /87
+1961 006617  0037          37      /88
+1962 006620  0037          37      /89
+1963               
+1964               
+1965               
+1966 006621  0000  MULTI,  0                       /THIS IS STANDARD SINGLE PRECISION
+1967 006622  7100          CLL                     /MULTIPLY ROUTINE WHICH WAS ONCE
+1968 006623  7510          SPA                     /USED.  I'VE LEFT IT IN SINCE
+1969 006624  7061          CMA CML IAC             /THERE IS LOTS OF CORE LEFT OVER AND
+1970 006625  3271          DCA MULMP1              /MAYBLE SOMEDAY I'LL NEED IT TO PUT
+1971 006626  3272          DCA MULMP5              /IN A SUN OR SOMETHING.  THIS IS THE
+1972 006627  1621          TAD I MULTI             /STANDARD DEC SUBROUTINE WITH DIFFERENT
+1973 006630  7450          SNA                     /LABELS
+1974 006631  5255          JMP MULPSN+2
+1975 006632  7510          SPA
+1976 006633  7061          CMA CML IAC
+1977 006634  3273          DCA MULMP2
+1978 006635  1270          TAD MULTHR
+1979 006636  3274          DCA MULMP3
+1980               
+1981 006637  1271  MULMP4, TAD MULMP1
+1982 006640  7010          RAR
+1983 006641  3271          DCA MULMP1
+1984 006642  1272          TAD MULMP5
+1985 006643  7430          SZL
+1986 006644  1273          TAD MULMP2
+1987 006645  7110          CLL RAR
+1988 006646  3272          DCA MULMP5
+1989 006647  2274          ISZ MULMP3
+1990 006650  5237          JMP MULMP4
+1991 006651  1271          TAD MULMP1
+1992 006652  7010          RAR
+1993 006653  7430  MULPSN, SZL
+1994 006654  5261          JMP MULCMP
+1995 006655  3271          DCA MULMP1
+1996 006656  1272          TAD MULMP5
+1997 006657  2221  MULMPZ, ISZ MULTI
+1998 006660  5621          JMP I MULTI
+1999               
+2000 006661  7141  MULCMP, CMA CLL IAC
+2001 006662  3271          DCA MULMP1
+2002 006663  1272          TAD MULMP5
+2003 006664  7040          CMA
+2004 006665  7430          SZL
+2005 006666  7001          IAC
+2006 006667  5257          JMP MULMPZ
+2007               
+2008 006670  7764  MULTHR, 7764
+2009 006671  0000  MULMP1, 0
+2010 006672  0000  MULMP5, 0
+2011 006673  0000  MULMP2, 0
+2012 006674  0000  MULMP3, 0
+2013               
+2014               
+2015               /
+2016               /       SHIFTR DIVIDES THE AC BY TWO WHETHER POSITIVE OR NEGATIVE
+2017               /       AND IS CALLED FROM VARIOUS PLACES.   NOT ENTIRELY MYSTERIOUS
+2018               /
+2019               
+2020               
+2021 006675  0000  SHIFTR, 0
+2022 006676  7100          CLL
+2023 006677  7510          SPA
+2024 006700  7021          CML IAC
+2025 006701  7010          RAR
+2026 006702  5675          JMP I SHIFTR
+2027               
+2028               
+2029               /
+2030               /       POSCAL IS CALLED TO CALCULATE THE COORDINATE INCREMENTS
+2031               /       NECESSARY TO PRODUCE THE SHIP FIGURES.  RATHER THAN DOING
+2032               /       A LOT OF EXPENSIVE MATH THIS DOES A QUICK PRODUCTION
+2033               /       OF 1, 2, AND 3 TIMES THE SIN AND COSINE VALUES FOUND
+2034               /       IN CALSIN AND CALCOS LEAVING THEM IN THE TABLE FOR
+2035               /       ONESET AND TWOSET.  IF THE SCOPE WERE ANY BETTER
+2036               /       THIS PROBABLY WOULDN'T BE NEAR GOOD ENOUGH BUT....
+2037               /
+2038               
+2039 006703  0000  POSCAL, 0
+2040 006704  1063          TAD CALSIN
+2041               
+2042 006705  3055          DCA T10SIN
+2043 006706  1055          TAD T10SIN
+2044 006707  7104          CLL RAL
+2045 006710  3056          DCA T20SIN
+2046 006711  1055          TAD T10SIN
+2047 006712  1056          TAD T20SIN
+2048 006713  3057          DCA T30SIN
+2049               
+2050 006714  1064          TAD CALCOS
+2051               
+2052 006715  3060          DCA T10COS
+2053 006716  1060          TAD T10COS
+2054 006717  7104          CLL RAL
+2055 006720  3061          DCA T20COS
+2056 006721  1060          TAD T10COS
+2057 006722  1061          TAD T20COS
+2058 006723  3062          DCA T30COS
+2059 006724  5703          JMP I POSCAL
+2060               
+2061               
+2062                       *7000
+2063               
+2064               /GENERAL PURPOSE SYMBOL GENERATOR
+2065               /
+2066 007000  0000  CHARS,  0       /ENTRY TO PLOT CHARACTER STRING
+2067 007001  3335          DCA ADDR        /STORE STRING ADDRESS
+2068 007002  1735          TAD I ADDR      /FETCH DOUBLE CHARACTER
+2069 007003  7012          RTR     /SHIFT
+2070 007004  7012          RTR     /       FOR FIRST
+2071 007005  7012          RTR     /       CHARACTER
+2072 007006  4216          JMS CHAR        /PLOT CHARACTER
+2073 007007  7410          SKP     /NORMAL RETURN -- SKIP
+2074 007010  5600          JMP I CHARS     /TERMINATION RETURN -- EXIT
+2075 007011  1735          TAD I ADDR      /RECALL DOUBLE CHARACTER
+2076 007012  2335          ISZ ADDR        /ADVANCE STRING ADDRESS
+2077 007013  4216          JMS CHAR        /PLOT CHARACTER
+2078 007014  5202          JMP CHARS+2     /NORMAL RETURN -- REPEAT
+2079 007015  5600          JMP I CHARS     /TERMINATION RETURN -- EXIT
+2080               /
+2081 007016  0000  CHAR,   0       /ENTRY TO PLOT SINGLE CHARACTER
+2082 007017  0341          AND K77 /MASK OUT UPPER BITS
+2083 007020  7104          CLL RAL /MULTIPLY CODE BY TWO
+2084 007021  1343          TAD TABLE       /ADD TABLE BASE ADDRESS
+2085 007022  3342          DCA POINT       /CONSTRUCT POINTER TO 24-BIT CODE
+2086 007023  7040          CMA     /INITIALIZE COUNTER FOR
+2087 007024  3337          DCA COUNT2      /       TWO PLOT WORDS
+2088 007025  1742          TAD I POINT     /FETCH FIRST PLOT WORD
+2089 007026  2342          ISZ POINT       /INCREMENT POINTER FOR NEXT ONE
+2090 007027  7450          SNA     /SKIP IF NOT SPECIAL CHARACTER
+2091 007030  5301          JMP SPCHAR      /ELSE GO PROCESS IT
+2092 007031  3334          DCA CURPLT      /SAVE CURRENT PLOT BITS
+2093 007032  1340  XPLOT,  TAD KM6 /INITIALIZE 6-BIT
+2094 007033  3336          DCA COUNT6      /       COUNTER
+2095 007034  1330          TAD YVALUE      /RESET Y TEMPORARY
+2096 007035  3333          DCA YTEMP       /       VALUE FOR CHARACTER
+2097 007036  1327          TAD XVALUE      /OUTPUT CURRENT
+2098 007037  7100          CLL 
+2099 007040  6053          DILX    /       X-VALUE TO CRT
+2100 007041  1331          TAD XINCR       /INCREMENT
+2101 007042  3327          DCA XVALUE      /       ABSCISSA
+2102 007043  1334          YPLOT,  TAD CURPLT      /RECALL CURRENT PLOT BITS
+2103 007044  7104          CLL RAL /GET NEXT BIT
+2104 007045  3334          DCA CURPLT      /SAVE REMAINING PLOT BITS
+2105 007046  7420          SNL     /SKIP IF POINT TO PLOT
+2106 007047  5262          JMP CNTINU      /ELSE JUMP AHEAD
+2107 007050  1333          TAD YTEMP       /OUTPUT CURRENT
+2108 007051  7100          CLL 
+2109 007052  6054          DILY /  Y-VALUE TO CRT
+2110 007053  6052          DISD            / CHECK VC8E READY
+2111 007054  5253          JMP     .-1     /
+2112 007055  6055          DIXY    / SHOW IT
+2113 007056  7300          CLA CLL /CLEAR AC
+2114 007057  1334          TAD CURPLT      /RECALL CURRENT PLOT BITS
+2115 007060  7650          SNA CLA /SKIP IF POINTS REMAINING
+2116 007061  5270          JMP WRDEND      /ELSE WORD IS FINISHED
+2117 007062  1333  CNTINU, TAD YTEMP       /INCREMENT TEMPORARY
+2118 007063  1332          TAD YINCR       /       Y-VALUE FOR NEXT
+2119 007064  3333          DCA YTEMP       /       CHARACTER STEP
+2120 007065  2336          ISZ COUNT6      /SKIP IF 6 BITS PLOTTED
+2121 007066  5243          JMP YPLOT       /ELSE PLOT NEXT ONE
+2122 007067  5232          JMP XPLOT       /GO UPDATE X-VALUE
+2123 007070  2337  WRDEND, ISZ COUNT2      /SKIP IF ANOTHER BIT WORD
+2124 007071  5275         JMP EXIT        /ELSE EXIT
+2125 007072  1742          TAD I POINT     /FETCH SECOND BIT WORD
+2126 007073  7440          SZA     /SKIP IF NO PLOT POINTS
+2127 007074  5231          JMP XPLOT-1     /ELSE GO PLOT THEM
+2128 007075  1327  EXIT,   TAD XVALUE      /INCREMENT ABSCISSA
+2129 007076  1331          TAD XINCR       /       FOR SPACE BETWEEN
+2130 007077  3327          DCA XVALUE      /       SYMBOLS
+2131 007100  5616          JMP I CHAR      /EXIT FROM CHAR
+2132               /
+2133 007101  1742  SPCHAR, TAD I POINT     /FETCH TRANSFER VECTOR
+2134 007102  3342          DCA POINT       /STORE AS INDIRECT ADDRESS
+2135 007103  5742         JMP I POINT     /GO TO APPROPRIATE ROUTINE
+2136 007104  1331  SPACE,  TAD XINCR       /FETCH BASIC ABSCISSA INCREMENT
+2137 007105  7106          CLL RTL /MULTIPLY BY FOUR AND
+2138 007106  5275          JMP EXIT        /       GO CREATE SPACE
+2139 007107  1325  CRLF,   TAD INITX       /"CARRIAGE RETURN" RESETS X
+2140 007110  3327          DCA XVALUE      /       TO ITS ORIGINAL VALUE
+2141 007111  1332  LF,     TAD YINCR       /"LINE FEED"
+2142 007112  7106          CLL RTL /       DECREMENTS THE
+2143 007113  7145          CLL CIA RAL     /       Y-VALUE BY
+2144 007114  1330          TAD YVALUE      /       EIGHT SCALE
+2145 007115  3330          DCA YVALUE      /       STEPS
+2146 007116  5616          JMP I CHAR      /EXIT FROM CHAR
+2147 007117  1325  RESET,  TAD INITX       /"RESET" RESETS
+2148 007120  3327          DCA XVALUE      /       X AND Y TO
+2149 007121  1326          TAD INITY       /       THEIR ORIGINAL
+2150 007122  5315          JMP RESET-2     /       VALUES
+2151 007123  2216  TERM,   ISZ CHAR        /TERMINATE CODE CAUSES
+2152 007124  5616          JMP I CHAR      /       EXIT TO P+2
+2153               /
+2154 007125  0000  INITX,  0       /INITIAL X-VALUE
+2155 007126  0327  INITY,  327     /INITIAL Y-VALUE
+2156 007127  0000  XVALUE, 0       /CURRENT X-VALUE
+2157 007130  0000  YVALUE, 0       /CURRENT Y-VALUE
+2158 007131  0006  XINCR,  6       /BASIC X INCREMENT VALUE
+2159 007132  0010  YINCR,  10      /BASIC Y INCREMENT VALUE
+2160 007133  0000  YTEMP,  0       /TEMPORARY Y-VALUE
+2161 007134  0000  CURPLT, 0       /CURRENT PLOT BITS
+2162 007135  0000  ADDR,   0       /CURRENT STRING ADDRESS
+2163 007136  0000  COUNT6, 0       /6-BIT COUNTER
+2164 007137  0000  COUNT2, 0       /2-WORD COUNTER
+2165 007140  7772  KM6,    -6      /CONSTANT FOR COUNT6
+2166 007141  0077  K77,    77      /CHARACTER CODE MASK
+2167 007142  0000  POINT,  0       /TABLE POINTER
+2168               /
+2169               
+2170               /
+2171 007143  7144  TABLE,  .+1     /TABLE BASE ADDRESS
+2172 007144  0000          0       /SPECIAL CHARACTER (00)
+2173 007145  7123          TERM    /TERMINATION CODE
+2174 007146  7611          7611    / A
+2175 007147  1176          1176
+2176 007150  7745          7745    / B
+2177 007151  4532          4532
+2178 007152  3641          3641    / C
+2179 007153  4122          4122
+2180 007154  7741          7741    / D
+2181 007155  4136          4136
+2182 007156  7745          7745    / E
+2183 007157  4541          4541
+2184 007160  7705          7705    / F
+2185 007161  0501          501
+2186 007162  7741          7741    / G
+2187 007163  5173          5173
+2188 007164  7710          7710    / H
+2189 007165  1077          1077
+2190 007166  4177          4177    / I
+2191 007167  4100          4100
+2192 007170  2040          2040    / J
+2193 007171  4037          4037
+2194 007172  7714          7714    / K
+2195 007173  2241          2241
+2196 007174  7740          7740    / L
+2197 007175  4040          4040
+2198 007176  7702          7702    / M
+2199 007177  0277          277
+2200 007200  7706          7706    / N
+2201 007201  3077          3077
+2202 007202  7741          7741    / O
+2203 007203  4177          4177
+2204 007204  7705          7705    / P
+2205 007205  0502          502
+2206 007206  3641          3641    / Q
+2207 007207  6176          6176
+2208 007210  7715          7715    / R
+2209 007211  2542          2542
+2210 007212  2245          2245    / S
+2211 007213  5122          5122
+2212 007214  0177          177     / T
+2213 007215  0100          100
+2214 007216  3740          3740    / U
+2215 007217  4037          4037
+2216 007220  1720          1720    / V
+2217 007221  4037          4037
+2218 007222  7730          7730    / W
+2219 007223  3077          3077
+2220 007224  4136          4136    / X
+2221 007225  3641          3641
+2222 007226  0374          374     / Y
+2223 007227  7403          7403
+2224 007230  6151          6151    / Z
+2225 007231  4543          4543
+2226 007232  7741          7741    / [
+2227 007233  0000          0
+2228 007234  0204          204     / \
+2229 007235  1020          1020
+2230 007236  4177          4177    / ]
+2231 007237  0000          0
+2232 007240  0436          436     / ^
+2233 007241  0400          400
+2234 007242  0000          0       /SPECIAL CHARACTER (37)
+2235 007243  7117          RESET   /RESET
+2236 007244  0000          0       /SPECIAL CHARACTER (40)
+2237 007245  7104          SPACE   /SPACE
+2238 007246  5600          5600    / !
+2239 007247  0000          0
+2240 007250  0303          303     / "
+2241 007251  0000          0
+2242 007252  1477          1477    / #
+2243 007253  7714          7714
+2244 007254  2277          2277    / MARKER
+2245 007255  2200          2200
+2246 007256  2313          2313    / %
+2247 007257  6462          6462
+2248 007260  7777          7777    / BLOCK
+2249 007261  7777          7777
+2250 007262  0300          300     / '
+2251 007263  0000          0
+2252 007264  3641          3641    / (
+2253 007265  0000          0
+2254 007266  4136          4136    / )
+2255 007267  0000          0
+2256 007270  4040          4040    / UNDERSCORE (52)
+2257 007271  4040          4040
+2258 007272  1034          1034    / +
+2259 007273  1000          1000
+2260 007274  0000          0       /SPECIAL CHARACTER (54)
+2261 007275  7111          LF      /LINE FEED
+2262 007276  1010          1010    / -
+2263 007277  1000          1000
+2264 007300  4000          4000    / .
+2265 007301  0000          0
+2266 007302  2010          2010    / /
+2267 007303  0402          402
+2268 007304  3641          3641    / 0
+2269 007305  4136          4136
+2270 007306  4442          4442    / 1
+2271 007307  7740          7740
+2272 007310  4261          4261    / 2
+2273 007311  5146          5146
+2274 007312  2145          2145    / 3
+2275 007313  5321          5321
+2276 007314  1710          1710    / 4
+2277 007315  1077          1077
+2278 007316  4745          4745    / 5
+2279 007317  4531          4531
+2280 007320  7750          7750    / 6
+2281 007321  5070          5070
+2282 007322  6111          6111    / 7
+2283 007323  0503          503
+2284 007324  2255          2255    / 8
+2285 007325  5522          5522
+2286 007326  0705          705     / 9
+2287 007327  0577          577
+2288 007330  2400          2400    / :
+2289 007331  0000          0
+2290 007332  0000          0       /SPECIAL CHARACTER (73)
+2291 007333  7107          CRLF    /CARRIAGE RETURN; LINE FEED
+2292 007334  1024          1024    / >
+2293 007335  4200          4200
+2294 007336  1212          1212    / =
+2295 007337  1200          1200
+2296 007340  4224          4224    / <
+2297 007341  1000          1000
+2298 007342  0255          255     / ?
+2299 007343  0300          300
+2300               
+2301               
+2302               /
+2303               /       HERE FOLLOW THE PACKED ASCII TEXTS FOR THE VARIOUS
+2304               /       VICTORY MESSAGES.  PERSONS ADVENTEROUS TO FIND THIS MIGH CARE
+2305               /       TO TOGGLE IN SOME CUTE LITTLE MESSAGES OF THEIR OWN.
+2306               /
+2307               
+2308 007344  3773  MESS0,  3773
+2309 007345  7340  MESS5,  7340
+2310 007346  4040          4040
+2311 007347  4040          4040
+2312 007350  4000          4000
+2313               
+2314 007351  1716  MESS1,  1716
+2315 007352  0500          0500
+2316               
+2317 007353  2427  MESS2,  2427
+2318 007354  1700          1700
+2319               
+2320 007355  2711  MESS3,  2711
+2321 007356  1623          1623
+2322 007357  4100          4100
+2323               
+2324 007360  1617  MESS4,  1617
+2325 007361  0217          0217
+2326 007362  0431          0431
+2327 007363  0000          0000
+2328               
+2329                
+2330                       *7400
+2331               
+2332 007400  0000  DISBUF, 0
+2333               
+2334               /       THE DISPLAY BUFFERS BEGIN HERE AND EXTEND UP SOMEWHERE TO
+2335               /       AROUND 7575 OR SO.
+2336               /
+2337               /
+2338               /
+2339               /
+2340               / 
+2341               
+2342               $
+
+ACCFLG  0104
+ACCPER  0105
+ADDR    7135
+AUTO10  0010
+AUTO11  0011
+AUTO12  0012 unreferenced
+AUTO13  0013 unreferenced
+AUTO14  0014 unreferenced
+AUTO15  0015
+AUTO16  0016
+AUTO17  0017
+BUFLIM  1710
+BUFSET  0314
+BUFST   1707
+BUFTMP  0112
+C0401   0326
+C3006   0325
+C4010   0324
+CALCOS  0064
+CALPOS  0072
+CALSIN  0063
+CHAR    7016
+CHARS   7000
+CHECK   2000
+CHECK2  2032
+CHKOUT  1711
+CLDI    6132 unreferenced
+CLEI    6131
+CLOCK   0074
+CLSK    6133
+CNTINU  7062
+COLDST  0244
+COLIDE  1471
+COLLID  2074
+COLLIM  2136
+COSINE  0066
+COSINI  6463
+COUNT2  7137
+COUNT6  7136
+CRLF    7107
+CURPLT  7134
+CUTOUT  2065
+CUTPNT  2073
+DICD    6051
+DILC    6050
+DILX    6053
+DILY    6054
+DISBUF  7400
+DISCNT  0054
+DISD    6052
+DISHFT  1547
+DISLOP  1511
+DISPLY  1474
+DIXTEM  0052
+DIXY    6055
+DIYTEM  0053
+EMPTY   0003 unreferenced
+ENDGAM  1676
+EXIT    7075
+EXPDIS  2400
+EXPIRE  1677
+EXPLOP  2417
+FILDIS  1400
+FILONE  1420
+FINISH  1657
+FINITO  2553 unreferenced
+FLAM1   1052 unreferenced
+FLAM2   1263 unreferenced
+GAMOVR  0103
+HM177   2270
+HYPER   0075
+HYPRET  2245
+HYPSET  2200
+IFILDS  1375
+INCONE  2333
+INCTWO  2334
+INITX   7125
+INITY   7126
+INTACC  0365
+INTBUS  0340
+INTGLH  0367
+INTLNK  0366
+INTRET  0357 unreferenced
+INTSER  0330
+INTTEM  0316
+INTWRD  0073
+IONEEX  1472
+IONEST  0750
+IPRODS  1463
+ISHFT   0101
+ITWOEX  1473
+ITWOST  1153
+ITWOUP  0552
+IXPDIS  2332
+JOBLOP  2542
+K77     7141
+KM6     7140
+LF      7111
+LFTHAF  0317
+LIMIT   2064
+LNC1FG  0553
+LNC2FG  0751
+M10     0133
+M11     0134 unreferenced
+M200    0136
+M264    0135
+M4      0131
+M400    0137
+M550    0140
+M6      0132
+MES0    2554
+MES1    2555
+MES2    2556
+MES3    2557
+MES4    2560
+MES5    2561
+MESOUT  0076
+MESS    2562
+MESS0   7344
+MESS1   7351
+MESS2   7353
+MESS3   7355
+MESS4   7360
+MESS5   7345
+MEXP    0106
+MHYP    2257
+MRES    1740
+MULCMP  6661
+MULMP1  6671
+MULMP2  6673
+MULMP3  6674
+MULMP4  6637
+MULMP5  6672
+MULMPZ  6657
+MULPSN  6653
+MULT    0067 unreferenced
+MULTHR  6670
+MULTI   6621
+N203    0352
+NOWIN   2536
+NOWPRO  2330
+NOWTWO  2327
+ODT1    0004 unreferenced
+ODT2    0005 unreferenced
+ODT3    0006 unreferenced
+OM14    0753
+OM300   0555
+ONECNT  0021
+ONECON  1121
+ONECOS  0031
+ONEDIF  2251
+ONEEXP  2271
+ONEFIG  0437
+ONEFIL  0113
+ONEFIN  0032
+ONEFLG  0022
+ONELEF  0425
+ONELNC  0507 unreferenced
+ONEMOV  0453 unreferenced
+ONEOK   0410
+ONEOUT  0020
+ONEPEX  0026
+ONEPEY  0027
+ONERTN  2254
+ONERYT  0433
+ONESET  1000
+ONESIN  0030
+ONETHE  0023
+ONEUP   0400
+ONEVEL  0472
+ONEVEX  0024
+ONEVEY  0025
+ONEWIN  2522
+ONEWN   0556
+ONFG1   1154
+ONFG2   1155
+OP14    0752
+OP300   0554
+OUTLOC  2256
+P10     0116
+P100    0123
+P132    0124
+P17     0117
+P20     0120
+P200    0125
+P37     0121
+P3777   0130 unreferenced
+P40     0122
+P400    0126 unreferenced
+P5      0115
+P550    0127
+POINT   7142
+POSCAL  6703
+PRODIS  1600
+PROLIF  0111
+PROLOP  1603
+PROX    0107
+PROY    0110
+RESCNT  1741
+RESCON  1726
+RESE1   1712
+RESET   7117
+RESET1  0102
+RESFND  1734
+RESLOP  1715
+RESPNT  1742
+RESTRT  0201
+RLBITS  0327
+RSHIFT  0070
+RTNFLG  2253
+RYTHAF  0320
+SETBUF  1743
+SETLOP  1755
+SETPNT  1764
+SHIFTR  6675
+SINARG  6452
+SINE    0065
+SINEIN  6400
+SINELK  6444
+SINES   6470
+SINLST  6454
+SINNEG  6423
+SINNG2  6417
+SINPOP  6410
+SINPOS  6426
+SINPSH  6453
+SINTAB  6462
+SPACE   7104
+SPCHAR  7101
+SPURIO  0353
+START   0200 unreferenced
+STRT1   0321
+STRT2   0322
+STRTY   0323
+T10COS  0060
+T10SIN  0055
+T20COS  0061
+T20SIN  0056
+T30COS  0062
+T30SIN  0057
+TABLE   7143
+TABLEN  0315
+TERM    7123
+THEADJ  0077
+THEAJI  2510
+TIEUP   2331
+TIMOUT  2250
+TWDLOP  1453
+TWFG1   1376
+TWFG2   1377
+TWOCNT  0034
+TWOCOM  0141
+TWOCON  1332
+TWOCOS  0044
+TWODIS  1435
+TWOEXP  2310
+TWOFIG  0635
+TWOFIL  0114
+TWOFIN  0045
+TWOFLG  0035
+TWOLEF  0623 unreferenced
+TWOLNC  0705 unreferenced
+TWOLST  2252
+TWOMOV  0651 unreferenced
+TWOOK   0610
+TWOOUT  0033
+TWOPEX  0041
+TWOPEY  0042
+TWORTN  2255
+TWORYT  0631
+TWOSET  1200
+TWOSIN  0043
+TWOTHE  0036
+TWOUP   0600
+TWOVEL  0670
+TWOVEX  0037
+TWOVEY  0040
+TWOWIN  2530
+TWOWN   0754
+UPDATE  0243
+VECTOR  0071
+VEECLR  2503
+VEEHLD  2505
+VEELIM  2464
+VEEMAX  2507
+VEEMIN  2506
+VEEPOS  2476
+VEESCL  0100
+VEESET  2260
+WRDEND  7070
+XINCR   7131
+XONEDS  0046
+XPLOT   7032
+XTWODS  0050
+XVALUE  7127
+YINCR   7132
+YONEDS  0047
+YPLOT   7043
+YTEMP   7133
+YTWODS  0051
+YVALUE  7130

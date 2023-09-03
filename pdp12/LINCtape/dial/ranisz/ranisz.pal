@@ -1,0 +1,1408 @@
+dial=1
+unref=1
+/PDP-8E ISZ TEST
+/COPYRIGHT 1970, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.  01754
+/
+/CONSTANTS AND VARIABLES
+*0
+	0
+	JMP 1		/PERIPHERAL INTERRUPT
+FRMLOC,	2		/ISZ TEST INSTRUCTION LOCATION
+LIMLO,	3		/LOW LIMIT TEST AREA
+LIMHI,	-7600		/HIGH LIMIT TEST AREA
+ASUC,	SUC
+	7771
+MSK7,	0007		/OCTAL CONVERSION MASK
+WORK,	0		/IR0
+WORK1,	0		/IR1
+M377,	-377
+NUM,	3607		/THE RANDOM NUMBER LOCATION
+THREE,	3
+
+ISZ1,	ISZ I TOLOC	/MOVING ISZ
+JMP1,	JMP BACK	/TEST INSTRUCTION
+JMP2,	JMP BAKBRN	/GROUP.
+TOLOC,	0		/LOCATION TO BE ISZ'D
+PATRN,	0		/STARTING ISZ PATTERN
+BEFOR,	0		/FAILING PATTERN BEFORE FAILING ISZ
+AFTER,	0		/PREDICTED RESULTS OF EACH ISZ
+K4,	4		/SWITCH REGISTER MASKS
+K0400,	0400
+K0200,	0200
+K0100,	0100
+NOTE,	0		/7'S=ERROR WITH NO SKIP
+PRINT,	INF1-1		/0'S=ERROR WITH SKIP
+AERR1,	ERR1
+AERR2,	ERR2
+APDR,	PDR
+ITADNM,	TAD NUM
+ATFCLF,	TFCLF
+
+/SR0(0)=HALT AFTER ERROR PRINTOUT
+/SR1(1)=NO PRINTOUTS
+/SR3(1) = HOLD FROM CONSTANT
+/SR4(1) = HOLD TO CONSTANT
+/SR5(1) = HOLD PATTERN CONSTANT
+/SR9(0) = DO ONE ISZ ONLY
+/SR11(1) = DO TEST PART 2
+/
+/
+
+/PROGRAM START
+START,	JMS I .+1	/ION
+	PATCH		/LAS
+	AND THREE
+	SZA CLA		/SKIP IF PART 1
+	JMP I K0400	/GO TO PART 2
+	TAD ITADNM
+	DCA RANUM+1
+	/CHECK FOR FIXED PATTERN
+CHEK1,	LAS
+	AND K0100
+	SZA
+	JMP CHEK2
+
+	/SELECT THE PATTERN
+SELPAT,	JMS RANUM
+	DCA PATRN
+
+	/CHECK FOR FIXED TO
+CHEK2,	LAS
+	AND K0200
+	SZA CLA
+	JMP CHEKS
+
+	/SELECT THE TO LOCATION
+SELTO,	JMS RANUM
+	DCA TOLOC
+	TAD TOLOC
+	JMS LIMTST
+
+	/CHECK FOR FIXED FROM
+CHEKS,	LAS
+	AND K0400
+	SZA CLA
+	JMP PLCINT
+
+	/SELECT THE FROM LOCATION
+SELFRM,	JMS RANUM
+	DCA FRMLOC
+	TAD FRMLOC
+	JMS LIMTST
+
+	/PLACE FROM INSTRUCTIONS
+PLCINT,	CLA CMA
+	TAD FRMLOC
+	DCA WORK
+	TAD ISZ1
+	DCA I WORK
+	TAD JMP1
+	DCA I WORK
+	TAD JMP2
+	DCA I WORK
+
+	/DEPOSIT PATTERN IN LOCATION
+	TAD PATRN
+	DCA I TOLOC
+
+	/STORE PREDICTED ISZ RESULT
+	TAD PATRN
+	DCA BEFOR
+LUP1,	TAD BEFOR
+	IAC
+	DCA AFTER
+	JMP I ASUC
+
+	/RETURN NO SKIP CONDITION
+BACK,	LAS
+	RAL
+	SPA CLA
+	JMP LAS1
+	TAD I TOLOC
+	CIA
+	TAD AFTER
+	SZA CLA
+	JMP I AERR1	/ERROR IN ISZ OPERATION
+	TAD I TOLOC
+	SNA CLA
+	JMP I AERR1	/ERROR IN ISZ SKIP DETECTION
+LAS1,	LAS
+	AND K4
+	SZA		/SKIP IF NOT ONE ISZ (SR9)
+	JMP CHEK1
+	IAC
+	TAD BEFOR
+	JMP LUP1-1
+
+	/RETURN FOR SKIP CONDITION
+BAKBRN,	LAS
+	RAL
+	SPA CLA
+	JMP CHEK1
+	TAD I TOLOC
+	SZA CLA		/SKIP IF TO LOCATION OK
+	JMP I AERR2	/ERROR IN ISZ LOCATION
+	JMP CHEK1
+
+/TEST HIGH-LOW LIMITS
+
+LIMTST,	0
+	SPA
+	JMP .+5
+	TAD LIMLO
+	SMA CLA
+	JMP I LIMTST
+	JMP RANUM+1
+	TAD LIMHI
+	SMA CLA
+	JMP RANUM+1
+	JMP I LIMTST
+
+	/RANDOM NUMBER GENERATOR
+RANUM,	0
+	TAD NUM
+	RAL CLL
+	SZL
+	TAD THREE
+	DCA NUM
+	TAD NUM		/AC=NEW RANDOM NUMBER
+	JMP I RANUM
+
+A1,	SKPDAT
+A2,	SKPDAT+1
+K1000,	1000
+KP,	0
+CT,	0
+
+*200
+/	JMP START
+
+	/ERROR ROUTINE 1
+ERR1,	TAD SKPDAT+6
+	DCA SKPDAT
+	CMA
+	DCA NOTE
+	JMP KPGO
+
+	/ERROR ROUTINE 2
+ERR2,	TAD SKPDAT-1
+	DCA SKPDAT
+KPGO,	TAD SKPDAT+7
+	DCA SKPDAT+1
+	TAD FRMLOC
+	DCA WORK
+	TAD A3
+	JMS SETUP
+
+	TAD TOLOC
+	DCA WORK
+	TAD A4
+	JMS SETUP
+
+	TAD PATRN
+	DCA WORK
+	TAD A5
+	JMS SETUP
+	TAD BEFOR
+	DCA WORK
+	TAD A6
+	JMS SETUP
+
+	TAD I TOLOC
+	DCA WORK
+	TAD A7
+	JMS SETUP
+
+	/TTY PRINT ROUTINE
+TTY,	IOF
+	TAD PRINT
+	DCA WORK
+	TAD I WORK
+	TLS
+	TSF
+	JMP .-1
+	TAD M377
+	SZA CLA
+	JMP TTY+3
+	TCF
+	ION
+	LAS
+	SPA CLA
+	HLT		/HALT AFTER ERROR (SR0)
+
+	TAD NOTE
+	SNA CLA
+	JMP CHEK1
+	DCA NOTE
+	JMP LAS1	/RETURN TO NO SKIP ROUTINE
+
+	/ERROR PRINT OUT LINE 1
+INF1,	306		/F	FROM (INSTRUCTION LOCATION)
+	240		/SPACE
+INDATA,	0		/X	LOCATION
+	0		/X
+	0		/X
+	0		/X
+	240		/SPACE
+	240		/SPACE
+	324		/T	TO (OPERAND ADDRESS)
+	240		/SPACE
+ONDATA,	0		/X	ADDRESS
+	0		/X
+	0		/X
+	0		/X
+	215		/CR
+	212		/LF
+	215		/CR
+	215		/CR
+
+	/ERROR PRINT OUT LINE 2
+	317		/O	OPERAND (STARTING COUNT)
+	240		/SPACE
+STDATA,	0		/X	PATTERN
+	0		/X
+	0		/X
+	0		/X
+	240		/SPACE
+	240		/SPACE
+	306		/F	FAILING COUNT
+	240		/SPACE
+FLDATA,	0		/X	PATTERN BEFORE FAILING ISZ
+	0		/X
+	0		/X
+	0		/X
+	240		/SPACE
+	240		/SPACE
+	322		/R	RESULT AFTER FAILURE
+	240		/SPACE
+RSDATA,	0		/X	PATTERN AFTER FAILING ISZ
+	0		/X
+	0		/X
+	0		/X
+	240		/SPACE
+	240		/SPACE
+SKPDAT,	316		/N	NO
+	323		/S	SKIP
+	215		/CR
+	212		/LF
+	212		/LF
+	377		/RUBOUT
+	316		/N
+	323		/S
+
+SETUP,	0
+	DCA WORK1
+	TAD WORK
+	RTL
+	RTL
+	JMS MORSU
+	RTR
+	RTR
+	RTR
+	JMS MORSU
+	RTR
+	RAR
+	JMS MORSU
+	JMS MORSU
+	CLA
+	JMP I SETUP
+MORSU,	0
+	AND MSK7
+	TAD TW6
+	DCA I WORK1
+	TAD WORK
+	JMP I MORSU
+
+	/PAGE 1 CONSTANTS
+A3,	INDATA-1
+A4,	ONDATA-1
+A5,	STDATA-1
+A6,	FLDATA-1
+A7,	RSDATA-1
+TW6,	0260
+ifdef unref <
+4570	/unref
+>
+
+/PART 2 INITIALIZATION ROUTINE
+*400
+	TAD LIMLO
+	CIA
+	DCA FROM	/LOW LIMIT TO FROM
+	TAD LIMLO
+	CMA
+	DCA TO
+	TAD A0
+	DCA PATCYC
+	TAD INST1
+	DCA RANUM+1
+
+	JMP CHEK1	/GO TO PAGE 0 START
+
+	/PATH DECISION ROUTINE
+PDR,	TAD RANUM
+	CIA
+	TAD GFROM
+	SNA CLA		/SKIP IF NOT REQUESTING FROM
+	JMP FRUT		/GO TO TO ADDRESS ROUTINE
+
+	TAD RANUM
+	CIA
+	TAD GTO
+	SNA CLA		/SKIP IF NOT REQUESTING TO
+	JMP TORUT		/GO TO ADDRESS ROUTINE
+	JMP PRUT		/GO TO PATTERN ROUTINE
+
+	/SELECT PATTERN AND OTHER THINGS
+PRUT,	TAD I PATCYC
+	DCA PATT
+	TAD PATT
+	SNA		/NO SKIP IF END OF PATTERN TABLE
+	JMP .+6		/END PATTERN TABLE LOOK AROUND
+	CLA IAC
+	TAD PATCYC
+	DCA PATCYC
+	TAD PATT
+	JMP I RANUM	/RETURN, AC=NEW PATTERN
+	/
+	TAD AK7776
+	DCA PATCYC	/RESTOR START ADDRESS OF PATT. TABLE
+	IAC
+	TAD TO
+	DCA TO		/INCREMENT TO
+	TAD TO
+	CIA
+	TAD FROM
+	SZA CLA		/SKIP IF TO = FROM
+	JMP .+4
+	TAD TO
+	TAD THREE
+	DCA TO		/SKIP AROUND FROM
+	TAD TO
+	SMA
+	JMP GOUT
+	TAD LIMHI
+	SPA CLA		/SKIP IF END TEST AREA
+	JMP GOUT
+	CLA IAC
+	TAD FROM
+	DCA FROM	/ADVANCE FROM
+	TAD LIMLO
+	CIA
+	DCA TO		/RESET TO ADDRESS
+	TAD FROM
+	TAD LIMHI
+	SZA CLA
+	JMP GOUT
+	JMP 400
+GOUT,	CLA
+	TAD PATT
+	JMP I RANUM
+
+	/SELECT TO ROUTINE
+TORUT,	TAD TO
+	JMP I RANUM
+
+	/SELECT FROM ROUTINE
+FRUT,	TAD FROM
+	JMP I RANUM
+
+	/PAGE 3 CONSTANTS
+GFROM,	SELFRM+1	/STORED RETURN ADDRESS WHEN
+			/RANDOM FROM IS REQUESTED
+GTO,	SELTO+1 	/STORED RETURN ADDRESS WHEN
+			/RANDOM TO IS REQUESTED
+GPAT,	SELPAT+1	/STORED RETURN ADDRESS WHEN
+			/RANDOM PATTERN IS REQUESTED
+FROM,	0		/CURRENT FROM ADDRESS
+TO,	0		/CURRENT TO ADDRESS
+PATT,	0		/CURRENT PATTERN
+PATCYC,	0		/CURRENT PATTERN ADDRESS
+INST1,	JMP I APDR
+K7776,	7776
+	7775
+	7773
+	7767
+	7757
+	7737
+	7677
+	7577
+	7377
+	6777
+	5777
+	3777
+	0001
+	0003
+	0007
+	0017
+	0037
+	0077
+	0177
+	0377
+	0777
+	1777
+K3777,	3777
+	0
+AK7776,	K7776
+A0,	K3777+1
+
+SUC,	TAD CT
+	IAC
+	DCA CT
+	TAD CT
+	SZA CLA
+	JMP I ATFCLF
+	TAD KP
+	TAD K1000
+	DCA KP
+	TAD KP
+	SZA CLA
+	JMP I ATFCLF
+	IOF
+	TAD INF2+1
+	DCA I A1
+	TAD INF2+2
+	DCA I A2
+	TAD INF2
+	DCA WORK
+	JMP I .+1
+	7602
+INF2,	332
+	260
+	267
+ifdef unref <
+4552	/unref
+>
+
+*600
+
+/CHECK FOR TO=FROM CONFLICT
+
+TFCLF,	TAD TOLOC
+	CIA
+	TAD FRMLOC
+	SNA
+	JMP CHEK2
+	IAC
+	SNA
+	JMP CHEK2
+	IAC
+	SNA CLA
+	JMP CHEK2
+	JMP I FRMLOC
+
+PATCH,	0		/RESTORE THEN GO AWAY
+	DCA 0
+	TAD X
+	DCA 1
+	TAD X1
+	DCA 2
+	TAD X2
+	DCA 3
+	TAD X3
+	DCA START
+	TAD X4
+	DCA START+1
+	ION
+	JMP I PATCH
+
+X,	7402
+X1,	0
+X2,	7157
+X3,	ION
+X4,	LAS
+ifdef unref <
+1752	/unref
+7420	/unref
+5762	/unref
+7000	/unref
+7000	/unref
+7604	/unref
+7106	/unref
+7430	/unref
+5200	/unref
+5753	/unref
+7100	/unref
+7621	/unref
+1744	/unref
+7421	/unref
+1743	/unref
+7407	/unref
+0000	/unref
+3355	/unref
+7430	/unref
+7040	/unref
+3356	/unref
+7501	/unref
+3357	/unref
+7441	/unref
+3350	/unref
+1766	/unref
+7650	/unref
+5274	/unref
+5276	/unref
+1760	/unref
+7410	/unref
+1761	/unref
+7140	/unref
+1355	/unref
+7040	/unref
+7440	/unref
+5763	/unref
+7430	/unref
+5763	/unref
+1764	/unref
+7040	/unref
+1357	/unref
+7040	/unref
+7440	/unref
+5763	/unref
+7430	/unref
+5763	/unref
+1356	/unref
+7440	/unref
+5763	/unref
+7441	/unref
+7140	/unref
+1354	/unref
+7040	/unref
+7440	/unref
+5763	/unref
+7430	/unref
+5763	/unref
+7404	/unref
+7006	/unref
+7630	/unref
+5251	/unref
+7404	/unref
+7006	/unref
+7006	/unref
+7430	/unref
+5753	/unref
+5765	/unref
+0264	/unref
+0265	/unref
+0000	/unref
+0000	/unref
+0000	/unref
+0000	/unref
+0554	/unref
+0337	/unref
+0203	/unref
+0015	/unref
+0000	/unref
+0000	/unref
+0000	/unref
+0317	/unref
+0316	/unref
+1000	/unref
+1400	/unref
+0354	/unref
+2000	/unref
+0566	/unref
+6064	/unref
+6043	/unref
+6764	/unref
+6460	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6260	/unref
+6062	/unref
+>
+
+ifdef dial <
+/THIS BIT IS UNIQUE TO THE DIAL VERSION.
+/I SUSPECT IT'S PURPOSE IS TO BRANCH TO START IF
+/THE PROGRAM IS INVOKED IN LINC MODE.
+*4000
+7200	/unref
+7410	/unref
+7240	/unref
+3003	/unref
+1473	/unref
+3472	/unref
+6141	/unref
+0647	/unref
+0500	/unref
+6214	/unref
+0301	/unref
+1560	/unref
+7770	/unref
+1120	/unref
+7770	/unref
+0470	/unref
+7141	/unref
+1020	/unref
+7000	/unref
+0640	/unref
+1040	/unref
+2237	/unref
+1040	/unref
+2241	/unref
+1040	/unref
+2252	/unref
+1040	/unref
+2254	/unref
+1040	/unref
+2271	/unref
+1040	/unref
+2551	/unref
+1040	/unref
+2362	/unref
+1040	/unref
+2625	/unref
+1040	/unref
+2666	/unref
+1040	/unref
+3154	/unref
+1040	/unref
+3156	/unref
+0641	/unref
+1040	/unref
+2003	/unref
+1040	/unref
+2021	/unref
+1040	/unref
+2304	/unref
+1040	/unref
+2306	/unref
+1040	/unref
+2432	/unref
+1040	/unref
+2445	/unref
+1040	/unref
+2466	/unref
+1040	/unref
+2475	/unref
+1040	/unref
+2514	/unref
+1040	/unref
+2515	/unref
+1040	/unref
+2517	/unref
+1040	/unref
+2525	/unref
+1040	/unref
+3547	/unref
+1040	/unref
+3551	/unref
+1040	/unref
+3561	/unref
+1040	/unref
+3563	/unref
+1020	/unref
+0643	/unref
+1040	/unref
+3304	/unref
+4074	/unref
+1020	/unref
+7377	/unref
+0640	/unref
+1040	/unref
+2367	/unref
+1020	/unref
+7577	/unref
+1040	/unref
+2773	/unref
+1020	/unref
+1732	/unref
+1040	/unref
+2074	/unref
+1020	/unref
+0671	/unref
+1040	/unref
+2112	/unref
+0643	/unref
+0002	/unref
+4746	/unref
+4460	/unref
+5472	/unref
+4274	/unref
+4347	/unref
+2401	/unref
+0440	/unref
+1140	/unref
+6166	/unref
+4347	/unref
+0116	/unref
+0440	/unref
+2405	/unref
+1520	/unref
+4347	/unref
+0116	/unref
+0440	/unref
+2063	/unref
+6767	/unref
+6743	/unref
+0304	/unref
+0606	/unref
+5447	/unref
+6662	/unref
+6061	/unref
+4347	/unref
+0403	/unref
+0140	/unref
+1140	/unref
+6167	/unref
+4347	/unref
+1215	/unref
+2040	/unref
+1517	/unref
+2602	/unref
+4322	/unref
+0116	/unref
+0454	/unref
+4760	/unref
+4301	/unref
+1604	/unref
+4003	/unref
+1716	/unref
+4304	/unref
+0301	/unref
+4003	/unref
+1716	/unref
+4312	/unref
+1520	/unref
+4011	/unref
+4022	/unref
+0116	/unref
+0443	/unref
+0516	/unref
+0415	/unref
+2354	/unref
+4724	/unref
+0104	/unref
+4020	/unref
+0123	/unref
+2343	/unref
+2320	/unref
+0140	/unref
+0314	/unref
+0143	/unref
+1215	/unref
+2040	/unref
+1140	/unref
+2205	/unref
+2461	/unref
+4312	/unref
+1520	/unref
+4011	/unref
+4015	/unref
+0111	/unref
+1605	/unref
+3043	/unref
+4752	/unref
+6567	/unref
+6343	/unref
+6043	/unref
+6043	/unref
+6047	/unref
+5706	/unref
+1126	/unref
+0540	/unref
+2320	/unref
+0103	/unref
+0523	/unref
+4010	/unref
+0522	/unref
+0540	/unref
+1722	/unref
+4023	/unref
+1715	/unref
+0527	/unref
+1005	/unref
+2205	/unref
+4011	/unref
+1640	/unref
+4360	/unref
+4757	/unref
+2305	/unref
+0715	/unref
+1624	/unref
+4060	/unref
+4006	/unref
+1722	/unref
+4004	/unref
+1123	/unref
+1340	/unref
+0411	/unref
+0114	/unref
+4360	/unref
+4357	/unref
+2004	/unref
+2055	/unref
+6162	/unref
+4001	/unref
+2323	/unref
+0515	/unref
+0214	/unref
+0522	/unref
+4020	/unref
+0107	/unref
+0540	/unref
+6343	/unref
+5266	/unref
+6060	/unref
+4357	/unref
+2331	/unref
+1502	/unref
+1714	/unref
+4016	/unref
+2515	/unref
+0205	/unref
+2240	/unref
+0405	/unref
+0317	/unref
+0405	/unref
+2243	/unref
+2304	/unref
+0503	/unref
+1770	/unref
+5447	/unref
+6047	/unref
+4757	/unref
+0317	/unref
+1626	/unref
+0522	/unref
+2440	/unref
+0140	/unref
+2331	/unref
+1502	/unref
+1714	/unref
+4016	/unref
+2515	/unref
+>
+
+ifdef unref <
+*7400
+6360	/unref
+6062	/unref
+4367	/unref
+6360	/unref
+6043	/unref
+6160	/unref
+6465	/unref
+4363	/unref
+6260	/unref
+6043	/unref
+6262	/unref
+6060	/unref
+4361	/unref
+6067	/unref
+6343	/unref
+6162	/unref
+6060	/unref
+4367	/unref
+6064	/unref
+6043	/unref
+6764	/unref
+6260	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6764	/unref
+6062	/unref
+4367	/unref
+6260	/unref
+6043	/unref
+6160	/unref
+6062	/unref
+4367	/unref
+6060	/unref
+6143	/unref
+6764	/unref
+6460	/unref
+4365	/unref
+6362	/unref
+6643	/unref
+6762	/unref
+6060	/unref
+4363	/unref
+6060	/unref
+6243	/unref
+6763	/unref
+6060	/unref
+4361	/unref
+6064	/unref
+6643	/unref
+6362	/unref
+6060	/unref
+4362	/unref
+6260	/unref
+6043	/unref
+6160	/unref
+6764	/unref
+4361	/unref
+6260	/unref
+6043	/unref
+6760	/unref
+6460	/unref
+4367	/unref
+6462	/unref
+6043	/unref
+6764	/unref
+6460	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6762	/unref
+6060	/unref
+4361	/unref
+6060	/unref
+6243	/unref
+6760	/unref
+6061	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6563	/unref
+6467	/unref
+4367	/unref
+6260	/unref
+6043	/unref
+5264	/unref
+6260	/unref
+6043	/unref
+6043	/unref
+6360	/unref
+6062	/unref
+4367	/unref
+6360	/unref
+6043	/unref
+6160	/unref
+6467	/unref
+4363	/unref
+6260	/unref
+6043	/unref
+6262	/unref
+6060	/unref
+4361	/unref
+6067	/unref
+6543	/unref
+6162	/unref
+6060	/unref
+4367	/unref
+6064	/unref
+6043	/unref
+6764	/unref
+6260	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6764	/unref
+6062	/unref
+4367	/unref
+6260	/unref
+6043	/unref
+6160	/unref
+6062	/unref
+4367	/unref
+6060	/unref
+6143	/unref
+6764	/unref
+6460	/unref
+4365	/unref
+6260	/unref
+6143	/unref
+6762	/unref
+>
+
+*7602
+	TAD I WORK
+	TLS
+	TSF
+	JMP .-1
+	TAD M377
+	SZA CLA
+	JMP .-6
+	JMP OVR
+
+ifdef unref <
+6043	/unref
+6362	/unref
+6060	/unref
+4362	/unref
+6260	/unref
+>
+
+*7617
+OVR,	TCF
+	ION
+	JMP I ATFCLF
+
+ifdef unref <
+4361	/unref
+6260	/unref
+6043	/unref
+6760	/unref
+6460	/unref
+4367	/unref
+6462	/unref
+6043	/unref
+6764	/unref
+6460	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6762	/unref
+6060	/unref
+4361	/unref
+6060	/unref
+6243	/unref
+6760	/unref
+6061	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6562	/unref
+6262	/unref
+4367	/unref
+6260	/unref
+6043	/unref
+6360	/unref
+6062	/unref
+4367	/unref
+6360	/unref
+6043	/unref
+6160	/unref
+6561	/unref
+4363	/unref
+6260	/unref
+6043	/unref
+6262	/unref
+6060	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6160	/unref
+6561	/unref
+4361	/unref
+6260	/unref
+6043	/unref
+6760	/unref
+6460	/unref
+4367	/unref
+6462	/unref
+6043	/unref
+6764	/unref
+6460	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6762	/unref
+6060	/unref
+4361	/unref
+6060	/unref
+6243	/unref
+6760	/unref
+6061	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6562	/unref
+6463	/unref
+4367	/unref
+6364	/unref
+6043	/unref
+6260	/unref
+4367	/unref
+6465	/unref
+6043	/unref
+6764	/unref
+6360	/unref
+4367	/unref
+6460	/unref
+6243	/unref
+6262	/unref
+6764	/unref
+4365	/unref
+6266	/unref
+6443	/unref
+6764	/unref
+6160	/unref
+4360	/unref
+4367	/unref
+6360	/unref
+6043	/unref
+6160	/unref
+6460	/unref
+4367	/unref
+6064	/unref
+6043	/unref
+6164	/unref
+6266	/unref
+4367	/unref
+6064	/unref
+6043	/unref
+6764	/unref
+6260	/unref
+4367	/unref
+6464	/unref
+6043	/unref
+6764	/unref
+6062	/unref
+>
+
+ifdef unref <
+/DIAL HEADER BLOCK
+FIELD 1
+*0
+0000	/dial
+6202	/dial
+5777	/dial
+0037	/dial
+6342	/dial
+2411	/dial
+6141	/dial
+6141	/dial
+0641	/dial
+0011	/dial
+0001	/dial
+0721	/dial
+3314	/dial
+0643	/dial
+0721	/dial
+7300	/dial
+0000	/dial
+3224	/dial
+6141	/dial
+0700	/dial
+0000	/dial
+0011	/dial
+0002	/dial
+5620	/dial
+3344	/dial
+7300	/dial
+6141	/dial
+6312	/dial
+0700	/dial
+1364	/dial
+1000	/dial
+0035	/dial
+1460	/dial
+1456	/dial
+6044	/dial
+6200	/dial
+1020	/dial
+0001	/dial
+1140	/dial
+0035	/dial
+0011	/dial
+0002	/dial
+5630	/dial
+1543	/dial
+4500	/dial
+1202	/dial
+3235	/dial
+1202	/dial
+1130	/dial
+3241	/dial
+1310	/dial
+3011	/dial
+1157	/dial
+3715	/dial
+3711	/dial
+1316	/dial
+3717	/dial
+4720	/dial
+3037	/dial
+6141	/dial
+0643	/dial
+0720	/dial
+6342	/dial
+0700	/dial
+7343	/dial
+0643	/dial
+0011	/dial
+0002	/dial
+7040	/dial
+3012	/dial
+5653	/dial
+3402	/dial
+2370	/dial
+3357	/dial
+3666	/dial
+4337	/dial
+7640	/dial
+3362	/dial
+4400	/dial
+3360	/dial
+4030	/dial
+1011	/dial
+4513	/dial
+4712	/dial
+1313	/dial
+3016	/dial
+1013	/dial
+3017	/dial
+3173	/dial
+1416	/dial
+7710	/dial
+2173	/dial
+2017	/dial
+5331	/dial
+1173	/dial
+3713	/dial
+1351	/dial
+4513	/dial
+4601	/dial
+4605	/dial
+4746	/dial
+5517	/dial
+3746	/dial
+4336	/dial
+4400	/dial
+0437	/dial
+5401	/dial
+1030	/dial
+0132	/dial
+5363	/dial
+2020	/dial
+1037	/dial
+7700	/dial
+5366	/dial
+1030	/dial
+4434	/dial
+4504	/dial
+5503	/dial
+1030	/dial
+0137	/dial
+7041	/dial
+1046	/dial
+7640	/dial
+5353	/dial
+1030	/dial
+0144	/dial
+5363	/dial
+7113	/dial
+0002	/dial
+7200	/dial
+1205	/dial
+4476	/dial
+5516	/dial
+0010	/dial
+4142	/dial
+3212	/dial
+6141	/dial
+0714	/dial
+0437	/dial
+0011	/dial
+0002	/dial
+5606	/dial
+0000	/dial
+3234	/dial
+1166	/dial
+3237	/dial
+1037	/dial
+7700	/dial
+5232	/dial
+1234	/dial
+7041	/dial
+1166	/dial
+3166	/dial
+5616	/dial
+6141	/dial
+1020	/dial
+0000	/dial
+0017	/dial
+1120	/dial
+0000	/dial
+0002	/dial
+5230	/dial
+0000	/dial
+3257	/dial
+1166	/dial
+3261	/dial
+1037	/dial
+7700	/dial
+5255	/dial
+1257	/dial
+1166	/dial
+3166	/dial
+5642	/dial
+6141	/dial
+1020	/dial
+0000	/dial
+1120	/dial
+0000	/dial
+0002	/dial
+5253	/dial
+0000	/dial
+3270	/dial
+6141	/dial
+0716	/dial
+0000	/dial
+0011	/dial
+0002	/dial
+5664	/dial
+5144	/dial
+6141	/dial
+1000	/dial
+0777	/dial
+0321	/dial
+1560	/dial
+7774	/dial
+4313	/dial
+0264	/dial
+1620	/dial
+0700	/dial
+4035	/dial
+0002	/dial
+5674	/dial
+1020	/dial
+0000	/dial
+0001	/dial
+0011	/dial
+6000	/dial
+3677	/dial
+3323	/dial
+6141	/dial
+0710	/dial
+2377	/dial
+0011	/dial
+0002	/dial
+5717	/dial
+1136	/dial
+7240	/dial
+1047	/dial
+3047	/dial
+1447	/dial
+5727	/dial
+2217	/dial
+0000	/dial
+0004	/dial
+7777	/dial
+7777	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+7777	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+7777	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+0000	/dial
+>
+$
