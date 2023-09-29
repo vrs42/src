@@ -1,0 +1,728 @@
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 1
+
+
+    1              /XMODEM TRANSMIT OS/8 DEVICE HANDLER
+    2              /**************************************************************
+    3              /THIS 2-PAGE OS/8 DEVICE HANDLER TRANSMITS DATA VIA A KL8-E-
+    4              /TYPE SERIAL PORT, USING THE XMODEM PROTOCOL. THERE ARE TWO
+    5              /CO-RESIDENT HANDLERS HERE: XMT0 TRANSMITS DATA AS IT IS IN
+    6              /THE OS/8 BUFFER. XMTA (INTENDED FOR OS/8 ASCII FILES) STRIPS
+    7              /THE MOST-SIGNIFICANT (PARITY) BIT FROM EVERY 8-BIT BYTE.
+    8              /LIMITATIONS:
+    9              / 1. TRANSFERS MUST BE AN EVEN NUMBER OF 128-WORD OS/8 RECORDS.
+   10              /    (ONE OS/8 DATA BLOCK IS ALWAYS 2 RECORDS ANYWAY.)
+   11              / 2. CRC ERROR CHECKING IS NOT SUPPORTED
+   12              / 3. RETRIES ARE UNBOUNDED. (THE USER CAN TYPE ^C TO ABORT)
+   13              /**************************************************************
+   14              /FOR DEVICE HANDLER DOCUMENTATION, SEE THE FOLLOWING:
+   15              /  OS/8 SOFTWARE SUPPORT MANUAL (DEC-S8-OSSMB-A-D),
+   16              /     CHAPTER 4: USING DEVICE HANDLERS
+   17              /     SECTION 5.1: WRITING DEVICE HANDLERS
+   18              /  OS/8 HANDBOOK, APRIL 1974 (DEC-S8-0SHBA-A-D)
+   19              /     PAGES 2-56 TO 2-61: BUILD HANDLER DEVICE FORMAT
+   20              /**************************************************************
+   21              /REVISION HISTORY
+   22              / 1.00 17 AUGUST 2020  M. EBERHARD
+   23              /    CREATED
+   24              / 1.01 4 SEPTEMBER 2020  M. EBERHARD
+   25              /    ADD ASCII DATA HANDLER, XMTA, TO STRIP THE 8-BIT MSB'S
+   26              /    (FOR HANDLING OS/8 ASCII FILES, WHICH GENERALLY HAVE THE
+   27              /    MSB SET). RENAME THE NORMAL HANDLER "XMT0"
+   28              /**************************************************************
+   29              
+   30        0101          XMTVERSION=0101 /OCTAL VERSION
+   31              
+   32        0550          DEVTYPE=0550    /DEVICE TYPE, 0NN0,
+   33                                      /NN BETWEEN 40 AND 77
+   34                                      /(SEE DEC-S8-0SHBA-A-D PAGE 2-59)
+   35              
+   36              /------------------
+   37              /XMODEM DEFINITIONS
+   38              /------------------
+   39        4170          XTVAL=4170      /-TIMEOUT TO RECEIVE ACK OR NAK
+   40                                      /  7737 FOR A 1-SECOND TIMEOUT
+   41                                      /  7537 FOR A 5-SECOND TIMEOUT
+   42                                      /  6074 FOR A 30-SECOND TIMEOUT
+   43                                      /  4170 FOR A 60-SECOND TIMEOUT
+   44                                      /  2265 FOR A 90-SECOND TIMEOUT
+   45              
+   46              /--------------------------------
+   47              / TRANSFER PORT DEFINITIONS
+   48              /DTPORT MUST BE OF THE FORM 0NN0,
+   49              /WHERE N IS AN OCTAL DIGIT
+   50              /--------------------------------
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 2
+
+
+   51              
+   52        0300  DTPORT=0300             /2ND KL8-E
+   53              /DTPORT=0400            /2ND "TELETYPE" ON THE PDP-8 SIMULATOR
+   54              
+   55              /CALCULATE THE SPECIFIED KL8-E IOT'S FOR THE TRANSFER PORT
+   56              
+   57        6301  DTPKSF=6001+DTPORT      /SKIP ON INPUT FLAG
+   58        6302  DTPKCC=6002+DTPORT      /CLEAR INPUT FLAG
+   59        6306  DTPKRB=6006+DTPORT      /READ INPUT BUFFER, CLEAR FLAG
+   60        6310  DTPTFL=6010+DTPORT      /SET OUTPUT FLAG
+   61        6311  DTPTSF=6011+DTPORT      /SKIP ON OUTPUT FLAG
+   62        6316  DTPTLS=6016+DTPORT      /WRITE TO OUTPUT, CLEAR FLAG
+   63              
+   64              /**********************************
+   65              /* DEVICE HANDLER HEADER BLOCK    *
+   66              /* SEE DEC-S8-0SHBA-A-D PAGE 2-57 *
+   67              /**********************************
+   68        0000          *0
+   69 00000  7776          -2              /-NUMBER OF DEVICE HANDLERS HERE
+   70              
+   71              /HANDLER 1: 8-BIT DATA
+   72              
+   73 00001  3015          DEVICE XMT      /DEVICE GROUP NAME
+      00002  2400
+   74 00003  3015          DEVICE XMT0     /OS/8 DEVICE NAME (8-BIT HANDLER)
+      00004  2460
+   75 00005  1550          DEVTYPE+1000    /DCB WORD: NOT FILE-STRUC'D,
+   76                                      /WRITE-ONLY,DEVICE TYPE
+   77 00006  4057          XMT0&177+4000   /2-PAGE HANDLER,
+   78                                      /ENTRY POINT (MUST BE>24)
+   79                                      /(SEE DEC-S8-0SHBA-A-D PAGE 2-60)
+   80 00007  0000          ZBLOCK 2        /2 WORDS MUST BE 0
+      00010  0000
+   81              
+   82              /NANDLER 2: 7-BIT DATA
+   83              
+   84 00011  3015          DEVICE XMT      /DEVICE GROUP NAME
+      00012  2400
+   85 00013  3015          DEVICE XMTA     /OS/8 DEVICE NAME (7-BIT HANDLER)
+      00014  2401
+   86 00015  1550          DEVTYPE+1000    /DCB WORD: NOT FILE-STRUC'D,
+   87                                      /WRITE-ONLY,DEVICE TYPE
+   88 00016  4062          XMTA&177+4000   /2-PAGE HANDLER,
+   89                                      /ENTRY POINT (MUST BE>24)
+   90                                      /(SEE DEC-S8-0SHBA-A-D PAGE 2-60)
+   91 00017  0000          ZBLOCK 2        /2 WORDS MUST BE 0
+      00020  0000
+   92              
+   93              /***********************
+   94              /* DEVICE HANDLER BODY *
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 3
+
+
+   95              /***********************        
+   96        0200          *200            /(SEE DEC-S8-0SHBA-A-D PAGE 2-57)
+   97              
+   98              /VARIABLES
+   99              
+  100              TEMP1,                  /(REUSE)
+  101 00200  0000  RXTMRH, 0               /TIMEOUT TIMER HIGH WORD
+  102 00201  0000  XRECCNT,0               /-XMODEM RECORD COUNT
+  103              
+  104 00202  0000  BUFADR, 0               /BUFFER ADDRESS FROM CALL
+  105 00203  0000  BPTRA,  0               /OOINTS TO BUFPTR
+  106 00204  0000  B123A,  0               /POINTS TO BUF123
+  107              
+  108              /CONSTANTS
+  109              
+  110 00205  0070  C0070,  0070
+  111 00206  3700  BWCMSK, 3700            /MASK FOR BUFFER WORD COUNT
+  112 00207  0177  PMASK,  0177            /PARITY MASK
+  113 00210  7775  NCTRLC, -3              /-ASCII ^C
+  114 00211  0004  EOT,    4               /XMODEM EOT
+  115 00212  7772  NACK,   -6              /-XMODEM ACK
+  116 00213  7761  ACKMNK, 6-25            /XMODEM ACK - XMODEM NAK
+  117 00214  4170  TIMOUT, XTVAL           /TIMEOUT INITIALIZER
+  118              
+  119 00215  6203  CIFCDF, CDF CIF 0       /PROTOTYPE FOR CDF CIF INSTR.
+  120              
+  121              /*** HANDLER INITIALIZATION ***********************
+  122              /THIS SUBROUTINE GETS CALLED ONLY ON THE FIRST CALL
+  123              /TO THE HANDLER, WHEN THE OS/8 RECORD NUMBER IS 0
+  124              /ON ENTRY:
+  125              /  AC=0
+  126              /  TEMP1=7777 IF ENTRY FROM XMTO
+  127              /       =0177 IF ENTRY FROM XMTA
+  128              /  DATA FIELD IS SET TO 0
+  129              /**************************************************
+  130 00216  0167  DELTA,  XRECNO-IRET     /BE POSITION-INDEPENDENT
+  131              
+  132 00217  0000  INIT,   0               /RETURN ADDRESS
+  133              
+  134              /POINT TO 2ND PAGE VARIABLE TABLE
+  135              
+  136 00220  1217          TAD     INIT    /GET PAGE ADDRESS
+  137 00221  1216          TAD     DELTA   /POINT TO XRECNO
+  138 00222  3204          DCA     B123A   /TEMP USE B123A AS POINTER
+  139              
+  140              /INITIALIZE POINTERS TO 2ND PAGE VARIABLES
+  141              /AND INITIALIZE A FEW OF THESE VARIABLES
+  142              
+  143 00223  3604          DCA I   B123A   /XRECNO=0: START WITH RECORD 1
+  144              
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 4
+
+
+  145 00224  2204          ISZ     B123A   /POINT TO DMASK
+  146 00225  1200          TAD     TEMP1   /DATA MASK IN PAGE 1
+  147 00226  3604          DCA I   B123A   /..BELONGS IN PAGE 2
+  148              
+  149 00227  2204          ISZ     B123A   /POINT TO BUFPTR
+  150 00230  1204          TAD     B123A
+  151 00231  3203          DCA     BPTRA   /SET UP POINTER TO BUFPTR
+  152              
+  153 00232  2204          ISZ     B123A   /NOW POINTS TO BUF123
+  154              
+  155              /INITIALIZE TRANSFER PORT
+  156              
+  157 00233  6310          DTPTFL
+  158 00234  6302          DTPKCC
+  159              
+  160              /WAIT FOR INITIAL NAK TO BEGIN TRANSFER.
+  161              /ABORT WITH FATAL ERROR IF TIMEOUT
+  162              
+  163 00235  4342  ZSNAKW, JMS     GETACK  /GET&TEST A TRANSFER PORT BYTE
+  164 00236  7630          SZL CLA         /L=0 IF ACK, 1 IF NAK
+  165 00237  5617          JMP I   INIT    /NAK: GO!
+  166 00240  5235          JMP     ZSNAKW  /ACK: IGNORE IT
+  167              
+  168              /*** EXIT *******************************
+  169              /SEND EOT AND WAIT FOR ACK IN RESPONSE.
+  170              /RESEND EOT IF NAK WHILE WAITING FOR ACK.
+  171              /NORMAL-RETURN WHEN ACK ARRIVES.
+  172              /(USER CAN ^C TO ABORT)
+  173              /ON ENTRY:
+  174              /  AC=0
+  175              /****************************************
+  176 00241  6311  XCLOSE, DTPTSF          /DEVICE READY?
+  177 00242  5241          JMP     .-1     /N: KEEP WAITING
+  178              
+  179 00243  1211          TAD     EOT     /SEND XMODEM EOT
+  180 00244  6316          DTPTLS
+  181 00245  7600  ABORT,  7600            /EXIT TO MONITOR IN FIELD 0
+  182                                      /(ALSO ALTERNATE CLA)
+  183              
+  184 00246  4342          JMS     GETACK  /GET & TEST TRANSFER PORT CHR
+  185 00247  7430          SZL             /L=0 IF ACK, 1 IF NAK
+  186 00250  5241          JMP     XCLOSE  /NAK: RESEND EOT, TRY AGAIN
+  187                                      /ACK RECEIVED
+  188              
+  189              /FALL INTO XMTEXT FOR NORMAL EXIT
+  190              
+  191              /*** EXIT *************************************
+  192              /ALL DATA SENT. RESTORE FIELD AND NORMAL-RETURN
+  193              /ON ENTRY:
+  194              /  AC=0
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 5
+
+
+  195              /  XMT POINTS TO OS/8 RECORD NUMBER
+  196              /**********************************************
+  197 00251  2257  XMTEXT, ISZ     XMT     /POINT TO NORMAL RETURN
+  198 00252  7410          SKP
+  199              
+  200              /SKIP INTO ERREXT FOR NORMAL EXIT
+  201              
+  202              /*** EXIT *****************************
+  203              /HARD ERROR EXIT. ERROR-EXIT WITH AC=-1
+  204              /ON ENTRY:
+  205              /  XMT POINTS TO OS/8 RECORD NUMBER
+  206              /**************************************
+  207 00253  7240  ERREXT, STA             /AC=-1 FOR HARD ERROR
+  208              
+  209 00254  2257          ISZ     XMT     /ERROR RETURN FOR ERREXT
+  210              
+  211 00255  7402  RSTFLD, HLT             /(GETS OVERWRITTEN) RESTORE FIELDS
+  212 00256  5657          JMP I   XMT     /AND RETURN
+  213              
+  214              /*****************************
+  215              /* XMT0 HANDLER ENTRY POINT  *
+  216              /* NORMAL 8-BIT DATA HANDLER *
+  217              /*****************************
+  218              XMT,                    /COMMON POINTER FOR RETURN ETC.
+  219 00257  0101  XMT0,   XMTVERSION      /THIS CODE'S VERSION NUMBER
+  220                                      /IN RETURN ADDRESS SLOT
+  221              
+  222 00260  7240          STA             /12-BIT MASK: 7777
+  223 00261  5267          JMP     XMTC
+  224              
+  225              /****************************
+  226              /* XMTA HANDLER ENTRY POINT *
+  227              /* 7-BIT ASCII DATA HANDLER *
+  228              /****************************
+  229 00262  0101  XMTA,   XMTVERSION      /THIS CODE'S VERSION NUMBER
+  230                                      /IN RETURN ADDRESS SLOT
+  231              
+  232 00263  7200          CLA
+  233 00264  1262          TAD     XMTA    /SET UP POINTER FOR CALLING
+  234 00265  3257          DCA     XMT     /..PARAMETERS, RETURN ADDRESSES
+  235              
+  236 00266  1207          TAD     PMASK   /7-BIT MASK: 0177
+  237              
+  238 00267  3200  XMTC,   DCA     TEMP1   /DATA MASK IN THIS PAGE FOR NOW
+  239              
+  240              /-------------------------------
+  241              /PARSE HANDLER INPUT PARAMETERS
+  242              /(SEE DEC-S8-OSSMB-A-D PAGE 5-1)
+  243              /-------------------------------
+  244 00270  7330          STL CLA RAR     /AC=4000
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 6
+
+
+  245 00271  1657          TAD I   XMT     /GET FUNCTION WORD, R/W BIT TO LINK
+  246 00272  0206          AND     BWCMSK  /EXTRACT NUMBER OF WORDS TO TRANSFER
+  247 00273  7002          BSW             /BITS 1-5 INTO BITS 7-11
+  248 00274  3201          DCA     XRECCNT /OS/8 128-WORD RECORD COUNT FOR NOW
+  249              
+  250 00275  6214          RDF             /GET THE USER'S DATA FIELD
+  251 00276  1215          TAD     CIFCDF  /FORM OUR EXIT CIF CDF
+  252 00277  3255          DCA     RSTFLD  /STORE IN EXIT ROUTINE
+  253              
+  254 00300  1657          TAD I   XMT     /GET FUNCTION WORD AGAIN
+  255 00301  0205          AND     C0070   /ISOLATE BUFFER'S FIELD
+  256 00302  1313          TAD     CDFOP   /FORM CDF BUFFER'S FIELD
+  257 00303  3332          DCA     XMTCDF  /STORE WHERE IT WILL BE USEFUL
+  258              
+  259 00304  2257          ISZ     XMT     /POINT TO BUFFER ADDRESS
+  260 00305  1657          TAD I   XMT     /GET BUFFER ADDRESS
+  261 00306  3202          DCA     BUFADR  /UNTIL WE CAN REACH FIELD 0
+  262              
+  263 00307  2257          ISZ     XMT     /POINT TO OS/8 BLOCK NUMBER
+  264              
+  265 00310  7620          SNL CLA         /LINK=1 MEANS OUTPUT
+  266 00311  5253          JMP     ERREXT  /INPUT IS AN ERROR
+  267              
+  268              /----------------------------------------
+  269              /SET UP FOR NEW TRANSFER IF OS/8 RECORD 0
+  270              /(SEE DEC-S8-OSSMB-A-D PAGE 5-1 ITEM 2)
+  271              /ON ENTRY:
+  272              /  AC=0
+  273              /  XMT POINTS TO OS/8 RECORD NUMBER
+  274              /----------------------------------------
+  275 00312  1657          TAD I   XMT     /GET OS/8 RECORD NUMBER
+  276              
+  277 00313  6201  CDFOP,  CDF 0           /THE FOLLOWING OPS ARE IN FIELD 0
+  278                                      /ALSO PROTOTYPE FOR CDF NN
+  279              
+  280 00314  7650          SNA CLA         /RECORD 0 MEANS INITIALIZE FIRST
+  281 00315  4217          JMS     INIT    /DO INITIAL SETUP
+  282              IRET,
+  283              
+  284              /-----------------------------------
+  285              /SET UP FOR EACH CALL TO THE HANDLER
+  286              /NOW THAT WE CAN ACCESS FIELD 0, AND
+  287              /WE HAVE POINTERS TO PAGE 2
+  288              /ON ENTRY:
+  289              /  AC=0
+  290              /  BUFADR=OS/8 BUFFER ADDRESS
+  291              /-----------------------------------
+  292 00316  1202          TAD     BUFADR  /OS/8 BUFFER ADDRESS
+  293 00317  3603          DCA I   BPTRA   /..INTO 2ND PAGE
+  294 00320  3604          DCA I   B123A   /INIT 1-OF-3 BUFFER BYTE COUNTER
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 7
+
+
+  295              
+  296              /-----------------------------------------------------------
+  297              /COMPUTE XMODEM RECORD COUNT = -(OS/8 RECORD COUNT)*3/2
+  298              /ALSO CHECK FOR ILLEGAL ODD NUMBER OF OS/8 128-WORD RECORDS.
+  299              /BITS 1-5 & 9-11 ALL 0 MEANS CLOSE. (WE DON'T CHECK BITS
+  300              /9-11 HERE. ONLY 0 IS MEANINGFUL ANYWAY.)
+  301              /(SEE DEC-S8-OSSMB-A-D PAGE 4-3 ITEM 5 AND PAGE 5-3 ITEM 12)
+  302              /-----------------------------------------------------------
+  303 00321  1201          TAD     XRECCNT /OS/8 128-WORD RECORD COUNT
+  304 00322  7450          SNA
+  305 00323  5241          JMP     XCLOSE  /XRECCNT=0 MEANS CLOSE HANDLER
+  306              
+  307 00324  7110          CLL RAR         /DIVIDE BY 2. L SET IF ODD NUMBER
+  308 00325  7430          SZL
+  309 00326  5253          JMP     ERREXT  /ODD IS A FATAL ERROR
+  310              
+  311 00327  1201          TAD     XRECCNT /AC=(OS/8 RECORD COUNT)*3/2
+  312                                      /L=0 STILL
+  313              
+  314 00330  7041          CIA             /-XMODEM RECORD COUNT
+  315 00331  3201          DCA     XRECCNT
+  316              
+  317 00332  7402  XMTCDF, HLT             /(GETS OVERWRITTEN) SET DATA FIELD
+  318                                      /FOR OS/8 BUFFER
+  319              /----------------------------------
+  320              /SEND A COMPETE XMODEM RECORD
+  321              / L=0 TO SEND THE NEXT RECORD
+  322              / L=1 TO RESEND THE PREVIOUS RECORD
+  323              /----------------------------------
+  324 00333  4376  RECLUP, JMS     XSENDR
+  325              
+  326              /------------------------------------------
+  327              /WAIT FOR ACK, WITH TIMEOUT
+  328              /  ACK: SEND THE NEXT RECORD IF WE HAVE ONE
+  329              /  NAK: RESEND THE SAME RECORD
+  330              /  ANYTHING ELSE: IGNORE
+  331              /AC=0 HERE
+  332              /------------------------------------------
+  333 00334  4342  XSAWAT, JMS     GETACK  /GET & TEST TRANSFER PORT CHR
+  334 00335  7430          SZL             /L=0 MEANS ACK, 1 MEANS NAK
+  335 00336  5333          JMP     RECLUP  /WITH L=1 TO FORCE RETRY
+  336              
+  337              /-------------------------------------------
+  338              /GOT AN ACK. SEND THE NEXT XMODEM RECORD, OR
+  339              /RETURN FROM HANDLER IF THE BUFFER IS EMPTY
+  340              /AC=0 AND L=0 HERE
+  341              /-------------------------------------------
+  342 00337  2201          ISZ     XRECCNT /MORE IN BUFFER?
+  343 00340  5333          JMP     RECLUP  /Y: SEND ANOTHER XMODEM RECORD
+  344              
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 8
+
+
+  345 00341  5251          JMP     XMTEXT  /DONE: NORMAL RETURN2
+  346              
+  347              /*** SUBROUTINE *************************************
+  348              /RECEIVE A BYTE FROM THE TRANSFER PORT WITH TIMEOUT.
+  349              /TEST FOR NAK OR ACK,  WHILE CHECKING FOR ^C
+  350              /FROM THE USER. IGNORE EVERYTHING EXCEPT ACK AND NAK.
+  351              /
+  352              /ON ENTRY
+  353              /  AC=0
+  354              /  RXTMRL IS RANDOM. (WHO CARES?)
+  355              /ON RETURN:
+  356              /  AC=0
+  357              /  L=0 IF ACK RECEIVED
+  358              /  L=1 IF NAK RECEIVED
+  359              /ABORT WITH HARD ERROR IF TIMEOUT
+  360              /****************************************************
+  361 00342  0000  GETACK, 0               /(RETURN ADDRESS)
+  362              
+  363 00343  1214          TAD     TIMOUT  /GET TIMEOUT VALUE
+  364 00344  3200          DCA     RXTMRH  /SET UP TIMER
+  365              
+  366              /TEST FOR TRANSFER PORT BYTE, KEEP WAITING IF NOT
+  367              
+  368 00345  6301  GAWLUP, DTPKSF          /(2,6)TEST FOR BYTE
+  369 00346  5357          JMP     GAWAIT  /(1.2)WAIT FOR INPUT
+  370              
+  371              /GET TRANSFER PORT BYTE
+  372              /AC=0 HERE
+  373              
+  374 00347  6306          DTPKRB
+  375              
+  376              /TEST FOR ACK AND NAK, RETURN AS INDICATED,
+  377              /IGNORE OTHER CHRS, WITH TIMEOUT
+  378              
+  379 00350  1212          TAD     NACK    /ACK?
+  380 00351  7100          CLL             /IN CASE OF ACK
+  381 00352  7450          SNA
+  382 00353  5742          JMP I   GETACK  /ACK: RETURN WITH L=0
+  383              
+  384 00354  1213          TAD     ACKMNK  /ASCII ACK-ASCII NAK
+  385                                      /NAK WILL SET L
+  386 00355  7650          SNA CLA         /IGNORE IF NEITHER ACK NOR NAK
+  387 00356  5742          JMP I   GETACK  /NAK: RETURN WITH L=1
+  388              
+  389              /NO BYTE YET, OR NEITHER ACK NOR NAK. BUMP TIMER,
+  390              /KEEP WAITING. RXTMRL WILL OVERFLOW EVERY 32 MS
+  391              
+  392 00357  2376  GAWAIT, ISZ     RXTMRL  /(2.6)INNER LOOP
+  393 00360  5345          JMP     GAWLUP  /(1.2)  
+  394              
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                                Page 9
+
+
+  395              /EVERY 32 MSEC, TEST FOR ^C FROM USER AND ABORT IF SO
+  396              /AC=0 HERE
+  397              
+  398 00361  6034          KRS             /READ STATIC FROM KEYBOARD
+  399 00362  0207          AND     PMASK   /STRIP PARITY
+  400 00363  1210          TAD     NCTRLC  /IS IT ^C?
+  401 00364  7650          SNA CLA
+  402 00365  5645          JMP I   ABORT   /YES - EXIT TO MONITOR
+  403              
+  404              /BUMP HIGH TIMER WORD, TEST FOR TIMEOUT. ERROR-EXIT IF SO
+  405              
+  406 00366  2200          ISZ     RXTMRH  /TIMEOUT?
+  407 00367  5345          JMP     GAWLUP  /N: KEEP WAITING
+  408              
+  409              /TIMEOUT: ABORT HANDLER
+  410              
+  411 00370  5253          JMP     ERREXT
+  412              
+  413              /*** SUBROUTINE****************************************
+  414              /SEND A COMPLETE XMODEM RECORD
+  415              /
+  416              / THIS SUBROUTINE IS STRATEGICALLY PLACED TO SPAN THE
+  417              / PAGE BOUNDARY AFTER THE "TAD XSENDR" INSTRUCTION, TO
+  418              / KEEP THIS HANDLER POSITION-INDEPENDENT. THE ASSEMBLER
+  419              / MAY NOT REPORT AN ERROR IF THE SPAN IS NOT POSITIONED
+  420              / CORRECTLY. (CHECK FOR PAGE OVERLAP MANUALLY.)
+  421              /ON ENTRY:
+  422              /  AC=0
+  423              /  BUFPTR AND BUF123 POINT TO THE NEXT BUFFER LOCATION
+  424              /  XRECNO=THE PREVIOUS XMODEM RECORD NUMBER
+  425              /  L=0 FOR NEXT RECORD
+  426              /  L=1 TO RETRY PREVIOUS RECORD
+  427              /  IF L=1 THEN SAVPTR=BUFPTR
+  428              /         AND SAV123=BUF123
+  429              /******************************************************
+  430        0376          *376
+  431              RXTMRL,                 /(REUSE) TIMEOUT TIMER LOW WORD
+  432 00376  0000  XSENDR, 0               /RETURN ADDRESS (IN 1ST PAGE)
+  433 00377  1376          TAD     XSENDR  /GET RETURN ADDRESS
+  434              
+  435              /---PAGE BREAK HERE---
+  436              
+  437 00400  3272          DCA     XSRRET  /CREATE RETURN ADDRESS
+  438                                      /IN 2ND PAGE
+  439              
+  440              /----------------------
+  441              /RETRY PREVIOUS RECORD?
+  442              /----------------------
+  443 00401  7430          SZL
+  444 00402  5211          JMP     XRETRY  /L SET MEANT RETRY
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                               Page 10
+
+
+  445              
+  446              /-------------------------------------
+  447              /SAVE BUFFER LOCATION FOR XMODEM RETRY
+  448              /(EACH PAIR OF BUFFER WORDS BECOMES
+  449              /3 XMODEM BYTES. BUF123 TELLS US WHICH
+  450              /OF THE 3 BYTES TO USE.)
+  451              /-------------------------------------
+  452 00403  1307          TAD     BUFPTR
+  453 00404  3303          DCA     SAVPTR
+  454 00405  1310          TAD     BUF123
+  455 00406  3304          DCA     SAV123
+  456              
+  457              /------------------
+  458              /NEXT XMODEM RECORD
+  459              /------------------
+  460 00407  2305          ISZ     XRECNO  /NEXT XMODEM RECORD NUMBER
+  461 00410  7000          NOP             /IN CASE XRECNO WRAPS
+  462              
+  463              /--------------------------------------------
+  464              /ENTER HERE IF NAK RECEIVED: BACK UP THE
+  465              /BUFFER POINTERS AND RESEND THE XMODEM RECORD
+  466              /ON ENTRY:
+  467              /  AC=0
+  468              /--------------------------------------------
+  469 00411  1303  XRETRY, TAD     SAVPTR
+  470 00412  3307          DCA     BUFPTR
+  471 00413  1304          TAD     SAV123
+  472 00414  3310          DCA     BUF123
+  473              
+  474              /----------------------------------------------
+  475              /FOUR STEPS TO CREATE AND SEND AN XMODEM RECORD
+  476              /ON ENTRY:
+  477              /  XRECNO=XMODEM RECORD NUMBER
+  478              /  BUFPTR=ADDRESS OF NEXT BUFFER WORD
+  479              /  BUF123=STARTING 8-BIY BYTE LOCATION
+  480              /         0 FOR 1ST BYTE
+  481              /         1 FOR 2ND BYTE
+  482              /        -1 FOR 3RD BYTE
+  483              /----------------------------------------------
+  484              
+  485              /----------------------------------
+  486              /1. SEND THE RECORD HEADER, AND SET 
+  487              /   UP FOR THE DATA LOAD IN BETWEEN
+  488              /     RECORD HEADER: 
+  489              /        SOH
+  490              /        RECORD NUMBER
+  491              /        COMPLEMENTED RECORD NUMBER
+  492              /----------------------------------
+  493 00415  7201          CLA IAC         /SEND SOH (ASCII SOH = 1)
+  494 00416  4273          JMS     TPOUT
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                               Page 11
+
+
+  495              
+  496 00417  1277          TAD     XBYTES  /-BYTES PER XMODEM RECORD
+  497 00420  3301          DCA     XBCOUNT /SET UP BYTE COUNT
+  498              
+  499 00421  1305          TAD     XRECNO  /SEND RECORD NUMBER
+  500 00422  4273          JMS     TPOUT
+  501              
+  502 00423  3302          DCA     CHKSUM  /INITIALIZE CHECKSUM
+  503              
+  504 00424  1305          TAD     XRECNO  /SEND INVERTED RECORD NUMBER
+  505 00425  7040          CMA
+  506 00426  4273          JMS     TPOUT
+  507              
+  508              /------------------------------------------------------------
+  509              /2. LOOP TO SEND THE NEXT 128*2/3 12-BIT BUFFER -WORDS AS 128
+  510              /   8-BIT XMODEM BYTES, COMPUTING THE CHECKSUM AS WE GO. EACH
+  511              /   PAIR OF 12-BIT BUFFER WORDS BECOMES 3 XMODEM BYTES,
+  512              /   ENCODED AS FOLLOWS (DEC-S8-OSSMB-A-D PAGE 5-3, ITEM 11):
+  513              /
+  514              /           0        3  4                         11
+  515              /          ------------ ----------------------------
+  516              /  WORD 1 |BYTE 3 <0:3>|        BYTE 1 <0:7>        |
+  517              /          ------------ ----------------------------
+  518              /  WORD 2 |BYTE 3 <4:7>|        BYTE 2 <0:7>        |
+  519              /          ------------ ----------------------------
+  520              /ON ENTRY:
+  521              /  AC=0
+  522              /  CHKSUM=0
+  523              /  XBCOUNT=-128
+  524              /  BUFPTR=ADDRESS OF NEXT BUFFER WORD
+  525              /  BUF123=0 FOR BYTE 1
+  526              /         1 FOR BYTE 2
+  527              /        -1 FOR BYTE 3
+  528              /TRASHES TEMP2
+  529              /------------------------------------------------------------
+  530 00427  1310  XSDLUP, TAD     BUF123
+  531 00430  2310          ISZ     BUF123  /WHICH 8-BIT BYTE NEXT?
+  532 00431  5247          JMP     XSD1    /WAS -1: SEND BYTE 3
+  533              
+  534              /BUF123 WAS -1: SEND BYTE 3
+  535              /AC=-1 HERE
+  536              
+  537 00432  1307          TAD     BUFPTR  /DECREMENT BUFPTR
+  538 00433  3273          DCA     TEMP2   /POINT TO 1ST OF 2 BUFFER WORDS
+  539              
+  540 00434  1673          TAD I   TEMP2   /GET 1ST OF 2 BUFFER WORDS
+  541 00435  0255          AND     C7400   /PEEL OFF BITS <0:3>
+  542 00436  3273          DCA     TEMP2   /TEMP2<0:3> = BYTE 3<0:3>
+  543              
+  544 00437  1707          TAD I   BUFPTR  /GET 2ND OF 2 BUFFER WORDS
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                               Page 12
+
+
+  545 00440  0255          AND     C7400   /PEEL OFF BITS <0:3>
+  546 00441  7112          CLL RTR
+  547 00442  7112          CLL RTR         /AC<4:7> = BYTE 3<4:7>
+  548 00443  1273          TAD     TEMP2   /COMBINE: AC<0:7> = BYTE 3<0:7>
+  549              
+  550 00444  7112          CLL RTR         /PUSH INTO BITS 4:11
+  551 00445  7112          CLL RTR         /AC<4:11>=BYTE 3<0:7>
+  552              
+  553 00446  5254          JMP     XSD2    /AC=8-BIT BYTE 3
+  554              
+  555              /FIX BUF123 FOR THE NEXT BYTE:
+  556              /CURRENT BYTE1: AC=0, BUF123 IS AND SHOULD BE 1
+  557              /CURRENT BYTE2: AC=1, BUF123 IS 2 AND SHOULD BE -1
+  558              
+  559 00447  7161  XSD1,   CLL CML CMA IAC /BYTE 1: AC=0, L=0
+  560                                      /BYTE 2: AC=-1, L=1
+  561 00450  7440          SZA
+  562 00451  3310          DCA     BUF123  /BUF123=-1: BYTE 3 NEXT
+  563              
+  564              /GET A BUFFER WORD FOR BYTES 1 AND 2
+  565              /NOTE THAT THE SERIAL PORT IGNORES BITS <0:3>
+  566              
+  567 00452  1707          TAD I   BUFPTR
+  568              
+  569              /L=1 IFF THE NEXT BYTE WILL BE BYTE 3
+  570              /DON'T ADVANCE THE ADDRESS POINTER IF SO
+  571              
+  572 00453  7420          SNL             /DON'T BUMP BUFPTR IF BYTE 3 IS NEXT    
+  573 00454  2307  XSD2,   ISZ     BUFPTR  /POINT TO NEXT PAIR OF BUFFER WORDS
+  574 00455  7400  C7400,  7400            /NOP (BUFPTR COULD WRAP)
+  575              
+  576              /AC<4:11>=NEXT 8-BIT XMODEM BYTE TO SEND                
+  577              /COMPUTE CHECKSUM AND SEND THE XMODEM BYTE
+  578                      
+  579 00456  0306          AND     DMASK   /STRIP PARITY IF XMTA
+  580 00457  3273          DCA     TEMP2   /TEMP2<4:11> = BYTE TO SEND
+  581              
+  582 00460  1273          TAD     TEMP2
+  583 00461  1302          TAD     CHKSUM  /UPDATE CHECKSUM
+  584 00462  3302          DCA     CHKSUM
+  585              
+  586 00463  1273          TAD     TEMP2   /NOTE: CALLING TPOUT TRASHES TEMP2
+  587 00464  4273          JMS     TPOUT   /SEND BYTE (AC<0:3> IGNORED)
+  588              
+  589              /LOOP TO SEND ALL 128 BYTES OF XMODEM RECORD DATA
+  590              
+  591 00465  2301          ISZ     XBCOUNT
+  592 00466  5227          JMP     XSDLUP  /LOOP FOR ALL DATA WORDS
+  593              
+  594              /--------------------
+
+
+
+      /XMODEM TRANSMIT OS/8 DEVICE HANDLER                               Page 13
+
+
+  595              /3. SEND THE CHECKSUM
+  596              /   AC=0 HERE
+  597              /--------------------
+  598 00467  1302          TAD     CHKSUM
+  599 00470  4273          JMS     TPOUT   /BITS <0:3> IGNORED BY PORT
+  600              
+  601              /--------------------------------
+  602              /4. RETURN TO WAIT FOR THE ACK
+  603              /--------------------------------
+  604              
+  605 00471  5672          JMP I   XSRRET
+  606              
+  607 00472  0000  XSRRET, 0               /RETURN ADDRESS IN 2ND PAGE
+  608              
+  609              /*** SUBROUTINE ***************************
+  610              /SEND BYTE IN AC<4:11> TO THE TRANSFER PORT
+  611              /ON EXIT:
+  612              /  AC=0
+  613              /******************************************
+  614              TEMP2,                  /(REUSE)
+  615 00473  0000  TPOUT,  0               /(RETURN ADDRESS)
+  616              
+  617 00474  6311          DTPTSF          /DEVICE READY?
+  618 00475  5274          JMP     .-1     /N: KEEP WAITING
+  619              
+  620 00476  6316          DTPTLS          /SEND BYTE TO DEVICE
+  621 00477  7600  XBYTES, -200            /7600=-200=-BYTES PER XMODEM RECORD
+  622                                      /ALSO ALTERNATE CLA INSTRUCTION
+  623              
+  624 00500  5673          JMP I   TPOUT   /RETURN
+  625              
+  626              /---------
+  627              /VARIABLES
+  628              /---------
+  629 00501  0000  XBCOUNT,0               /XMODEM DATA BYTE COUNTER
+  630 00502  0000  CHKSUM, 0               /RECORD CHECKSUM
+  631              
+  632 00503  0000  SAVPTR, 0               /BUFPTR FOR XMODEM RETRY
+  633 00504  0000  SAV123, 0               /BUF123 FOR XMODEM RETRY
+  634              
+  635              /THESE 4 VARIABLES MUST BE IN THIS ORDER
+  636              
+  637 00505  0000  XRECNO, 0               /XMODEM RECORD NUMBER
+  638 00506  0000  DMASK,  0               /DATA MASK FOR PARITY STRIPPING
+  639 00507  0000  BUFPTR, 0               /POINTER INTO OS/8 BUFFER
+  640 00510  0000  BUF123, 0               /3-BYTE COUNTER
+  641                      
+  642                      $
+      No detected errors
+      No links generated
