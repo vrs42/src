@@ -1,0 +1,146 @@
+   1               / PDP-8 DISK MONITOR SYSTEM RESTORE PROGRAM
+   2               / SINGLE DISK DF32 VERSION (OCT. 15, 1969)
+   3               /
+   4               / COPYRIGHT 1969, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.
+   5               /
+   6               *200
+   7               /
+   8 000200  7300  START,  CLA CLL
+   9 000201  1377          TAD     (7576           /READ MONITOR HEAD INTO 7600
+  10 000202  3776          DCA I   (7750
+  11 000203  1377          TAD     (7576
+  12 000204  3775          DCA I   (7751
+  13 000205  6603          DMAR
+  14 000206  6622          DFSC
+  15 000207  5206          JMP     .-1
+  16 000210  6621          DFSE
+  17 000211  7402          HLT
+  18 000212  4774          JMS I   (7642           /GET DN1 BACKUP
+  19 000213  0003                  3
+  20 000214  0003                  3
+  21 000215  0400  DN1,            DNBUF
+  22 000216  0000                  0
+  23 000217  7402          HLT
+  24 000220  4774          JMS I   (7642           /GET SAM1 BACKUP
+  25 000221  0003                  3
+  26 000222  0004                  4
+  27 000223  0600                  DNBUF+200
+  28 000224  0000  SMLINK,         0
+  29 000225  7402          HLT
+  30 000226  1224          TAD     SMLINK
+  31 000227  3242          DCA     NUSMLK
+  32 000230  4774          JMS I   (7642           /RESTORE DN1
+  33 000231  0005                  5
+  34 000232  0177                  177
+  35 000233  0400                  DNBUF
+  36 000234  0201                  201
+  37 000235  7402          HLT
+  38 000236  4774          JMS I   (7642           /RESTORE SAM1
+  39 000237  0005                  5
+  40 000240  0200                  200
+  41 000241  0600                  DNBUF+200
+  42 000242  0000  NUSMLK,         0
+  43 000243  7402          HLT
+  44 000244  1373          TAD     (-200           /REFRESH DN2
+  45 000245  3200          DCA     CTR
+  46 000246  1215          TAD     DN1
+  47 000247  3201          DCA     PTR
+  48 000250  3601          DCA I   PTR
+  49 000251  2201          ISZ     PTR
+  50 000252  2200          ISZ     CTR
+  51 000253  5250          JMP     .-3
+  52 000254  4774          JMS I   (7642
+  53 000255  0005                  5
+  54 000256  0201                  201
+  55 000257  0400                  DNBUF
+  56 000260  0202                  202
+  57 000261  7402          HLT
+  58               /
+  59               /INCLUDE NEXT 2 LINES IF YOU HAVE A 2, 3, OR 4 UNIT DF32
+  60               /XTRA,  IAC                     /MARK SAMBLOCK SLOT
+  61               /       DCA I   (DNBUF+1
+  62               /
+  63               /INCLUDE NEXT 6 LINES IF YOU HAVE A 4 UNIT DF32
+  64               /       JMS I   (7642           /REFRESH SAM3
+  65               /               5
+  66               /               1001
+  67               /               DNBUF
+  68               /               1401
+  69               /       HLT
+  70               /
+  71               /INCLUDE NEXT 12 LINES IF YOU HAVE A 3 OR 4 UNIT DF32
+  72               /       JMS I   (7642           /REFRESH SAM2
+  73               /               5
+  74               /               401
+  75               /               DNBUF
+  76               /               1001
+  77               /       HLT
+  78               /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+  79               /       DCA I   (DNBUF+172
+  80               /       TAD     (100
+  81               /       DCA I   (DNBUF+173
+  82               /       TAD     XTRA+6          /SET LAST SAMBLOCK NUMBER
+  83               /       DCA     LASTSM
+  84               /
+  85               /INCLUDE NEXT 4 LINES IF YOU HAVE A 4 UNIT DF32
+  86               /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+  87               /       DCA I   (DNBUF+170
+  88               /       TAD     (100
+  89               /       DCA I   (DNBUF+171
+  90               /
+  91               /INCLUDE NEXT 15 LINES IF YOU HAVE A 2, 3, OR 4 UNIT DF32
+  92               /       TAD     (100            /MARK NON-EXISTENT BLOCKS
+  93               /       DCA I   (DNBUF+174
+  94               /       TAD     (100
+  95               /       DCA I   (DNBUF+175
+  96               /       TAD     (100
+  97               /       DCA I   (DNBUF+176
+  98               /       TAD     (100
+  99               /       DCA I   (DNBUF+177
+ 100               /       JMS I   (7642           /REFRESH LAST SAMBLOCK
+ 101               /               5
+ 102               /LASTSM,        401
+ 103               /               DNBUF
+ 104               /               0
+ 105               /       HLT
+ 106               /       DCA I   (DNBUF+1        /CLEAR
+ 107               /
+ 108               /END OF DF32 CONDITIONAL CODE
+ 109               /
+ 110 000262  1372          TAD     (-74            /REFRESH DN3
+ 111 000263  3200          DCA     CTR
+ 112 000264  1371          TAD     (DNBUF+104
+ 113 000265  3201          DCA     PTR
+ 114 000266  1370          TAD     (100
+ 115 000267  3601          DCA I   PTR
+ 116 000270  2201          ISZ     PTR
+ 117 000271  2200          ISZ     CTR
+ 118 000272  5266          JMP     .-4
+ 119 000273  4774          JMS I   (7642
+ 120 000274  0005                  5
+ 121 000275  0202                  202
+ 122 000276  0400                  DNBUF
+ 123 000277  0000                  0
+ 124 000300  7402          HLT
+ 125 000301  5773          JMP I   (7600           /GO TO MONITOR
+ 126               /
+ 127               /END
+ 128               /
+ 129               /
+ 130               /DEFINITIONS
+ 131               /
+ 132               DMAR=6603
+ 133               DSFE=6621
+ 134               DFSC=6622
+ 135               CTR=START
+ 136               PTR=START+1
+ 137               DNBUF=400
+ 138               /
+ 139 000370  0100  $
+     000371  0504  
+     000372  7704  
+     000373  7600  
+     000374  7642  
+     000375  7751  
+     000376  7750  
+     000377  7576  
