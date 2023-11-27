@@ -1,0 +1,74 @@
+;
+; EduSystem 20C Basic from (simulated) paper tape.
+;
+; Make sure edu20c.rm.pt is in /opt/pidp8i/share/media/os8
+;
+; This version takes advantage of 1.script in terms of pre-loading
+; the RIM loader. The edu20c.pt paper tape has a self-starting
+; binary loader on the front end.
+;
+; When you boot into 6.script (presumably using the Sing Step
+; front panel switch with octal 6 in the Inst Field) everything
+; will be set up. The program counter will be 07756. Just press
+; Start on the front panel.
+;
+; If you prefer, you can change the last line of this script from
+;    go  07755
+; to
+;    go  07756
+; and comment out or delete the "echo   press Start switch to run"
+; line to skip the part about pressing Start on the PiDP-8/i front
+; panel
+
+echo
+echo
+echo
+echo EduSystem 20 version C BASIC
+
+; To set up additional terminals on Edu20C, connect thru PuTTY with
+; a TelNet connection on localhost with port 12166. this connection
+; can be established before pressing Start on the PiDP-8/i so that
+; Edu20C's READY prompt comes out on both terminals at the same time
+; NOTE1: up to 5 additional terminals are supported in this script
+; NOTE2: once ttix is attached, it remains attached until simh is
+; exited. just <ctrl/e> exit then "pidp8i start" to get back going
+; again
+; NOTE3: the console terminal "owns" PTR: and PTP:. if the second
+; terminal needs ptr/ptp it must be done thru the console. as well,
+; all console simh activity suspends both terminals
+set ttix lines=5
+att ttix 12166
+
+set df disabled
+set cpu noidle
+
+; Standard CPU throttling behavior.  See README-throttle.md.
+deposit int-throttle THROT_DELAY 3
+set throttle 416k
+
+dep 07755 7402
+dep 07756 6014
+dep 07757 6011
+dep 07760 5357
+dep 07761 6016
+dep 07762 7106
+dep 07763 7006
+dep 07764 7510
+dep 07765 5374
+dep 07766 7006
+dep 07767 6011
+dep 07770 5367
+dep 07771 6016
+dep 07772 7420
+dep 07773 3776
+dep 07774 3376
+dep 07775 5357
+dep 07776 0000
+
+att ptr /opt/pidp8i/share/media/os8/edu20c.rm.pt
+
+echo
+echo   ***** press Start switch to run *****
+echo
+
+go  07755
