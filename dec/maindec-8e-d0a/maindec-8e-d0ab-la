@@ -1,0 +1,3802 @@
+   1               /PDP-8/E INSTRUCTION TEST  1  MAINDEC-8E-D0AB
+   2               /COPYRIGHT 1970, 1971, DIGITAL EQUIPMENT CORP., MAYNARD, MASS.  01754
+   3               /TAPE 1
+   4               
+   5               BSW=7002                        /SWAP BYTES IN AC
+   6               NOPE=7401                       /NOP
+   7               CLAE=7601                       /CLEAR AC
+   8               MQL=7421                        /LOAD MQ FROM AC THEN CLEAR AC
+   9               MQA=7501                        /INCLUSIVE OR, MQ AND AC
+  10               CAM=7621                        /CLEAR AC AND MQ
+  11               SWP=7521                        /SWAP AC AND MQ
+  12               ACL=7701                        /LOAD AC FROM MQ, CLEAR MQ
+  13               
+  14               *0
+  15 000000  0000          0
+  16 000001  5001          JMP 1
+  17 000002  0002          0002
+  18 000003  0003          0003
+  19 000004  0000          0
+  20 000005  0000          0000
+  21 000006  7402  HALT,   HLT
+  22 000007  7000  NOOP,   NOP
+  23 000010  0000          0
+  24               
+  25                       /CONSTANTS AND VARIABLES
+  26               *20
+  27 000020  0000  K0000,  0000
+  28 000021  0001  K0001,  0001
+  29 000022  0002  K0002,  0002
+  30 000023  0003  K3,     3
+  31 000024  0004  K0004,  0004
+  32 000025  0006  K6,     6
+  33 000026  0010  k0010,  0010
+  34 000027  0014  K14,    14
+  35 000030  0020  K0020,  0020
+  36 000031  0030  K30,    30
+  37 000032  0040  K0040,  0040
+  38 000033  0060  K60,    60
+  39 000034  0100  K0100,  0100
+  40 000035  0140  K140,   140
+  41 000036  0200  K0200,  0200
+  42 000037  0300  K300,   300
+  43 000040  0400  K0400,  0400
+  44 000041  0600  K600,   600
+  45 000042  1000  K1000,  1000
+  46 000043  1234  K1234,  1234
+  47 000044  1400  K1400,  1400
+  48 000045  2000  K2000,  2000
+  49 000046  3000  K3000,  3000
+  50 000047  3312  K3312,  3312
+  51 000050  4000  K4000,  4000
+  52 000051  7717  K7717,  7717
+  53 000052  7776  K7776,  7776
+  54 000053  7775  K7775,  7775
+  55 000054  7773  K7773,  7773
+  56 000055  7767  K7767,  7767
+  57 000056  7757  K7757,  7757
+  58 000057  7737  K7737,  7737
+  59 000060  7177  K7177,  7177
+  60 000061  7677  K7677,  7677
+  61 000062  7577  K7577,  7577
+  62 000063  7377  K7377,  7377
+  63 000064  6777  K6777,  6777
+  64 000065  5777  K5777,  5777
+  65 000066  3777  K3777,  3777
+  66 000067  7777  K7777,  7777
+  67 000070  5252  K5252,  5252
+  68 000071  2525  K2525,  2525
+  69 000072  6000  K6000,  6000
+  70 000073  7000  K7000,  7000
+  71 000074  7400  K7400,  7400
+  72 000075  7600  K7600,  7600
+  73 000076  7740  K7740,  7740
+  74 000077  7760  K7760,  7760
+  75 000100  7770  K7770,  7770
+  76 000101  7774  K7774,  7774
+  77               
+  78 000102  0007  K0007,  0007
+  79 000103  0067  K0067,  0067
+  80 000104  0017  K0017,  0017
+  81 000105  0037  K0037,  0037
+  82 000106  0077  K0077,  0077
+  83 000107  0177  K0177,  0177
+  84 000110  0377  K0377,  0377
+  85 000111  0777  K0777,  0777
+  86 000112  1777  K1777,  1777
+  87 000113  7700  K7700,  7700
+  88 000114  5225  K5225,  5225
+  89 000115  2552  K2552,  2552
+  90 000116  0770  K0770,  0770
+  91 000117  7007  K7007,  7007
+  92 000120  0207  BEL,    0207
+  93 000121  5140  BLCNT,  -2640
+  94 000122  5140  BLCON,  -2640
+  95               
+  96               
+  97               
+  98               *144
+  99               /TAD,CLA,HLT,TEST
+ 100 000144  1067  START,  TAD K7777
+ 101 000145  7200          CLA
+ 102 000146  7402          HLT             /AC SHOULD=0
+ 103                                       /SET SR TO 7777, CONTINUE
+ 104               /SKIP TEST
+ 105 000147  7410          SKP
+ 106 000150  7402          HLT             /SKP FAILED
+ 107               /SZA TEST 1
+ 108 000151  7200          CLA
+ 109 000152  7440          SZA
+ 110 000153  7402          HLT             /SZA SHOULD HAVE SKIPPED
+ 111                                       /AC SHOULD EQUAL ZERO
+ 112 000154  7450          SNA
+ 113 000155  7410          SKP
+ 114 000156  7402          HLT             /SNA SHOULD NOT HAVE SKIPPED
+ 115                                       /AC SHOULD EQUAL ZERO
+ 116               /SZA TEST 2
+ 117 000157  7200          CLA
+ 118 000160  1050          TAD K4000
+ 119 000161  7440          SZA
+ 120 000162  7410          SKP
+ 121 000163  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 122                                       /AC SHOULD EQUAL 4000
+ 123 000164  7450          SNA
+ 124 000165  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 125                                       /AC SHOULD EQUAL 4000
+ 126               
+ 127               /SZA TEST 3
+ 128 000166  7200          CLA
+ 129 000167  1045          TAD K2000
+ 130 000170  7440          SZA
+ 131 000171  7410          SKP
+ 132 000172  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 133                                       /AC SHOULD EQUAL 2000
+ 134 000173  7450          SNA
+ 135 000174  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 136 000175  7000          NOP             /AC SHOULD EQUAL 2000
+ 137 000176  7000          NOP
+ 138 000177  7410          SKP             /SKIP OVER JMP START.
+ 139               
+ 140               *200
+ 141 000200  5144  BEGIN,  JMP START       /BEGINNING OF INSTRUCTION TEST 1.
+ 142               /SZA TEST 4
+ 143 000201  7200          CLA
+ 144 000202  1042          TAD K1000
+ 145 000203  7440          SZA
+ 146 000204  7410          SKP
+ 147 000205  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 148                                       /AC SHOULD EQUAL 1000
+ 149 000206  7450          SNA
+ 150 000207  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 151                                       /AC SHOULD EQUAL 10000
+ 152               /SZA TEST 5
+ 153 000210  7200          CLA
+ 154 000211  1040          TAD K0400
+ 155 000212  7440          SZA
+ 156 000213  7410          SKP
+ 157 000214  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 158                                       /AC SHOULD EQUAL 0400
+ 159 000215  7450          SNA
+ 160 000216  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 161                                       /AC SHOULD EQUAL 0400
+ 162               /SZA TEST 6
+ 163 000217  7200          CLA
+ 164 000220  1036          TAD K0200
+ 165 000221  7440          SZA
+ 166 000222  7410          SKP
+ 167 000223  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 168                                       /AC SHOULD EQUAL 0200
+ 169 000224  7450          SNA
+ 170 000225  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 171                                       /AC SHOULD EQUAL 0200
+ 172               /SZA TEST 7
+ 173 000226  7200          CLA
+ 174 000227  1034          TAD K0100
+ 175 000230  7440          SZA
+ 176 000231  7410          SKP
+ 177 000232  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 178                                       /AC SHOULD EQUAL 0100
+ 179 000233  7450          SNA
+ 180 000234  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 181                                       /AC SHOULD EQUAL 0100
+ 182               
+ 183               
+ 184               /SZA TEST 8
+ 185 000235  7200          CLA
+ 186 000236  1032          TAD K0040
+ 187 000237  7440          SZA
+ 188 000240  7410          SKP
+ 189 000241  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 190                                       /AC SHOULD EQUAL 0040
+ 191 000242  7450          SNA
+ 192 000243  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 193                                       /AC SHOULD EQUAL 0040
+ 194               /SZA TEST 9
+ 195 000244  7200          CLA
+ 196 000245  1030          TAD K0020
+ 197 000246  7440          SZA
+ 198 000247  7410          SKP
+ 199 000250  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 200                                       /AC SHOULD EQUAL 0020
+ 201 000251  7450          SNA
+ 202 000252  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 203                                       /AC SHOULD EQUAL 0020
+ 204               /SZA TEST 10
+ 205 000253  7200          CLA
+ 206 000254  1026          TAD K0010
+ 207 000255  7440          SZA
+ 208 000256  7410          SKP
+ 209 000257  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 210                                       /AC SHOULD EQUAL 0010
+ 211 000260  7450          SNA
+ 212 000261  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 213                                       /AC SHOULD EQUAL 0010
+ 214               /SZA TEST 11
+ 215 000262  7200          CLA
+ 216 000263  1024          TAD K0004
+ 217 000264  7440          SZA
+ 218 000265  7410          SKP
+ 219 000266  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 220                                       /AC SHOULD EQUAL 0004
+ 221 000267  7450          SNA
+ 222 000270  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 223                                       /AC SHOULD EQUAL 0004
+ 224               
+ 225               
+ 226               /SZA TEST 12
+ 227 000271  7200          CLA
+ 228 000272  1022          TAD K0002
+ 229 000273  7440          SZA
+ 230 000274  7410          SKP
+ 231 000275  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 232                                       /AC SHOULD EQUAL 0002
+ 233 000276  7450          SNA
+ 234 000277  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 235                                       /AC SHOULD EQUAL 0002
+ 236               /SZA TEST 13
+ 237 000300  7200          CLA
+ 238 000301  1021          TAD K0001
+ 239 000302  7440          SZA
+ 240 000303  7410          SKP
+ 241 000304  7402          HLT             /SZA SHOULD NOT HAVE SKIPPED
+ 242                                       /AC SHOULD EQUAL 0001
+ 243 000305  7450          SNA
+ 244 000306  7402          HLT             /SNA SHOULD HAVE SKIPPED
+ 245                                       /AC SHOULD EQUAL 0001
+ 246               /SPA TEST 1
+ 247 000307  7200          CLA
+ 248 000310  1066          TAD K3777
+ 249 000311  7510          SPA
+ 250 000312  7402          HLT             /SPA SHOULD HAVE SKIPPED
+ 251                                       /AC SHOULD EQUAL 3777
+ 252               
+ 253               /SPA TEST 2
+ 254 000313  7200          CLA
+ 255 000314  1050          TAD K4000
+ 256 000315  7510          SPA
+ 257 000316  7410          SKP
+ 258 000317  7402          HLT             /SPA SHOULD NOT HAVE SKIPPED
+ 259                                       /AC SHOULD EQUAL 4000
+ 260               /SMA TEST 1
+ 261 000320  7200          CLA
+ 262 000321  1066          TAD K3777
+ 263 000322  7500          SMA
+ 264 000323  7410          SKP
+ 265 000324  7402          HLT             /SMA SHOULD NOT HAVE SKIPPED
+ 266                                       /AC SHOULD EQUAL 3777
+ 267               
+ 268               /SMA TEST 2
+ 269 000325  7200          CLA
+ 270 000326  1050          TAD K4000
+ 271 000327  7500          SMA
+ 272 000330  7402          HLT             /SMA SHOULD HAVE SKIPPED
+ 273                                       /AC SHOULD EQUAL 4000
+ 274               /CMA TEST 1
+ 275 000331  7200          CLA
+ 276 000332  1067          TAD K7777
+ 277 000333  7040          CMA
+ 278 000334  7440          SZA
+ 279 000335  7402          HLT             /CMA DID NOT COMPLEMENT AC
+ 280                                       /AC SHOULD EQUAL 0000
+ 281               /CMA -  TAD TEST 1
+ 282 000336  7200          CLA
+ 283 000337  1071          TAD K2525
+ 284 000340  7040          CMA
+ 285 000341  7450          SNA
+ 286 000342  7402          HLT             /TAD OR CMA ERROR
+ 287                                       /AC SHOULD EQUAL 5252
+ 288 000343  1071          TAD K2525
+ 289 000344  7040          CMA
+ 290 000345  7440          SZA
+ 291 000346  7402          HLT             /TAD OR CMA ERROR
+ 292                                       /AC SHOULD EQUAL 0000
+ 293               /CMA -  TAD TEST 2
+ 294 000347  7200          CLA
+ 295 000350  1070          TAD K5252
+ 296 000351  7040          CMA
+ 297 000352  7450          SNA
+ 298 000353  7402          HLT             /TAD OR CMA ERROR
+ 299                                       /AC SHOULD EQUAL 2525
+ 300 000354  1070          TAD K5252
+ 301 000355  7040          CMA
+ 302 000356  7440          SZA
+ 303 000357  7402          HLT             /TAD OR CMA ERROR
+ 304                                       /AC SHOULD EQUAL 0000
+ 305               
+ 306               
+ 307               /CMA -  TAD TEST 3
+ 308 000360  7200          CLA
+ 309 000361  1067          TAD K7777
+ 310 000362  7040          CMA
+ 311 000363  7440          SZA
+ 312 000364  7402          HLT             /TAD OR CMA ERROR
+ 313                                       /AC SHOULD EQUAL 0000
+ 314               /IAC TEST 1
+ 315 000365  7200          CLA
+ 316 000366  7001          IAC
+ 317 000367  7440          SZA
+ 318 000370  7410          SKP
+ 319 000371  7402          HLT             /IAC DID NOT INCREMENT
+ 320                                       /AC SHOULD EQUAL 0001
+ 321               /IAC TEST 2
+ 322 000372  7200          CLA
+ 323 000373  1067          TAD K7777
+ 324 000374  7001          IAC
+ 325 000375  7440          SZA
+ 326 000376  7402          HLT             /IAC DID NOT INCREMENT
+ 327                                       /AC SHOULD EQUAL 0000
+ 328               /IAC TEST 3
+ 329 000377  7200          CLA
+ 330 000400  1101          TAD K7774
+ 331 000401  7001          IAC
+ 332 000402  7001          IAC
+ 333 000403  7001          IAC
+ 334 000404  7001          IAC
+ 335 000405  7440          SZA
+ 336 000406  7402          HLT             /IAC NOT INCREMENTING
+ 337                                       /AC SHOULD EQUAL 0000
+ 338               /SZL TEST 1
+ 339 000407  7200          CLA
+ 340 000410  7100          CLL             /CLEAR LINK
+ 341 000411  7004          RAL             /CLEAR LINK SAFETY
+ 342 000412  7430          SZL
+ 343 000413  7402          HLT             /SZL SHOULD HAVE SKIPPED
+ 344                                       /LINK SHOULD EQUAL ZERO
+ 345               
+ 346               
+ 347               /SZL TEST 2
+ 348 000414  7200          CLA
+ 349 000415  7100          CLL             /CLEAR LINK
+ 350 000416  7020          CML             /COMPLEMENT LINK
+ 351 000417  1050          TAD K4000
+ 352 000420  7004          RAL             /SET LINK SAFETY
+ 353 000421  7430          SZL
+ 354 000422  7410          SKP
+ 355 000423  7402          HLT             /SZL SHOULD NOT HAVE SKIPPED
+ 356                                       /LINK SHOULD EQUAL ONE
+ 357               /SNL TEST 1
+ 358 000424  7200          CLA
+ 359 000425  7100          CLL             /CLEAR LINK
+ 360 000426  7004          RAL             /CLEAR LINK SAFETY
+ 361 000427  7420          SNL
+ 362 000430  7410          SKP
+ 363 000431  7402          HLT             /SNL SHOULD NOT HAVE SKIPPED
+ 364                                       /LINK SHOULD EQUAL ZERO
+ 365               
+ 366               /SNL TEST 2
+ 367 000432  7200          CLA
+ 368 000433  7100          CLL             /CLEAR LINK
+ 369 000434  7020          CML             /COMPLEMENT LINK
+ 370 000435  1050          TAD K4000
+ 371 000436  7004          RAL             /SET LINK SAFETY
+ 372 000437  7420          SNL
+ 373 000440  7402          HLT             /SNL SHOULD HAVE SKIPPED
+ 374                                       /LINK SHOULD EQUAL ONE
+ 375               
+ 376               
+ 377               /CLL TEST 1
+ 378 000441  7200          CLA
+ 379 000442  1050          TAD K4000
+ 380 000443  7004          RAL             /SET LINK
+ 381 000444  7420          SNL
+ 382 000445  5252          JMP CLL11               /CANNOT SET LINK WITH A RAL
+ 383                                       /TRY A CML
+ 384 000446  7100  CLL1,   CLL
+ 385 000447  7430          SZL
+ 386 000450  7402          HLT             /CLL DID NOT CLEAR LINK
+ 387                                       /LINK SHOULD EQUAL ONE
+ 388 000451  5256          JMP .+5
+ 389 000452  7020  CLL11,  CML             /SET LINK
+ 390 000453  7420          SNL
+ 391 000454  7402          HLT             /CANNOT SET LINK WITH
+ 392                                       /RAL OR CML, CANNOT
+ 393                                       /PERFORM CLL TEST 1
+ 394 000455  5246          JMP CLL1
+ 395               
+ 396               /CML TEST 1
+ 397 000456  7100  CMLT1,  CLL
+ 398 000457  7430          SZL
+ 399 000460  7402          HLT             /CLL DID NOT CLEAR LINK
+ 400 000461  7020          CML
+ 401 000462  7420          SNL
+ 402 000463  7402          HLT             /CML DID NOT SET LINK
+ 403 000464  7020          CML
+ 404 000465  7430          SZL
+ 405 000466  7402          HLT             /CML DID NOT RESET LINK
+ 406               /CLA TEST 1 (OPERATE GROUP 2)
+ 407 000467  7200          CLA
+ 408 000470  1067          TAD K7777
+ 409 000471  7600          7600
+ 410 000472  7440          SZA
+ 411 000473  7402          HLT             /CLA (7600) DID NOT CLEAR AC
+ 412                                       /AC SHOULD EQUAL 0000
+ 413               /OSR TEST 1
+ 414 000474  7200          CLA
+ 415 000475  7404          OSR
+ 416 000476  7040          CMA
+ 417 000477  7440          SZA
+ 418 000500  7402          HLT             /OSR DID NOT SET AC TO 7777
+ 419                                       /AC SHOULD=0
+ 420               
+ 421               
+ 422               /NOP TEST 1 (OPERATE GROUP 1)
+ 423               
+ 424 000501  7200          CLA
+ 425 000502  7100          CLL             /AC AND LINK EQUAL ZERO
+ 426 000503  7000          7000            /TEST INSTRUCTION
+ 427 000504  7450          SNA
+ 428 000505  7430          SZL
+ 429 000506  7402          HLT             /NOP FAILURE
+ 430                                       /AC AND LINK SHOULD BE ZERO
+ 431               
+ 432               /NOP TEST 2 (OPERATE GROUP 2)
+ 433               
+ 434 000507  7200          CLA
+ 435 000510  7100          CLL             /AC AND LINK EQUAL ZERO
+ 436 000511  7400          7400            /TEST INSTRUCTION
+ 437 000512  7450          SNA
+ 438 000513  7430          SZL
+ 439 000514  7402          HLT             /NOP FAILURE
+ 440                                       /AC AND LINK SHOULD BE ZERO
+ 441               /TAD TEST 1
+ 442 000515  7200          CLA
+ 443 000516  1066          TAD K3777               /OPERAND 1
+ 444 000517  1050          TAD K4000               /OPERAND 2
+ 445 000520  7040          CMA
+ 446 000521  7440          SZA
+ 447 000522  7402          HLT             /TAD ERROR
+ 448                                       /AC SHOULD EQUAL 0000
+ 449               /TAD TEST 2
+ 450 000523  7200          CLA
+ 451 000524  1065          TAD K5777               /OPERAND 1
+ 452 000525  1045          TAD K2000               /OPERAND 2
+ 453 000526  7040          CMA
+ 454 000527  7440          SZA
+ 455 000530  7402          HLT             /TAD ERROR
+ 456                                       /AC SHOULD EQUAL 0000
+ 457               /TAD TEST 3
+ 458 000531  7200          CLA
+ 459 000532  1064          TAD K6777               /OPERAND 1
+ 460 000533  1042          TAD K1000               /OPERAND 2
+ 461 000534  7040          CMA
+ 462 000535  7440          SZA
+ 463 000536  7402          HLT             /TAD ERROR
+ 464                                       /AC SHOULD EQUAL 0000
+ 465               /TAD TEST 4
+ 466 000537  7200          CLA
+ 467 000540  1063          TAD K7377               /OPERAND 1
+ 468 000541  1040          TAD K0400               /OPERAND 2
+ 469 000542  7040          CMA
+ 470 000543  7440          SZA
+ 471 000544  7402          HLT             /TAD ERROR
+ 472                                       /AC SHOULD EQUAL 0000
+ 473               /TAD TEST 5
+ 474 000545  7200          CLA
+ 475 000546  1062          TAD K7577               /OPERAND 1
+ 476 000547  1036          TAD K0200               /OPERAND 2
+ 477 000550  7040          CMA
+ 478 000551  7440          SZA
+ 479 000552  7402          HLT             /TAD ERROR
+ 480                                       /AC SHOULD EQUAL 0000
+ 481               /TAD TEST 6
+ 482 000553  7200          CLA
+ 483 000554  1061          TAD K7677               /OPERAND 1
+ 484 000555  1034          TAD K0100               /OPERAND 2
+ 485 000556  7040          CMA
+ 486 000557  7440          SZA
+ 487 000560  7402          HLT             /TAD ERROR
+ 488                                       /AC SHOULD EQUAL 0000
+ 489               /TAD TEST 7
+ 490 000561  7200          CLA
+ 491 000562  1057          TAD K7737               /OPERAND 1
+ 492 000563  1032          TAD K0040               /OPERAND 2
+ 493 000564  7040          CMA
+ 494 000565  7440          SZA
+ 495 000566  7402          HLT             /TAD ERROR
+ 496                                       /AC SHOULD EQUAL 0000
+ 497               /TAD TEST 8
+ 498 000567  7200          CLA
+ 499 000570  1056          TAD K7757               /OPERAND 1
+ 500 000571  1030          TAD K0020               /OPERAND 2
+ 501 000572  7040          CMA
+ 502 000573  7440          SZA
+ 503 000574  7402          HLT             /TAD ERROR
+ 504                                       /AC SHOULD EQUAL 0000
+ 505               /TAD TEST 9
+ 506 000575  7200          CLA
+ 507 000576  1055          TAD K7767               /OPERAND 1
+ 508 000577  1026          TAD K0010               /OPERAND 2
+ 509 000600  7040          CMA
+ 510 000601  7440          SZA
+ 511 000602  7402          HLT             /TAD ERROR
+ 512                                       /AC SHOULD EQUAL 0000
+ 513               
+ 514               
+ 515               /TAD TEST 10
+ 516 000603  7200          CLA
+ 517 000604  1054          TAD K7773               /OPERAND 1
+ 518 000605  1024          TAD K0004               /OPERAND 2
+ 519 000606  7040          CMA
+ 520 000607  7440          SZA
+ 521 000610  7402          HLT             /TAD ERROR
+ 522                                       /AC SHOULD EQUAL 0000
+ 523               /TAD TEST 11
+ 524 000611  7200          CLA
+ 525 000612  1053          TAD K7775               /OPERAND 1
+ 526 000613  1022          TAD K0002               /OPERAND 2
+ 527 000614  7040          CMA
+ 528 000615  7440          SZA
+ 529 000616  7402          HLT             /TAD ERROR
+ 530               /TAD TEST 12
+ 531 000617  7200          CLA
+ 532 000620  1052          TAD K7776               /OPERAND 1
+ 533 000621  1021          TAD K0001               /OPERAND 2
+ 534 000622  7040          CMA
+ 535 000623  7440          SZA
+ 536 000624  7402          HLT             /TAD ERROR
+ 537                                       /AC SHOULD EQUAL 0000
+ 538               /TAD TEST 13
+ 539 000625  7200          CLA
+ 540 000626  7100          CLL
+ 541 000627  1050          TAD K4000               /OPERAND 1
+ 542 000630  1050          TAD K4000               /OPERAND 2
+ 543 000631  7430          SZL
+ 544 000632  7440          SZA
+ 545 000633  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 546                                       /LINK SHOULD BE EQUAL ONE.
+ 547               
+ 548               
+ 549               /TAD TEST 14
+ 550 000634  7200          CLA
+ 551 000635  7100          CLL
+ 552 000636  1072          TAD K6000               /OPERAND 1
+ 553 000637  1045          TAD K2000               /OPERAND 2
+ 554 000640  7430          SZL
+ 555 000641  7440          SZA
+ 556 000642  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 557                                       /LINK SHOULD EQUAL ONE
+ 558               /TAD TEST 15
+ 559 000643  7200          CLA
+ 560 000644  7100          CLL
+ 561 000645  1073          TAD K7000               /OPERAND 1
+ 562 000646  1042          TAD K1000               /OPERAND 2
+ 563 000647  7430          SZL
+ 564 000650  7440          SZA
+ 565 000651  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 566                                       /LINK SHOULD EQUAL ONE
+ 567               /TAD TEST 16
+ 568 000652  7200          CLA
+ 569 000653  7100          CLL
+ 570 000654  1074          TAD K7400               /OPERAND 1
+ 571 000655  1040          TAD K0400               /OPERAND 2
+ 572 000656  7430          SZL
+ 573 000657  7440          SZA
+ 574 000660  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 575                                       /LINK SHOULD EQUAL ONE
+ 576               /TAD TEST 17
+ 577 000661  7200          CLA
+ 578 000662  7100          CLL
+ 579 000663  1075          TAD K7600               /OPERAND 1
+ 580 000664  1036          TAD K0200               /OPERAND 2
+ 581 000665  7430          SZL
+ 582 000666  7440          SZA
+ 583 000667  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 584                                       /LINK SHOULD EQUAL ONE
+ 585               /TAD TEST 18
+ 586 000670  7200          CLA
+ 587 000671  7100          CLL
+ 588 000672  1113          TAD K7700               /OPERAND 1
+ 589 000673  1034          TAD K0100               /OPERAND 2
+ 590 000674  7430          SZL
+ 591 000675  7440          SZA
+ 592 000676  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 593                                       /LINK SHOULD EQUAL ONE
+ 594               /TAD TEST 19
+ 595 000677  7200          CLA
+ 596 000700  7100          CLL
+ 597 000701  1076          TAD K7740               /OPERAND 1
+ 598 000702  1032          TAD K0040               /OPERAND 2
+ 599 000703  7430          SZL
+ 600 000704  7440          SZA
+ 601 000705  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 602                                       /LINK SHOULD EQUAL ONE
+ 603               /TAD TEST 20
+ 604 000706  7200          CLA
+ 605 000707  7100          CLL
+ 606 000710  1077          TAD K7760               /OPERAND 1
+ 607 000711  1030          TAD K0020               /OPERAND 2
+ 608 000712  7430          SZL
+ 609 000713  7440          SZA
+ 610 000714  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 611                                       /LINK SHOULD EQUAL ONE
+ 612               /TAD TEST 21
+ 613 000715  7200          CLA
+ 614 000716  7100          CLL
+ 615 000717  1100          TAD K7770               /OPERAND 1
+ 616 000720  1026          TAD K0010               /OPERAND 2
+ 617 000721  7430          SZL
+ 618 000722  7440          SZA
+ 619 000723  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 620                                       /LINK SHOULD EQUAL ONE
+ 621               /TAD TEST 22
+ 622 000724  7200          CLA
+ 623 000725  7100          CLL
+ 624 000726  1101          TAD K7774               /OPERAND 1
+ 625 000727  1024          TAD K0004               /OPERAND 2
+ 626 000730  7430          SZL
+ 627 000731  7440          SZA
+ 628 000732  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 629                                       /LINK SHOULD EQUAL ONE
+ 630               /TAD TEST 23
+ 631 000733  7200          CLA
+ 632 000734  7100          CLL
+ 633 000735  1052          TAD K7776               /OPERAND 1
+ 634 000736  1022          TAD K0002               /OPERAND 2
+ 635 000737  7430          SZL
+ 636 000740  7440          SZA
+ 637 000741  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 638                                       /LINK SHOULD EQUAL ONE
+ 639               
+ 640               
+ 641               /TAD TEST 24
+ 642 000742  7200          CLA
+ 643 000743  7100          CLL
+ 644 000744  1067          TAD K7777               /OPERAND 1
+ 645 000745  1021          TAD K0001               /OPERAND 2
+ 646 000746  7430          SZL
+ 647 000747  7440          SZA
+ 648 000750  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 649                                       /LINK SHOULD EQUAL ONE
+ 650               /TAD TEST 25
+ 651 000751  7200          CLA
+ 652 000752  7100          CLL
+ 653 000753  7020          CML
+ 654 000754  1050          TAD K4000               /OPERAND 1
+ 655 000755  1050          TAD K4000               /OPERAND 2
+ 656 000756  7420          SNL
+ 657 000757  7440          SZA
+ 658 000760  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 659                                       /LINK SHOULD EQUAL ZERO
+ 660               /TAD TEST 26
+ 661 000761  7200          CLA
+ 662 000762  7100          CLL
+ 663 000763  1066          TAD K3777               /OPERAND 1
+ 664 000764  1045          TAD K2000               /OPERAND 2
+ 665 000765  1045          TAD K2000               /OPERAND 3
+ 666 000766  7040          CMA
+ 667 000767  7420          SNL
+ 668 000770  7440          SZA
+ 669 000771  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 670                                       /LINK SHOULD EQUAL ZERO
+ 671               /TAD TEST 27
+ 672 000772  7200          CLA
+ 673 000773  7100          CLL
+ 674 000774  1065          TAD K5777               /OPERAND 1
+ 675 000775  1042          TAD K1000               /OPERAND 2
+ 676 000776  1042          TAD K1000               /OPERAND 3
+ 677 000777  7040          CMA
+ 678 001000  7420          SNL
+ 679 001001  7440          SZA             /TAD ERROR, AC SHOULD EQUAL 0000
+ 680 001002  7402          HLT             /LINK SHOULD EQUAL ZERO
+ 681               
+ 682               
+ 683               /TAD TEST 28
+ 684 001003  7200          CLA
+ 685 001004  7100          CLL
+ 686 001005  1064          TAD K6777               /OPERAND 1
+ 687 001006  1040          TAD K0400               /OPERAND 2
+ 688 001007  1040          TAD K0400               /OPERAND 3
+ 689 001010  7040          CMA
+ 690 001011  7420          SNL
+ 691 001012  7440          SZA
+ 692 001013  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 693                                       /LINK SHOULD EQUAL ZERO
+ 694               /TAD TEST 29
+ 695 001014  7200          CLA
+ 696 001015  7100          CLL
+ 697 001016  1063          TAD K7377               /OPERAND 1
+ 698 001017  1036          TAD K0200               /OPERAND 2
+ 699 001020  1036          TAD K0200               /OPERAND 3
+ 700 001021  7040          CMA
+ 701 001022  7420          SNL
+ 702 001023  7440          SZA
+ 703 001024  7402          HLT             /TAD ERROR, AC SOULD EQUAL 0000
+ 704                                       /LINK SHOULD EQUAL ZERO
+ 705               /TAD TEST 30
+ 706 001025  7200          CLA
+ 707 001026  7100          CLL
+ 708 001027  1062          TAD K7577               /OPERAND 1
+ 709 001030  1034          TAD K0100               /OPERAND 2
+ 710 001031  1034          TAD K0100               /OPERAND 3
+ 711 001032  7040          CMA
+ 712 001033  7420          SNL
+ 713 001034  7440          SZA
+ 714 001035  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 715                                       /LINK SHOULD EQUAL ZERO
+ 716               /TAD TEST 31
+ 717 001036  7200          CLA
+ 718 001037  7100          CLL
+ 719 001040  1061          TAD K7677               /OPERAND 1
+ 720 001041  1032          TAD K0040               /OPERAND 2
+ 721 001042  1032          TAD K0040               /OPERAND 3
+ 722 001043  7040          CMA
+ 723 001044  7420          SNL
+ 724 001045  7440          SZA
+ 725 001046  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 726                                       /LINK SHOULD EQUAL ZERO
+ 727               
+ 728               
+ 729               /TAD TEST 32
+ 730 001047  7200          CLA
+ 731 001050  7100          CLL
+ 732 001051  1057          TAD K7737               /OPERAND 1
+ 733 001052  1030          TAD K0020               /OPERAND 2
+ 734 001053  1030          TAD K0020               /OPERAND 3
+ 735 001054  7040          CMA
+ 736 001055  7420          SNL
+ 737 001056  7440          SZA
+ 738 001057  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 739                                       /LINK SHOULD EQUAL ZERO
+ 740               /TAD TEST 33
+ 741 001060  7200          CLA
+ 742 001061  7100          CLL
+ 743 001062  1056          TAD K7757               /OPERAND 1
+ 744 001063  1026          TAD K0010               /OPERAND 2
+ 745 001064  1026          TAD K0010               /OPERAND 3
+ 746 001065  7040          CMA
+ 747 001066  7420          SNL
+ 748 001067  7440          SZA
+ 749 001070  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 750                                       /LINK SHOULD EQUAL ZERO
+ 751               /TAD TEST 34
+ 752 001071  7200          CLA
+ 753 001072  7100          CLL
+ 754 001073  1055          TAD K7767               /OPERAND 1
+ 755 001074  1024          TAD K0004               /OPERAND 2
+ 756 001075  1024          TAD K0004               /OPERAND 3
+ 757 001076  7040          CMA
+ 758 001077  7420          SNL
+ 759 001100  7440          SZA
+ 760 001101  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 761                                       /LINK SHOULD EQUAL ZERO
+ 762               /TAD TEST 35
+ 763 001102  7200          CLA
+ 764 001103  7100          CLL
+ 765 001104  1054          TAD K7773               /OPERAND 1
+ 766 001105  1022          TAD K0002               /OPERAND 2
+ 767 001106  1022          TAD K0002               /OPERAND 3
+ 768 001107  7040          CMA
+ 769 001110  7420          SNL
+ 770 001111  7440          SZA
+ 771 001112  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 772                                       /LINK SHOULD EQUAL ZERO
+ 773               
+ 774               
+ 775               /TAD TEST 36
+ 776 001113  7200          CLA
+ 777 001114  7100          CLL
+ 778 001115  1053          TAD K7775               /OPERAND 1
+ 779 001116  1021          TAD K0001               /OPERAND 2
+ 780 001117  1021          TAD K0001               /OPERAND 3
+ 781 001120  7040          CMA
+ 782 001121  7420          SNL
+ 783 001122  7430          SZL
+ 784 001123  7402          HLT             /TAD ERROR, AC SHOULD EQUAL 0000
+ 785                                       /LINK SHOULD EQUAL ZERO
+ 786               
+ 787               
+ 788               /TAD TEST 37                    /10;MB, CR.
+ 789 001124  7200          CLA
+ 790 001125  7100          CLL
+ 791 001126  1021          TAD K0001       /0+1=1
+ 792 001127  1023          TAD K3          /1+3=4
+ 793 001130  1054          TAD K7773       /4+7773=7777
+ 794 001131  7040          CMA             /0
+ 795 001132  7420          SNL
+ 796 001133  7440          SZA
+ 797 001134  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 798               
+ 799               /TAD TEST 38.           /9; MB, CR.
+ 800 001135  7200          CLA
+ 801 001136  7100          CLL
+ 802 001137  1022          TAD K0002       /0+2=2
+ 803 001140  1025          TAD K6          /2+6=10
+ 804 001141  1055          TAD K7767       /10+7767=7777
+ 805 001142  7040          CMA             /0
+ 806 001143  7420          SNL
+ 807 001144  7440          SZA
+ 808 001145  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 809               
+ 810               /TAD TEST 39.           /8; MB, CR.
+ 811 001146  7200          CLA
+ 812 001147  7100          CLL
+ 813 001150  1024          TAD K0004       /0+4=4
+ 814 001151  1027          TAD K14         /4+14=20
+ 815 001152  1056          TAD K7757       /20+7757=7777
+ 816 001153  7040          CMA             /0
+ 817 001154  7420          SNL
+ 818 001155  7440          SZA
+ 819 001156  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 820               
+ 821               /TAD TEST 40.           /7; MB, CR.
+ 822 001157  7200          CLA
+ 823 001160  7100          CLL
+ 824 001161  1026          TAD K0010       /0+10=10
+ 825 001162  1031          TAD K30         /10+30=40
+ 826 001163  1057          TAD K7737       /40+7737=7777
+ 827 001164  7040          CMA             /0
+ 828 001165  7420          SNL
+ 829 001166  7440          SZA
+ 830 001167  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 831               
+ 832               /TAD TEST 41.           /6; MB, CR.
+ 833 001170  7200          CLA
+ 834 001171  7100          CLL
+ 835 001172  1030          TAD K0020       /0+20=20
+ 836 001173  1033          TAD K60         /20+60=100
+ 837 001174  1061          TAD K7677       /100+7677=7777
+ 838 001175  7040          CMA             /0
+ 839 001176  7420          SNL
+ 840 001177  7440          SZA
+ 841 001200  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 842               
+ 843               /TAD TEST 42.           /5; MB, CR.
+ 844 001201  7200          CLA
+ 845 001202  7100          CLL
+ 846 001203  1032          TAD K0040       /0+40=40
+ 847 001204  1035          TAD K140        /40+140=200
+ 848 001205  1062          TAD K7577       /200+7577=7777
+ 849 001206  7040          CMA             /0
+ 850 001207  7420          SNL
+ 851 001210  7440          SZA
+ 852 001211  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 853               
+ 854               /TAD TEST 43.           /4; MB, CR.
+ 855 001212  7200          CLA
+ 856 001213  7100          CLL
+ 857 001214  1034          TAD K0100       /0+100=100
+ 858 001215  1037          TAD K300        /100+300=400
+ 859 001216  1063          TAD K7377       /400+7377=7777
+ 860 001217  7040          CMA             /0
+ 861 001220  7420          SNL
+ 862 001221  7440          SZA
+ 863 001222  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 864               
+ 865               /TAD TEST 44.           /3; MB, CR.
+ 866 001223  7200          CLA
+ 867 001224  7100          CLL
+ 868 001225  1036          TAD K0200       /0+200=200
+ 869 001226  1041          TAD K600        /200+600=1000
+ 870 001227  1064          TAD K6777       /1000+6777=7777
+ 871 001230  7040          CMA             /0
+ 872 001231  7420          SNL
+ 873 001232  7440          SZA
+ 874 001233  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 875               
+ 876               /TAD TEST 45.           /2; MB, CR.
+ 877 001234  7200          CLA
+ 878 001235  7100          CLL             /
+ 879 001236  1040          TAD K0400       /0+400=400
+ 880 001237  1044          TAD K1400       /400+1400=2000
+ 881 001240  1065          TAD K5777       /2000+5777=7777
+ 882 001241  7040          CMA             /0
+ 883 001242  7420          SNL
+ 884 001243  7440          SZA
+ 885 001244  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 886               
+ 887               /TAD TEST 46.           /1; MB, CR.
+ 888 001245  7200          CLA
+ 889 001246  7100          CLL
+ 890 001247  1042          TAD K1000       /0+1000=1000
+ 891 001250  1046          TAD K3000       /1000+3000=4000
+ 892 001251  1066          TAD K3777       /4000+3777=7777
+ 893 001252  7040          CMA             /0
+ 894 001253  7420          SNL
+ 895 001254  7440          SZA
+ 896 001255  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 897               
+ 898               /TAD TEST 47            /0; MB, CR.
+ 899 001256  7200          CLA
+ 900 001257  7100          CLL
+ 901 001260  1045          TAD K2000       /0+2000=2000
+ 902 001261  1072          TAD K6000       /2000+6000=1 0000
+ 903 001262  7430          SZL
+ 904 001263  7440          SZA
+ 905 001264  7402          HLT             /TAD ERROR, LINK SHOULD = 1, AC SHOULD = 0000.
+ 906               
+ 907               /TAD TEST 48.
+ 908 001265  7200          CLA
+ 909 001266  7100          CLL
+ 910 001267  1067          TAD K7777       /0+7777=7777
+ 911 001270  1021          TAD K0001       /7777+1=1 0000
+ 912 001271  7430          SZL
+ 913 001272  7440          SZA             /
+ 914 001273  7402          HLT             /TAD ERROR, LINK SHOULD = 1, AC SHOULD = 0000.
+ 915               
+ 916               /TAD TEST 49.           /10; AC, MB, CR.
+ 917 001274  7200          CLA
+ 918 001275  7100          CLL
+ 919 001276  1023          TAD K3          /0+3=3
+ 920 001277  1023          TAD K3          /3+3=6
+ 921 001300  1100          TAD K7770       /6+7770=7776
+ 922 001301  1021          TAD K0001       /7776+1=7777
+ 923 001302  7040          CMA             /0
+ 924 001303  7420          SNL
+ 925 001304  7440          SZA
+ 926 001305  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 927               
+ 928               /TAD TEST 50.           /9; AC, MB, CR.
+ 929 001306  7200          CLA
+ 930 001307  7100          CLL
+ 931 001310  1025          TAD K6          /0+6=6
+ 932 001311  1025          TAD K6          /6+6=14
+ 933 001312  1077          TAD K7760       /14+7760=7774
+ 934 001313  1023          TAD K3          /7774+3=7777
+ 935 001314  7040          CMA             /0
+ 936 001315  7420          SNL
+ 937 001316  7440          SZA
+ 938 001317  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 939               
+ 940               /TAD TEST 51.           /8; AC, MB, CR.
+ 941 001320  7200          CLA
+ 942 001321  7100          CLL
+ 943 001322  1027          TAD K14         /0+14=14
+ 944 001323  1027          TAD K14         /14+14=30
+ 945 001324  1076          TAD K7740       /30+7740=7770
+ 946 001325  1102          TAD K0007       /7770+7=7777
+ 947 001326  7040          CMA             /0
+ 948 001327  7420          SNL
+ 949 001330  7440          SZA
+ 950 001331  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 951               
+ 952               /TAD TEST 52.           /7; AC, MB, CR.
+ 953 001332  7200          CLA
+ 954 001333  7100          CLL
+ 955 001334  1031          TAD K30         /0+30=30
+ 956 001335  1031          TAD K30         /30+30=60
+ 957 001336  1051          TAD K7717       /60+7717=7777
+ 958 001337  7040          CMA             /0
+ 959 001340  7420          SNL
+ 960 001341  7440          SZA
+ 961 001342  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 962               
+ 963               /TAD TEST 53.           /6; AC, MB, CR.
+ 964 001343  7200          CLA
+ 965 001344  7100          CLL
+ 966 001345  1033          TAD K60
+ 967 001346  1033          TAD K60         /60+60=140
+ 968 001347  1075          TAD K7600       /140+7600=7740
+ 969 001350  1105          TAD K0037       /7740+37=7777
+ 970 001351  7040          CMA             /0
+ 971 001352  7420          SNL
+ 972 001353  7440          SZA
+ 973 001354  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 974               
+ 975               /TAD TEST 54.           /5; AC, MB, CR.
+ 976 001355  7200          CLA
+ 977 001356  7100          CLL
+ 978 001357  1035          TAD K140
+ 979 001360  1035          TAD K140        /140+140=300
+ 980 001361  1074          TAD K7400       /300+7400=7700
+ 981 001362  1106          TAD K0077       /7700+77=7777
+ 982 001363  7040          CMA             /0
+ 983 001364  7420          SNL
+ 984 001365  7440          SZA
+ 985 001366  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 986               
+ 987               /TAD TEST 55.           /4; AC, MB, CR.
+ 988 001367  7200          CLA
+ 989 001370  7100          CLL
+ 990 001371  1037          TAD K300        /0+300=300
+ 991 001372  1037          TAD K300        /300+300=600
+ 992 001373  1060          TAD K7177       /600+7177=7777
+ 993 001374  7040          CMA             /0
+ 994 001375  7420          SNL
+ 995 001376  7440          SZA
+ 996 001377  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+ 997               
+ 998               /TAD TEST 56.           /3; AC, MB, CR.
+ 999 001400  7200          CLA
+1000 001401  7100          CLL
+1001 001402  1041          TAD K600        /0+600=600
+1002 001403  1041          TAD K600        /600+600=1400
+1003 001404  1072          TAD K6000       /1400+6000=7400
+1004 001405  1110          TAD K0377       /7400+377=7777
+1005 001406  7040          CMA             /0
+1006 001407  7420          SNL
+1007 001410  7440          SZA
+1008 001411  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+1009               
+1010               /TAD TEST 57.           /2; AC, MB, CR.
+1011 001412  7200          CLA
+1012 001413  7100          CLL
+1013 001414  1044          TAD K1400       /0+1400=1400
+1014 001415  1044          TAD K1400       /1400+1400=3000
+1015 001416  1050          TAD K4000       /3000+4000=7000
+1016 001417  1111          TAD K0777       /7000+777=7777
+1017 001420  7040          CMA             /0
+1018 001421  7420          SNL
+1019 001422  7440          SZA
+1020 001423  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+1021               
+1022               /TAD TEST 58.           /1; AC, MB, CR.
+1023 001424  7200          CLA
+1024 001425  7100          CLL
+1025 001426  1046          TAD K3000       /0+3000=3000
+1026 001427  1046          TAD K3000       /3000+3000=6000
+1027 001430  1112          TAD K1777       /6000+1777=7777
+1028 001431  7040          CMA             /0
+1029 001432  7420          SNL
+1030 001433  7440          SZA
+1031 001434  7402          HLT             /TAD ERROR, AC AND LINK SHOULD BE ZERO.
+1032               
+1033               /TAD TEST 59.           /0; AC, MB, CR.
+1034 001435  7200          CLA
+1035 001436  7100          CLL
+1036 001437  1072          TAD K6000       /0+6000=6000
+1037 001440  1072          TAD K6000       /6000+6000=1 4000
+1038 001441  1066          TAD K3777       /1 4000+3777=1 7777
+1039 001442  7040          CMA             /1 0000
+1040 001443  7430          SZL
+1041 001444  7440          SZA
+1042 001445  7402          HLT             /TAD ERROR, LINK SHOULD BE 1, AC SHOULD BE ZERO.
+1043               
+1044               /TAD TEST 60.           /
+1045 001446  7200          CLA
+1046 001447  7100          CLL
+1047 001450  1067          TAD K7777       /0+7777=7777
+1048 001451  1067          TAD K7777       /7777+7777=1 7776
+1049 001452  1021          TAD K0001       /1 7776+1=1 7777
+1050 001453  7040          CMA             /1 0000
+1051 001454  7430          SZL
+1052 001455  7440          SZA
+1053 001456  7402          HLT             /TAD ERROR, LINK SHOULD BE 1, AC SHOULD BE ZERO.
+1054               
+1055               
+1056               /RAR TEST 1
+1057 001457  7200          CLA
+1058 001460  7100          CLL
+1059 001461  1021          TAD K0001               /ROTATE PATTERN
+1060 001462  7010          RAR
+1061 001463  7420          SNL
+1062 001464  7402          HLT             /RAR FAILED, LINK DROPPED A BIT
+1063                                       /LINK SHOULD EQUAL A ONE
+1064               /RAR TEST 2
+1065 001465  7200          CLA
+1066 001466  7100          CLL
+1067 001467  1020          TAD K0000               /ROTATE PATTERN
+1068 001470  7010          RAR
+1069 001471  7440          SZA
+1070 001472  7402          HLT             /RAR FAILED, AC PICKED UP A BIT
+1071                                       /A ONE IN AC EQUALS THE PICKED UP BIT
+1072               /RAR TEST 3
+1073 001473  7200          CLA
+1074 001474  7100          CLL
+1075 001475  1020          TAD K0000               /ROTATE PATTERN
+1076 001476  7010          RAR
+1077 001477  7430          SZL
+1078 001500  7402          HLT             /RAR FAILED, LINK PICKED UP A BIT
+1079                                       /LINK SHOULD EQUAL ZERO
+1080               
+1081               /RAR TEST 4
+1082 001501  7200          CLA
+1083 001502  7100          CLL
+1084 001503  7020          CML
+1085 001504  1020          TAD K0000               /ROTATE PATTERN
+1086 001505  7010          RAR
+1087 001506  7430          SZL
+1088 001507  7402          HLT             /RAR LINK PICKED UP A BIT
+1089                                       /LINK SHOULD EQUAL ZERO
+1090               /RAR TEST 5
+1091 001510  7200          CLA
+1092 001511  7100          CLL
+1093 001512  7020          CML
+1094 001513  1067          TAD K7777               /ROTATE PATTERN
+1095 001514  7010          RAR
+1096 001515  7040          CMA
+1097 001516  7440          SZA
+1098 001517  7402          HLT             /RAR FAILED AC DROPPED A BIT
+1099                                       /A ONE IN AC EQUALS THE DROPPED BIT
+1100               /RAR TEST 6
+1101 001520  7200          CLA
+1102 001521  7100          CLL
+1103 001522  7020          CML
+1104 001523  1020          TAD K0000               /ROTATE PATTERN
+1105 001524  7010          RAR
+1106 001525  1066          TAD K3777
+1107 001526  7040          CMA
+1108 001527  7450          SNA
+1109 001530  7430          SZL
+1110 001531  7402          HLT             /RAR FAILED AC AND LINK
+1111                                       /SHOULD EQUAL 0000
+1112               /RAR TEST 7
+1113 001532  7200          CLA
+1114 001533  7100          CLL
+1115 001534  1050          TAD K4000               /ROTATE PATTERN
+1116 001535  7010          RAR
+1117 001536  1065          TAD K5777
+1118 001537  7040          CMA
+1119 001540  7450          SNA
+1120 001541  7430          SZL
+1121 001542  7402          HLT             /RAR FAILED AC AND LINK SHOULD
+1122                                       /EQUAL 0000
+1123               
+1124               
+1125               /RAR TEST 8
+1126 001543  7200          CLA
+1127 001544  7100          CLL
+1128 001545  1045          TAD K2000               /ROTATE PATTERN
+1129 001546  7010          RAR
+1130 001547  1064          TAD K6777
+1131 001550  7040          CMA
+1132 001551  7450          SNA
+1133 001552  7430          SZL
+1134 001553  7402          HLT             /RAR FAILED AC AND LINK SHOULD
+1135                                       /EQUAL 0000
+1136               /RAR TEST 9
+1137 001554  7200          CLA
+1138 001555  7100          CLL
+1139 001556  1042          TAD K1000               /ROTATE PATTERN
+1140 001557  7010          RAR
+1141 001560  1063          TAD K7377
+1142 001561  7040          CMA
+1143 001562  7450          SNA
+1144 001563  7430          SZL
+1145 001564  7402          HLT             /RAR FAILED AC AND LINK SHOULD
+1146                                       /EQUAL 0000
+1147               
+1148               /RAR TEST 10
+1149 001565  7200          CLA
+1150 001566  7100          CLL
+1151 001567  1040          TAD K0400               /ROTATE PATTERN
+1152 001570  7010          RAR
+1153 001571  1062          TAD K7577
+1154 001572  7040          CMA
+1155 001573  7450          SNA
+1156 001574  7430          SZL
+1157 001575  7402          HLT             /RAR FAILED AC AND LINK
+1158                                       /SHOULD EQUAL 0000
+1159               
+1160               
+1161               
+1162               /RAR TEST 11
+1163 001576  7200          CLA
+1164 001577  7100          CLL
+1165 001600  1036          TAD K0200               /ROTATE PATTERN
+1166 001601  7010          RAR
+1167 001602  1061          TAD K7677
+1168 001603  7040          CMA
+1169 001604  7450          SNA
+1170 001605  7430          SZL
+1171 001606  7402          HLT             /RAR FAILED AC AND LINK
+1172                                       /EQUAL 0000
+1173               
+1174               /RAR TEST 12
+1175 001607  7200          CLA
+1176 001610  7100          CLL
+1177 001611  1034          TAD K0100               /ROTATE PATTERN
+1178 001612  7010          RAR
+1179 001613  1057          TAD K7737
+1180 001614  7040          CMA
+1181 001615  7450          SNA
+1182 001616  7430          SZL
+1183 001617  7402          HLT             /RAR FAILED AC AND LINK
+1184                                       /SHOULD EQUAL 0000
+1185               /RAR TEST 13
+1186 001620  7200          CLA
+1187 001621  7100          CLL
+1188 001622  1032          TAD K0040               /ROTATE PATTERN
+1189 001623  7010          RAR
+1190 001624  1056          TAD K7757
+1191 001625  7040          CMA
+1192 001626  7450          SNA
+1193 001627  7430          SZL
+1194 001630  7402          HLT             /RAR FAILED AC AND LINK
+1195                                       /SHOULD EQUAL 0000
+1196               
+1197               
+1198               /PAUSE
+1199               
+1200               
+1201               /INSTRUCTION TEST 1
+1202               /TAPE 2
+1203               /RAR TEST 14
+1204 001631  7200          CLA
+1205 001632  7100          CLL
+1206 001633  1030          TAD K0020               /ROTATE PATTERN
+1207 001634  7010          RAR
+1208 001635  1055          TAD K7767
+1209 001636  7040          CMA
+1210 001637  7450          SNA
+1211 001640  7430          SZL
+1212 001641  7402          HLT             /RAR FAILED AC AND LINK
+1213                                       /SHOULD EQUAL 0000
+1214               /RAR TEST 15
+1215 001642  7200          CLA
+1216 001643  7100          CLL
+1217 001644  1026          TAD K0010               /ROTATE PATTERN
+1218 001645  7010          RAR
+1219 001646  1054          TAD K7773
+1220 001647  7040          CMA
+1221 001650  7450          SNA
+1222 001651  7430          SZL
+1223 001652  7402          HLT             /RAR FAILED AC AND LINK
+1224                                       /SHOULD EQUAL 0000
+1225               /RAR TEST 16
+1226 001653  7200          CLA
+1227 001654  7100          CLL
+1228 001655  1024          TAD K0004               /ROTATE PATTERN
+1229 001656  7010          RAR
+1230 001657  1053          TAD K7775
+1231 001660  7040          CMA
+1232 001661  7450          SNA
+1233 001662  7430          SZL
+1234 001663  7402          HLT             /RAR FAILED AC AND LINK
+1235                                       /SHOULD EQUAL 0000
+1236               /RAR TEST 17
+1237 001664  7200          CLA
+1238 001665  7100          CLL
+1239 001666  1022          TAD K0002               /ROTATE PATTERN
+1240 001667  7010          RAR
+1241 001670  1052          TAD K7776
+1242 001671  7040          CMA
+1243 001672  7450          SNA
+1244 001673  7430          SZL
+1245 001674  7402          HLT             /RAR FAILED AC AND LINK
+1246                                       /SHOULD EQUAL 0000
+1247               /RAR TEST 18
+1248 001675  7200          CLA
+1249 001676  7100          CLL
+1250 001677  1021          TAD K0001               /ROTATE PATTERN
+1251 001700  7010          RAR
+1252 001701  1067          TAD K7777
+1253 001702  7040          CMA
+1254 001703  7450          SNA
+1255 001704  7420          SNL
+1256 001705  7402          HLT             /RAR FAILED AC AND LINK
+1257                                       /SHOULD EQUAL 0000
+1258               /RTR TEST 1
+1259 001706  7200          CLA
+1260 001707  7100          CLL
+1261 001710  1022          TAD K0002               /ROTATE PATTERN
+1262 001711  7012          RTR
+1263 001712  7420          SNL
+1264 001713  7402          HLT             /RTR FAILED LINK DROPPED
+1265                                       /A BIT LINK SHOULD EQUAL A ONE
+1266               
+1267               /RTR TEST 2
+1268 001714  7200          CLA
+1269 001715  7100          CLL
+1270 001716  1020          TAD K0000               /ROTATE PATTERN
+1271 001717  7012          RTR
+1272 001720  7440          SZA
+1273 001721  7402          HLT             /RTR FAILED AC PICKED UP A BIT
+1274                                       /A ONE IN AC EQUALS THE PICKED UP BIT
+1275               /RTR TEST 3
+1276 001722  7200          CLA
+1277 001723  7100          CLL
+1278 001724  1020          TAD K0000               /ROTATE PATTERN
+1279 001725  7012          RTR
+1280 001726  7430          SZL
+1281 001727  7402          HLT             /RTR LINK PICKED UP A BIT
+1282                                       /LINK SHOULD EQUAL ZERO
+1283               /RTR TEST 4
+1284 001730  7200          CLA
+1285 001731  7100          CLL
+1286 001732  7020          CML
+1287 001733  1020          TAD K0000               /ROTATE PATTERN
+1288 001734  7012          RTR
+1289 001735  7430          SZL
+1290 001736  7402          HLT             /RTR LINK PICKED UP A BIT
+1291                                       /LINK SHOULD EQUAL ZERO
+1292               
+1293               
+1294               /RTR TEST 5
+1295 001737  7200          CLA
+1296 001740  7100          CLL
+1297 001741  7020          CML
+1298 001742  1067          TAD K7777               /ROTATE PATTERN
+1299 001743  7012          RTR
+1300 001744  7040          CMA
+1301 001745  7440          SZA
+1302 001746  7402          HLT             /RTR AC DROPPED A BIT A ONE IN
+1303                                       /AC EQUALS THE DROPPED BIT
+1304               /RTR TEST 6
+1305 001747  7200          CLA
+1306 001750  7100          CLL
+1307 001751  7020          CML
+1308 001752  1020          TAD K0000               /ROTATE PATTERN
+1309 001753  7012          RTR
+1310 001754  1065          TAD K5777
+1311 001755  7040          CMA
+1312 001756  7450          SNA
+1313 001757  7430          SZL
+1314 001760  7402          HLT             /RTR FAILED AC AND LINK
+1315                                       /SHOULD EQUAL 0000
+1316               /RTR TEST 7
+1317 001761  7200          CLA
+1318 001762  7100          CLL
+1319 001763  1050          TAD K4000               /ROTATE PATTERN
+1320 001764  7012          RTR
+1321 001765  1064          TAD K6777
+1322 001766  7040          CMA
+1323 001767  7450          SNA
+1324 001770  7430          SZL
+1325 001771  7402          HLT             /RTR FAILED AC AND LINK
+1326                                       /SHOULD EQUAL 0000
+1327               /RTR TEST 8
+1328 001772  7200          CLA
+1329 001773  7100          CLL
+1330 001774  1045          TAD K2000               /ROTATE PATTERN
+1331 001775  7012          RTR
+1332 001776  1063          TAD K7377
+1333 001777  7040          CMA
+1334 002000  7450          SNA
+1335 002001  7430          SZL
+1336 002002  7402          HLT             /RTR FAILED AC AND LINK
+1337                                       /SHOULD EQUAL 0000
+1338               
+1339               
+1340               /RTR TEST 9
+1341 002003  7200          CLA
+1342 002004  7100          CLL
+1343 002005  1042          TAD K1000               /ROTATE PATTERN
+1344 002006  7012          RTR
+1345 002007  1062          TAD K7577
+1346 002010  7040          CMA
+1347 002011  7450          SNA
+1348 002012  7430          SZL
+1349 002013  7402          HLT             /RTR FAILED AC AND LINK
+1350                                       /SHOULD EQUAL 0000
+1351               /RTR TEST 10
+1352 002014  7200          CLA
+1353 002015  7100          CLL
+1354 002016  1040          TAD K0400               /ROTATE PATTERN
+1355 002017  7012          RTR
+1356 002020  1061          TAD K7677
+1357 002021  7040          CMA
+1358 002022  7450          SNA
+1359 002023  7430          SZL
+1360 002024  7402          HLT             /RTR FAILED AC AND LINK
+1361                                       /SHOULD EQUAL 0000
+1362               /RTR TEST 11
+1363 002025  7200          CLA
+1364 002026  7100          CLL
+1365 002027  1036          TAD K0200               /ROTATE PATTERN
+1366 002030  7012          RTR
+1367 002031  1057          TAD K7737
+1368 002032  7040          CMA
+1369 002033  7450          SNA
+1370 002034  7430          SZL
+1371 002035  7402          HLT             /RTR FAILED AC AND LINK
+1372                                       /SHOULD EQUAL 0000
+1373               /RTR TEST 12
+1374 002036  7200          CLA
+1375 002037  7100          CLL
+1376 002040  1034          TAD K0100               /ROTATE PATTERN
+1377 002041  7012          RTR
+1378 002042  1056          TAD K7757
+1379 002043  7040          CMA
+1380 002044  7450          SNA
+1381 002045  7430          SZL
+1382 002046  7402          HLT             /RTR FAILED AC AND LINK
+1383                                       /SHOULD EQUAL 0000
+1384               
+1385               
+1386               /RTR TEST 13
+1387 002047  7200          CLA
+1388 002050  7100          CLL
+1389 002051  1032          TAD K0040               /ROTATE PATTERN
+1390 002052  7012          RTR
+1391 002053  1055          TAD K7767
+1392 002054  7040          CMA
+1393 002055  7450          SNA
+1394 002056  7430          SZL
+1395 002057  7402          HLT             /RTR FAILED AC AND LINK
+1396                                       /SHOULD EQUAL 0000
+1397               /RTR TEST 14
+1398 002060  7200          CLA
+1399 002061  7100          CLL
+1400 002062  1030          TAD K0020               /ROTATE PATTERN
+1401 002063  7012          RTR
+1402 002064  1054          TAD K7773
+1403 002065  7040          CMA
+1404 002066  7450          SNA
+1405 002067  7430          SZL
+1406 002070  7402          HLT             /RTR FAILED AC AND LINK
+1407                                       /SHOULD EQUAL 0000
+1408               /RTR TEST 15
+1409 002071  7200          CLA
+1410 002072  7100          CLL
+1411 002073  1026          TAD K0010               /ROTATE PATTERN
+1412 002074  7012          RTR
+1413 002075  1053          TAD K7775
+1414 002076  7040          CMA
+1415 002077  7450          SNA
+1416 002100  7430          SZL
+1417 002101  7402          HLT             /RTR FAILED AC AND LINK
+1418                                       /SHOULD EQUAL 0000
+1419               /RTR TEST 16
+1420 002102  7300          CLA CLL
+1421 002103  1024          TAD K0004               /ROTATE PATTERN
+1422 002104  7012          RTR
+1423 002105  1052          TAD K7776
+1424 002106  7040          CMA
+1425 002107  7450          SNA
+1426 002110  7430          SZL
+1427 002111  7402          HLT             /RTR FAILED  AC AND LINK
+1428                                       /SHOULD EQUAL 0000
+1429               /RTR TEST 17
+1430 002112  7200          CLA
+1431 002113  7100          CLL
+1432 002114  1022          TAD K0002               /ROTATE PATTERN
+1433 002115  7012          RTR
+1434 002116  7450          SNA
+1435 002117  7420          SNL
+1436 002120  7402          HLT             /RTR FAILED, AC SHOULD EQUAL
+1437                                       /0000, LINK SHOULD EQUAL ONE
+1438               /RTR TEST 18
+1439 002121  7200          CLA
+1440 002122  7100          CLL
+1441 002123  1021          TAD K0001               /ROTATE PATTERN
+1442 002124  7012          RTR
+1443 002125  1066          TAD K3777
+1444 002126  7040          CMA
+1445 002127  7450          SNA
+1446 002130  7430          SZL
+1447 002131  7402          HLT             /RTR FAILED AC AND LINK
+1448                                       /SHOULD BE ZERO
+1449               /RAL TEST 1
+1450 002132  7200          CLA
+1451 002133  7100          CLL
+1452 002134  1050          TAD K4000               /ROTATE PATTERN
+1453 002135  7004          RAL
+1454 002136  7430          SZL
+1455 002137  7440          SZA
+1456 002140  7402          HLT             /RAL FAILED, AC SHOULD EQUAL 0000
+1457                                       /LINK SHOULD EQUAL ONE
+1458               /RAL TEST 2
+1459 002141  7200          CLA
+1460 002142  7100          CLL
+1461 002143  1020          TAD K0000               /ROTATE PATTERN
+1462 002144  7004          RAL
+1463 002145  7420          SNL
+1464 002146  7440          SZA
+1465 002147  7402          HLT             /RAL FAILED, AC SHOULD EQUAL 0000
+1466                                       /LINK SHOULD EQUAL ZERO
+1467               /RAL TEST 3
+1468 002150  7200          CLA
+1469 002151  7100          CLL
+1470 002152  7020          CML
+1471 002153  1020          TAD K0000               /ROTATE PATTERN
+1472 002154  7004          RAL
+1473 002155  7430          SZL
+1474 002156  7402          HLT             /RAL FAILURE, AC SHOULD EQUAL 0001
+1475                                       /LINK SHOULD EQUAL ZERO
+1476               /RAL TEST 4
+1477 002157  7200          CLA
+1478 002160  7100          CLL
+1479 002161  7020          CML
+1480 002162  1067          TAD K7777               /ROTATE PATTERN
+1481 002163  7004          RAL
+1482 002164  7040          CMA
+1483 002165  7440          SZA
+1484 002166  7402          HLT             /RAL FAILURE, LINK SHOULD EQUAL ONE
+1485                                       /AC SHOULD EQUAL 0000
+1486               /RAL TEST 5
+1487 002167  7200          CLA
+1488 002170  7100          CLL
+1489 002171  1045          TAD K2000               /ROTATE PATTERN
+1490 002172  7004          RAL
+1491 002173  1066          TAD K3777
+1492 002174  7040          CMA
+1493 002175  7450          SNA
+1494 002176  7430          SZL
+1495 002177  7402          HLT             /RAL FAILURE, AC SHOULD EQUAL 0000
+1496                                       /LINK SHOULD EQUAL ONE
+1497               /RAL TEST 6
+1498 002200  7200          CLA
+1499 002201  7100          CLL
+1500 002202  1042          TAD K1000               /ROTATE PATTERN
+1501 002203  7004          RAL
+1502 002204  1065          TAD K5777
+1503 002205  7040          CMA
+1504 002206  7440          SZA
+1505 002207  7402          HLT             /RAL FAILURE, AC SHOULD EQUAL 0000
+1506                                       /LINK SHOULD EQUAL ZERO
+1507               
+1508               
+1509               /RAL TEST 7
+1510 002210  7200          CLA
+1511 002211  7100          CLL
+1512 002212  1040          TAD K0400               /ROTATE PATTERN
+1513 002213  7004          RAL
+1514 002214  1064          TAD K6777
+1515 002215  7040          CMA
+1516 002216  7450          SNA
+1517 002217  7430          SZL
+1518 002220  7402          HLT             /RAL FAILURE, AC SHOULD EQUAL 0000
+1519                                       /LINK SHOULD EQUAL ZERO
+1520               
+1521               /RAL TEST 8
+1522 002221  7200          CLA
+1523 002222  7100          CLL
+1524 002223  1036          TAD K0200               /ROTATE PATTERN
+1525 002224  7004          RAL
+1526 002225  1063          TAD K7377
+1527 002226  7040          CMA
+1528 002227  7450          SNA
+1529 002230  7430          SZL             /RAL FAILURE AC SHOULD EQUAL 0000
+1530 002231  7402          HLT             /LINK SHOULD EQUAL ZERO
+1531               /RAL TEST 9
+1532 002232  7200          CLA
+1533 002233  7100          CLL
+1534 002234  1034          TAD K0100               /ROTATE PATTERN
+1535 002235  7004          RAL
+1536 002236  1062          TAD K7577
+1537 002237  7040          CMA
+1538 002240  7450          SNA
+1539 002241  7430          SZL             /RAL FAILURE AC SHOULD EQUAL 0000
+1540 002242  7402          HLT             /LINK SHOULD EQUAL ZERO
+1541                       
+1542               
+1543               /RAL TEST 10
+1544 002243  7200          CLA
+1545 002244  7100          CLL
+1546 002245  1032          TAD K0040               /ROTATE PATTERN
+1547 002246  7004          RAL
+1548 002247  1061          TAD K7677
+1549 002250  7040          CMA
+1550 002251  7450          SNA
+1551 002252  7430          SZL             /RAL FAILURE AC SHOULD EQUAL 0000
+1552 002253  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1553               /RAL TEST 11
+1554 002254  7200          CLA
+1555 002255  7100          CLL
+1556 002256  1030          TAD K0020               /ROTATE PATTERN
+1557 002257  7004          RAL
+1558 002260  1057          TAD K7737
+1559 002261  7040          CMA
+1560 002262  7450          SNA
+1561 002263  7430          SZL             /RAL FAILURE AC SHOULD EQUAL 0000
+1562 002264  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1563               /RAL TEST 12
+1564 002265  7200          CLA
+1565 002266  7100          CLL
+1566 002267  1026          TAD K0010               /ROTATE PATTERN
+1567 002270  7004          RAL
+1568 002271  1056          TAD K7757
+1569 002272  7040          CMA
+1570 002273  7450          SNA
+1571 002274  7430          SZL             /RAL FAILURE AC SHOULD EQUAL 0000
+1572 002275  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1573               /RAL TEST 13
+1574 002276  7200          CLA
+1575 002277  7100          CLL
+1576 002300  1024          TAD K0004               /ROTATE PATTERN
+1577 002301  7004          RAL
+1578 002302  1055          TAD K7767
+1579 002303  7040          CMA
+1580 002304  7450          SNA
+1581 002305  7430          SZL             /RAL FAILED AC SHOULD EQUAL 0000
+1582 002306  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1583               /RAL TEST 14
+1584 002307  7200          CLA
+1585 002310  7100          CLL
+1586 002311  1022          TAD K0002               /ROTATE PATTERN
+1587 002312  7004          RAL
+1588 002313  1054          TAD K7773
+1589 002314  7040          CMA
+1590 002315  7450          SNA
+1591 002316  7430          SZL             /RAL FAILED AC SHOULD EQUAL 0000
+1592 002317  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1593               /RAL TEST 15
+1594 002320  7200          CLA
+1595 002321  7100          CLL
+1596 002322  1021          TAD K0001               /ROTATE PATTERN
+1597 002323  7004          RAL
+1598 002324  1053          TAD K7775
+1599 002325  7040          CMA
+1600 002326  7450          SNA
+1601 002327  7430          SZL             /RAL FAILED AC SHOULD EQUAL 0000
+1602 002330  7402          HLT             /LINK SHOULD EQUAL A ZERO
+1603               /RAL TEST 16
+1604 002331  7200          CLA
+1605 002332  7100          CLL
+1606 002333  7020          CML
+1607 002334  7004          RAL
+1608 002335  1052          TAD K7776
+1609 002336  7040          CMA
+1610 002337  7450          SNA
+1611 002340  7430          SZL
+1612 002341  7402          HLT             /RAL FAILED AC SHOULD EQUAL 0000
+1613                                       /LINK SHOULD EQUAL A ZERO
+1614               
+1615               
+1616               /RTL TEST 1
+1617 002342  7200          CLA
+1618 002343  7100          CLL
+1619 002344  1045          TAD K2000
+1620 002345  7006          RTL
+1621 002346  7420          SNL
+1622 002347  7402          HLT             /RTL LINK DROPPED A BIT
+1623                                       /LINK SHOULD EQUAL A ONE
+1624               /RTL TEST 2
+1625 002350  7200          CLA
+1626 002351  7100          CLL
+1627 002352  1020          TAD K0000               /ROTATE PATTERN
+1628 002353  7006          RTL
+1629 002354  7440          SZA
+1630 002355  7402          HLT             /RTL AC PICKED UP A BIT
+1631                                       /A ONE IN AC EQUALS THE PICKED UP
+1632               /RTL TEST 3
+1633 002356  7200          CLA
+1634 002357  7100          CLL
+1635 002360  1020          TAD K0000               /ROTATE PATTERN
+1636 002361  7006          RTL
+1637 002362  7430          SZL
+1638 002363  7402          HLT             /RTL LINK PICKED UP A BIT
+1639                                       /LINK SHOULD EQUAL ZERO
+1640               /RTL TEST 4
+1641 002364  7200          CLA
+1642 002365  7100          CLL
+1643 002366  7020          CML
+1644 002367  1020          TAD K0000               /ROTATE PATTERN
+1645 002370  7006          RTL
+1646 002371  7430          SZL
+1647 002372  7402          HLT             /RTL FAILURE, LINK PICKED UP A BIT
+1648                                       /LINK SHOULD EQUAL A ZERO
+1649               
+1650               
+1651               /RTL TEST 5
+1652 002373  7200          CLA
+1653 002374  7100          CLL
+1654 002375  7020          CML
+1655 002376  1067          TAD K7777               /ROTATE PATTERN
+1656 002377  7006          RTL
+1657 002400  7040          CMA
+1658 002401  7440          SZA
+1659 002402  7402          HLT             /RTL FAILURE, DROPPED A BIT
+1660               /RTL TEST 6
+1661 002403  7200          CLA
+1662 002404  7100          CLL
+1663 002405  1050          TAD K4000               /ROTATE PATTERN
+1664 002406  7006          RTL
+1665 002407  1052          TAD K7776
+1666 002410  7040          CMA
+1667 002411  7450          SNA
+1668 002412  7430          SZL
+1669 002413  7402          HLT             /RTL FAILED AC AND LINK SHOULD EQUAL 0000
+1670               /RTL TEST 7
+1671 002414  7200          CLA
+1672 002415  7100          CLL
+1673 002416  1045          TAD K2000               /ROTATE PATTERN
+1674 002417  7006          RTL
+1675 002420  7450          SNA
+1676 002421  7420          SNL
+1677 002422  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1678                                       /EQUAL 0000
+1679               /RTL TEST 8
+1680 002423  7200          CLA
+1681 002424  7100          CLL
+1682 002425  1042          TAD K1000               /ROTATE PATTERN
+1683 002426  7006          RTL
+1684 002427  1066          TAD K3777
+1685 002430  7040          CMA
+1686 002431  7450          SNA
+1687 002432  7430          SZL
+1688 002433  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1689                                       /EQUAL 0000
+1690               
+1691               
+1692               /RTL TEST 9
+1693 002434  7200          CLA
+1694 002435  7100          CLL
+1695 002436  1040          TAD K0400               /ROTATE PATTERN
+1696 002437  7006          RTL
+1697 002440  1065          TAD K5777
+1698 002441  7040          CMA
+1699 002442  7450          SNA
+1700 002443  7430          SZL
+1701 002444  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1702                                       /EQUAL ZERO
+1703               /RTL TEST 10
+1704 002445  7200          CLA
+1705 002446  7100          CLL
+1706 002447  1036          TAD K0200               /ROTATE PATTERN
+1707 002450  7006          RTL
+1708 002451  1064          TAD K6777
+1709 002452  7040          CMA
+1710 002453  7450          SNA
+1711 002454  7430          SZL
+1712 002455  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1713                                       /EQUAL 0000
+1714               /RTL TEST 11
+1715 002456  7200          CLA
+1716 002457  7100          CLL
+1717 002460  1034          TAD K0100               /ROTATE PATTERN
+1718 002461  7006          RTL
+1719 002462  1063          TAD K7377
+1720 002463  7040          CMA
+1721 002464  7450          SNA
+1722 002465  7430          SZL
+1723 002466  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1724                                       /EQUAL 0000
+1725               /RTL TEST 12
+1726 002467  7200          CLA
+1727 002470  7100          CLL
+1728 002471  1032          TAD K0040               /ROTATE PATTERN
+1729 002472  7006          RTL
+1730 002473  1062          TAD K7577
+1731 002474  7040          CMA
+1732 002475  7450          SNA
+1733 002476  7430          SZL
+1734 002477  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1735                                       /EQUAL 0000
+1736               /RTL TEST 13
+1737 002500  7200          CLA
+1738 002501  7100          CLL
+1739 002502  1030          TAD K0020               /ROTATE PATTERN
+1740 002503  7006          RTL
+1741 002504  1061          TAD K7677
+1742 002505  7040          CMA
+1743 002506  7450          SNA
+1744 002507  7430          SZL
+1745 002510  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1746                                       /EQUAL 0000
+1747               /RTL TEST 14
+1748 002511  7200          CLA
+1749 002512  7100          CLL
+1750 002513  1026          TAD K0010               /ROTATE PATTERN
+1751 002514  7006          RTL
+1752 002515  1057          TAD K7737
+1753 002516  7040          CMA
+1754 002517  7450          SNA
+1755 002520  7430          SZL
+1756 002521  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1757               /RTL TEST 15
+1758 002522  7200          CLA
+1759 002523  7100          CLL
+1760 002524  1024          TAD K0004               /ROTATE PATTERN
+1761 002525  7006          RTL
+1762 002526  1056          TAD K7757
+1763 002527  7040          CMA
+1764 002530  7450          SNA
+1765 002531  7430          SZL
+1766 002532  7402          HLT             /RTL FAILED AC AND LINK SHOULD
+1767                                       /EQUAL 0000
+1768               /RTL TEST 16
+1769 002533  7200          CLA
+1770 002534  7100          CLL
+1771 002535  1022          TAD K0002               /ROTATE PATTERN
+1772 002536  7006          RTL
+1773 002537  1055          TAD K7767
+1774 002540  7040          CMA
+1775 002541  7450          SNA
+1776 002542  7430          SZL
+1777 002543  7402          HLT             /RTL FAILED AC AND LINK
+1778                                       /SHOULD EQUAL 0000
+1779               
+1780               
+1781               /RTL TEST 17
+1782 002544  7200          CLA
+1783 002545  7100          CLL
+1784 002546  1021          TAD K0001               /ROTATE PATTERN
+1785 002547  7006          RTL
+1786 002550  1054          TAD K7773
+1787 002551  7040          CMA
+1788 002552  7450          SNA
+1789 002553  7430          SZL
+1790 002554  7402          HLT             /RTL FAILED AC AND LINK
+1791                                       /SHOULD EQUAL 0000
+1792               /RTL TEST 18
+1793 002555  7200          CLA
+1794 002556  7100          CLL
+1795 002557  7020          CML
+1796 002560  7006          RTL
+1797 002561  1053          TAD K7775
+1798 002562  7040          CMA
+1799 002563  7450          SNA
+1800 002564  7430          SZL
+1801 002565  7402          HLT             /RTL FAILED AC AND LINK
+1802                                       /SHOULD EQUAL 0000
+1803               
+1804               
+1805               /BSW TEST 1
+1806 002566  7200          CLA
+1807 002567  7100          CLL
+1808 002570  7040          CMA                     /AC=7777
+1809 002571  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 7777
+1810 002572  7040          CMA
+1811 002573  7420          SNL                     /DID LINK SET?
+1812 002574  7440          SZA
+1813 002575  7402          HLT                     /BSW FAILED
+1814                                               /AC AND LINK SHOULD=0000
+1815               /BSW TEST 2
+1816 002576  7200          CLA
+1817 002577  7100          CLL
+1818 002600  7020          CML                     /LINK=1
+1819 002601  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 0000
+1820 002602  7450          SNA
+1821 002603  7420          SNL
+1822 002604  7402          HLT                     /BSW CAUSED THE LINK
+1823                                               /TO ROTATE
+1824               /BSW TEST 3
+1825 002605  7200          CLA
+1826 002606  7100          CLL
+1827 002607  1113          TAD K7700               /AC=7700
+1828 002610  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 0077
+1829 002611  1113          TAD K7700               /AC=7777
+1830 002612  7040          CMA                     /AC=0000
+1831 002613  7420          SNL
+1832 002614  7440          SZA
+1833 002615  7402          HLT                     /BSW FAILED AC AND LINK
+1834                                               /SHOULD=0000
+1835               /BSW TEST 4
+1836 002616  7200          CLA
+1837 002617  7100          CLL
+1838 002620  1106          TAD K0077               /AC=0077
+1839 002621  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 7700
+1840 002622  1106          TAD K0077               /AC=7777
+1841 002623  7040          CMA
+1842 002624  7420          SNL
+1843 002625  7440          SZA
+1844 002626  7402          HLT                     /BSW FAILED AC AND LINK
+1845                                               /SHOULD=0000
+1846               /BSW TEST 5
+1847 002627  7300          CLA CLL
+1848 002630  1116          TAD K0770
+1849 002631  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 0770
+1850 002632  1116          TAD K0770
+1851 002633  7040          CMA
+1852 002634  7420          SNL
+1853 002635  7440          SZA
+1854 002636  7402          HLT                     /BSW FAILED AC AND LINK
+1855                                               /SHOULD=0000
+1856               /BSW TEST 6
+1857 002637  7320          CLA CLL CML
+1858 002640  1117          TAD K7007
+1859 002641  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 0770
+1860 002642  1117          TAD K7007
+1861 002643  7040          CMA
+1862 002644  7430          SZL
+1863 002645  7440          SZA
+1864 002646  7402          HLT                     /BSW FAILED AC
+1865                                               /SHOULD EQUAL 0000 AND LINK=1
+1866               /BSW TEST 7
+1867 002647  7200          CLA
+1868 002650  7100          CLL
+1869 002651  1114          TAD K5225               /AC=5225
+1870 002652  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 2552
+1871 002653  1114          TAD K5225               /AC=7777
+1872 002654  7040          CMA
+1873 002655  7420          SNL
+1874 002656  7440          SZA
+1875 002657  7402          HLT                     /BSW FAILED AC AND LINK
+1876                                               /SHOULD=0000
+1877               /BSW TEST 8
+1878 002660  7200          CLA
+1879 002661  7100          CLL
+1880 002662  1115          TAD K2552               /AC=2552
+1881 002663  7002          BSW                     /SWAP BYTES AC SHOULD EQUAL 5225
+1882 002664  1115          TAD K2552               /AC=7777
+1883 002665  7040          CMA
+1884 002666  7420          SNL
+1885 002667  7440          SZA
+1886 002670  7402          HLT                     /BSW FAILED AC AND LINK
+1887                                               /SHOULD=0000
+1888               
+1889               
+1890               /GROUP 1 OPERATE TEST 1
+1891 002671  7200          CLA             /CLEAR AC
+1892 002672  7100          CLL             /CLEAR LINK
+1893 002673  7040          CMA             /AC EQUALS 7777
+1894 002674  7020          CML             /LINK EQUALS ONE
+1895 002675  7300          CLA CLL         /TEST COMBINATION
+1896 002676  7420          SNL
+1897 002677  7440          SZA
+1898 002700  7402          HLT             /CLA CLL FAILED, LINK SHOULD BE 0
+1899                                       /AC SHOULD EQUAL 0000
+1900               /GROUP 1 OPERATE TEST 2
+1901 002701  7200          CLA             /AC=0000
+1902 002702  1071          TAD K2525               /AC EQUALS 2525
+1903 002703  7240          CLA CMA         /TEST COMBINATION
+1904 002704  7040          CMA
+1905 002705  7440          SZA
+1906 002706  7402          HLT             /CLA CMA ERROR, AC SHOULD
+1907                                       /BE 0000
+1908               /GROUP 1 OPERATE TEST 3
+1909 002707  7200          CLA
+1910 002710  7100          CLL
+1911 002711  7040          CMA             /AC=7777 LINK=1
+1912 002712  7140          CLL CMA         /TEST COMBINATION
+1913 002713  7420          SNL
+1914 002714  7440          SZA
+1915 002715  7402          HLT             /CLL CMA FAILED, AC AND LINK
+1916                                       /SHOULD BE ZERO
+1917               /GROUP 1 OPERATE TEST 4
+1918 002716  7100          CLL
+1919 002717  7020          CML             /LINK=1
+1920 002720  7200          CLA
+1921 002721  7040          CMA             /AC=7777
+1922 002722  7340          CLA CMA CLL     /TEST COMBINATION
+1923 002723  7040          CMA
+1924 002724  7420          SNL
+1925 002725  7440          SZA
+1926 002726  7402          HLT             /CLA CMA CLL FAILED, AC AND
+1927                                       /LINK SHOULD BE ZERO
+1928               
+1929               
+1930               /GROUP 1 OPERATE TEST 5
+1931 002727  7200          CLA
+1932 002730  7100          CLL             /LINK=0
+1933 002731  7040          CMA             /AC=7777
+1934 002732  7220          CLA CML         /TEST COMBINATION
+1935 002733  7430          SZL
+1936 002734  7440          SZA
+1937 002735  7402          HLT             /CLA CML FAILED, AC SHOULD EQUAL
+1938                                       /0000 LINK SHOULD BE A ONE
+1939               /GROUP 1 OPERATE TEST 6
+1940 002736  7100          CLL
+1941 002737  7020          CML             /LINK=1
+1942 002740  7120          CLL CML         /TEST COMBINATION
+1943 002741  7420          SNL
+1944 002742  7402          HLT             /CLL CML FAILED
+1945                                       /LINK SHOULD BE A ONE
+1946               /GROUP 1 OPERATE TEST 7
+1947 002743  7100          CLL             /LINK=0
+1948 002744  7120          CLL CML         /TEST COMBINATION
+1949 002745  7420          SNL
+1950 002746  7402          HLT             /CLL CML FAILED
+1951                                       /LINK SHOULD BE A ONE
+1952               /GROUP 1 OPERATE TEST 8
+1953 002747  7120          CLL CML         /LINK=1
+1954 002750  7240          CLA CMA         /AC=7777
+1955 002751  7320          CLA CLL CML     /TEST COMBINATION
+1956 002752  7430          SZL
+1957 002753  7440          SZA
+1958 002754  7402          HLT             /CLA CLL CML FAILED, LINK SHOULD
+1959                                       /BE 1, AC SHOULD BE ZERO
+1960               /GROUP 1 OPERATE TEST 9
+1961 002755  7340          CLA CLL CMA     /LINK=0, AC=7777
+1962 002756  7320          CLA CLL CML     /TEST COMBINATION
+1963 002757  7430          SZL
+1964 002760  7440          SZA
+1965 002761  7402          HLT             /CLA CLL CML FAILED, LINK SHOULD
+1966                                       /BE 1, AC SHOULD BE ZERO
+1967               
+1968               
+1969               /GROUP 1 OPERATE TEST 10
+1970 002762  7340          CLA CLL CMA     /AC=7777, LINK=0
+1971 002763  7060          CMA CML         /TEST COMBINATION
+1972 002764  7430          SZL
+1973 002765  7440          SZA
+1974 002766  7402          HLT             /CMA CML FAILED, AC SHOULD BE
+1975                                       /0000 LINK SHOULD EQUAL ONE
+1976               /GROUP 1 OPERATE TEST 11
+1977 002767  7300          CLA CLL         /AC AND LINK=0
+1978 002770  1071          TAD K2525               /AC=2525
+1979 002771  7340          CLA CMA CLL     /TEST COMBINATION
+1980 002772  7040          CMA
+1981 002773  7420          SNL
+1982 002774  7440          SZA
+1983 002775  7402          HLT             /CLA CMA CML FAILED, AC SHOULD BE
+1984                                       /0000 LINK SHOULD EQUAL ZERO
+1985               /GROUP 1 OPERATE TEST 12
+1986 002776  7300          CLL CLA         /AC AND LINK=0
+1987 002777  1071          TAD K2525               /AC=2525
+1988 003000  7160          CLL CMA CML     /TEST COMBINATION
+1989 003001  1071          TAD K2525
+1990 003002  7040          CMA
+1991 003003  7430          SZL
+1992 003004  7440          SZA
+1993 003005  7402          HLT             /CLL CMA CML FAILED, AC SHOULD BE
+1994                                       /0000 LINK SHOULD EQUAL ONE
+1995               /GROUP 1 OPERATE TEST 13
+1996 003006  7300          CLA CLL
+1997 003007  7020          CML             /AC=0000, LINK=1
+1998 003010  7160          CLL CMA CML     /TEST COMBINATION
+1999 003011  7040          CMA
+2000 003012  7430          SZL
+2001 003013  7440          SZA
+2002 003014  7402          HLT             /CLL CMA CML FAILED, AC SHOULD
+2003                                       /BE 0000 LINK SHOULD BE ONE
+2004               
+2005               
+2006               /GROUP 1 OPERATE TEST 14
+2007 003015  7300          CLA CLL
+2008 003016  1071          TAD K2525               /AC=2525, LINK=0
+2009 003017  7360          CLA CLL CMA CML /TEST COMBINATION
+2010 003020  7040          CMA
+2011 003021  7430          SZL
+2012 003022  7440          SZA
+2013 003023  7402          HLT             /CLA CLL CMA CML FAILED, AC SHOULD
+2014                                       /BE 0000 LINK SHOULD EQUAL ONE
+2015               /GROUP 1 OPERATE TEST 15
+2016 003024  7320          CLA CLL CML
+2017 003025  1070          TAD K5252               /AC=5252, LINK=1
+2018 003026  7360          CLA CLL CMA CML /TEST COMBINATION
+2019 003027  7040          CMA
+2020 003030  7430          SZL
+2021 003031  7440          SZA
+2022 003032  7402          HLT             /CLA CLL CMA CML FAILED, AC SHOULD
+2023                                       /BE 000, LINK SHOULD EQUAL ONE
+2024               /GROUP 1 OPERATE TEST 16
+2025 003033  7200          CLA
+2026 003034  1071          TAD K2525               /AC=2525
+2027 003035  7201          CLA IAC         /TEST COMBINATION
+2028 003036  1052          TAD K7776
+2029 003037  7040          CMA
+2030 003040  7440          SZA
+2031 003041  7402          HLT             /CLA IAC FAILED
+2032                                       /AC SHOULD EQUAL 0000
+2033               /GROUP 1 OPERATE TEST 17
+2034 003042  7320          CLL CML CLA
+2035 003043  1052          TAD K7776               /AC=7776, LINK=1
+2036 003044  7101          CLL IAC         /TEST COMBINATION
+2037 003045  7040          CMA
+2038 003046  7420          SNL
+2039 003047  7440          SZA
+2040 003050  7402          HLT             /CLA IAC FAILED, AC AND LINK
+2041                                       /SHOULD EQUAL ZERO
+2042               
+2043               
+2044               /GROUP 1 OPERATE TEST 18
+2045 003051  7320          CLA CLL CML
+2046 003052  1071          TAD K2525               /AC=2525, LINK=1
+2047 003053  7301          CLA CLL IAC     /TEST COMBINATION
+2048 003054  1052          TAD K7776
+2049 003055  7040          CMA
+2050 003056  7420          SNL
+2051 003057  7440          SZA
+2052 003060  7402          HLT             /CLA CLL IAC FAILED, AC AND LINK
+2053                                       /SHOULD BE ZERO
+2054               /GROUP 1 OPERATE TEST 19
+2055 003061  7300          CLA CLL         /AC=0 LINK=0
+2056 003062  7041          CMA IAC         /TEST COMBINATION
+2057 003063  7430          SZL
+2058 003064  7440          SZA
+2059 003065  7402          HLT             /CMA IAC FAILED, AC SHOULD EQUAL
+2060                                       /0000. LINK SHOULD EQUAL ONE
+2061               /GROUP 1 OPERATE TEST 20
+2062 003066  7300          CLA CLL
+2063 003067  1071          TAD K2525               /AC=2525, LINK=0
+2064 003070  7241          CLA CMA IAC     /TEST COMBINATION
+2065 003071  7430          SZL
+2066 003072  7440          SZA
+2067 003073  7402          HLT             /CLA CMA IAC FAILED, AC SHOULD
+2068                                       /EQUAL 0000. LINK SHOULD BE ONE.
+2069               /GROUP 1 OPERATE TEST 21
+2070 003074  7320          CLL CLA CML     /AC=0000 LINK=1
+2071 003075  1021          TAD K0001               /AC=0001
+2072 003076  7141          CLL CMA IAC     /TEST COMBINATION
+2073 003077  7040          CMA
+2074 003100  7420          SNL
+2075 003101  7440          SZA
+2076 003102  7402          HLT             /CLL CMA IAC FAILED, AC SHOULD BE
+2077                                       /0000 LINK SHOULD BE 0
+2078               /GROUP 1 OPERATE TEST 22
+2079 003103  7320          CLA CLL CML
+2080 003104  1071          TAD K2525               /AC=2525 LINK=1
+2081 003105  7341          CLA CLL CMA IAC /TEST COMBINATION
+2082 003106  7430          SZL
+2083 003107  7440          SZA
+2084 003110  7402          HLT             /CLA CLL CMA IAC FAILED, AC SHOULD BE
+2085                                       /0000, LINK SHOULD BE ONE
+2086               
+2087               
+2088               /GROUP 1 OPERATE TEST 23
+2089 003111  7300          CLA CLL
+2090 003112  1070          TAD K5252               /AC=5252 LINK=0
+2091 003113  7341          CLA CLL CMA IAC /TEST COMBINATION
+2092 003114  7430          SZL
+2093 003115  7440          SZA
+2094 003116  7402          HLT             /CLA CLL CMA IAC FAILED, AC SHOULD
+2095                                       /BE 0000, LINK SHOULD BE ONE
+2096               /GROUP 1 OPERATE TEST 24
+2097 003117  7300          CLA CLL
+2098 003120  1052          TAD K7776               /AC=7776 LINK=0
+2099 003121  7021          CML IAC         /TEST COMBINATION
+2100 003122  7040          CMA
+2101 003123  7430          SZL
+2102 003124  7440          SZA
+2103 003125  7402          HLT             /CML IAC FAILED AC SHOULD BE
+2104                                       /0000, LINK SHOULD BE ONE
+2105               /GROUP 1 OPERATE TEST 25
+2106 003126  7320          CLA CLL CML
+2107 003127  1052          TAD K7776               /AC=7776 LINK=1
+2108 003130  7021          CML IAC         /TEST COMBINATION
+2109 003131  7040          CMA
+2110 003132  7420          SNL
+2111 003133  7440          SZA
+2112 003134  7402          HLT             /CML IAC FAILED, AC SHOULD BE
+2113                                       /0000, LINK SHOULD BE ZERO
+2114               /GROUP 1 OPERATE TEST 26
+2115 003135  7300          CLA CLL
+2116 003136  1071          TAD K2525               /AC=2525 LINK=0
+2117 003137  7221          CLA CML IAC     /TEST COMBINATION
+2118 003140  1052          TAD K7776
+2119 003141  7040          CMA
+2120 003142  7430          SZL
+2121 003143  7440          SZA
+2122 003144  7402          HLT             /CLA CML IAC FAILED, AC SHOULD BE
+2123                                       /0000, LINK SHOULD EQUAL ONE
+2124               /GROUP 1 OPERATE TEST 27
+2125 003145  7320          CLA CLL CML     /AC=0000 LINK=1
+2126 003146  1052          TAD K7776               /AC=7776
+2127 003147  7121          CLL CML IAC     /TEST COMBINATION
+2128 003150  7040          CMA
+2129 003151  7430          SZL
+2130 003152  7440          SZA
+2131 003153  7402          HLT             /CLL CML IAC FAILURE, AC SHOULD BE
+2132                                       /0000. LINK SHOULD EQUAL ONE.
+2133               
+2134               
+2135               /GROUP 1 OPERATE TEST 28
+2136 003154  7300          CLA CLL
+2137 003155  1052          TAD K7776               /AC=7776 LINK=0
+2138 003156  7121          CLL CML IAC     /TEST COMBINATION
+2139 003157  7040          CMA
+2140 003160  7430          SZL
+2141 003161  7440          SZA
+2142 003162  7402          HLT             /CLL CML IAC FAILED, AC SHOULD
+2143                                       /BE 0000, LINK SHOULD BE ONE.
+2144               /GROUP 1 OPERATE TEST 29
+2145 003163  7300          CLA CLL
+2146 003164  1071          TAD K2525               /AC=2525, LINK=0
+2147 003165  7321          CLA CLL CML IAC /TEST COMBINATION
+2148 003166  1052          TAD K7776
+2149 003167  7040          CMA
+2150 003170  7430          SZL
+2151 003171  7440          SZA
+2152 003172  7402          HLT             /CLA CLL CML IAC FAILED, AC SHOULD
+2153                                       /BE 0000, LINK SHOULD BE ONE.
+2154               /GROUP 1 OPERATE TEST 30
+2155 003173  7320          CLA CLL CML
+2156 003174  1071          TAD K2525               /AC=2525, LINK=1
+2157 003175  7321          CLA CLL CML IAC /TEST COMBINATION
+2158 003176  1052          TAD K7776
+2159 003177  7040          CMA
+2160 003200  7430          SZL
+2161 003201  7440          SZA
+2162 003202  7402          HLT             /CLA CLL CML IAC FAILED, AC SHOULD
+2163                                       /BE 0000, LINK SHOULD BE ONE.
+2164               
+2165               
+2166               /GROUP 1 OPERATE TEST 31
+2167 003203  7300          CLA CLL
+2168 003204  1021          TAD K0001               /AC=0001 LINK=0
+2169 003205  7061          CMA CML IAC     /TEST COMBINATION
+2170 003206  7040          CMA
+2171 003207  7430          SZL
+2172 003210  7440          SZA
+2173 003211  7402          HLT             /CMA CML IAC FAILED, AC SHOULD
+2174                                       /BE 0000, LINK SHOULD BE ONE.
+2175               /GROUP 1 OPERATE TEST 32
+2176 003212  7320          CLA CLL CML
+2177 003213  1021          TAD K0001               /AC=0001 LINK=1
+2178 003214  7061          CMA CML IAC     /TEST COMBINATION
+2179 003215  7040          CMA
+2180 003216  7420          SNL
+2181 003217  7440          SZA
+2182 003220  7402          HLT             /CMA CML IAC FAILURE, AC SHOULD BE
+2183                                       /0000, LINK SHOULD BE ZERO
+2184               /GROUP 1 OPERATE TEST 33
+2185 003221  7300          CLA CLL         /AC=0 LINK=0
+2186 003222  1071          TAD K2525               /AC=2525
+2187 003223  7261          CLA CMA CML IAC /TEST COMBINATION
+2188 003224  7420          SNL
+2189 003225  7430          SZL
+2190 003226  7402          HLT             /CLA CMA CML IAC FAILURE, AC SHOULD
+2191                                       /BE 0000, LINK SHOULD BE ZERO
+2192               /GROUP 1 OPERATE TEST 34
+2193 003227  7320          CLA CLL CML
+2194 003230  1071          TAD K2525               /AC=2525 LINK=1
+2195 003231  7261          CLA CMA CML IAC /TEST COMBINATION
+2196 003232  7430          SZL
+2197 003233  7440          SZA
+2198 003234  7402          HLT             /CLA CMA CML IAC FAILED, AC SHOULD
+2199                                       /BE 0000, LINK SHOULD BE ONE
+2200               
+2201               
+2202               /GROUP 1 OPERATE TEST 35
+2203 003235  7300          CLA CLL
+2204 003236  1021          TAD K0001               /AC=0001 LINK=0
+2205 003237  7161          CLL CMA CML IAC /TEST COMBINATION
+2206 003240  7040          CMA
+2207 003241  7430          SZL
+2208 003242  7440          SZA
+2209 003243  7402          HLT             /CLL CMA CML IAC FAILED, AC SHOULD BE
+2210                                       /0000, LINK SHOULD BE ONE
+2211               /GROUP 1 OPERATE TEST 36
+2212 003244  7320          CLA CLL CML
+2213 003245  1021          TAD K0001               /AC=0001 LINK=1
+2214 003246  7161          CLL CMA CML IAC /TEST COMBINATION
+2215 003247  7040          CMA
+2216 003250  7430          SZL
+2217 003251  7440          SZA
+2218 003252  7402          HLT             /CLL CMA CML IAC FAILED, AC SHOULD BE
+2219                                       /0000, LINK SHOULD BE ONE
+2220               /GROUP 1 OPERATE TEST 37
+2221 003253  7300          CLA CLL
+2222 003254  1071          TAD K2525               /AC=2525 LINK=0
+2223 003255  7361          CLA CLL CMA CML IAC     /TEST COMBINATION
+2224 003256  7420          SNL
+2225 003257  7440          SZA
+2226 003260  7402          HLT             /CLA CLL CMA CML IAC FAILED, AC AND
+2227                                       /LINK SHOULD EQUAL ZERO
+2228               /GROUP 1 OPERATE TEST 38
+2229 003261  7360          CLA CMA CLL CML /AC=7777 LINK=1
+2230 003262  7210          CLA RAR         /TEST COMBINATION
+2231 003263  1066          TAD K3777
+2232 003264  7040          CMA
+2233 003265  7420          SNL
+2234 003266  7440          SZA
+2235 003267  7402          HLT             /CLA RAR FAILED, LINK AND
+2236                                       /AC SHOULD EQUAL ZERO
+2237               
+2238               
+2239               /GROUP 1 OPERATE TEST 39
+2240 003270  7360          CLA CMA CLL CML /AC=7777 LINK=1
+2241 003271  7204          CLA RAL         /TEST COMBINATION
+2242 003272  1052          TAD K7776
+2243 003273  7040          CMA
+2244 003274  7420          SNL
+2245 003275  7440          SZA
+2246 003276  7402          HLT             /CLA RAL FAILED, LINK AND
+2247                                       /AC SHOULD EQUAL ZERO
+2248               /GROUP 1 OPERATE TEST 40
+2249 003277  7360          CLA CMA CLL CML /AC=7777 LINK =1
+2250 003300  7212          CLA RTR         /TEST COMBINATION
+2251 003301  1065          TAD K5777
+2252 003302  7040          CMA
+2253 003303  7420          SNL
+2254 003304  7440          SZA
+2255 003305  7402          HLT             /CLA RTR FAILED, AC AND
+2256                                       /LINK SHOULD BE ZERO
+2257               /GROUP 1 OPERATE TEST 41
+2258 003306  7360          CLA CMA CLL CML /AC=7777 LINK =1
+2259 003307  7206          CLA RTL         /TEST COMBINATION
+2260 003310  1053          TAD K7775
+2261 003311  7040          CMA
+2262 003312  7420          SNL
+2263 003313  7440          SZA
+2264 003314  7402          HLT             /CLA RTL FAILED, AC AND LINK
+2265                                       /SHOULDBE ZERO
+2266               /GROUP 1 OPERATE TEST 42
+2267 003315  7320          CLA CLL CML
+2268 003316  1032          TAD K0040               /AC=0040 LINK=1
+2269 003317  7110          CLL RAR         /TEST COMBINATION
+2270 003320  1056          TAD K7757
+2271 003321  7040          CMA
+2272 003322  7420          SNL
+2273 003323  7440          SZA
+2274 003324  7402          HLT             /CLL RAR FAILED, AC AND LINK
+2275                                       /SHOULD BE ZERO
+2276               
+2277               
+2278               /GROUP 1 OPERATE TEST 43
+2279 003325  7320          CLA CLL CML
+2280 003326  1032          TAD K0040               /AC=0040 LINK=1
+2281 003327  7104          CLL RAL         /TEST COMBINATION
+2282 003330  1061          TAD K7677
+2283 003331  7040          CMA
+2284 003332  7420          SNL
+2285 003333  7440          SZA
+2286 003334  7402          HLT             /CLL RAL FAILED, AC AND LINK
+2287                                       /SHOULD BE ZERO
+2288               /GROUP 1 OPERATE TEST 44
+2289 003335  7320          CLA CLL CML
+2290 003336  1032          TAD K0040               /AC=0040 LINK=1
+2291 003337  7112          CLL RTR         /TEST COMBINATION
+2292 003340  1055          TAD K7767
+2293 003341  7040          CMA
+2294 003342  7420          SNL
+2295 003343  7440          SZA
+2296 003344  7402          HLT             /CLL RTR FAILED, AC AND LINK
+2297                                       /SHOULD BE ZERO
+2298               /GROUP 1 OPERATE TEST 45
+2299 003345  7320          CLA CLL CML
+2300 003346  1032          TAD K0040               /AC=0040 LINK=1
+2301 003347  7106          CLL RTL         /TEST COMBINATION
+2302 003350  1062          TAD K7577
+2303 003351  7040          CMA
+2304 003352  7420          SNL
+2305 003353  7440          SZA
+2306 003354  7402          HLT             /CLL RTL FAILED, AC AND LINK
+2307                                       /SHOULD BE ZERO
+2308               /GROUP 1 OPERATE TEST 46
+2309 003355  7360          CLA CLL CML CMA /AC=7777 LINK=1
+2310 003356  7310          CLL CLA RAR             /TEST COMBINATION
+2311 003357  7420          SNL
+2312 003360  7440          SZA
+2313 003361  7402          HLT             /CLL CLA RAR FAILED AC AND
+2314                                       /LINK SHOULD BE ZERO
+2315               
+2316               
+2317               /GROUP 1 OPERATE TEST 47
+2318 003362  7360          CLA CMA CLL CML /AC=7777 LINK=1
+2319 003363  7304          CLL CLA RAL             /TEST COMBINATION
+2320 003364  7420          SNL
+2321 003365  7430          SZL
+2322 003366  7402          HLT             /CLL CLA  RAL FAILED, AC AND
+2323                                       /LINK SHOULD BE ZERO
+2324               /GROUP 1 OPERATE TEST 48
+2325 003367  7360          CLA CMA CLL CML /AC=7777 LINK=1
+2326 003370  7312          CLL CLA RTR     /TEST COMBINATION
+2327 003371  7420          SNL
+2328 003372  7440          SZA
+2329 003373  7402          HLT             /CLL CLA RTR FAILED, AC AND
+2330                                       /LINK SHOULD BE ZERO
+2331               /GROUP 1 OPERATE TEST 49
+2332 003374  7360          CLA CMA CLL CML /AC=7777 LINK=1
+2333 003375  7306          CLL CLA RTL     /TEST COMBINATION
+2334 003376  7420          SNL
+2335 003377  7440          SZA
+2336 003400  7402          HLT             /CLL CLA RTL FAILED, AC AND
+2337                                       /LINK SHOULD EQUAL ZERO
+2338               /GROUP 1 OPERATE TEST 50
+2339 003401  7300          CLA CLL         /AC=0000 LINK=0
+2340 003402  7030          CML RAR         /TEST COMBINATION
+2341 003403  1066          TAD K3777
+2342 003404  7040          CMA
+2343 003405  7420          SNL
+2344 003406  7440          SZA
+2345 003407  7402          HLT             /CML RAR FAILED, AC AND LINK
+2346                                       /SHOULD BE ZERO
+2347               
+2348               
+2349               /GROUP 1 OPERATE TEST 51
+2350 003410  7300          CLA CLL         /AC=0000 LINK=0
+2351 003411  7024          CML RAL         /TEST COMBINATION
+2352 003412  1052          TAD K7776
+2353 003413  7040          CMA
+2354 003414  7420          SNL
+2355 003415  7440          SZA
+2356 003416  7402          HLT             /CML RAL FAILED, AC AND LINK
+2357                                       /SHOULD BE ZERO.
+2358               /GROUP 1 OPERATE TEST 52
+2359 003417  7300          CLA CLL         /AC=0000 LINK=0
+2360 003420  7032          CML RTR         /TEST COMBINATION
+2361 003421  1065          TAD K5777
+2362 003422  7040          CMA
+2363 003423  7420          SNL
+2364 003424  7440          SZA
+2365 003425  7402          HLT             /CML RTR FAILED, AC AND LINK
+2366                                       /SHOULD EQUAL ZERO
+2367               /GROUP 1 OPERATE TEST 53
+2368 003426  7300          CLA CLL         /AC=0000 LINK=0
+2369 003427  7026          CML RTL         /TEST COMBINATION
+2370 003430  1053          TAD K7775
+2371 003431  7040          CMA
+2372 003432  7420          SNL
+2373 003433  7440          SZA
+2374 003434  7402          HLT             /CML RTL FAILED, AC AND LINK
+2375                                       /SHOULD EQUAL ZERO
+2376               /GROUP 1 OPERATE TEST 54
+2377 003435  7300          CLA CLL
+2378 003436  1070          TAD K5252               /AC=5252 LINK=0
+2379 003437  7230          CLA CML RAR     /TEST COMBINATION
+2380 003440  1066          TAD K3777
+2381 003441  7040          CMA
+2382 003442  7420          SNL
+2383 003443  7440          SZA
+2384 003444  7402          HLT             /CLA CML RTL FAILED, AC AND
+2385               /PAUSE
+2386               
+2387               
+2388               /INSTRUCTION TEST - 1
+2389               /GROUP 1 OPERATE TEST 55
+2390               /TAPE 3
+2391 003445  7300          CLA CLL
+2392 003446  1070          TAD K5252               /AC=5252 LINK=0
+2393 003447  7224          CLA CML RAL     /TEST COMBINATION
+2394 003450  1052          TAD K7776
+2395 003451  7040          CMA
+2396 003452  7420          SNL
+2397 003453  7440          SZA
+2398 003454  7402          HLT             /CLA CML RAL FAILED, AC AND
+2399                                       /LINK SHOULD BE ZERO
+2400               /GROUP 1 OPERATE TEST 56
+2401 003455  7300          CLA CLL
+2402 003456  1070          TAD K5252               /AC=5252 LINK=0
+2403 003457  7232          CLA CML RTR     /TEST COMBINATION
+2404 003460  1065          TAD K5777
+2405 003461  7040          CMA
+2406 003462  7420          SNL
+2407 003463  7440          SZA
+2408 003464  7402          HLT             /CLA CML RTR FAILED, AC AND
+2409                                       /LINK SHOULD BE ZERO
+2410               /GROUP 1 OPERATE TEST 57
+2411 003465  7300          CLA CLL
+2412 003466  1070          TAD K5252               /AC=5252 LINK=0
+2413 003467  7226          CLA CML RTL     /TEST COMBINATION
+2414 003470  1053          TAD K7775
+2415 003471  7040          CMA
+2416 003472  7420          SNL
+2417 003473  7440          SZA
+2418 003474  7402          HLT             /CLA CML RTL FAILED, AC AND
+2419                                       /LINK SHOULD BE ZERO
+2420               /GROUP 1 OPERATE TEST 58
+2421 003475  7300          CLA CLL         /AC=0000 LINK=0
+2422 003476  7130          CLL CML RAR     /TEST COMBINATION
+2423 003477  7004          RAL
+2424 003500  7430          SZL
+2425 003501  7440          SZA
+2426 003502  7402          HLT             /CLL CML RAR FAILED, AC SHOULD
+2427                                       /BE 0000 LINK SHOULD BE 1
+2428               /GROUP 1 OPERATE TEST 59
+2429 003503  7320          CLA CLL CML     /AC=0000 LINK=1
+2430 003504  7130          CLL CML RAR     /TEST COMBINATION
+2431 003505  7004          RAL
+2432 003506  7430          SZL
+2433 003507  7440          SZA
+2434 003510  7402          HLT             /CLL CML RAR FAILED, AC SHOULD BE
+2435                                       /0000, LINK SHOULD BE A ONE
+2436               /GROUP 1 OPERATE TEST 60
+2437 003511  7300          CLA CLL         /AC=0000 LINK=0
+2438 003512  7124          CLL CML RAL     /TEST COMBINATION
+2439 003513  7010          RAR
+2440 003514  7430          SZL
+2441 003515  7440          SZA
+2442 003516  7402          HLT             /CLL CML RAL FAILED, AC SHOULD
+2443                                       /EQUAL 0000, LINK SHOULD BE ONE
+2444               /GROUP 1 OPERATE TEST 61
+2445 003517  7320          CLA CLL CML     /AC=0000 LINK=1
+2446 003520  7124          CLL CML RAL     /TEST COMBINATION
+2447 003521  7010          RAR
+2448 003522  7430          SZL
+2449 003523  7440          SZA
+2450 003524  7402          HLT             /CLL CML RAL FAILED, AC SHOULD
+2451                                       /EQUAL 0000, LINK SHOULD BE ONE
+2452               /GROUP 1 OPERATE TEST 62
+2453 003525  7300          CLA CLL         /AC=0000 LINK=0
+2454 003526  7132          CLL CML RTR     /TEST COMBINATION
+2455 003527  7006          RTL
+2456 003530  7430          SZL
+2457 003531  7440          SZA
+2458 003532  7402          HLT             /CLL CML RTR FAILED, AC SHOULD
+2459                                       /BE 0000, LINK SHOULD BE ONE
+2460               
+2461               
+2462               /GROUP 1 OPERATE TEST 63
+2463 003533  7320          CLA CLL CML     /AC=0000 LINK=1
+2464 003534  7132          CLL CML RTR     /TEST COMBINATION
+2465 003535  7006          RTL
+2466 003536  7430          SZL
+2467 003537  7440          SZA
+2468 003540  7402          HLT             /CLL CML RTR FAILED, AC SHOULD
+2469                                       /BE 0000 LINK SHOULD BE ONE.
+2470               /GROUP 1 OPERATE TEST 64
+2471 003541  7300          CLA CLL         /AC=0000 LINK=0
+2472 003542  7126          CLL CML RTL     /TEST COMBINATION
+2473 003543  7012          RTR
+2474 003544  7430          SZL
+2475 003545  7440          SZA
+2476 003546  7402          HLT             /CLL CML RTL FAILED, AC SHOULD
+2477                                       /BE 0000, LINK SHOULD BE A ONE
+2478               /GROUP 1 OPERATE TEST 65
+2479 003547  7320          CLA CLL CML     /AC=0000 LINK=1
+2480 003550  7126          CLL CML RTL     /TEST COMBINATION
+2481 003551  7012          RTR
+2482 003552  7430          SZL
+2483 003553  7440          SZA
+2484 003554  7402          HLT             /CLL CML RTL FAILED, AC SHOULD
+2485                                       /BE 0000, LINK SHOULD BE A ONE.
+2486               /GROUP 1 OPERATE TEST 66
+2487 003555  7300          CLA CLL
+2488 003556  1070          TAD K5252               /AC=5252 LINK=0
+2489 003557  7330          CLA CLL CML RAR /TEST COMBINATION
+2490 003560  7004          RAL
+2491 003561  7430          SZL
+2492 003562  7440          SZA
+2493 003563  7402          HLT             /CLA CLL CML RAR FAILED, AC SHOULD
+2494                                       /BE 0000, LINK SHOULD BE ONE.
+2495               /GROUP 1 OPERATE TEST 67
+2496 003564  7320          CLA CLL CML
+2497 003565  1071          TAD K2525               /AC=2525 LINK=1
+2498 003566  7330          CLA CLL CML RAR /TEST COMBINATION
+2499 003567  7004          RAL
+2500 003570  7430          SZL
+2501 003571  7440          SZA
+2502 003572  7402          HLT             /CLA CLL CML RAR FAILED, AC SHOULD
+2503                                       /BE 0000, LINK SHOULD BE ONE
+2504               /GROUP 1 OPERATE TEST 68
+2505 003573  7300          CLA CLL
+2506 003574  1071          TAD K2525               /AC=2525 LINK=0
+2507 003575  7324          CLA CLL CML RAL /TEST COMBINATION
+2508 003576  7010          RAR
+2509 003577  7430          SZL
+2510 003600  7440          SZA
+2511 003601  7402          HLT             /CLA CLL CML RAL FAILED, AC SHOULD
+2512                                       /BE 0000, LINK SHOULD BE ONE
+2513               /GROUP 1 OPERATE TEST 69
+2514 003602  7320          CLA CLL CML
+2515 003603  1070          TAD K5252               /AC=5252 LINK=1
+2516 003604  7324          CLA CLL CML RAL /TEST COMBINATION
+2517 003605  7010          RAR
+2518 003606  7430          SZL
+2519 003607  7440          SZA
+2520 003610  7402          HLT             /CLA CLL CML RAL FAILED, AC SHOULD
+2521                                       /BE 0000, LINK SHOULD BE A ONE
+2522               /GROUP 1 OPERATE TEST 70
+2523 003611  7300          CLA CLL
+2524 003612  1071          TAD K2525               /AC=2525 LINK=0
+2525 003613  7332          CLA CLL CML RTR /TEST COMBINATION
+2526 003614  7006          RTL
+2527 003615  7430          SZL
+2528 003616  7440          SZA
+2529 003617  7402          HLT             /CLA CLL CML RTR FAILED, AC SHOULD
+2530                                       /BE 0000, LINK SHOULD BE A ONE
+2531               
+2532               
+2533               /GROUP 1 OPERATE TEST 71
+2534 003620  7320          CLA CLL CML
+2535 003621  1070          TAD K5252               /AC=5252 LINK=1
+2536 003622  7332          CLA CLL CML RTR /TEST COMBINATION
+2537 003623  7006          RTL
+2538 003624  7430          SZL
+2539 003625  7440          SZA
+2540 003626  7402          HLT             /CLA CLL CML RTR FAILED, AC SHOULD
+2541                                       /BE 0000, LINK SHOULD BE A ONE
+2542               /GROUP 1 OPERATE TEST 72
+2543 003627  7300          CLA CLL
+2544 003630  1071          TAD K2525               /AC=2525 LINK=0
+2545 003631  7326          CLA CLL CML RTL /TEST COMBINATION
+2546 003632  7012          RTR
+2547 003633  7430          SZL
+2548 003634  7440          SZA
+2549 003635  7402          HLT             /CLA CLL CML RTL FAILED, AC SHOULD
+2550                                       /BE 0000, LINK SHOULD BE A ZERO
+2551               /GROUP 1 OPERATE TEST 73
+2552 003636  7320          CLA CLL CML
+2553 003637  1070          TAD K5252               /AC=5252 LINK=1
+2554 003640  7326          CLA CLL CML RTL /TEST COMBINATION
+2555 003641  7012          RTR
+2556 003642  7430          SZL
+2557 003643  7440          SZA
+2558 003644  7402          HLT             /CLA CLL CML RTL FAILED, AC SHOULD
+2559                                       /BE 0000, LINK SHOULD BE A ONE
+2560               /GROUP 1 OPERATE TEST 74
+2561 003645  7300          CLA CLL
+2562 003646  1067          TAD K7777               /TEST PATTERN
+2563 003647  7041          CIA             /AC EQUALS 0001
+2564 003650  1052          TAD K7776
+2565 003651  7040          CMA
+2566 003652  7420          SNL
+2567 003653  7440          SZA             /CIA FAILED AC SHOULD EQUAL 0000
+2568 003654  7402          HLT             /LINK SHOULD EQUAL A ZERO
+2569               /GROUP 1 OPERATE TEST 75
+2570 003655  7300          CLA CLL
+2571 003656  1052          TAD K7776               /TEST PATTERN
+2572 003657  7041          CIA             /AC EQUALS 0002
+2573 003660  1053          TAD K7775
+2574 003661  7040          CMA
+2575 003662  7420          SNL
+2576 003663  7440          SZA             /CIA FAILED AC SHOULD EQUAL 0000
+2577 003664  7402          HLT             /LINK SHOULD EQUAL A ZERO
+2578               
+2579               
+2580               /GROUP 1 OPERATE TEST 76
+2581 003665  7300          CLA CLL
+2582 003666  1101          TAD K7774               /TEST PATTERN
+2583 003667  7041          CIA             /AC EQUALS 0004
+2584 003670  1054          TAD K7773
+2585 003671  7040          CMA
+2586 003672  7420          SNL
+2587 003673  7440          SZA             /CIA FAILED AC SHOULD EQUAL 0000
+2588 003674  7402          HLT             /LINK SHOULD EQUAL A ZERO
+2589               /GROUP 1 OPERATE TEST 77
+2590 003675  7300          CLA CLL
+2591 003676  1100          TAD K7770               /TEST PATTERN
+2592 003677  7041          CIA             /AC EQUALS 0010
+2593 003700  1055          TAD K7767
+2594 003701  7040          CMA
+2595 003702  7420          SNL
+2596 003703  7440          SZA
+2597 003704  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2598               /GROUP 1 OPERATE TEST 78
+2599 003705  7300          CLA CLL
+2600 003706  1077          TAD K7760               /TEST PATTERN
+2601 003707  7041          CIA             /AC EQUALS 0020
+2602 003710  1056          TAD K7757
+2603 003711  7040          CMA
+2604 003712  7420          SNL
+2605 003713  7440          SZA
+2606 003714  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2607                                       /LINK SHOULD EQUAL A ZERO
+2608               /GROUP 1 OPERATE TEST 79
+2609 003715  7300          CLA CLL
+2610 003716  1076          TAD K7740               /TEST PATTERN
+2611 003717  7041          CIA             /AC EQUALS 0040
+2612 003720  1057          TAD K7737
+2613 003721  7040          CMA
+2614 003722  7420          SNL
+2615 003723  7440          SZA
+2616 003724  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2617                                       /LINK SHOULD EQUAL ZERO
+2618               
+2619               
+2620               /GROUP 1 OPERATE TEST 80
+2621 003725  7300          CLA CLL
+2622 003726  1113          TAD K7700               /TEST PATTERN
+2623 003727  7041          CIA             /AC EQUALS 0100
+2624 003730  1061          TAD K7677
+2625 003731  7040          CMA
+2626 003732  7420          SNL
+2627 003733  7440          SZA
+2628 003734  7402          HLT             /CIA FAILED A SHOULD EQUAL 0000
+2629                                       /LINK SHOULD EQUAL ZERO
+2630               /GROUP 1 OPERATE TEST 81
+2631 003735  7300          CLA CLL
+2632 003736  1075          TAD K7600               /TEST PATTERN
+2633 003737  7041          CIA             /AC EQUALS 0200
+2634 003740  1062          TAD K7577
+2635 003741  7040          CMA
+2636 003742  7420          SNL
+2637 003743  7440          SZA
+2638 003744  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2639                                       /LINK SHOULD EQUAL ZERO
+2640               /GROUP 1 OPERATE TEST 82
+2641 003745  7300          CLA CLL
+2642 003746  1074          TAD K7400               /TEST PATTERN
+2643 003747  7041          CIA             /AC EQUALS 0400
+2644 003750  1063          TAD K7377
+2645 003751  7040          CMA
+2646 003752  7420          SNL
+2647 003753  7440          SZA
+2648 003754  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2649                                       /LINK SHOULD EQUAL ZERO
+2650               
+2651               
+2652               /GROUP 1 OPERATE TEST 83
+2653 003755  7300          CLA CLL
+2654 003756  1073          TAD K7000               /TEST PATTERN
+2655 003757  7041          CIA             /AC EQUALS 1000
+2656 003760  1064          TAD K6777
+2657 003761  7040          CMA
+2658 003762  7420          SNL
+2659 003763  7440          SZA
+2660 003764  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2661                                       /LINK SHOULD EQUAL ZERO
+2662               /GROUP 1 OPERATE TEST 84
+2663 003765  7300          CLA CLL
+2664 003766  1072          TAD K6000               /TEST PATTERN
+2665 003767  7041          CIA             /AC EQUALS 2000
+2666 003770  1065          TAD K5777
+2667 003771  7040          CMA
+2668 003772  7420          SNL
+2669 003773  7440          SZA
+2670 003774  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2671                                       /LINK SHOULD EQUAL ZERO
+2672               /GROUP 1 OPERATE TEST 85
+2673 003775  7300          CLA CLL
+2674 003776  1050          TAD K4000               /TEST PATTERN
+2675 003777  7041          CIA             /AC EQUALS 4000
+2676 004000  1066          TAD K3777
+2677 004001  7040          CMA
+2678 004002  7420          SNL
+2679 004003  7440          SZA
+2680 004004  7402          HLT             /CIA FAILED AC SHOULD EQUUA 0000
+2681                                       /LINK SHOULD EQUALL ZERO
+2682               /GROUP 1 OPERATE TEST 86
+2683 004005  7300          CLA CLL
+2684 004006  1020          TAD K0000               /TEST PATTERN
+2685 004007  7041          CIA             /AC EQUALS 0000, LINK EQUALS A ONE
+2686 004010  7450          SNA
+2687 004011  7420          SNL
+2688 004012  7402          HLT             /CIA FAILED AC SHOULD EQUAL 0000
+2689                                       /LINK SHOULD EQUAL A ONE
+2690               
+2691               
+2692               /GROUP 1 OPERATE TEST 87
+2693 004013  7340          CLA CMA CLL     /AC=7777,L=0
+2694 004014  7311          CLA CLL IAC RAR /AC=0,L=1
+2695 004015  7430          SZL
+2696 004016  7440          SZA
+2697 004017  7402          HLT             /ERROR; LINC NOT SET OR
+2698                                       /AC NOT 0
+2699               
+2700               /GROUP 1 OPERATE TEST 88
+2701 004020  7360          CLA CMA CLL CML /AC=7777,L=1
+2702 004021  7305          CLA CLL IAC RAL /AC=2,L=0
+2703 004022  7430          SZL
+2704 004023  7402          HLT             /ERROR; LINC NOT 0
+2705 004024  7041          CMA IAC
+2706 004025  1022          TAD K0002
+2707 004026  7440          SZA
+2708 004027  7402          HLT             /ERROR AC NOT=2
+2709               
+2710               /GROUP 1 OPERATE TEST 89
+2711 004030  7320          CLA CLL CML     /AC=0,L=1
+2712 004031  7313          CLA CLL IAC RTR /AC=4000,L=0
+2713 004032  7430          SZL
+2714 004033  7402          HLT             /ERROR; LINC NOT 0
+2715 004034  7500          SMA
+2716 004035  7402          HLT             /ERROR; AC NOT 4000
+2717               
+2718               /GROUP 1 OPERATE TEST 90
+2719 004036  7360          CLA CMA CLL CML         /AC=7777,L=1
+2720 004037  7307          CLA CLL IAC RTL         /AC=4,LINC=0
+2721 004040  7430          SZL
+2722 004041  7402          HLT             /ERROR; LINC NOT 0
+2723 004042  7041          CMA IAC
+2724 004043  1024          TAD K0004
+2725 004044  7440          SZA
+2726 004045  7402          HLT             /ERROR; AC NOT 4
+2727               
+2728               /GROUP 1 OPERATE TEST 91
+2729 004046  7300          CLA CLL         /AC=0, L=0
+2730 004047  7331          CLA CLL CML IAC RAR     /AC=4000, L=1
+2731 004050  7520          SMA SNL
+2732 004051  7402          HLT             /ERROR; AC NOT 4000 OR
+2733                                       /LINC NOT 1
+2734               
+2735               
+2736               
+2737               /GROUP 1 OPERATE TEST 92
+2738 004052  7300          CLA CLL         /AC=0,L=0
+2739 004053  7345          CLA CMA CLL IAC RAL     /AC=0001,L=0
+2740 004054  7430          SZL
+2741 004055  7402          HLT             /LINC NOT=0
+2742 004056  7041          CMA IAC
+2743 004057  1021          TAD K0001
+2744 004060  7440          SZA
+2745 004061  7402          HLT             /AC NOT 0001
+2746               
+2747               /GROUP 1 OPERATE TEST 93
+2748 004062  7360          CLA CMA CLL CML         /AC=7777,L=1
+2749 004063  7373          CLA CMA CLL CML IAC RTR /AC=0,L=0
+2750 004064  7440          SZA
+2751 004065  7402          HLT             /ERROR;
+2752 004066  7430          SZL
+2753 004067  7402          HLT             /ERROR;
+2754               
+2755               /GROUP 1 OPERATE TEST 94
+2756 004070  7332          CLA CLL CML RTR         /L=0 AC=2000
+2757 004071  7006          RTL                     /L=1 AC=0000
+2758 004072  7430          SZL
+2759 004073  7440          SZA
+2760 004074  7402          HLT                     /CLA CLL CML RTR OR RTL FAILED
+2761               
+2762               /GROUP 1 OPERATE TEST 95
+2763 004075  7360          CLA CMA CLL CML
+2764 004076  7342          CLA CLL CMA BSW/AC=7777 LINK=0
+2765 004077  7040          CMA
+2766 004100  7420          SNL
+2767 004101  7440          SZA
+2768 004102  7402          HLT                     /7742 FAILED
+2769               
+2770               /GROUP 1 OPERATE TEST 96
+2771 004103  7360          CLA CMA CLL CML
+2772 004104  7303          CLA CLL IAC BSW /AC=0100 LINK=0
+2773 004105  1061          TAD     K7677   /AC=7777
+2774 004106  7040          CMA             /AC=0000
+2775 004107  7420          SNL
+2776 004110  7440          SZA
+2777 004111  7402          HLT             /7703 FAILED
+2778               
+2779               /GROUP 1 OPERATE TEST 97
+2780 004112  7360          CLA CMA CLL CML
+2781 004113  7343          CLA CLL CMA IAC BSW     /AC=0000 LINK=1
+2782 004114  7430          SZL
+2783 004115  7440          SZA
+2784 004116  7402          HLT             /7743 FAILED
+2785               
+2786               /GROUP 1 OPERATE TEST 98
+2787 004117  7360          CLA CMA CLL CML
+2788 004120  7363          CLA CLL CMA CML IAC BSW /AC=0000 LINK=0
+2789 004121  7420          SNL
+2790 004122  7440          SZA
+2791 004123  7402          HLT             /7763 FAILED
+2792               
+2793               /GROUP 1 OPERATE TEST 99
+2794 004124  7300          CLA CLL
+2795 004125  1043          TAD K1234
+2796 004126  7063          CMA CML IAC BSW         /AC=4465 LINK=1
+2797 004127  1047          TAD K3312
+2798 004130  7040          CMA
+2799 004131  7430          SZL
+2800 004132  7440          SZA
+2801 004133  7402          HLT             /7063 FAILED
+2802               
+2803               /GROUP 1 OPERATE TEST 100
+2804 004134  7332          CLA CLL CML RTR         /AC=2000 L=1
+2805 004135  7063          CMA CML IAC BSW         /AC=0060 L=1
+2806 004136  1051          TAD K7717
+2807 004137  7040          CMA
+2808 004140  7430          SZL
+2809 004141  7440          SZA
+2810 004142  7402          HLT             /7063 FAILED
+2811               
+2812               
+2813               
+2814               /GROUP 2 OPERATE TEST 1
+2815 004143  7240          CLA CMA         /AC=7777
+2816 004144  7700          CLA SMA         /TEST COMBINATION
+2817 004145  7402          HLT             /CLA SMA DID NOT SKIP
+2818                                       /AC SHOULD BE 0000
+2819 004146  7440          SZA
+2820 004147  7402          HLT             /CLA SMA DID BIT CLEAR AC
+2821                                       /AC SHOULD BE 0000
+2822               /GROUP 2 OPERATE TEST 2
+2823 004150  7240          CLA CMA         /AC=7777
+2824 004151  7640          CLA SZA         /TEST COMBINATION
+2825 004152  7440          SZA
+2826 004153  7402          HLT             /CLA SZA SKIPPED OR AC NOT
+2827                                       /CLEARED TO 0000
+2828               /GROUP 2 OPERATE TEST 3
+2829 004154  7240          CLA CMA         /AC=7777
+2830 004155  7540          SMA SZA         /TEST COMBINATION
+2831 004156  7402          HLT             /SMA SZA SHOULD HAVE SKIPPED
+2832                                       /AC SHOULD EQUAL 7777
+2833               /GROUP 2 OPERATE TEST 4
+2834 004157  7200          CLA             /AC=0000
+2835 004160  7540          SMA SZA         /TEST COMBINATION
+2836 004161  7402          HLT             /SMA SZA SHOULD HAVE SKIPPED
+2837                                       /AC SHOULD EQUAL 0000
+2838               /GROUP 2 OPERATE TEST 5
+2839 004162  7200          CLA
+2840 004163  1066          TAD K3777               /AC=3777
+2841 004164  7540          SMA SZA         /TEST COMBINATION
+2842 004165  7450          SNA
+2843 004166  7402          HLT             /SMA SZA SHOULD NOT HAVE SKIPPED
+2844                                       /AC SHOULD EQUAL 3777
+2845               
+2846               
+2847               /GROUP 2 OPERATE TEST 6
+2848 004167  7240          CLA CMA         /AC=7777
+2849 004170  7740          CLA SMA SZA     /TEST COMBINATION
+2850 004171  7402          HLT             /CLA SMA SZA SHOULD HAVE SKIPPED
+2851                                       /AC SHOULD BE 0000
+2852 004172  7440          SZA
+2853 004173  7402          HLT             /AC WAS NOT CLEARED
+2854                                       /AC SHOULD BE 0000
+2855               /GROUP 2 OPERATE TEST 7
+2856 004174  7200          CLA             /AC=0000
+2857 004175  7740          CLA SMA SZA     /TEST COMBINATION
+2858 004176  7402          HLT             /CLA SMA SZA SHOULD HAVE SKIPPED
+2859                                       /AC SHOULD BE 0000
+2860 004177  7440          SZA
+2861 004200  7402          HLT             /AC WAS NOT CLEARED
+2862                                       /AC SHOULD BE 0000
+2863               /GROUP 2 OPERATE TEST 8
+2864 004201  7200          CLA
+2865 004202  1066          TAD K3777               /AC=3777
+2866 004203  7740          CLA SMA SZA     /TEST COMBINATION
+2867 004204  7440          SZA
+2868 004205  7402          HLT             /SMA SZA DID NOT SKIP OR AC
+2869                                       /NOT CLEARED TO 0000
+2870               /GROUP 2 OPERATE TEST 9
+2871 004206  7300          CLL CLA         /LINK=0
+2872 004207  1070          TAD K5252               /AC=5252
+2873 004210  7620          CLA SNL         /TEST COMBINATION
+2874 004211  7440          SZA
+2875 004212  7402          HLT             /SNL SKIPPED OR AC NOT CLEARED
+2876                                       /AC AND LINK SHOULD EQUAL ZERO
+2877               
+2878               
+2879               
+2880               /GROUP 2 OPERATE TEST 10
+2881 004213  7320          CLA CLL CML
+2882 004214  1071          TAD K2525               /AC=2525 LINK=1
+2883 004215  7620          CLA SNL         /TEST COMBINATION
+2884 004216  7402          HLT             /SNL DID NOT SKIP
+2885                                       /LINK SHOULD EQUAL ONE
+2886 004217  7440          SZA
+2887 004220  7402          HLT             /CLA SNL DID NOT CLEAR AC
+2888                                       /AC SHOULD EQUAL ZERO
+2889               
+2890               /GROUP 2 OPERATE TEST 11
+2891 004221  7300          CLA CLL         /AC=0000  LINK=0
+2892 004222  7520          SMA SNL         /TEST COMBINATION
+2893 004223  7440          SZA
+2894 004224  7402          HLT             /SMA SNL SKIPPED, AC AND LINK
+2895                                       /SHOULD EQUAL ZERO
+2896               /GROUP 2 OPERATE TEST 12
+2897 004225  7320          CLA CLL CML     /AC=0000  LINK=1
+2898 004226  7520          SMA SNL         /TEST COMBINATION
+2899 004227  7402          HLT             /SMA SNL SHOULD HAVE SKIPPED, LINK = 1
+2900               /GROUP 2 OPERATE TEST 13
+2901 004230  7300          CLA CLL
+2902 004231  1050          TAD K4000               /AC=4000  LINK=0
+2903 004232  7520          SMA SNL         /TEST COMBINATION
+2904 004233  7402          HLT             /SMA SHOULD HAVE SKIPPED
+2905                                       /AC=4000
+2906               /GROUP 2 OPERATE TEST 14
+2907 004234  7320          CLA CLL CML
+2908 004235  1050          TAD K4000               /AC=4000  LINK=1
+2909 004236  7520          SMA SNL         /TEST COMBINATION
+2910 004237  7402          HLT             /SMA SNL SHOULD HAVE SKIPPED
+2911                                       /AC=4000  LINK=1
+2912               
+2913               
+2914               /GROUP 2 OPERATE TEST 15
+2915 004240  7300          CLA CLL         /AC=0000  LINK=0
+2916 004241  7720          CLA SMA SNL     /TEST COMBINATION
+2917 004242  7440          SZA
+2918 004243  7402          HLT             /SMA SNL SKIPPED, AC AND LINK
+2919                                       /SHOULD BE ZERO
+2920               /GROUP 2 OPERATE TEST 16
+2921 004244  7320          CLA CLL CML     /AC=0000  LINK=1
+2922 004245  7720          CLA SMA SNL     /TEST COMBINATION
+2923 004246  7402          HLT             /SNL SHOULD HAVE SKIPPED
+2924                                       /LINK=1
+2925 004247  7440          SZA
+2926 004250  7402          HLT             /CLA SMA SNL DID NOT CLEAR AC
+2927                                       /AC SHOULD EQUAL ZERO
+2928               /GROUP 2 OPERATE TEST 17
+2929 004251  7300          CLA CLL
+2930 004252  1050          TAD K4000               /AC=4000  LINK=0
+2931 004253  7720          CLA SMA SNL     /TEST COMBINATION
+2932 004254  7402          HLT             /SMA SHOULD HAVE SKIPPED
+2933                                       /AC SHOULD EQUAL 0000  LINK=0
+2934 004255  7440          SZA
+2935 004256  7402          HLT             /CLA SMA SNL DID NOT CLEAR AC
+2936                                       /AC SHOULD EQUAL 0000
+2937               /GROUP 2 OPERATE TEST 18
+2938 004257  7320          CLA CLL CML
+2939 004260  1050          TAD K4000               /AC=4000  LINK=1
+2940 004261  7720          CLA SMA SNL     /TEST COMBINATION
+2941 004262  7402          HLT             /CLA SMA SNL SHOULD HAVE SKIPPED
+2942                                       /AC SHOULD BE 0000  LINK=1
+2943 004263  7440          SZA
+2944 004264  7402          HLT             /CLA SMA SNL DID NOT CLEAR AC
+2945                                       /AC SHOULD BE 0000  LINK=1
+2946               /GROUP 2 OPERATE TEST 19
+2947 004265  7300          CLA CLL         /AC=0000 LINK=0
+2948 004266  7460          SZA SNL         /TEST COMBINATION
+2949 004267  7402          HLT             /SZA SNL DID NOT SKIP
+2950                                       /AC=0000
+2951               /GROUP 2 OPERATE TEST 20
+2952 004270  7320          CLL CLA CML     /AC=0000 LINK=1
+2953 004271  7460          SZA SNL         /TEST COMBINATION
+2954 004272  7402          HLT             /SZA SNL DID NOT SKIP
+2955                                       /AC=0000  LINK=1
+2956               
+2957               
+2958               /GROUP 2 OPERATE TEST 21
+2959 004273  7300          CLA CLL
+2960 004274  1040          TAD K0400               /AC=0400  LINK=0
+2961 004275  7460          SZA SNL         /TEST COMBINATION
+2962 004276  7450          SNA
+2963 004277  7402          HLT             /SZA SNL SKIPPED
+2964                                       /AC=0400  LINK=0
+2965               /GROUP 2 OPERATE TEST 22
+2966 004300  7320          CLA CLL CML
+2967 004301  1032          TAD K0040               /AC=0040  LINK=1
+2968 004302  7460          SZA SNL         /TEST COMBINATION
+2969 004303  7402          HLT             /SZA SNL SHOULD HAVE SKIPPED
+2970                                       /LINK=1
+2971               /GROUP 2 OPERATE TEST 23
+2972 004304  7300          CLA CLL         /AC=0000  LINK=0
+2973 004305  7660          CLA SZA SNL     /TEST COMBINATION
+2974 004306  7402          HLT             /CLA SZA SNL SHOULD HAVE SKIPPED
+2975                                       /AC AND LINK SHOULD EQUAL ZERO
+2976 004307  7440          SZA
+2977 004310  7402          HLT             /CLA SZA SNL DID NOT CLEAR AC
+2978                                       /AC SHOULD BE 0000
+2979               /GROUP 2 OPERATE TEST 24
+2980 004311  7320          CLA CLL CML     /AC=0000  LINK=1
+2981 004312  7660          CLA SZA SNL     /TEST COMBINATION
+2982 004313  7402          HLT             /CLA SZA SNL SHOULD HAVE SKIPPED
+2983                                       /AC=0000  LINK=1
+2984 004314  7440          SZA
+2985 004315  7402          HLT             /CLA SZA SNL DID NOT CLEAR AC
+2986                                       /AC SHOULD EQUAL 0000
+2987               /GROUP 2 OPERATE TEST 25
+2988 004316  7320          CLA CLL CML
+2989 004317  1036          TAD K0200               /AC=0200  LINK=1
+2990 004320  7660          CLA SZA SNL             /TEST COMBINATION
+2991 004321  7402          HLT             /CLA SZA SNL SHOULD HAVE SKIPPED
+2992                                       /LINK=1
+2993 004322  7440          SZA
+2994 004323  7402          HLT             /CLA SZA SNL DID NOT CLEAR AC
+2995                                       /AC SHOULD EQUAL 0000
+2996               /GROUP 2 OPERATE TEST 26
+2997 004324  7300          CLA CLL
+2998 004325  1045          TAD K2000               /AC=2000  LINK=0
+2999 004326  7660          CLA SZA SNL             /TEST COMBINATION
+3000 004327  7440          SZA
+3001 004330  7402          HLT             /CLA SZA SNL FAILED, AC AND
+3002                                       /LINK SHOULD EQUAL ZERO
+3003               
+3004               
+3005               /GROUP 2 OPERATE TEST 27
+3006 004331  7300          CLA CLL         /AC=0000  LINK=0
+3007 004332  7560          SMA SZA SNL     /TEST COMBINATION
+3008 004333  7402          HLT             /SMA SZA SNL SHOULD HAVE SKIPPED
+3009                                       /AC=0000  LINK=0
+3010               /GROUP 2 OPERATE TEST 28
+3011 004334  7320          CLA CLL CML
+3012 004335  1066          TAD K3777               /AC=3777  LINK=1
+3013 004336  7560          SMA SZA SNL     /TEST COMBINATION
+3014 004337  7402          HLT             /SMA SZA SNL SHOULD HAVE SKIPPED
+3015                                       /AC=0000  LINK=1
+3016               /GROUP 2 OPERATE TEST 29
+3017 004340  7300          CLA CLL
+3018 004341  1050          TAD K4000               /AC=4000  LINK=0
+3019 004342  7560          SMA SZA SNL     /TEST COMBINATION
+3020 004343  7402          HLT             /SMA SZA SNL SHOULD HAVE SKIPPED
+3021                                       /AC=4000  LINK=0
+3022               /GROUP 2 OPERATE TEST 30
+3023 004344  7300          CLA CLL
+3024 004345  1066          TAD K3777               /AC=3777  LINK=0
+3025 004346  7560          SMA SZA SNL     /TEST COMBINATION
+3026 004347  7450          SNA
+3027 004350  7402          HLT             /SMA SZA SNL SHOULD NOT HAVE
+3028                                       /SKIPPED, AC=3777  LINK=0
+3029               
+3030               
+3031               /GROUP 2 OPERATE TEST 31
+3032 004351  7300          CLA CLL         /AC=0000  LINK=0
+3033 004352  7760          CLA SMA SZA SNL /TEST COMBINATION
+3034 004353  7402          HLT             /CLA SMA SZA SNL SHOULD HAVE SKIPPED
+3035                                       /AC SHOULD EQUAL ZERO
+3036 004354  7440          SZA
+3037 004355  7402          HLT             /AC NOT ZERO AFTER CLA SMA SZA SNL
+3038                                       /AC SHOULD BE 0000 LINK=0
+3039               /GROUP 2 OPERATE TEST 32
+3040 004356  7320          CLA CLL CML
+3041 004357  1066          TAD K3777               /AC=3777  LINK=1
+3042 004360  7760          CLA SMA SZA SNL /TEST COMBINATION
+3043 004361  7402          HLT             /CLA SMA SZA SNL DID NOT SKIP
+3044                                       /AC SHOULD BE 0000  LINK=1
+3045 004362  7440          SZA
+3046 004363  7402          HLT             /CLA SMA SZA SNL DID NOT CLEAR AC
+3047                                       /AC SHOULD EQUAL 0000  LINK=1
+3048               /GROUP 2 OPERATE TEST 33
+3049 004364  7300          CLA CLL
+3050 004365  1050          TAD K4000               /AC=4000  LINK=0
+3051 004366  7760          CLA SMA SZA SNL /TEST COMBINATION
+3052 004367  7402          HLT             /CLA SMA SZA SNL SHOULD HAVE SKIPPED
+3053                                       /AC SHOULD BE 0000. LINK=0
+3054 004370  7440          SZA
+3055 004371  7402          HLT             /CLA SMA SZA SNL DID NOT CLEAR AC
+3056                                       /AC SHOULD EQUAL 0000
+3057               /GROUP 2 OPERATE TEST 34
+3058 004372  7300          CLA CLL
+3059 004373  1066          TAD K3777               /AC=3777  LINK=0
+3060 004374  7760          CLA SMA SZA SNL /TEST COMBINATION
+3061 004375  7440          SZA
+3062 004376  7402          HLT             /CLA SMA SZA SNL FAILED, AC
+3063                                       /SHOULD BE 0000, LINK=0
+3064               /GROUP 2 OPERATE TEST 35
+3065 004377  7300          CLA CLL         /AC=0000  LINK=0
+3066 004400  7410          SKP             /TEST INSTRUCTION
+3067 004401  7402          HLT             /SKP FAILED
+3068                                       /AC AND LINK EQUAL ZERO
+3069               /GROUP 2 OPERATE TEST 36
+3070 004402  7320          CLA CLL CML     /AC=0000  LINK=1
+3071 004403  7410          SKP             /TEST INSTRUCTION
+3072 004404  7402          HLT             /SKP FAILED
+3073                                       /AC=0000  LINK=1
+3074               
+3075               
+3076               /GROUP 2 OPERATE TEST 37
+3077 004405  7320          CLA CLL CML
+3078 004406  1066          TAD K3777               /AC=3777  LINK=1
+3079 004407  7410          SKP             /TEST INSTRUCTION
+3080 004410  7402          HLT             /SKP FAILED
+3081                                       /AC=3777  LINK=1
+3082               /GROUP 2 OPERATE TEST 38
+3083 004411  7300          CLA CLL
+3084 004412  1066          TAD K3777               /AC=3777  LINK=0
+3085 004413  7410          SKP             /TEST INSTRUCTION
+3086 004414  7402          HLT             /SKP FAILED
+3087                                       /AC=3777  LINK=0
+3088               /GROUP 2 OPERATE TEST 39
+3089 004415  7200          CLA
+3090 004416  1066          TAD K3777               /AC=3777
+3091 004417  7710          CLA SPA         /TEST COMBINATION
+3092 004420  7402          HLT             /CLA SPA DID NOT SKIP, AC
+3093                                       /SHOULD BE ZERO
+3094 004421  7440          SZA
+3095 004422  7402          HLT             /CLA SPA DID NOT CLEAR AC
+3096                                       /AC SHOULD EQUAL ZERO
+3097               /GROUP 2 OPERATE TEST 40
+3098 004423  7200          CLA
+3099 004424  1050          TAD K4000               /AC=4000
+3100 004425  7710          CLA SPA         /TEST COMBINATION
+3101 004426  7440          SZA
+3102 004427  7402          HLT             /CLA SPA FAILED, AC SHOULD
+3103                                       /EQUAL ZERO
+3104               /GROUP 2 OPERATE TEST 41
+3105 004430  7240          CLA CMA         /AC=7777
+3106 004431  7650          CLA SNA         /TEST COMBINATION
+3107 004432  7402          HLT             /CLA SNA DID NOT SKIP
+3108                                       /AC SHOULD BE 0000
+3109               /GROUP 2 OPERATE TEST 42
+3110 004433  7200          CLA             /AC=0000
+3111 004434  7650          CLA SNA         /TEST COMBINATION
+3112 004435  7440          SZA
+3113 004436  7402          HLT             /CLA SNA FAILED
+3114                                       /AC SHOULD EQUAL 0000
+3115               
+3116               
+3117               /GROUP 2 OPERATE TEST 43
+3118 004437  7200          CLA             /AC=0000
+3119 004440  7550          SPA SNA         /TEST COMBINATION (AND)
+3120 004441  7440          SZA
+3121 004442  7402          HLT             /SPA SNA SKIPPED
+3122                                       /AC=0000
+3123               /GROUP 2 OPERATE TEST 44
+3124 004443  7200          CLA
+3125 004444  1066          TAD K3777               /AC=3777
+3126 004445  7550          SPA SNA         /TEST COMBINATION (AND)
+3127 004446  7402          HLT             /SPA SNA FAILED TO SKIP
+3128                                       /AC=3777
+3129               /GROUP 2 OPERATE TEST 45
+3130 004447  7200          CLA
+3131 004450  1050          TAD K4000               /AC=4000
+3132 004451  7550          SPA SNA         /TEST COMBINATION (AND)
+3133 004452  7450          SNA
+3134 004453  7402          HLT             /SPA SNA SKIPPED.
+3135                                       /AC=4000
+3136               /GROUP 2 OPERATE TEST 46
+3137 004454  7200          CLA             /AC=0000
+3138 004455  7750          CLA SPA SNA     /TEST COMBINATION (AND)
+3139 004456  7440          SZA
+3140 004457  7402          HLT             /CLA SPA SNA FAILED.
+3141                                       /AC SHOULD BE 0000
+3142               /GROUP 2 OPERATE TEST 47
+3143 004460  7200          CLA
+3144 004461  1066          TAD K3777               /AC=3777
+3145 004462  7750          CLA SPA SNA     /TEST COMBINATION (AND)
+3146 004463  7402          HLT             /CLA SPA SNA DID NOT SKIP
+3147                                       /AC SHOULD BE 0000
+3148 004464  7440          SZA
+3149 004465  7402          HLT             /CLA SPA SNA DID NOT CLEAR THE AC
+3150                                       /AC SHOULD EQUAL 0000
+3151               /GROUP 2 OPERATE TEST 48
+3152 004466  7200          CLA
+3153 004467  1050          TAD K4000               /AC=4000
+3154 004470  7750          CLA SPA SNA     /TEST COMBINATION (AND)
+3155 004471  7440          SZA
+3156 004472  7402          HLT             /CLA SPA SNA FAILED
+3157                                       /AC SHOULD EQUAL 0000
+3158               
+3159               /PAUSE
+3160               
+3161               
+3162               /INSTRUCTION TEST - TAPE 4
+3163               /GROUP 2 OPERATE TEST 49
+3164 004473  7300          CLA CLL
+3165 004474  1070          TAD K5252               /AC=5252  LINK=0
+3166 004475  7630          CLA SZL         /TEST COMBINATION
+3167 004476  7402          HLT             /CLA SZL DID NOT SKIP
+3168                                       /AC AND LINK SHOULD BE 0
+3169 004477  7440          SZA
+3170 004500  7402          HLT             /CLA SZL DID NOT CLEAR AC
+3171                                       /AC SHOULD BE 0000.  LINK=0
+3172               
+3173               /GROUP 2 OPERATE TEST 50
+3174 004501  7360          CLA CLL CML CMA /AC=7777  LINK=1
+3175 004502  7630          CLA SZL         /TEST COMBINATION (AND)
+3176 004503  7440          SZA
+3177 004504  7402          HLT             /CLA SZL FAILED, AC SHOULD
+3178                                       /BE 0000.  LINK=1
+3179               /GROUP 2 OPERATE TEST 51
+3180 004505  7300          CLA CLL
+3181 004506  1066          TAD K3777               /AC=3777  LINK=0
+3182 004507  7530          SPA SZL         /TEST COMBINATION (AND)
+3183 004510  7402          HLT             /SPA SZL DID NOT SKIP
+3184                                       /AC=3777  LINK=0
+3185               /GROUP 2 OPERATE TEST 52
+3186 004511  7320          CLA CLL CML
+3187 004512  1066          TAD K3777               /AC=3777  LINK=1
+3188 004513  7530          SPA SZL         /TEST COMBINATION (AND)
+3189 004514  7450          SNA
+3190 004515  7402          HLT             /SPA SZL SKIPPED
+3191                                       /AC=3777  LINK=1
+3192               /GROUP 2 OPERATE TEST 53
+3193 004516  7300          CLA CLL 
+3194 004517  1050          TAD K4000               /AC=4000  LINK-0
+3195 004520  7530          SPA SZL         /TEST COMBINATION (AND)
+3196 004521  7500          SMA
+3197 004522  7402          HLT             /SPA SZL SKIPPED
+3198                                       /AC=4000  LINK=0
+3199               /GROUP 2 OPERATE TEST 54
+3200 004523  7300          CLA CLL 
+3201 004524  1066          TAD K3777               /AC=3777  LINK=0
+3202 004525  7730          CLA SPA SZL     /TEST COMBINATION (AND)
+3203 004526  7402          HLT             /CLA SPA SZL SHOULD HAVE SKIPPED
+3204                                       /AC SHOULD BE 0000.  LINK=0
+3205 004527  7440          SZA
+3206 004530  7402          HLT             /CLA SPA SZA DID NOT CLEAR THE AC
+3207                                       /AC SHOULD BE 0000
+3208               
+3209               
+3210               /GROUP 2 OPERATE TEST 55
+3211 004531  7320          CLA CLL CML
+3212 004532  1066          TAD K3777               /AC=3777  LINK=1
+3213 004533  7730          CLA SPA SZL     /TEST COMBINATION (AND)
+3214 004534  7440          SZA
+3215 004535  7402          HLT             /CLA SPA SZL FAILED
+3216                                       /AC SHOULD EQUAL 0000  LINK=1
+3217               /GROUP 2 OPERATE TEST 56
+3218 004536  7300          CLA CLL
+3219 004537  1050          TAD K4000               /AC=4000  LINK=0
+3220 004540  7730          CLA SPA SZL     /TEST COMBINATION (AND)
+3221 004541  7440          SZA
+3222 004542  7402          HLT             /CLA SPA SZL FAILED
+3223                                       /AC SHOULD EQUAL 0000  LINK=0
+3224               /GROUP 2 OPERATE TEST 57
+3225 004543  7300          CLA CLL
+3226 004544  1050          TAD K4000               /AC=4000  LINK=0
+3227 004545  7470          SNA SZL         /TEST COMBINATION (AND)
+3228 004546  7402          HLT             /SNA SZL DID NOT SKIP
+3229                                       /AC = 4000  LINK=0
+3230               /GROUP 2 OPERATE TEST 58
+3231 004547  7320          CLA CLL CML
+3232 004550  1050          TAD K4000               /AC=4000  LINK=1
+3233 004551  7470          SNA SZL         /TEST COMBINATION (AND)
+3234 004552  7420          SNL
+3235 004553  7402          HLT             /SNA SZL SKIPPED
+3236                                       /AC-4000  LINK=1
+3237               /GROUP 2 OPERATE TEST 59
+3238 004554  7300          CLA CLL         /AC=0000  LINK=0
+3239 004555  7470          SNA SZL         /TEST COMBINATION (AND)
+3240 004556  7430          SZL
+3241 004557  7402          HLT             /SNA SZL SKIPPED
+3242                                       /AC=0000  LINK=0
+3243               /GROUP 2 OPERATE TEST 60
+3244 004560  7320          CLA CLL CML
+3245 004561  1050          TAD K4000               /AC=4000  LINK=1
+3246 004562  7670          CLA SNA SZL     /TEST COMBINATION (AND)
+3247 004563  7440          SZA
+3248 004564  7402          HLT             /CLA SNA SZL FAILED, AC SHOULD
+3249                                       /BE 0000,  LINK=1
+3250               
+3251               
+3252               /GROUP 2 OPERATE TEST 61
+3253 004565  7300          CLA CLL
+3254 004566  1050          TAD K4000               /AC=4000  LINK=0
+3255 004567  7670          CLA SNA SZL     /TEST COMBINATION (AND)
+3256 004570  7402          HLT             /CLA SNA SZL DID NOT SKIP
+3257                                       /AC SHOULD BE 0000. LINK=0
+3258 004571  7440          SZA
+3259 004572  7402          HLT             /CLA SNA SZL DID NOT CLEAR AC
+3260                                       /AC AND LINK SHOULD BE ZERO
+3261               /GROUP 2 OPERATE TEST 62
+3262 004573  7300          CLA CLL         /AC=0000  LINK=0
+3263 004574  7670          CLA SNA SZL     /TEST COMBINATION (AND)
+3264 004575  7440          SZA
+3265 004576  7402          HLT             /CLA SNA SZL FAILED, AC SHOULD
+3266                                       /BE 0000, LINK=0
+3267               /GROUP 2 OPERATE TEST 63
+3268 004577  7300          CLA CLL
+3269 004600  1066          TAD K3777               /AC-3777  LINK=0
+3270 004601  7570          SPA SNA SZL     /TEST COMBINATION (AND)
+3271 004602  7402          HLT             /SPA SNA SZL DID NOT SKIP
+3272                                       /AC=3777  LINK=0
+3273               /GROUP 2 OPERATE TEST 64
+3274 004603  7320          CLA CLL CML
+3275 004604  1066          TAD K3777               /AC-3777  LINK=1
+3276 004605  7570          SPA SNA SZL     /TEST COMBINATION (AND)
+3277 004606  7420          SNL
+3278 004607  7402          HLT             /SPA SNA SZL SKIPPED
+3279                                       /AC=3777  LINK=1
+3280               /GROUP 2 OPERATE TEST 65
+3281 004610  7300          CLA CLL         /AC=0000  LINK=0
+3282 004611  7570          SPA SNA SZL     /TEST COMBINATION (AND)
+3283 004612  7430          SZL
+3284 004613  7402          HLT             /SPA SNA SZL SKIPPED
+3285                                       /AC=0000  LINK=0
+3286               /GROUP 2 OPERATE TEST 66
+3287 004614  7300          CLA CLL
+3288 004615  1050          TAD K4000               /AC=4000  LINK=0
+3289 004616  7570          SPA SNA SZL     /TEST COMBINATION (AND)
+3290 004617  7430          SZL
+3291 004620  7402          HLT             /SPA SNA SZL SKIPPED
+3292                                       /AC=4000  LINK=0
+3293               
+3294               
+3295               /GROUP 2 OPERATE TEST 67
+3296 004621  7300          CLA CLL
+3297 004622  1066          TAD K3777               /AC=3777  LINK=0
+3298 004623  7770          CLA SPA SNA SZL /TEST COMBINATION (AND)
+3299 004624  7402          HLT             /CLA SPA SNA SZL DID NOT SKIP
+3300                                       /AC AND LINK SHOULD BE ZERO
+3301 004625  7440          SZA
+3302 004626  7402          HLT             /CLA SPA SNA SZL DID NOT CLEAR AC
+3303                                       /AC AND LINK SHOULD BE ZERO
+3304               
+3305               /GROUP 2 OPERATE TEST 68
+3306 004627  7320          CLA CLL CML
+3307 004630  1066          TAD K3777               /AC=3777  LINK=1
+3308 004631  7770          CLA SPA SNA SZL /TEST COMBINATION (AND)
+3309 004632  7440          SZA
+3310 004633  7402          HLT             /CLA SPA SNA SZL FAILED, AC SHOULD
+3311                                       /BE 0000, LINK SHOULD EQUAL ONE
+3312               /GROUP 2 OPERATE TEST 69
+3313 004634  7300          CLA CLL
+3314 004635  1050          TAD K4000               /AC=4000  LINK=0
+3315 004636  7770          CLA SPA SNA SZL /TEST COMBINATION (AND)
+3316 004637  7440          SZA
+3317 004640  7402          HLT             /CLA SPA SNA SZL FAILED, AC SHOULD
+3318                                       /BE 0000, LINK SHOULD EQUAL ZERO
+3319               /GROUP 2 OPERATE TEST 70
+3320 004641  7300          CLA CLL         /AC=0000  LINK=0
+3321 004642  7770          CLA SPA SNA SZL /TEST COMBINATION (AND)
+3322 004643  7440          SZA
+3323 004644  7402          HLT             /CLA SPA SNA SZL FAILED, AC AND
+3324                                       /LINK SHOULD EQUAL ZERO.
+3325               /GROUP 2 OPERATE TEST 71
+3326 004645  7200          CLA
+3327 004646  1070          TAD K5252               /AC=5252
+3328 004647  7604          CLA OSR         /TEST COMBINATION
+3329 004650  7040          CMA
+3330 004651  7440          SZA
+3331 004652  7402          HLT             /CLA OSR FAILED, AC AND
+3332                                       /AC SHOULD BE 0000.
+3333               
+3334               
+3335               /GROUP 2 OPERATE TEST 72
+3336 004653  7200          CLA
+3337 004654  1050          TAD K4000               /AC=4000
+3338 004655  7504          SMA OSR         /TEST COMBINATION
+3339 004656  7402          HLT             /SMA OSR FAILED TO SKIP
+3340                                       /AC SHOULD BE 7777
+3341 004657  7040          CMA
+3342 004660  7440          SZA
+3343 004661  7402          HLT             /SMA OSR FAILED
+3344                                       /AC SHOULD BE 0000
+3345               /GROUP 2 OPERATE TEST 73
+3346 004662  7200          CLA             /AC=0000
+3347 004663  7444          SZA OSR         /TEST COMBINATION
+3348 004664  7402          HLT             /SZA OSR FAILED TO SKIP
+3349                                       /AC SHOULD BE 0000
+3350 004665  7040          CMA
+3351 004666  7440          SZA
+3352 004667  7402          HLT             /SZA OSR FAILED.
+3353                                       /AC SHOULD BE 0000
+3354               /GROUP 2 OPERATE TEST 74
+3355 004670  7320          CLL CML CLA     /LINK=1
+3356 004671  7424          SNL OSR         /TEST COMBINATION
+3357 004672  7402          HLT             /SNL OSR FAILED TO SKIP
+3358                                       /AC SHOULD BE 7777
+3359 004673  7040          CMA
+3360 004674  7440          SZA
+3361 004675  7402          HLT             /SNL OSR FAILED.
+3362                                       /AC SHOULD BE 0000
+3363               /GROUP 2 OPERATE TEST 75
+3364 004676  7300          CLA CLL
+3365 004677  1066          TAD K3777               /AC=3777 LINK=0
+3366 004700  7764          CLA SMA SZA SNL OSR     /TEST COMBINATION
+3367 004701  7450          SNA
+3368 004702  7402          HLT             /CLA SMA SZA SNL OSR FAILED.
+3369                                       /AC SHOULD BE 7777.  LINK=0
+3370 004703  7040          CMA
+3371 004704  7440          SZA
+3372 004705  7402          HLT             /CLA SMA SZA SNL OSR FAILED
+3373                                       /AC SHOULD EQUAL 0000
+3374               /GROUP 2 OPERATE TEST 76
+3375 004706  7200          CLA             /AC=0000
+3376 004707  7414          SKP OSR         /TEST COMBINATION
+3377 004710  7402          HLT             /SKP OSR DID NOT SKIP
+3378                                       /AC SHOULD BE 7777
+3379 004711  7040          CMA
+3380 004712  7440          SZA
+3381 004713  7402          HLT             /SKP OSR FAILED
+3382                                       /AC SHOULD EQUAL ZERO
+3383               
+3384               
+3385               /GROUP 2 OPERATE TEST 77
+3386 004714  7200          CLA             /AC=0000
+3387 004715  7514          SPA OSR         /TEST COMBINATION
+3388 004716  7402          HLT             /SPA OSR DID NOT SKIP
+3389                                       /AC SHOULD EQUAL 7777
+3390 004717  7040          CMA
+3391 004720  7440          SZA
+3392 004721  7402          HLT             /SPA OSR FAILED.
+3393                                       /AC SHOULD BE 0000
+3394               /GROUP 2 OPERATE TEST 78
+3395 004722  7200          CLA
+3396 004723  1040          TAD K0400               /AC=0400
+3397 004724  7454          SNA OSR         /TEST COMBINATION
+3398 004725  7402          HLT             /SNA OSR DID NOT SKIP
+3399                                       /AC SHOULD BE 7777
+3400 004726  7040          CMA
+3401 004727  7440          SZA
+3402 004730  7402          HLT             /SNA OSR FAILED
+3403                                       /AC SHOULD BE 0000
+3404               /GROUP 2 OPERATE TEST 79
+3405 004731  7300          CLA CLL         /LINK=0  AC=0000
+3406 004732  7434          SZL OSR         /TEST COMBINATION
+3407 004733  7402          HLT             /SZL OSR DID NOT SKIP
+3408                                       /AC SHOULD BE 7777
+3409 004734  7040          CMA
+3410 004735  7440          SZA
+3411 004736  7402          HLT             /SZL OSR FAILED
+3412                                       /AC SHOULD BE 0000
+3413               /GROUP 2 OPERATE TEST 80
+3414 004737  7300          CLA CLL
+3415 004740  1066          TAD K3777               /AC=3777  LINK=0
+3416 004741  7774          CLA SPA SNA SZL OSR     /TEST COMBINATION (AND)
+3417 004742  7402          HLT             /ABOVE MESS DID NOT SKIP
+3418                                       /AC SHOULD BE 7777
+3419 004743  7040          CMA
+3420 004744  7440          SZA
+3421 004745  7402          HLT             /CLA SPA SNA SZL OSR FAILED
+3422                                       /AC SHOULD BE 0000
+3423               
+3424               
+3425               /MQ OPERATE TEST 1
+3426 004746  7360          CLA CMA CLL CML         /AC=7777 LINK=1
+3427 004747  7601          CLAE                    /AC=0000 LINK=1
+3428 004750  7430          SZL
+3429 004751  7440          SZA
+3430 004752  7402          HLT                     /7601 FAILED
+3431               
+3432               /MQ OPERATE TEST 2
+3433 004753  7360          CLA CMA CLL CML         /AC=7777 L=1
+3434 004754  7401          NOPE                    /AC=7777 L=1 (NOP)
+3435 004755  7040          CMA
+3436 004756  7430          SZL
+3437 004757  7440          SZA
+3438 004760  7402          HLT                     /7401 FAILED
+3439               
+3440               /MQ OPERATE TEST 3
+3441 004761  7360          CLA CMA CLL CML         /AC=7777 L=1
+3442 004762  7421          MQL                     /AC=0000 L=1
+3443 004763  7430          SZL
+3444 004764  7440          SZA
+3445 004765  7402          HLT                     /MQL DID NOT CLEAR AC
+3446               
+3447               /MQ OPERATE TEST 4
+3448 004766  7300          CLA CLL
+3449 004767  7421          MQL                     /MQ=0000, AC=0000
+3450 004770  7040          CMA                     /AC=7777
+3451 004771  7501          MQA                     /AC=7777, MQ=0000
+3452 004772  7040          CMA                     /AC=0000
+3453 004773  7420          SNL
+3454 004774  7440          SZA
+3455 004775  7402          HLT                     /MQ DID NOT EQUAL 0000 OR MQA FAILED
+3456               
+3457               /MQ OPERATE TEST 5
+3458 004776  7340          CLA CMA CLL
+3459 004777  7421          MQL                     /MQ=7777, AC=0000
+3460 005000  7501          MQA                     /AC=7777, MQ=7777
+3461 005001  7040          CMA
+3462 005002  7420          SNL
+3463 005003  7440          SZA
+3464 005004  7402          HLT                     /MQ DID NOT EQUAL 7777 OR MQA FAILED
+3465               
+3466               /MQ OPERATE TEST 6
+3467 005005  7601          CLAE                    /CLEAR AC
+3468 005006  1070          TAD K5252
+3469 005007  7421          MQL                     /MQ=5252, AC=0000
+3470 005010  1071          TAD K2525
+3471 005011  7501          MQA                     /AC=7777, MQ=5252
+3472 005012  7040          CMA
+3473 005013  7440          SZA
+3474 005014  7402          HLT                     /MQ DID NOT EQUAL 5252 OR MQA FAILED
+3475               
+3476               /MQ OPERATE TEST 7
+3477 005015  7360          CLA CMA CLL CML
+3478 005016  7421          MQL                     /MQ=7777, AC=0000
+3479 005017  7040          CMA                     /AC=7777
+3480 005020  7621          CAM                     /AC AND MQ,=0000
+3481 005021  7440          SZA
+3482 005022  7402          HLT                     /AC SHOULD EQUAL 0000
+3483 005023  7501          MQA                     /AC=0000, MQ=0000
+3484 005024  7430          SZL
+3485 005025  7440          SZA
+3486 005026  7402          HLT                     /CAM DID NOT CLEAR MQ
+3487                                               /OR LINK WAS CLEARED
+3488               
+3489               /MQ OPERATE TEST 8
+3490 005027  7601          CLAE                    /CLEAR AC
+3491 005030  7421          MQL                     /MQ=0000 AC=0000
+3492 005031  7040          CMA
+3493 005032  7701          ACL                     /AC=0000 MQ=0000
+3494 005033  7440          SZA
+3495 005034  7402          HLT                     /ACL FAILED
+3496 005035  7501          MQA                     /AC=0000, MQ=0000
+3497 005036  7440          SZA
+3498 005037  7402          HLT                     /MQ SHOULD EQUAL 0000
+3499               
+3500               /MQ OPERATE TEST 9
+3501 005040  7240          CLA CMA
+3502 005041  7421          MQL                     /MQ=7777 AC=0000
+3503 005042  7701          ACL                     /AC=7777 MQ=7777
+3504 005043  7040          CMA
+3505 005044  7440          SZA
+3506 005045  7402          HLT                     /ACL FAILED
+3507 005046  7501          MQA                     /AC=7777, MQ=7777
+3508 005047  7040          CMA
+3509 005050  7440          SZA
+3510 005051  7402          HLT                     /MQ SHOULD EQUAL 7777
+3511               
+3512               /MQ OPERATE TEST 10
+3513 005052  7601          CLAE                    /CLEAR AC
+3514 005053  1070          TAD K5252
+3515 005054  7421          MQL                     /MQ=5252 AC=0000
+3516 005055  1071          TAD K2525
+3517 005056  7701          ACL                     /AC=5252 MQ=5252
+3518 005057  1071          TAD K2525
+3519 005060  7040          CMA
+3520 005061  7440          SZA
+3521 005062  7402          HLT                     /ACL FAILED
+3522 005063  7501          MQA                     /AC=5252 MQ=5252
+3523 005064  1071          TAD K2525
+3524 005065  7040          CMA
+3525 005066  7440          SZA
+3526 005067  7402          HLT                     /MQ SHOULD EQUAL 5252
+3527               
+3528               /MQ OPERATE TEST 11
+3529 005070  7601          CLAE                    /CLEAR AC
+3530 005071  1071          TAD K2525
+3531 005072  7421          MQL                     /MQ=2525 AC=0000
+3532 005073  1070          TAD K5252
+3533 005074  7701          ACL                     /AC=2525 MQ=2525
+3534 005075  1070          TAD K5252
+3535 005076  7040          CMA
+3536 005077  7440          SZA
+3537 005100  7402          HLT                     /ACL FAILED
+3538 005101  7501          MQA                     /AC=2525 MQ=2525
+3539 005102  1070          TAD K5252
+3540 005103  7040          CMA
+3541 005104  7440          SZA
+3542 005105  7402          HLT                     /MQ SHOULD EQUAL 2525
+3543               
+3544               
+3545               
+3546               /MQ OPERATE TEST 12
+3547 005106  7621          CAM                     /MQ=0000 AC=0000
+3548 005107  7040          CMA                     /AC=7777
+3549 005110  7521          SWP                     /MQ=7777 AC=0000
+3550 005111  7440          SZA
+3551 005112  7402          HLT                     /AC SHOULD EQUAL 0000
+3552 005113  7701          ACL                     /AC=7777 MQ=7777
+3553 005114  7040          CMA
+3554 005115  7440          SZA
+3555 005116  7402          HLT                     /MQ SHOULD EQUAL 7777
+3556               
+3557               /MQ OPERATE TEST 13
+3558 005117  7621          CAM                     /MQ=0000 AC=0000
+3559 005120  7040          CMA                     /AC=7777
+3560 005121  7421          MQL                     /MQ=7777 AC=0000
+3561 005122  7521          SWP                     /MQ=0000 AC=7777
+3562 005123  7040          CMA
+3563 005124  7440          SZA
+3564 005125  7402          HLT
+3565 005126  7701          ACL                     /AC=0000 MQ=0000
+3566 005127  7440          SZA
+3567 005130  7402          HLT                     /MQ SHOULD EQUAL 0000
+3568               
+3569               /MQ OPERATE TEST 14
+3570 005131  7621          CAM                     /MQ=0000 AC=0000
+3571 005132  1070          TAD K5252
+3572 005133  7421          MQL                     /MQ=5252 AC=0000
+3573 005134  1071          TAD K2525
+3574 005135  7521          SWP                     /MQ=2525 AC=5252
+3575 005136  1071          TAD K2525
+3576 005137  7040          CMA
+3577 005140  7440          SZA
+3578 005141  7402          HLT                     /SWP FAILED
+3579 005142  7701          ACL                     /AC=2525 MQ=2525
+3580 005143  1070          TAD K5252
+3581 005144  7040          CMA
+3582 005145  7440          SZA
+3583 005146  7402          HLT                     /SWP FAILED MQ SHOULD EQUAL 2525
+3584               
+3585               /MQ OPERATE TEST 15
+3586 005147  7621          CAM                     /MQ=0000 AC=0000
+3587 005150  1071          TAD K2525
+3588 005151  7421          MQL                     /MQ=2525 AC=0000
+3589 005152  1070          TAD K5252               /AC=5252
+3590 005153  7521          SWP                     /MQ=5252 AC=2525
+3591 005154  1070          TAD K5252
+3592 005155  7040          CMA
+3593 005156  7440          SZA
+3594 005157  7402          HLT                     /SWP FAILED
+3595 005160  7701          ACL                     /AC=5252 MQ=5252
+3596 005161  1071          TAD K2525
+3597 005162  7040          CMA
+3598 005163  7440          SZA
+3599 005164  7402          HLT                     /SWP FAILED MQ SHOULD EQUAL 5252
+3600               
+3601               
+3602               /MQ OPERATE TEST 16
+3603 005165  7621          CAM                     /MQ=0000 AC=0000
+3604 005166  7040          CMA                     /AC=7777
+3605 005167  7721          CLAE SWP                /AC=0000 MQ=0000
+3606 005170  7440          SZA
+3607 005171  7402          HLT                     /CLAE SWP FAILED AC SHOULD EQUAL 0000
+3608 005172  7701          ACL                     /AC=0000 MQ=0000
+3609 005173  7440          SZA
+3610 005174  7402          HLT                     /CLAE SWP FAILED MQ SHOULD EQUAL 0000
+3611               
+3612               /MQ OPERATE TEST 17
+3613 005175  7621          CAM                     /MQ=0000 AC=0000
+3614 005176  7040          CMA
+3615 005177  7421          MQL                     /MQ=7777 AC=0000
+3616 005200  7721          CLAE SWP                /AC=7777 MQ=0000
+3617 005201  7040          CMA
+3618 005202  7440          SZA
+3619 005203  7402          HLT                     /CLAE SWP FAILED
+3620 005204  7701          ACL                     /AC=0000 MQ=0000
+3621 005205  7440          SZA
+3622 005206  7402          HLT                     /CLAE SWP FAILED MQ SHOULD EQUAL 0000
+3623               
+3624               /MQ OPERATE TEST 18
+3625 005207  7621          CAM                     /MQ=0000 AC=0000
+3626 005210  1071          TAD K2525
+3627 005211  7421          MQL                     /MQ=2525 AC=0000
+3628 005212  1070          TAD K5252               /AC=5252
+3629 005213  7721          CLAE SWP                /AC=2525 MQ=0000
+3630 005214  1070          TAD K5252
+3631 005215  7040          CMA
+3632 005216  7440          SZA
+3633 005217  7402          HLT                     /CLAE FAILED
+3634 005220  7701          ACL                     /AC=0000 MQ=0000
+3635 005221  7440          SZA
+3636 005222  7402          HLT                     /CLAE FAILED MQ SHOULD EQUAL 0000
+3637               
+3638               
+3639               /AND TEST 1
+3640 005223  7200          CLA
+3641 005224  0067          AND K7777
+3642 005225  7440          SZA
+3643 005226  7402          HLT             /AND FAILED AC SHOULD
+3644                                       /BE 0000
+3645               /AND TEST 2
+3646 005227  7240          CLA CMA
+3647 005230  0020          AND K0000
+3648 005231  7440          SZA
+3649 005232  7402          HLT             /AND FAILED
+3650                                       /AC SHOULD EQUAL 0000
+3651               /AND TEST 3
+3652 005233  7320          CLA CLL CML
+3653 005234  1067          TAD K7777               /AC=7777  LINK=1
+3654 005235  0067          AND K7777
+3655 005236  7040          CMA
+3656 005237  7430          SZL
+3657 005240  7440          SZA
+3658 005241  7402          HLT             /AND FAILED, AC SHOULD BE
+3659                                       /0000, LINK SHOULD EQUAL ONE
+3660               /AND TEST 4
+3661 005242  7300          CLA CLL
+3662 005243  1071          TAD K2525               /AC=2525  LINK=0
+3663 005244  0070          AND K5252
+3664 005245  7420          SNL
+3665 005246  7440          SZA
+3666 005247  7402          HLT             /AND FAILED, AC SHOULD BE
+3667                                       /0000, LINK SHOULD BE 0
+3668               /AND TEST 5
+3669 005250  7300          CLA CLL
+3670 005251  1070          TAD K5252               /AC=5252  LINK=0
+3671 005252  0071          AND K2525
+3672 005253  7420          SNL
+3673 005254  7440          SZA
+3674 005255  7402          HLT             /AND FAILED, AC SHOULD BE
+3675                                       /0000, LINK SHOULD BE 0
+3676               
+3677               
+3678               /AND TEST 6
+3679 005256  7300          CLA CLL
+3680 005257  1052          TAD K7776               /AC=7776  LINK=0
+3681 005260  0070          AND K5252               /TEST INSTRUCTION
+3682 005261  7041          CIA             /AC=2526
+3683 005262  1070          TAD K5252               /AC=0000  LINK=1
+3684 005263  7430          SZL
+3685 005264  7440          SZA
+3686 005265  7402          HLT             /AND FAILED, AC SHOULD BE
+3687                                       /0000, LINK SHOULD BE ONE
+3688               /AND TEST 7
+3689 005266  7300          CLA CLL
+3690 005267  1071          TAD K2525               /AC=2525  LINK=0
+3691 005270  0071          AND K2525               /TEST INSTRUCTION
+3692 005271  7041          CIA             /AC=5253
+3693 005272  1071          TAD K2525               /AC-0000  LINK = 1
+3694 005273  7430          SZL
+3695 005274  7440          SZA
+3696 005275  7402          HLT             /AND FAILED,  AC SHOULD BE
+3697                                       /0000, LINK SHOULD BE ONE.
+3698               
+3699               /CHECK FOR BELL
+3700 005276  7200          CLA
+3701 005277  1121          TAD BLCNT
+3702 005300  7001          IAC
+3703 005301  3121          DCA BLCNT
+3704 005302  1121          TAD BLCNT
+3705 005303  7640          SZA CLA
+3706 005304  5147          JMP START+3
+3707 005305  1122          TAD BLCON
+3708 005306  3121          DCA BLCNT
+3709               
+3710               /RING BELL
+3711 005307  1120          TAD BEL
+3712 005310  6046          TLS
+3713 005311  6041          TSF
+3714 005312  5311          JMP .-1
+3715 005313  6042          TCF
+3716 005314  5147          JMP START+3
+3717               
+3718               
+3719               $
+
+ACL     7701
+BEGIN   0200 unreferenced
+BEL     0120
+BLCNT   0121
+BLCON   0122
+BSW     7002
+CAM     7621
+CLAE    7601
+CLL1    0446
+CLL11   0452
+CMLT1   0456 unreferenced
+HALT    0006 unreferenced
+K0000   0020
+K0001   0021
+K0002   0022
+K0004   0024
+K0007   0102
+K0010   0026
+K0017   0104 unreferenced
+K0020   0030
+K0037   0105
+K0040   0032
+K0067   0103 unreferenced
+K0077   0106
+K0100   0034
+K0177   0107 unreferenced
+K0200   0036
+K0377   0110
+K0400   0040
+K0770   0116
+K0777   0111
+K1000   0042
+K1234   0043
+K14     0027
+K140    0035
+K1400   0044
+K1777   0112
+K2000   0045
+K2525   0071
+K2552   0115
+K3      0023
+K30     0031
+K300    0037
+K3000   0046
+K3312   0047
+K3777   0066
+K4000   0050
+K5225   0114
+K5252   0070
+K5777   0065
+K6      0025
+K60     0033
+K600    0041
+K6000   0072
+K6777   0064
+K7000   0073
+K7007   0117
+K7177   0060
+K7377   0063
+K7400   0074
+K7577   0062
+K7600   0075
+K7677   0061
+K7700   0113
+K7717   0051
+K7737   0057
+K7740   0076
+K7757   0056
+K7760   0077
+K7767   0055
+K7770   0100
+K7773   0054
+K7774   0101
+K7775   0053
+K7776   0052
+K7777   0067
+MQA     7501
+MQL     7421
+NOOP    0007 unreferenced
+NOPE    7401
+START   0144
+SWP     7521
