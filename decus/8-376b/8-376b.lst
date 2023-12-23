@@ -1,0 +1,177 @@
+   1               /USE WITH PALD—DEC-D8-ASAC-LA
+   2               /
+   3               /8K OVERLAY FOR PALD
+   4               /EXTERNAL SYMBOL TABLE STORED IN FIELD 1
+   5               /FROM PAGE 1 TO PAGE 20
+   6               M1=133
+   7               P7400=156
+   8               P7600=145
+   9               C200=112
+  10               BLKPTR=5327
+  11               BLKTAB=5330
+  12               LNKPTR=5331
+  13               SNUM=5332
+  14               SDECOD=5200
+  15               ERR1=77
+  16               P12=153
+  17               BUFTOP=5333
+  18               SADR=23
+  19               VADR=22
+  20               P37=142
+  21               P1740=5334
+  22               P3=151
+  23               /
+  24               /
+  25               /
+  26               /
+  27               /
+  28               *6200
+  29 006200  5205  CDSVRV, JMP .+5         /JUMP .SYM SEARCH
+  30               /
+  31               /REPLACE PALD CODING WITH THE FOLLOWING
+  32               /
+  33               *5221
+  34 005221  1727  SVIRTL, TAD I BLKPTR    /RECORD PREVIOUS BLOCK
+  35 005222  3331          DCA LNKPTR
+  36 005223  1332          TAD SNUM
+  37 005224  1156          TAD P7400
+  38 005225  0334          AND P1740
+  39 005226  7112          CLL RTR
+  40 005227  7012          RTR
+  41 005230  7010          RAR
+  42 005231  1330          TAD BLKTAB
+  43 005232  3327          DCA BLKPTR
+  44               /
+  45 005233  1332          TAD SNUM
+  46 005234  0142          AND P37
+  47 005235  7001          IAC
+  48 005236  7106          CLL RTL
+  49 005237  7041          CIA
+  50 005240  7001          IAC
+  51 005241  1333          TAD BUFTOP
+  52 005242  3023          DCA SADR
+  53 005243  1023          TAD SADR
+  54 005244  1151          TAD P3
+  55 005245  3022          DCA VADR
+  56               /
+  57 005246  1727          TAD I BLKPTR    /IS NEXT BLOCK ZERO?
+  58 005247  7650          SNA CLA
+  59 005250  5261          JMP SERROR      /YES, EXCEEDS SYMBOL TABLE
+  60 005251  1727          TAD I BLKPTR    /IS BLOCK SAME AS LAST?
+  61 005252  7041          CIA
+  62 005253  1331          TAD LNKPTR      /PREVIOUS BLOCK
+  63 005254  7650          SNA CLA
+  64 005255  5200          SDECOD          /YES
+  65 005256  1727          TAD I BLKPTR    /NO, READ IN BLOCK
+  66 005257  4264          JMS SREAD
+  67 005260  5600          JMP I SDECOD    /NOW RETURN
+  68               /
+  69 005261  1153  SERROR, TAD P12
+  70 005262  4477          JMS I ERR1
+  71 005263  5545          JMP I P7600
+  72               /
+  73               /TO READ OR WRITE 200 WORDS FROM FIELD 1
+  74               /BLOCK (IN FIELD 1) TO BE READ MUST BE IN AC
+  75               /IF SNUM IS ZERO, WRITE
+  76               /
+  77 005264  0000  SREAD,  0
+  78 005265  7041          CIA
+  79 005266  3331          DCA LNKPTR      /-BLOCK NUMBER
+  80               
+  81               /PAGE STARTING ADDRESSES
+  82 005267  1112          TAD C200
+  83 005270  2331          ISZ LNKPTR
+  84 005271  5267          JMP .-2
+  85 005272  3304          DCA FROM        /INDEX
+  86 005273  1303          TAD BUF
+  87 005274  3377          DCA TO          /INDEX
+  88               /READ OR WRITE?
+  89 005275  1145          TAD P7600
+  90 005276  3331          DCA LNKPTR      /SET TO READ (WRITE) 200 WORDS
+  91 005277  1332          TAD SNUM        /ZERO FOR WRITE
+  92 005300  7650          SNA CLA
+  93 005301  5366          JMP WRITE
+  94 005302  5355          JMP READ
+  95 005303  5400  BUF,    5400
+  96 005304  0000  FROM,   0               /INDEX
+  97               /
+  98               *5305
+  99 005305  0000  SWRITE, 0
+ 100 005306  3332          DCA SNUM        /SET TO WRITE
+ 101 005307  1727          TAD I BLKPTR
+ 102 005310  4264          JMS SREAD
+ 103 005311  1311          TAD .
+ 104 005312  3332          DCA SNUM        /RESET TO READ
+ 105 005313  5705          JMP I SWRITE
+ 106               *5335
+ 107 005335  0001  BLKTBS, 1
+ 108 005336  0002          2
+ 109 005337  0003          3
+ 110 005340  0004          4
+ 111 005341  0005          5
+ 112 005342  0006          6
+ 113 005343  0007          7
+ 114 005344  0010          10
+ 115 005345  0011          11
+ 116 005346  0012          12
+ 117 005347  0013          13
+ 118 005350  0014          14
+ 119 005351  0015          15
+ 120 005352  0016          16
+ 121 005353  0017          17
+ 122 005354  0000          0
+ 123               /
+ 124               *5355
+ 125 005355  6211  READ,   CDF+10
+ 126 005356  1704          TAD I FROM
+ 127 005357  2304          ISZ FROM
+ 128 005360  6201          CDF
+ 129 005361  3777          DCA I TO
+ 130 005362  2377          ISZ TO
+ 131 005363  2331          ISZ LNKPTR
+ 132 005364  5355          JMP READ
+ 133 005365  5664          JMP I SREAD
+ 134               /
+ 135 005366  1777  WRITE,  TAD I TO
+ 136 005367  2377          ISZ TO
+ 137 005370  6211          CDF+10
+ 138 005371  3704          DCA I FROM
+ 139 005372  2304          ISZ FROM
+ 140 005373  6201          CDF
+ 141 005374  2331          ISZ LNKPTR
+ 142 005375  5366          JMP WRITE
+ 143 005376  5664          JMP I SREAD
+ 144 005377  0000  TO,     0       /INDEX
+ 145               /
+ 146               /
+ 147               /
+ 148               $
+
+BLKPTR  5327
+BLKTAB  5330
+BLKTBS  5335 unreferenced
+BUF     5303
+BUFTOP  5333
+C200    0112
+CDSVRV  6200 unreferenced
+ERR1    0077
+FROM    5304
+LNKPTR  5331
+M1      0133 unreferenced
+P12     0153
+P1740   5334
+P3      0151
+P37     0142
+P7400   0156
+P7600   0145
+READ    5355
+SADR    0023
+SDECOD  5200
+SERROR  5261
+SNUM    5332
+SREAD   5264
+SVIRTL  5221 unreferenced
+SWRITE  5305
+TO      5377
+VADR    0022
+WRITE   5366
