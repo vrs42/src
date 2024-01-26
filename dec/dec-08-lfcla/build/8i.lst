@@ -1,0 +1,98 @@
+   1               /FOCAL-8 FAMILY OF 8 OVERLAY
+   2               /DEC-08-LFOCA-A-LA
+   3               
+   4               /OCTOBER 1971                           SM
+   5               
+   6               /COPYRIGHT 1971  DIGITAL EQUIPMENT CORPORATION
+   7               /       MAYNARD, MASSACHUSETTS 01754
+   8               
+   9               /PATCH TO FOCAL-8 FOR USE ON:
+  10               /       PDP-8/I
+  11               /       PDP-8/L
+  12               /       PDP-8/S
+  13               /       PDP-8
+  14               
+  15               /ASSEMBLY INSTRUCTIONS:
+  16               /.R PAL8 OR .R PAL10
+  17               /*8I,8I_8I
+  18               
+  19               
+  20               XINT=1160
+  21               P177=106
+  22               C200=123
+  23               EXIT=2646
+  24               SIN=2662
+  25               MBREAK=2602
+  26               RECOVR=2740
+  27               INBUF=34
+  28               ERROR2=4566
+  29               XI33=2666
+  30               XOUTL=2676
+  31               XDYS=1142
+  32               WTEST2=654
+  33               
+  34               
+  35               /PATCH TO WRITE COMMAND HANDLER
+  36               /TO INSERT 2 NULL CHARACTERS AFTER EACH
+  37               /CARRIAGE RETURN
+  38               
+  39               *652
+  40 000652  5653          JMP I .+1
+  41 000653  1142          XDYS
+  42 000654  1147          XDYS+5
+  43               *670
+  44 000670  5655          JMP I WTEST2+1
+  45               
+  46               /PATCH TO INTERRUPT PROCESOR
+  47               
+  48               *2627
+  49 002627  6036          KRB             /READ BUFFER AND CLEAR FLAG
+  50 002630  0106          AND P177        /IGNORE CHANNEL 8
+  51 002631  7450          SNA             /BLANK?
+  52 002632  5246          JMP EXIT        /YES
+  53 002633  1123          TAD C200
+  54 002634  3262          DCA SIN
+  55 002635  1262          TAD SIN
+  56 002636  1202          TAD MBREAK      /CTRL/C?
+  57 002637  7650          SNA CLA
+  58 002640  5740          JMP I RECOVR    /YES
+  59 002641  1034          TAD INBUF       /ROOM IN BUFFER?
+  60 002642  7640          SZA CLA
+  61 002643  4566          ERROR2          /NO-WAIT FOR OUTPUT BUFFER
+  62 002644  1262          TAD SIN
+  63 002645  3034          DCA INBUF
+  64               
+  65               *2673
+  66 002673  3034          DCA INBUF
+  67 002674  1276          TAD XOUTL
+  68 002675  5666          JMP I XI33      /--RETURN--
+  69               *2414
+  70 002414  0000  I33,    0               /NO INTERRUPT INPUT ROUTINE
+  71 002415  6031          KSF
+  72 002416  5215          JMP .-1
+  73 002417  6036          KRB
+  74 002420  0106          AND P177
+  75 002421  7450          SNA             /BLANK?
+  76 002422  5215          JMP .-5         /YES--FETCH ANOTHER
+  77 002423  1123          TAD C200
+  78 002424  5614          JMP I I33       /--RETURN--
+  79               
+  80               *2741
+  81 002741  7000          NOP
+  82               
+  83               $
+
+C200    0123
+ERROR2  4566
+EXIT    2646
+I33     2414
+INBUF   0034
+MBREAK  2602
+P177    0106
+RECOVR  2740
+SIN     2662
+WTEST2  0654
+XDYS    1142
+XI33    2666
+XINT    1160 unreferenced
+XOUTL   2676
