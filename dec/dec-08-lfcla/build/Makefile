@@ -25,7 +25,7 @@ quad8i.pal: quad8i.pa focal8.pa float.pa
 	cat $^ >$@ || (rm $@ && exit 1)
 
 clean:
-	rm -f *.bin *.lst
+	rm -f $(PAL) *.bin *.lst
 
 %.bin:	%.pal
 	pal -d -e $< || (rm $@ && exit 1)
