@@ -98,12 +98,13 @@ sub process {
       $partno =~ s:</td>::is;
       $partno =~ y/A-Z/a-z/;
       $partno =~ s/^l/L/;
+      $partno =~ s:</*div>::;
       close(INPUT) || die "$d/$d.htm";
     } else {
        $partno = $d;
        $desc = "No abstract found";
     }
-    warn "Part number '$d' doesn't match\n"
+    warn "Part number '$d' doesn't match $partno\n"
       unless $partno =~ /^$d\r*\n*/;
     $l = &link($f);
     print "<tr>\n<td><a href=$l target=_blank>$partno</a><td>$desc<td>\n";
