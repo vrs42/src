@@ -20,3 +20,13 @@ all:	$(GAMES)
 
 %.ba:	../%.ba
 	cp $< $@
+
+animal.de: ../animal.de
+	cp $< $@
+
+monply.b1: ../monply.b1
+	cp $< $@
+
+spacwr.in: ../spacwr.in
+	cp $< $@
+
