@@ -1,6 +1,6 @@
 BD	= $(wildcard *.bd)
-OK	= $(BD:.bd=.ok)
-BIN	= $(BD:.bd=.bin)
+OK	= $(BD:.bd=.ok) 12-ajaa.ok
+BIN	= $(OK:.ok=.bin)
 
 all:	$(OK) $(BIN) $(BIN:.bin=.chk) check
 
