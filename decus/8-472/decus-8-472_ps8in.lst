@@ -1,0 +1,290 @@
+   1               /       PS/8 INPUT ROUTINE
+   2               /
+   3               /***************************************************
+   4               /       USER EQUATES
+   5               /***************************************************
+   6               /
+   7                       INTPAG=0        /1 IF 2-PAGEHANDLER IS ALLOWED
+   8                       BUFIN=6200      /STARTADDRESS OF INPUTBUFFER
+   9                       BLOKIN=1        /NUMBER OF INPUT BLOCKS
+  10                       HANDIN=7000     /STARTADDRESS OF DEVICE HANDLER
+  11                       PSEXT=0123      /EXTENSION BY DEFAULT
+  12                                       / .AS=0123
+  13                                       / .PA=2001
+  14                                       / .LS=1423
+  15                                       / .DA=0401
+  16               /
+  17               /********************************************************
+  18               /       PROGRAM EQUATES
+  19               /******************************************************
+  20               /
+  21                       PSFLD=10        /FIELD OF PROGRAM IS 1
+  22                       BUFIFD=10       /FIELD OF INPUTBUFFER
+  23               /
+  24               /****************************************************
+  25               /
+  26                       FIELD 1
+  27               *7400                   /USER DEFINED STARTINGADDRESS
+  28               /
+  29               /
+  30               /**************************************************
+  31               /       MAIN FRAME OF PS8-INPUT ROUTINE
+  32               /**************************************************
+  33               /
+  34 017400  0000  PS8IN,  0               /ENTRYPOINT
+  35 017401  7600  PSIMON, 7600            /CLEAR AC
+  36 017402  6214          RDF             /GET FIELD OF USER PROGRAM
+  37 017403  1270          TAD PSICIF      /SET UP FOR EXIT
+  38 017404  3264          DCA PSIEXT+1
+  39               /
+  40 017405  5271  PSINST, JMP PSIJOB      /INITIALIZE, ONCE ONLY CODE
+  41                                       / AFTER INIT. CDF PSFLD
+  42                                       / IS STORED HERE
+  43               /
+  44               /***************************************************
+  45               /        GETCH, WRITTEN AS A SUBROUTINE,
+  46               /           NOW PART OF MAIN FRAME
+  47               /***************************************************
+  48               /       ROUTINE TO GET A CHARACTER FROM A STRING
+  49               /            PACKED IN A BUFFER
+  50               /       POINTERS ARE:
+  51               /           INPTR: ADDRESSPOINTER
+  52               /           INPKSW=0 : 8 LEAST SIGN. BITS OF [POINTER]
+  53               /                 =-2: 4 MOST SIGN.BITS OF [POINTER-1]
+  54               /                         AND [POINTER]
+  55               /
+  56               /       UPON EXIT FROM GETCH, INPTR AND INPKSW
+  57               /               POINT TO NEXT CHARACTER
+  58               /
+  59               /       WHEN BUFFER END IS DETECTED, A BUFFER
+  60               /          READ IS PERFORMED
+  61               /       GETCH TESTS  THE NUMBER OF BLOCKS TO BE READ
+  62               /       WHEN NO MORE BLOCKS ARE AVAILABLE
+  63               /       A JUMP IS PERFORMED TO INITIALIZE NEXT FILE
+  64               /*****************************************************
+  65               /
+  66 017406  1277          TAD INPKSW      /TEST PACKSWITCH
+  67 017407  7640          SZA CLA
+  68 017410  5225          JMP INPKON      /JUMP IF -2
+  69               /
+  70 017411  1676          TAD I INPTR     /GET INFO.WORD
+  71 017412  0227          AND PSI377      /KILL BIT 0-3
+  72 017413  3304          DCA INCHAR      /SAVE TEMP
+  73               /
+  74 017414  1276          TAD INPTR       /IS POINTER EVEN?
+  75 017415  7110          CLL RAR
+  76 017416  7620          SNL CLA         /SKIP IF NO
+  77 017417  5223          JMP .+4         /YES, JUMP
+  78               /
+  79 017420  7344          CLL CLA CMA RAL /SET PACKSWITCH TO -2
+  80 017421  3277          DCA INPKSW
+  81               /
+  82 017422  7410          SKP             /NO INCREMENT
+  83 017423  2276          ISZ INPTR       /INCREMENT POINTER
+  84 017424  5257          JMP GETEX       /EXIT
+  85               /
+  86 017425  3304  INPKON, DCA INCHAR      /MAKE TEMP.LOC ZERO
+  87 017426  1676          TAD I INPTR     /GET WORD
+  88 017427  0377  PSI377, AND PS7400      /KILL BIT 4-11
+  89 017430  1304          TAD INCHAR
+  90 017431  7112          CLL RTR
+  91 017432  7012          RTR
+  92 017433  3304          DCA INCHAR      /SAVE TEMP
+  93               /
+  94 017434  7240          CLA CMA
+  95 017435  1276          TAD INPTR       /DECREMENT POINTER
+  96 017436  3276          DCA INPTR
+  97               /
+  98 017437  2277          ISZ INPKSW      /INCR.PACKSWITCH
+  99 017440  5226          JMP INPKON+1    /AGAIN IF NONZERO
+ 100 017441  7325          CLA CLL CML IAC RAL
+ 101 017442  1276          TAD INPTR       /SET POINTER TO NEXT WORD
+ 102 017443  3276          DCA INPTR
+ 103               /
+ 104 017444  2275          ISZ PTR2        /INCREMENT WORDPOINTER
+ 105 017445  5257          JMP GETEX       /NOT ZERO, EXIT
+ 106 017446  1201          TAD PSIMON      /RESTORE POINTER
+ 107 017447  3275          DCA PTR2
+ 108               /
+ 109 017450  2300          ISZ PSINUM      /INCR.NEG.BLOCKCOUNT
+ 110 017451  7410          SKP             /NOT ZERO, MORE BLOCKS AVAILABLE
+ 111 017452  5305          JMP PSCTRZ      /INITIALIZE NEXT FILE
+ 112               /
+ 113 017453  1373          TAD INLIM       /TEST ON BUFFER END
+ 114 017454  1276          TAD INPTR
+ 115 017455  7700          SMA CLA         /SKIP IF BUFFER END
+ 116 017456  4345          JMS PSREAD      /READ NEXT PART OF INPUT FILE
+ 117               /
+ 118               /
+ 119               /****************************************************
+ 120               /       LAST PART OF MAINFRAME
+ 121               /****************************************************
+ 122               /       TEST ON CONTROL/Z
+ 123               /
+ 124 017457  1304  GETEX,  TAD INCHAR
+ 125 017460  1370          TAD PSI232      /WAS IT CTRL/Z?
+ 126 017461  7650          SNA CLA         /SKIP IF NO
+ 127 017462  5305          JMP PSCTRZ      /YES, GET NEW DEVICE OR FILE
+ 128 017463  1304  PSIEXT, TAD INCHAR      /CHAR IN AC
+ 129 017464  0000          0               /RESTORE FIELD
+ 130 017465  5600          JMP I PS8IN     /RETURN
+ 131               /
+ 132 017466  1367  PSIEND, TAD PS232       /END OF ALL FILES,GET CTRL/Z
+ 133 017467  5264          JMP PSIEXT+1    / AND RETURN
+ 134               /
+ 135 017470  6203  PSICIF, CIF CDF 0
+ 136               /
+ 137               /************************************************
+ 138               /       INITIALIZATION PART
+ 139               /************************************************
+ 140               /       ONCE ONLY CODING
+ 141               /           SOME LOCATIONS ARE OVERWRITTEN
+ 142               /           BY POINTERS AND SAVE LOCATIONS.
+ 143               /************************************************
+ 144               /
+ 145 017471  6201  PSIJOB, CDF 0
+ 146 017472  1771          TAD I PS7746    /GET JOB STATUS WORD
+ 147 017473  0345          AND PSREAD      /MASK OUT BIT 2
+ 148 017474  1352          TAD PSIRD       /SET BIT 2: NOT RESTARTABLE
+ 149 017475  3771  PTR2,   DCA I PS7746    /AND SAVE
+ 150               /
+ 151 017476  6211  INPTR,  CDF PSFLD       /SET TO PROGRAM FIELD
+ 152 017477  1276  INPKSW, TAD .-1         /GET PREVIOUS INSTRUCTION
+ 153 017500  3205  PSINUM, DCA PSINST      /AND STORE IN MAINPART
+ 154               /
+ 155 017501  4753  PSCD,   JMS I PSIUSR    /CALL COMMAND DECODER
+ 156 017502  0005          5               /FUNCTION CODE
+ 157 017503  0123          PSEXT           /EXTENSION BY DEFAULT
+ 158 017504  0000  INCHAR, 0
+ 159               /
+ 160               /
+ 161               /**********************************************
+ 162               /       ROUTINE TO LOAD DEVICE HANDLER
+ 163               /**********************************************
+ 164               /
+ 165 017505  2372  PSCTRZ, ISZ PSINDV      /SET TO NEXT INPUT FILE
+ 166 017506  1335          TAD HANDAD      /SET UP STARTING ADDR.
+ 167 017507  3315          DCA PSIHND      /  OF DEVICE HANDLER
+ 168 017510  1772          TAD I PSINDV    /GET DEVICE NUMBER
+ 169 017511  7450          SNA             /ZERO?
+ 170 017512  5266          JMP PSIEND      /YES, INPUT END
+ 171               /
+ 172 017513  4753          JMS I PSIUSR    /LOAD DEVICE HANDLER
+ 173 017514  0001          1               /FUNCTION CODE
+ 174 017515  0000  PSIHND, 0               /ENTRYPOINT
+ 175 017516  5337          JMP INER1       /ERROR RETURN
+ 176               /
+ 177 017517  1772          TAD I PSINDV    /GET NEGATIVE BLOCKCOUNT
+ 178 017520  0354          AND PSIRD+2     /KILL BIT 8-11
+ 179 017521  7450          SNA             /SKIP IF FILEORIENTED
+ 180 017522  7207          CLA IAC RTL     /NO FILE,CREATE A VERY LONG ONE
+ 181 017523  7112          RTR CLL
+ 182 017524  7012          RTR             /SHIFT 4 POS. TO RIGHT
+ 183 017525  7500          SMA             /SKIP IF NOT FILE-ORIENTED
+ 184 017526  1377          TAD PS7400      /INSERT BIT 0-3
+ 185 017527  3300          DCA PSINUM      /SAVE NUMBER OF BLOCKS
+ 186               /
+ 187 017530  2372          ISZ PSINDV      /SET POINTER TO START.BLOCKNR.
+ 188 017531  1772          TAD I PSINDV    /GET START.BLOCKNUMBER
+ 189 017532  3352          DCA PSIRD       /STORE AT READ ROUTINE
+ 190 017533  4345          JMS PSREAD      /READ NEXT PART IN BUFFER
+ 191 017534  5206          JMP PSINST+1    /RETURN TO MAINFRAME
+ 192               /
+ 193 017535  7000  HANDAD, HANDIN+INTPAG
+ 194               /
+ 195               /************************************************
+ 196               /       ERROR PART
+ 197               /************************************************
+ 198               /
+ 199 017536  7201  INER2,  CLA IAC         /READ ERROR
+ 200 017537  1302  INER1,  TAD PSCD+1      /DEVICE HANDLER ERROR
+ 201 017540  3303          DCA PSCD+2
+ 202 017541  2302          ISZ PSCD+1
+ 203 017542  2302          ISZ PSCD+1
+ 204 017543  5301          JMP PSCD        /GIVE ERROR MESSAGE
+ 205               /
+ 206               /
+ 207               /***********************************************
+ 208               /       ROUTINE TO READ FROM DEVICE
+ 209               /************************************************
+ 210               /
+ 211 017544  0001          BLOKIN
+ 212 017545  6777  PSREAD, 6777
+ 213 017546  6202          CIF 0           /DEV.HANDLER IN FIELD 0!
+ 214 017547  4715          JMS I PSIHND    /CALL DEVICE HANDLER
+ 215 017550  0210          BLOKIN^200+BUFIFD
+ 216 017551  6200  PSIBUF, BUFIN           /BUFFER ADDRESS
+ 217 017552  1000  PSIRD,  1000            /STARTING BLOCKADDRESS
+ 218 017553  7700  PSIUSR, SMA CLA         /ERROR RETURN, SKIP IF FATAL
+ 219 017554  7760          7760            /SKIP IF AC 0 AND CONSTANT
+ 220 017555  5336          JMP INER2       /FATAL ERROR, DO NOT RETURN
+ 221               /
+ 222 017556  1344          TAD PSREAD-1    /UPDATE STARTING BLOCKNUMBER
+ 223 017557  1352          TAD PSIRD
+ 224 017560  3352          DCA PSIRD
+ 225               /
+ 226 017561  1351          TAD PSIBUF      /RESET INPUT POINTER
+ 227 017562  3276          DCA INPTR
+ 228 017563  3277          DCA INPKSW      /RESET PACKSWITCH
+ 229 017564  1201          TAD PSIMON      /RESET BLOCKPOINTER
+ 230 017565  3275          DCA PTR2
+ 231               /
+ 232 017566  5745          JMP I PSREAD    /RETURN
+ 233               /
+ 234               /
+ 235               /***********************************************
+ 236               /       CONSTANTS AND VARIABLES
+ 237               /************************************************
+ 238               /
+ 239 017567  0232  PS232,  232
+ 240 017570  7546  PSI232, -232
+ 241 017571  7746  PS7746, 7746
+ 242 017572  7616  PSINDV, 7616
+ 243               /
+ 244 017573  1200  INLIM,  -BLOKINN^400-BUFIN
+ 245               /
+ 246               *PS8IN+177
+ 247 017577  7400  PS7400, 7400    /DON'T MOVE THIS CONSTANT!!
+ 248 017600  7400  S7400, 7400    /DON'T MOVE THIS CONSTANT!!
+ 249               $
+end of file     ^
+
+BLOKIN  0001
+BUFIFD  0010
+BUFIN   6200
+GETEX   7457
+HANDAD  7535
+HANDIN  7000
+INCHAR  7504
+INER1   7537
+INER2   7536
+INLIM   7573
+INPKON  7425
+INPKSW  7477
+INPTR   7476
+INTPAG  0000
+PS232   7567
+PS7400  7577
+PS7746  7571
+PS8IN   7400
+PSCD    7501
+PSCTRZ  7505
+PSEXT   0123
+PSFLD   0010
+PSI232  7570
+PSI377  7427
+PSIBUF  7551
+PSICIF  7470
+PSIEND  7466
+PSIEXT  7463
+PSIHND  7515
+PSIJOB  7471
+PSIMON  7401
+PSINDV  7572
+PSINST  7405
+PSINUM  7500
+PSIRD   7552
+PSIUSR  7553
+PSREAD  7545
+PTR2    7475
+S7400   7600 unreferenced

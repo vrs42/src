@@ -1,0 +1,239 @@
+   1               /       PS/8 OUTPUT ROUTINE
+   2               /
+   3               /*****************************************************
+   4               /       USER EQUATES
+   5               /*******************************************************
+   6               /
+   7                       TWOPAG=1        /1 IF 2-PAGEHANDLER IS ALLOWED
+   8                       BUFOUT=6600     /STARTADDRESS OF OUTPUTBUFFER
+   9                       BLKOUT=1        /NUMBER OF OUTPUT BLOCKS
+  10                       HANDL=7200      /STARTADDRESS OF DEVICE HANDLER
+  11               /
+  12               /********************************************************
+  13               /       PROGRAM EQUATES
+  14               /*******************************************************
+  15               /
+  16                       PFIELD=10       /FIELD OF PROGRAM IS 1
+  17                       FILNAM=7601     /ADDRESS OF OUTPUTFILE NAME
+  18                       BUFFLD=10       /FIELD OF BUFFER IS 1
+  19                       WRITE=4000      /CODE FOR WRITE
+  20               /
+  21               /*******************************************************
+  22               /
+  23                       FIELD 1
+  24               /
+  25               *7200                   /USER DEFINED STARTING ADDRESS
+  26               /
+  27               /
+  28               /**************************************************
+  29               /       MAIN-FRAME OF PS8OUT ROUTINE
+  30               /**************************************************
+  31               /
+  32 017200  0000  PS8OUT, 0               /ENTRYPOINT
+  33 017201  3371          DCA CHAR        /SAVE CHAR.
+  34 017202  6214          RDF             /GET FIELD OF USER PROGRAM
+  35 017203  1223          TAD PSOCIF      /SET UP FOR EXIT
+  36 017204  3225          DCA PSORET
+  37 017205  6211          CDF PFIELD
+  38 017206  5312  PSINIT, JMP PSOBEG      /INITIALIZE,ONCE ONLY CODING;
+  39                                       /AFTER INIT., JMS PACKB 
+  40                                       /IS STORED HERE
+  41 017207  4342          JMS PSWRIT      /BUFFER FULL, WRITE BUFFER
+  42 017210  1371          TAD CHAR
+  43 017211  1376          TAD PSM232      /WAS IT CTRL/Z?
+  44 017212  7640          SZA CLA
+  45 017213  5225          JMP PSORET      /NO, EXIT
+  46 017214  3371          DCA CHAR        /SET CHAR TO ZERO
+  47 017215  4230  PSPACK, JMS PACKB       /ZERO REST OF BUFFER
+  48 017216  7410          SKP             /BUFFER END
+  49 017217  5215          JMP .-2         /AGAIN
+  50 017220  4342          JMS PSWRIT      /WRITE BUFFER TO OUTPUTDEVICE
+  51 017221  7307          CLA CLL IAC RTL /+4 IN AC
+  52 017222  4275          JMS PSOUSR      /CLOSE FILE
+  53 017223  6203  PSOCIF, CIF CDF 0       /YES, GO TO MONITOR
+  54 017224  5666          JMP I PS7600    /  IN FIELD 0
+  55 017225  0000  PSORET, 0               /RESTORE DATA AND INSTR.FIELD
+  56 017226  5600          JMP I PS8OUT
+  57               /
+  58               /*************************************************
+  59               /       SUBROUTINE PACKB
+  60               /*************************************************
+  61               /       ROUTINE PACKS A STRING IN A BUFFER
+  62               /       POINTERS ARE OUPTR AND OUPKSW
+  63               /               OUPTR POINTS TO ADDRESS
+  64               /               OUPKSW=0:  LAST 8 BITS
+  65               /               OUPKSW=-2: FIRST 4 BITS OF 2 WORDS
+  66               /       AFTER STORING IN BUFFER OUPTR AND OUPKSW
+  67               /               POINT TO NEXT BUFFERADDRESS
+  68               /       NORMAL EXIT AT JMS +2
+  69               /       BUFFER END EXIT AT JMS +1
+  70               /*************************************************
+  71 017227  7400          7400
+  72 017230  0000  PACKB,  0
+  73 017231  1372          TAD OUPKSW      /TEST PACKSWITCH
+  74 017232  7440          SZA
+  75 017233  5247          JMP PACKON      /JUMP IF -2
+  76 017234  1371          TAD CHAR        /GET CHARACTER
+  77 017235  3773          DCA I OUPTR     /INSERT IN BUFFER
+  78 017236  1373          TAD OUPTR
+  79 017237  7110          CLL RAR         /IS POINTER ODD?
+  80 017240  7620          SNL CLA         /SKIP IF YES
+  81 017241  5245          JMP .+4
+  82 017242  7344          CLL CLA CMA RAL /SET PACKSWITCH TO -2
+  83 017243  3372          DCA OUPKSW
+  84 017244  7410          SKP             /NO INCREMENT
+  85 017245  2373          ISZ OUPTR       /INCREMENT POINTER IF EVEN
+  86 017246  5272          JMP PACKEX      /GO TO EXIT
+  87 017247  7240  PACKON, CLA CMA
+  88 017250  1373          TAD OUPTR       /DECREMENT POINTER
+  89 017251  3373          DCA OUPTR
+  90 017252  1371          TAD CHAR                /GET CHARACTER
+  91 017253  7006          RTL
+  92 017254  7006          RTL             /SHIFT 4 POS. TO LEFT
+  93 017255  3317          DCA PSOBL-1     /SAVE TEMP
+  94 017256  1317          TAD PSOBL-1
+  95 017257  0227          AND PACKB-1     /KILL BITS 4-11
+  96 017260  1773          TAD I OUPTR
+  97 017261  3773          DCA I OUPTR     /INSERT IN BUFFER
+  98 017262  2373          ISZ OUPTR       /INCREMENT ADDRESSPOINTER
+  99 017263  1317          TAD PSOBL-1
+ 100 017264  2372          ISZ OUPKSW      /INCREMENT PACKSWITCH
+ 101 017265  5253          JMP PACKON+4    /AGAIN IF PACKSWITCH NONZERO
+ 102 017266  7600  PS7600, 7600            /CLEAR AC
+ 103 017267  1374          TAD LIMIT       /TEST ON BUFFER END
+ 104 017270  1373          TAD OUPTR
+ 105 017271  7710          SPA CLA         /SKIP IF BUFFER END
+ 106 017272  2230  PACKEX, ISZ PACKB       /SET UP FOR NORMAL RETURN
+ 107 017273  5630          JMP I PACKB     /RETURN
+ 108               /
+ 109               /
+ 110               /*******************************************************
+ 111               /       ROUTINE TO CALL USR
+ 112               /*******************************************************
+ 113               /
+ 114 017274  7601          FILNAM
+ 115 017275  0000  PSOUSR, 0
+ 116 017276  3305          DCA PSCALL+1    /STORE FUNCTION CODE
+ 117 017277  1274          TAD PSOUSR-1    /GET ADDRESS OF FILENAME
+ 118 017300  3306          DCA PSCALL+2
+ 119 017301  1320          TAD PSOBL       /GET BLOCKCOUNT
+ 120 017302  3307          DCA PSCALL+3
+ 121 017303  1666          TAD I PS7600    /GET DEVICE NUMBER
+ 122 017304  4775  PSCALL, JMS I USR
+ 123 017305  0000          0               /FUNCTION CODE
+ 124 017306  0000          0               /POINTER TO FILENAME
+ 125 017307  0000          0               /BLOCKCOUNT
+ 126 017310  5337          JMP ERR2        /ERROR RETURN
+ 127 017311  5675          JMP I PSOUSR    /RETURN
+ 128               /
+ 129               /************************************************************
+ 130               /       INITIALIZATION ROUTINE
+ 131               /************************************************************
+ 132               /
+ 133 017312  1666  PSOBEG, TAD I PS7600    /GET DEVICE NUMBER
+ 134 017313  7450          SNA             /TEST IF OUTPUT DEVICE IS SPECIFIED
+ 135 017314  7325          CLA CLL CML IAC RAL     /NO, TTY BY DEFAULT
+ 136 017315  3666          DCA I PS7600
+ 137 017316  1666          TAD I PS7600
+ 138 017317  4775          JMS I USR       /CALL DEVICE HANDLER
+ 139 017320  0001  PSOBL,  1
+ 140 017321  7201  PSOHND, HANDL+TWOPAG    /ENTRYPOINT
+ 141 017322  7305          CLA CLL IAC RAL /ERROR 1 RETURN
+ 142 017323  7125          CLL CML IAC RAL /+3 IN AC OR 7 FOR ERR.MSG
+ 143 017324  4275          JMS PSOUSR      /ENTER OUTPUT FILE
+ 144 017325  1307          TAD PSCALL+3    /IS DEVICE FILE-STRUCTURED?
+ 145 017326  7450          SNA             /SKIP IF YES
+ 146 017327  7130          CLL CML RAR     /NO, SET BLOCKCOUNT TO MAX.VALUE
+ 147 017330  3307          DCA PSCALL+3    /STORE NEG.BLOCKCOUNT
+ 148 017331  1215          TAD PSPACK      /GET NEW INSTRUCTION
+ 149 017332  3206          DCA PSINIT      /STORE IN MAINPART
+ 150 017333  3320          DCA PSOBL       /INITIALIZE BLOCKCOUNT
+ 151 017334  5206          JMP PSINIT      /RETURN
+ 152               /
+ 153               /
+ 154               /********************************************************
+ 155               /       ERROR PART
+ 156               /********************************************************
+ 157               /
+ 158 017335  2274  ERR4,   ISZ PSOUSR-1    /WRITE ERROR
+ 159 017336  2274  ERR3,   ISZ PSOUSR-1    /FILE TOO LONG
+ 160 017337  2274  ERR2,   ISZ PSOUSR-1    /ENTER OR CLOSE ERROR
+ 161                                       /ERR1: GET DEV.HANDLER ERROR
+ 162 017340  5322          JMP PSOHND+1    /GIVE ERRORMESSAGE
+ 163               /
+ 164               /********************************************************
+ 165               /       ROUTINE TO WRITE BUFFER TO DEVICE
+ 166               /********************************************************
+ 167               /
+ 168 017341  0001          BLKOUT
+ 169 017342  0000  PSWRIT, 0
+ 170 017343  1306          TAD PSCALL+2    /GET STARTING BLOCKNUMBER
+ 171 017344  3356          DCA PSOWRI
+ 172 017345  1307          TAD PSCALL+3    /TEST ON FILE OVERFLOW
+ 173 017346  1341          TAD PSWRIT-1
+ 174 017347  7540          SMA SZA         /SKIP IF NO OVERFLOW
+ 175 017350  5336          JMP ERR3        /ERROR 3, AC CLEARED IN PSOHND+1
+ 176 017351  3307          DCA PSCALL+3
+ 177 017352  6202          CIF 0           /FIELD 0
+ 178 017353  4721          JMS I PSOHND    /CALL DEVICE HANDLER
+ 179 017354  4210          BLKOUT^200+BUFFLD+WRITE
+ 180 017355  6600  PSOBUF, BUFOUT          /BUFFER ADDRESS
+ 181 017356  7773  PSOWRI, -5              /STARTING BLOCKNUMBER
+ 182 017357  5335          JMP ERR4        /ERROR RETURN
+ 183 017360  1341          TAD PSWRIT-1
+ 184 017361  1306          TAD PSCALL+2
+ 185 017362  3306          DCA PSCALL+2    /UPDATE STARTING BLOCKNUMBER
+ 186 017363  1341          TAD PSWRIT-1
+ 187 017364  1320          TAD PSOBL
+ 188 017365  3320          DCA PSOBL       /UPDATE BLOCKCOUNT
+ 189 017366  1355          TAD PSOBUF      /RESET POINTER
+ 190 017367  3373          DCA OUPTR
+ 191 017370  5742          JMP I PSWRIT    /RETURN
+ 192               /
+ 193               /************************************************
+ 194               /       CONSTANTS AND VARIABLES
+ 195               /************************************************
+ 196               /
+ 197 017371  0000  CHAR,   0
+ 198 017372  0000  OUPKSW, 0
+ 199 017373  6600  OUPTR,  BUFOUT
+ 200 017374  0600  LIMIT,  -BLKOUT^400-BUFOUT
+ 201 017375  7700  USR,    7700
+ 202 017376  7546  PSM232, -232
+ 203               /
+ 204               $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+BLKOUT  0001
+BUFFLD  0010
+BUFOUT  6600
+CHAR    7371
+ERR2    7337
+ERR3    7336
+ERR4    7335
+FILNAM  7601
+HANDL   7200
+LIMIT   7374
+OUPKSW  7372
+OUPTR   7373
+PACKB   7230
+PACKEX  7272
+PACKON  7247
+PFIELD  0010
+PS7600  7266
+PS8OUT  7200
+PSCALL  7304
+PSINIT  7206
+PSM232  7376
+PSOBEG  7312
+PSOBL   7320
+PSOBUF  7355
+PSOCIF  7223
+PSOHND  7321
+PSORET  7225
+PSOUSR  7275
+PSOWRI  7356
+PSPACK  7215
+PSWRIT  7342
+TWOPAG  0001
+USR     7375
+WRITE   4000
