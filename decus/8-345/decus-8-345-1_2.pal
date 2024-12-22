@@ -1,0 +1,165 @@
+FIELD 00
+*56     /EDIT-PAL   T 16570     16 JUNE 1970
+        1630            /PERMANENT BEGINNING OF BUFFER
+*114
+        1630            /NEXT LOCATION IN BUFFER
+*1104
+        JMP I .+1       /INSERT IN OUTTAB RTNE
+        TEST7
+        SZA CLA
+*1141
+        JMP I .+1       /INSERT IN KEYBOARD RTNE
+        READIN
+*1013
+        7000            /OCTAL CONSTANTS
+        7700
+        7770
+*363
+        5367            /JMP .+4 FOR OCTAL RADIX
+*172
+ATYPNUM,TYPNUM          /ADDR LINE # TYPING SUBR
+APUNCL, PUNCL
+ALINST, LINST
+COUNT,  0
+*671
+        JMS I ATYPNUM   /TYPE LINE #
+*702
+        JMP I ALINST    /FROM LIST ROUTINE
+*1217
+        JMP I APUNCL    /FROM PUNCH ROUTINE
+*1240
+        JMP I .+1       /INSERT IN TSTOUT RTNE
+        TSTPAL
+        SMA CLA
+*1443
+SPACES, TAD Z ECHOSW    /SPACE READIN
+        SNA CLA         /TEST READ MODE
+        OSR             /BIT6 UP TO COMPRESS SPACES TO TABS
+        AND CON40       /MASK BIT 6
+        SNA CLA
+        JMP I SPCNO     /PACK - (MOR+4)
+        CMA             /SET 1 SPACE
+SP2,    DCA CNT
+        JMS I Z READ1   /(CHIN)
+        TAD M240
+        SNA CLA
+        JMP SP2         /IGNORE EXTRA SPACES.
+        TAD CHAR
+        DCA SAVE        /SAVE NON-SPACE
+        ISZ CNT
+        TAD M27         /TAB
+        TAD C240        /SPACE
+        DCA CHAR
+        JMS I Z PACK1   /(PACBUF)
+        TAD SAVE
+        JMP I SPCGO     /SORT - (MOR+1)
+CON40,  0040            /MASK FOR BIT 6
+TYPNUM, 0               /TYPE LINE NUMBERS ON LIST
+        ISZ Z 0117      /ARG0
+        LAS             /CHECK SR BIT 5 (TYPE IF SET)
+        RTL
+        AND CN4400      /ALSO TEST BIT 2
+        SNA SPA CLA     /TYPING LINE #?
+        JMP I TYPNUM    /NO
+        TAD MIN3        /YES, SET DIGIT COUNTER (-3)
+        DCA COUNT
+/
+/
+        TAD Z 0112      /GET LINE # (THSN)
+        RTL             /TAKE CARE OF LINK
+        RTL             /AND THOUSANDS DIGIT
+        JMS TYPO        /TYPE 3 DIGIT OCTAL #
+        JMP I TYPNUM
+TYPO,   0
+AGAIN,  RTL             /POSITION 3 BITS
+        RAL
+        DCA STONUM
+        TAD STONUM
+        AND CON7        /MASK 3 BITS
+        TAD Z 0016      /ASCII BASE 260
+        JMS I 132       /TYPE IT
+        TAD STONUM
+        ISZ COUNT       /THROUGH?
+        JMP AGAIN       /NO
+CLEAR,  CLA CLL         /YES
+        TAD 21          /C240 (ASCII SPACE)
+        JMS I 132       /TYPE IT
+        JMP I TYPO
+        SNA SPA CLA
+PUNCL,  TAD CLEAR       /ENTER FROM PUNCH ROUTINE
+        DCA TYPNUM+5    /OMIT LINE # FROM TAPE
+        JMP I 66
+LINST,  TAD .-4
+        DCA TYPNUM+5    /RESTORE LINE # OPTION
+        JMP I 20        /RETURN TO START
+STONUM, 0               /TEMP STORE LINE #
+CON7,   7               /MASK
+TSTPAL, LAS             /ENTER FROM TSTOUT RTNE
+        RAR             /TEST BIT 9 FOR PALIII
+        RTR
+        SNL             /WORKING PALIII?
+        JMP I TST10     /NO, GO TEST BIT 10
+        CLA             /YES, SET RETURN ADDR
+        TAD RETURN-2
+        DCA RETURN
+        TAD PALIII      /SET OUTPUT ADDR
+        DCA Z 132       /OUTDEV
+        CIF CDF 10      /PALIII IS IN FIELD 1
+        JMP I Z 20      /GO START PALIII
+GETCHR, 0               /OUTPUT SUBR TO SERVE PALIII
+        CIF CDF 10
+        JMP 1412        /TAKE CHAR TO PALIII
+        TAD .+1         /INSTR FOR 1ST RETURN FROM PALIII
+        JMP I GETCHR    /USED IN SUBSEQUENT RETURNS
+RETURN, 0               /PALIII JUMPS HERE FOR CHAR
+        DCA .-1         /SET ADDR FOR SUBSEQUENT RETURNS
+        JMP I .+1       /RETURN TO TSTOUT RTNE AFTER
+        1251            /STARTING PALIII
+TST10,  1242            /ADDR IN TSTOUT RTNE
+PALIII, GETCHR
+TEST7,  LAS             /TEST SR BIT 7 (OUTPUT)
+        AND .+3         /IF SET COMPRESS SPACES TO TABS
+        JMP I .+1       /RETURN TO OUTTAB RTNE
+        1106
+        0020            /MASK FOR BIT 7
+CN4400, 4400            /MASK
+MIN3,   -3
+*1600
+READIN, KSF
+        JMP .+3         /IF KBRD NOT READY, TEST SR
+        JMP I .+1       /RETURN TO KBRD RTNE
+        1143
+/
+/
+        LAS             /TEST FOR BIT 3 (REQ BUFF BALANCE)
+        AND CN400
+        SNA CLA         /BIT 3 SET?
+        JMP READIN      /NO, CONTINUE IN LOOP
+        TAD Z 14        /YES SET CNTR TO -4
+        DCA Z COUNT
+        TAD Z 114       /NEXT LOC IN BUFFER
+        CIA
+        TAD LIMIT
+        RAL             /SHOVE LINK
+        JMS I ATYPO     /TYPE OCTAL #
+        TAD Z 24        /CR
+        JMS I Z 132     /TYPE IT
+        TAD Z 25        /LF
+        JMS I Z 132
+        JMP READIN      /RETURN TO KBRD LOOP
+LIMIT,  7777            /ASSUMED BUFFER LIMIT
+CN400,  0400            /MASK FOR BIT 3
+ATYPO,  TYPO
+CHAR=0122
+CNT=0124
+C240=0021
+ECHOSW=0126
+M240=0045
+M27=0027
+PACK1=0077
+READ1=0052
+SAVE=0127
+SPCGO=0107
+SPCNO=0106
+$
+o
