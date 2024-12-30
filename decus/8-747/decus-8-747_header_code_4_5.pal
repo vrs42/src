@@ -1,0 +1,261 @@
+COPY TILL END COPY.
+/STAGE2 IN PAL - JRG 1974
+SHL=7413
+ASR=7415
+LSR=7417
+DAD=7443
+DST=7445
+DPCM=7575
+DPDZ=7665
+DLD=7663
+DPSZ=7451
+CAM=7621
+DPIC=7573
+NL0001=CLA CLL IAC
+NL0002=CLA CLL IAC RAL
+NL0003=CLA CLL CML IAC RAL
+NL0004=CLA CLL IAC RTL
+NL0006=CLA CLL CML IAC RTL
+NL7777=CLA CLL CMA
+NL7776=CLA CLL CMA RAL
+NL7775=CLA CLL CMA RTL
+FIXTAB
+/
+DECIMAL
+        FIELD 1
+*0
+FLG0,   0
+VAL0,   0
+FLG1,   1
+VAL1,   1
+FLG2,   2
+VAL2,   2
+FLG3,   3
+VAL3,   3
+FLG4,   0
+VAL4,   4
+FLG5,   0
+VAL5,   5
+FLG6,   0
+VAL6,   6
+FLG7,   0
+VAL7,   7
+FLG8,   0
+VAL8,   8
+FLG9,   0
+VAL9,   9
+FLGA,   0
+VALA,   0
+FLGB,   0
+VALB,   0
+FLGC,   0
+VALC,   0
+FLGD,   0
+VALD,   0
+FLGE,   0
+VALE,   0
+FLGF,   0
+VALF,   0
+FLGG,   0
+VALG,   0
+FLGH,   0
+VALH,   0
+FLGI,   0
+VALI,   0
+FLGJ,   0
+VALJ,   0
+FLGK,   0
+VALK,   0
+FLGL,   0
+VALL,   0
+FLGM,   0
+VALM,   0
+FLGN,   0
+VALN,   0
+FLGO,   0
+VALO,   0
+FLGP,   0
+VALP,   0
+FLGQ,   0
+VALQ,   0
+FLGR,   0
+VALR,   0
+FLGS,   0
+VALS,   0
+FLGT,   0
+VALT,   0
+FLGU,   0
+VALU,   0
+FLGV,   0
+VALV,   0
+FLGW,   0
+VALW,   0
+FLGX,   0
+VALX,   0
+FLGY,   0
+VALY,   0
+FLGZ,   0
+VALZ,   0
+T1,
+TO,     0
+        TAD I TO
+JAC,    DCA T1
+        JMP I T1
+/
+T2,     /MIGHT AS WELL USE IT AS A TEMP
+SPEQ,   0
+        SNA CLA
+        JMP .+3
+        ISZ SPEQ
+        JMP I SPEQ
+        TAD I SPEQ
+        DCA T1
+        JMP I T1
+/
+SPNE,   0
+        SZA CLA
+        JMP .+3
+        ISZ SPNE
+        JMP I SPNE
+        TAD I SPNE
+        DCA T1
+        JMP I T1
+/
+DPNE,   0
+        DPSZ
+        JMP .+3
+        ISZ DPNE
+        JMP I DPNE
+        CAM
+        TAD I DPNE
+        JMP JAC
+/
+DPEQ,   0
+        DPSZ
+        JMP .+3
+        TAD I DPEQ
+        JMP JAC
+        CAM
+        ISZ DPEQ
+        JMP I DPEQ
+/
+DPGE,   0
+        SMA CLA
+        JMP .+3
+        ISZ DPGE
+        JMP I DPGE
+        TAD I DPGE
+        DCA T1
+        JMP I T1
+/
+GTP,    0       /POINTER TO GET ROUTINE
+STP,    0       /POINTER TO STORAGE ROUTINE
+GCP,    0
+PCP,    0
+PAGE
+LINKV,  START   /LINK VECTOR MAKE FIELD INDEPENDANT
+        PTR2-FLG2       /THE DIFFERENCE IS USED IN ADDRESS CALCULATION
+        PTR9+1  /FIELD OF HIGHEST ADDRESS
+        LOC100  /FOR TRACE BACK
+        LOC93
+        GTP     /ADDRESS IN PAGE ZERO OF POINTERS
+*LINKV+7
+DPMUL,  0
+        CAM
+        TAD DPMUL
+        CIF 0   /LEAVE DF SAME FOR ARG PICKUP
+        JMS I LINKV
+        DCA T1
+        JMP I T1
+/
+DPDIV,  0
+        CAM
+        TAD DPDIV
+        CIF 0   /LEAVE DF SAME FOR ARG PICKUP
+        JMS I LINKV+1
+        DCA T1
+        JMP I T1
+/
+READ,   0
+        CDF CIF 0
+        JMS I LINKV+2
+        JMP I READ
+/
+WRITE,  0
+        CDF CIF 0
+        JMS I LINKV+3
+        JMP I WRITE
+/
+REWIND, 0
+        CDF CIF 0
+        JMS I LINKV+4
+        JMP I REWIND
+/
+MESS,   0
+        MQL
+        TAD MESS
+        CIF 0   /LEAVE DF SAME FOR ARG PICKUP
+        JMS I LINKV+5
+        DCA T1
+        SWP
+        JMP I T1
+/
+ENDIT,  CDF CIF 0
+        JMP I LINKV+6
+/
+TOBY,   0
+        CAM
+        TAD I TOBY
+        DCA T1
+        ISZ TOBY
+        TAD I TOBY
+        DCA ADP
+        TAD TOBY
+        IAC
+        DCA I ADP
+        JMP I T1
+ADP,    0
+/
+PTR0,   0;0
+PTR1,   1;0
+PTR2,   2;0
+PTR3,   3;0
+PTR4,   ZBLOCK 2
+PTR5,   10;0    /10
+PTR6,   ZBLOCK 2
+PTR7,   1;0     /
+PTR8,   0;2     /FIRST FLUB LOCATION
+PTR9,   4088;7  /LAST FLUB LOCATION
+PTRA,   ZBLOCK 2
+PTRB,   ZBLOCK 2
+PTRC,   ZBLOCK 2
+PTRD,   ZBLOCK 2
+PTRE,   ZBLOCK 2
+PTRF,   ZBLOCK 2
+PTRG,   ZBLOCK 2
+PTRH,   ZBLOCK 2
+PTRI,   ZBLOCK 2
+PTRJ,   ZBLOCK 2
+PTRK,   ZBLOCK 2
+PTRL,   ZBLOCK 2
+PTRM,   ZBLOCK 2
+PTRN,   ZBLOCK 2
+PTRO,   ZBLOCK 2
+PTRP,   ZBLOCK 2
+PTRQ,   ZBLOCK 2
+PTRR,   ZBLOCK 2
+PTRS,   ZBLOCK 2
+PTRT,   ZBLOCK 2
+PTRU,   ZBLOCK 2
+PTRV,   ZBLOCK 2
+PTRW,   ZBLOCK 2
+PTRX,   ZBLOCK 2
+PTRY,   ZBLOCK 2
+PTRZ,   ZBLOCK 2
+/
+START,
+END COPY
+DAC = 0.
+PTR 9 = 9 - 8.  COMPUTE FLUB MEMORY INTERMS OF HOST WORDS
+PTR 9 = 9 / A.  CHANGE TO FLUB VALUES
+PTR 8 = 0 + 0.  START STORAGE AT ZERO
