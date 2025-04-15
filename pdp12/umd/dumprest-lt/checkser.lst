@@ -1,0 +1,57 @@
+    1             / Serial Port Test
+    2             /
+    3             / This program will read characters from the serial port and write them
+    4             / to memory starting at address 0.  If you use the sendtape program with
+    5             / the files sertest.dat you should have the following pattern in memory
+    6             / Addr Value
+    7             /  0     1
+    8             /  1     2
+    9             /  2     3
+   10             /  3     4
+   11             /  4    10
+   12             /  5    20
+   13             /  6    40
+   14             /  7   100
+   15             / 10   200
+   16             / 11     0
+   17             / 12   377
+   18             / 13   376
+   19             / 14   375
+   20             / 16   367
+   21             / 17    16  (Address of characters received)
+   22             /
+   23             / To run start at 0200.
+   24             / Program will not halt
+   25             
+   26       0030          INAD=030                / Address of serial input, 30 for console
+   27       6030          KCF2=6000 INAD
+   28       6031          KSF2=6001 INAD
+   29       6032          KCC2=6002 INAD
+   30       6034          KRS2=6004 INAD
+   31       6035          KIE2=6005 INAD
+   32       6036          KRB2=6006 INAD
+   33             
+   34       0040          OUTAD=040               / Address of serial output, 40 for console
+   35       6040          TFL2=6000 OUTAD
+   36       6041          TSF2=6001 OUTAD
+   37       6042          TCF2=6002 OUTAD
+   38       6044          TPC2=6004 OUTAD
+   39       6045          TSK2=6005 OUTAD
+   40       6046          TLS2=6006 OUTAD
+   41             
+   42       0017          *17
+   43 00017 7777  BUFLOC, 7777            / Address to store next word received
+   44             
+   45       0200          *200
+   46 00200 7340  START,  CLA CLL CMA     / Init all our variables
+   47 00201 3017          DCA BUFLOC
+   48             
+   49 00202 6031  READ,   KSF2            / Have character waiting
+   50 00203 5202          JMP .-1         / No
+   51 00204 7200          CLA
+   52 00205 6036          KRB2            / Get character
+   53 00206 3417          DCA I BUFLOC    / Save through auto increment location
+   54 00207 5202          JMP READ
+   55                     $
+
+      No detected errors

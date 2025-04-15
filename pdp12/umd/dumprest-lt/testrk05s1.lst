@@ -1,0 +1,420 @@
+    1             / RK05 SURFACE SCAN
+    2             / Do a destructive write/read check on all sectors.  Header words should be 
+    3             / checked in all sectors except 0.  0 probably missed since won't be first 
+    4             / after seek.
+    5             / Four different patterns are used.
+    6             / To run start at 0200 with drive # in bits 9-11. 
+    7             / It will print drive being tested to console
+    8             / and then halt.  Set SR = 0 for continuous testing or 1 to halt after 1 pass.
+    9       6741          DSKP=6741
+   10       6742          DCLR=6742
+   11       6743          DLAG=6743
+   12       6744          DLCA=6744
+   13       6745          DRST=6745
+   14       6746          DLDC=6746
+   15             
+   16       0010          *10
+   17 00010 0000  FILLOC, 0
+   18       0020          *20
+   19 00020 0002  DRIVE,  2
+   20 00021 0200  K0200,  0200
+   21 00022 4000  K4000,  4000
+   22 00023 0000  TRACK,  0
+   23 00024 4537  MAXTRK, 4537
+   24 00025 0000  EXBIT,  0
+   25 00026 1000  REDDAT, 1000
+   26 00027 5000  WRTDAT, 5000
+   27 00030 3000  WRTLOC, 3000
+   28 00031 4000  RDLOC,  4000
+   29 00032 0017  K17,    17
+   30 00033 0006  K6,     6
+   31 00034 0007  K0007,  0007
+   32 00035 0215  K215,   0215
+   33 00036 0212  K212,   0212
+   34 00037 7774  M4,     -4
+   35 00040 0000  LOOP,   0
+   36 00041 0000  CURPAT, 0
+   37 00042 0000  PATCNT, 0
+   38 00043 0000  FILCNT, 0
+   39 00044 7400  FILLEN, -400
+   40 00045 0600  INCF,   INCTRK
+   41 00046 1133  CRLFF,  CRLF
+   42 00047 0077  K0077,  0077
+   43 00050 7700  K7700,  7700
+   44 00051 3740  K3740,  3740
+   45 00052 4100  K4100,  4100
+   46 00053 0240  K0240,  0240
+   47 00054 0377  K0377,  0377
+   48 00055 0001  K0001,  0001
+   49 00056 7757  SIDEM,  7757
+   50 00057 0020  SIDE1,  0020
+   51 00060 1000  PRTXTF, PRTXT
+   52 00061 1041  FROCTF, FROCT
+   53 00062 1073  PRADF,  PRAD
+   54 00063 0400  WRITEF, WRITE
+   55 00064 0065  PATLOC, PATS
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 1
+
+
+   56 00065 7777  PATS,   7777            / Test patterns to use
+   57 00066 0000          0000
+   58 00067 5252          5252
+   59 00070 2525          2525
+   60 00071 0004  NUMPAT, 4
+   61             
+   62       0200          *200
+   63 00200 7704          CLA CLL OSR
+   64 00201 7004          RAL
+   65 00202 0033          AND K6          / Clear out high bits such as 0200 start address
+   66 00203 3020          DCA DRIVE
+   67 00204 1020          TAD DRIVE
+   68 00205 7010          RAR
+   69 00206 4461          JMS I FROCTF
+   70 00207 4460          JMS I PRTXTF
+   71 00210 0664          DTXT
+   72 00211 4446          JMS I CRLFF
+   73 00212 7402          HLT
+   74 00213 7200          CLA
+   75 00214 3040          DCA LOOP
+   76 00215 7301  RESTRT, CLA CLL IAC
+   77 00216 6742          DCLR
+   78 00217 1020          TAD DRIVE
+   79 00220 6746          DLDC
+   80 00221 7326          CLA CLL CML RTL
+   81 00222 6742          DCLR
+   82 00223 6741          DSKP
+   83 00224 5223          JMP .-1
+   84 00225 1021          TAD K0200
+   85 00226 1020          TAD DRIVE
+   86 00227 6746          DLDC
+   87 00230 6741          DSKP
+   88 00231 5230          JMP .-1
+   89 00232 6745          DRST
+   90 00233 7041          CIA
+   91 00234 1022          TAD K4000
+   92 00235 7640          SZA CLA
+   93 00236 5311          JMP BADSTA
+   94 00237 7200          CLA
+   95 00240 1071          TAD NUMPAT
+   96 00241 7041          CMA IAC
+   97 00242 3042          DCA PATCNT
+   98 00243 1064          TAD PATLOC
+   99 00244 3041          DCA CURPAT
+  100 00245 7200  FILP,   CLA
+  101 00246 1044          TAD FILLEN
+  102 00247 3043          DCA FILCNT
+  103 00250 7040          CMA
+  104 00251 1030          TAD WRTLOC
+  105 00252 3010          DCA FILLOC
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 2
+
+
+  106 00253 1441  LP,     TAD I CURPAT
+  107 00254 3410          DCA I FILLOC
+  108 00255 2043          ISZ FILCNT
+  109 00256 5253          JMP LP
+  110 00257 7300          CLA CLL
+  111 00260 3023          DCA TRACK
+  112 00261 3025          DCA EXBIT
+  113 00262 4463  WRTPAT, JMS I WRITEF
+  114 00263 4445          JMS I INCF
+  115 00264 5262          JMP WRTPAT
+  116 00265 7300          CLA CLL
+  117 00266 3023          DCA TRACK
+  118 00267 3025          DCA EXBIT
+  119 00270 4312  RDPAT,  JMS READ
+  120 00271 4445          JMS I INCF
+  121 00272 5270          JMP RDPAT
+  122 00273 2041          ISZ CURPAT
+  123 00274 2042          ISZ PATCNT
+  124 00275 5245          JMP FILP
+  125 00276 4460  DONE,   JMS I PRTXTF
+  126 00277 0640          PSTXT
+  127 00300 1040          TAD LOOP
+  128 00301 4461          JMS I FROCTF
+  129 00302 4446          JMS I CRLFF
+  130 00303 2040          ISZ LOOP
+  131 00304 7000          NOP
+  132 00305 7604          CLA OSR
+  133 00306 7440          SZA
+  134 00307 7402          HLT
+  135 00310 5215          JMP RESTRT
+  136             
+  137 00311 7402  BADSTA, HLT
+  138             
+  139 00312 0000  READ,   0
+  140 00313 7301          CLA CLL IAC
+  141 00314 6742          DCLR
+  142 00315 1031          TAD RDLOC
+  143 00316 6744          DLCA
+  144 00317 1020          TAD DRIVE
+  145 00320 1026          TAD REDDAT
+  146 00321 1025          TAD EXBIT
+  147 00322 6746          DLDC
+  148 00323 1023          TAD TRACK
+  149 00324 0056          AND SIDEM
+  150 00325 1057          TAD SIDE1
+  151 00326 6743          DLAG
+  152 00327 1025          TAD EXBIT
+  153 00330 7010          RAR
+  154 00331 1023          TAD TRACK
+  155 00332 7010          RAR
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 3
+
+
+  156 00333 6741          DSKP
+  157 00334 5333          JMP .-1
+  158 00335 6745          DRST
+  159 00336 7041          CIA
+  160 00337 1022          TAD K4000
+  161 00340 7640          SZA CLA
+  162 00341 5343          JMP ERROR
+  163 00342 5712          JMP I READ
+  164 00343 4460  ERROR,  JMS I PRTXTF
+  165 00344 0625          RERRT
+  166 00345 4462          JMS I PRADF
+  167 00346 5712          JMP I READ
+  168             
+  169                     PAGE
+  170 00400 0000  WRITE,  0
+  171 00401 7301          CLA CLL IAC     / We have one waiting, write it
+  172 00402 6742          DCLR
+  173 00403 1030          TAD WRTLOC
+  174 00404 6744          DLCA
+  175 00405 1020          TAD DRIVE
+  176 00406 1027          TAD WRTDAT
+  177 00407 1025          TAD EXBIT
+  178 00410 6746          DLDC
+  179 00411 1023          TAD TRACK
+  180 00412 0056          AND SIDEM
+  181 00413 1057          TAD SIDE1
+  182 00414 6743          DLAG
+  183 00415 1025          TAD EXBIT
+  184 00416 7010          RAR
+  185 00417 1023          TAD TRACK
+  186 00420 7010          RAR
+  187 00421 6741          DSKP
+  188 00422 5221          JMP .-1
+  189 00423 6745          DRST
+  190 00424 7041          CIA
+  191 00425 1022          TAD K4000
+  192 00426 7640          SZA CLA
+  193 00427 5231          JMP ERROR2
+  194 00430 5600          JMP I WRITE
+  195 00431 4460  ERROR2, JMS I PRTXTF
+  196 00432 0632          WERRT
+  197 00433 4462          JMS I PRADF
+  198 00434 5600          JMP I WRITE
+  199             
+  200                     
+  201                     
+  202                     PAGE
+  203 00600 0000  INCTRK, 0               / Increment track and exbit value for next sector
+  204 00601 7300          CLA CLL         / AC non zero on return if done
+  205 00602 1025          TAD EXBIT
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 4
+
+
+  206 00603 7440          SZA
+  207 00604 5212          JMP CHKCYL
+  208 00605 2023  INC2,   ISZ TRACK
+  209 00606 5600          JMP I INCTRK
+  210 00607 2025          ISZ EXBIT
+  211 00610 5600          JMP I INCTRK
+  212 00611 7402          HLT
+  213 00612 7200  CHKCYL, CLA
+  214 00613 1023          TAD TRACK
+  215 00614 7041          CIA
+  216 00615 1024          TAD MAXTRK
+  217 00616 7450          SNA
+  218 00617 5222          JMP FIN
+  219 00620 7200          CLA
+  220 00621 5205          JMP INC2
+  221 00622 7201  FIN,    CLA IAC
+  222 00623 2200          ISZ INCTRK
+  223 00624 5600          JMP I INCTRK
+  224             
+  225 00625 2205  RERRT,  TEXT "READ ERR "
+      00626 0104
+      00627 4005
+      00630 2222
+      00631 4000
+  226 00632 2722  WERRT,  TEXT "WRITE ERR "
+      00633 1124
+      00634 0540
+      00635 0522
+      00636 2240
+      00637 0000
+  227 00640 2001  PSTXT,  TEXT "PASS "
+      00641 2323
+      00642 4000
+  228 00643 0331  CTXT,   TEXT "CYL "
+      00644 1440
+      00645 0000
+  229 00646 2305  STXT,   TEXT "SECTOR "
+      00647 0324
+      00650 1722
+      00651 4000
+  230 00652 2325  SUTXT,  TEXT "SURFACE "
+      00653 2206
+      00654 0103
+      00655 0540
+      00656 0000
+  231 00657 2001  PTXT,   TEXT "PATTERN "
+      00660 2424
+      00661 0522
+      00662 1640
+      00663 0000
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 5
+
+
+  232 00664 0422  DTXT,   TEXT "DRIVE WILL BE R/W TESTED, SET SR"
+      00665 1126
+      00666 0540
+      00667 2711
+      00670 1414
+      00671 4002
+      00672 0540
+      00673 2257
+      00674 2740
+      00675 2405
+      00676 2324
+      00677 0504
+      00700 5440
+      00701 2305
+      00702 2440
+      00703 2322
+      00704 0000
+  233                     
+  234                     PAGE
+  235 01000 0000  PRTXT,  0
+  236 01001 7300          CLA CLL
+  237 01002 1600          TAD I PRTXT
+  238 01003 2200          ISZ PRTXT
+  239 01004 3241          DCA FROCT
+  240 01005 1641          TAD I FROCT
+  241 01006 0050          AND K7700
+  242 01007 7450          SNA
+  243 01010 5234          JMP PREX
+  244 01011 7500          SMA
+  245 01012 7020          CML
+  246 01013 7001          IAC
+  247 01014 7012          RTR
+  248 01015 7012          RTR
+  249 01016 7012          RTR
+  250 01017 4264          JMS PRINT
+  251 01020 1641          TAD I FROCT
+  252 01021 0047          AND K0077
+  253 01022 7450          SNA
+  254 01023 5234          JMP PREX
+  255 01024 1051          TAD K3740
+  256 01025 7500          SMA
+  257 01026 1052          TAD K4100
+  258 01027 1053          TAD K0240
+  259 01030 4264          JMS PRINT
+  260 01031 2241          ISZ FROCT
+  261 01032 7300          CLA CLL
+  262 01033 5205          JMP PRTXT+5
+  263 01034 7300  PREX,   CLA CLL
+  264 01035 5600          JMP I PRTXT
+  265             
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 6
+
+
+  266 01036 0000  TOCT,   0
+  267 01037 0000  UPONE,  0
+  268 01040 0260  K0260,  0260
+  269 01041 0000  FROCT,  0               / DUMP OCTAL
+  270 01042 7006          RTL
+  271 01043 7006          RTL
+  272 01044 3237          DCA UPONE
+  273 01045 1037          TAD M4
+  274 01046 3236          DCA TOCT
+  275 01047 1237          TAD UPONE
+  276 01050 0034          AND K0007
+  277 01051 1240          TAD K0260
+  278 01052 4264          JMS PRINT
+  279 01053 1237          TAD UPONE
+  280 01054 7006          RTL
+  281 01055 7004          RAL
+  282 01056 3237          DCA UPONE
+  283 01057 2236          ISZ TOCT
+  284 01060 5247          JMP .-11
+  285 01061 1053          TAD K0240
+  286 01062 4264          JMS PRINT
+  287 01063 5641          JMP I FROCT
+  288             
+  289 01064 0000  PRINT,  0
+  290 01065 6046          TLS
+  291 01066 6041          TSF
+  292 01067 5266          JMP .-1
+  293 01070 6042          TCF
+  294 01071 7200          CLA
+  295 01072 5664          JMP I PRINT
+  296             
+  297 01073 0000  PRAD,   0
+  298 01074 7200          CLA
+  299 01075 6745          DRST
+  300 01076 4241          JMS FROCT
+  301 01077 4200          JMS PRTXT
+  302 01100 0643          CTXT
+  303 01101 1025          TAD EXBIT
+  304 01102 7010          RAR
+  305 01103 1023          TAD TRACK
+  306 01104 7010          RAR
+  307 01105 7012          RTR
+  308 01106 7012          RTR
+  309 01107 0054          AND K0377
+  310 01110 4241          JMS FROCT
+  311 01111 4200          JMS PRTXT
+  312 01112 0652          SUTXT
+  313 01113 1023          TAD TRACK
+  314 01114 7012          RTR
+  315 01115 7012          RTR
+
+
+
+      PATS,   7777            / Test patterns to use                      Page 7
+
+
+  316 01116 0055          AND K0001
+  317 01117 4241          JMS FROCT
+  318 01120 4200          JMS PRTXT
+  319 01121 0646          STXT
+  320 01122 1023          TAD TRACK
+  321 01123 0032          AND K17
+  322 01124 4241          JMS FROCT
+  323 01125 4200          JMS PRTXT
+  324 01126 0657          PTXT
+  325 01127 1430          TAD I WRTLOC
+  326 01130 4241          JMS FROCT
+  327 01131 4333          JMS CRLF
+  328 01132 5673          JMP I PRAD
+  329             
+  330 01133 0000  CRLF,   0
+  331 01134 1035          TAD K215
+  332 01135 4264          JMS PRINT
+  333 01136 1036          TAD K212
+  334 01137 4264          JMS PRINT
+  335 01140 5733          JMP I CRLF
+  336                     $
+
+      No detected errors

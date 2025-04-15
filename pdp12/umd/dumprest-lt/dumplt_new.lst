@@ -1,0 +1,753 @@
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 1
+
+
+    1              / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINCTAPE
+    2              / 13 JUL 2017  WRS
+    3              /
+    4              / 4K, NO INTERRUPTS, PRESERVES 7600-7777 FOR OS/8
+    5              /
+    6              / THIS PROGRAM READS A LINCTAPE AND SENDS IT OUT THE SERIAL PORT.
+    7              /
+    8              / NOTE: REQUIRES OPERATOR TO DETECT 'SHOE SHINING' WHEN TRYING TO
+    9              /       READ PAST END OF TAPE AND TOGGLE SR0.
+   10              /
+   11              / THE PC PROGRAM THAT RECEIVES THE DATA SHOULD BY STARTED BEFORE THE PROGRAM.
+   12              /
+   13              / TO RUN:
+   14              /       START PROGRAM ON PC TO RECEIVE THE DATA.
+   15              /       MOUNT A LINCTAPE:
+   16              /           UNIT 0
+   17              /           DOES NOT NEED WRITE ENABLE.
+   18              /           REMOTE.
+   19              /       SET SWITCH REGISTER TO 0000.
+   20              /       PDP8 MODE (NOT LINC).
+   21              /       I/O PRESET.
+   22              /       START 20 (OR START 200).
+   23              /       IF IT IMMEDIATELY HALTS AT 233, SWITCH REGISTER is NOT 0000.
+   24              /
+   25              /       MQ DISPLAYS THE BLOCK BEING READ.
+   26              /
+   27              / WHEN THE PROGRAM TRIES TO READ PAST THE END OF THE TAPE,
+   28              / IT WILL 'SHOESHINE':
+   29              /
+   30              /       OPERATOR MUST TOGGLE SR0 ON, THEN OFF TO FINISH THE DUMP/CAPTURE.
+   31              /
+   32              / NORMAL HALT/EXIT IS 0177,    AC DISPLAYS NUMBER OF BAD READS (RETRIES).
+   33              /                              PRESSING CONT WILL RESTART THE PROGRAM.
+   34              /
+   35              / THE PC PROGRAM WILL PRINT OUT THE BAD BLOCK NUMBER IF RETRIES WERE UNSUCESSFUL.
+   36              / 
+   37              / THE PROGRAM TRIES EACH BLOCK READ UP TO 4 TIMES IF READ ERROR OCCURS.
+   38              /
+   39              /
+   40              /
+   41              / FORMAT OF DATA SENT OUT SERIAL PORT:
+   42              /
+   43              /
+   44              / IT USES 3 DIFFENT FORMATS FOR SENDING DATA OUT THE SERIAL PORT:
+   45              /
+   46              /    1. BYTES           SENT AS ONE BYTE/CHARACTER
+   47              /
+   48              /    2. 12-BIT WORD     SENT AS TWO BYTES:
+   49              /                       
+   50              /       BYTE 1: LOWER 8 BITS (4-11) OF THE WORD
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 2
+
+
+   51              /       BYTE 2: LO NYBBLE IS THE UPPER 4 BITS (0-3)
+   52              /               HI NYBBLE IS 0.
+   53              /
+   54              /       I.E.  TO SEND A WORD A(0..11) AS 2 BYTES:
+   55              /                       HI NYBBLE         LO NYBBLE
+   56              /       BYTE 1: (MSB) A4  A5  A6  A7    A8  A9  A10 A11 (LSB)
+   57              /       BYTE 2: (MSB)  0   0   0   0    A0  A1  A2  A3  (LSB)
+   58              /
+   59              /    3. TWO 12-BIT WORDS SENT AS THREE BYTES:
+   60              /
+   61              /       BYTE 1: LOWER 8 BITS (4-11) OF THE FIRST WORD.
+   62              /       BYTE 2: LO NYBBLE IS THE UPPER 4 BITS (0-3)
+   63              /                       OF THE FIRST WORD.
+   64              /               HI NYBBLE IS THE LOWER 4 BITS (8-11) 
+   65              /                       OF THE SECOND WORD.
+   66              /       BYTE 3: UPPER 8 BITS (0-7) OF THE SECOND WORD.
+   67              /
+   68              /       I.E.  TO SEND A WORDS A(0..11) and B(0..11) AS 3 BYTES:
+   69              /                                               HI NYBBLE         LO NYBBLE
+   70              /       BYTE 1: (MSB) A4  A5  A6  A7    A8  A9  A10 A11 (LSB)
+   71              /       BYTE 2: (MSB) B8  B9  B10 B11   A0  A1  A2  A3  (LSB)
+   72              /       BYTE 3: (MSB) B0  B1  B2  B3    B4  B5  B6  B7  (LSB)
+   73              /
+   74              /       NOTE: PACKS THEM LSBS FIRST.
+   75              /
+   76              / THE FORMAT OF THE LINCTAPE DATA SENT IS:
+   77              /       FOR EACH LINCTAPE BLOCK (IN SQUENTIAL ORDER, STARTING WITH 0)
+   78              /               STATUS BYTE             SENT AS 1 BYTE.
+   79              /                   0XFF (0377) IF NO READ ERROR.
+   80              /                   0XFD (0375) IF ERROR READING BLOCK.
+   81              /               BLOCK NUMBER (12-BIT)   SENT AS 2 BYTES.
+   82              /               BLOCK SIZE   (12-BIT)   SENT AS 2 BYTES.
+   83              /               BLOCK DATA   (12-BIT)   EACH 2 WORDS SENT AS 3 BYTES.
+   84              /                  If BLOCK SIZE is ODD (129), THE LAST WORD IS SENT AS 2 BYTES.
+   85              /       AFTER THE LAST BLOCK:
+   86              /               STATUS BYTE/END OF DATA SENT AS 1 BYTES.
+   87              /                   0xFE (0376) END OF DATA, CHECKSUM FOLLOWS.
+   88              /               CHECKSUM (12-BIT)  SUM OF ALL BLOCK DATA SENT, SENT AS 2 BYTES.
+   89              /
+   90              
+   91                     /INAD=030                / DEVCODE * 10 OF SERIAL INPUT,  30 IS DEV 03 CONSOLE.
+   92        0400          INAD=400                / DEVCODE * 10 OF SERIAL INPUT, 400 FOR DEV 40 KL8E.
+   93        6401          KSF2=6001 INAD
+   94        6406          KRB2=6006 INAD
+   95              
+   96                     /OUTAD=040               / DEVCODE * 10 OF SERIAL OUTPUT,  40 FOR DEV 04 CONSOLE.
+   97        0410          OUTAD=410               / DEVCODE * 10 OF SERIAL OUTPUT, 410 FOR DEV 41 KL8E. 
+   98        6411          TSF2=6001 OUTAD
+   99        6416          TLS2=6006 OUTAD
+  100              
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 3
+
+
+  101              
+  102              / PDP-12 OPCODES NEEDED
+  103              
+  104        6141          LINC=   6141    /PDP-8: SWITCH TO LINC MODE
+  105        0002          PDP=    0002    /LINC:  SWITCH TO PDP-8 MODE
+  106        0001          AXO=    0001    /LINC:  AC -> EXTENDED TAPE OPERATIONS BUFFER
+  107        0023          TMA=    0023    /LINC:  AC -> TAPE MEMORY ADDRESS SETUP REGISTER 
+  108        0003          TAC=    0003    /LINC:  TAPE ACCUMULATOR BUFFER -> AC
+  109        0416          STD=    0416    /LINC:  SKIP IF TAPE DONE
+  110        0017          COM=    0017    /LINC:  COMPLEMENT AC
+  111        0004          ESF=    0004    /LINC:  AC(2-6) -> SPECIAL FUNCTION REGISTER
+  112                                      /       BIT 2:  1=INSTRUCTION TRAP
+  113                                      /       BIT 3:  1=TAPE TRAP
+  114                                      /       BIT 4:  DISPLAY CHARACTER SIZE- 0=HALF, 1=FULL
+  115                                      /       BIT 5:  FAST SAMPLE A/D CHANNELS
+  116                                      /       BIT 6:  DISABLE TELETYPE INTERRUPT
+  117                                      /       BIT 7:  I/O PRESET PULSE
+  118        6151          TMIR=   6151    /PDP-8: LOAD TAPE MAINTENANCE INSTRUCTION REG
+  119                                      /       BITS 0-3:  0100 TMA SETUP       -> AC
+  120                                      /                  0101 TBN             -> AC
+  121                                      /                  0110 TB              -> AC
+  122                                      /                  1110 TMA             -> AC
+  123                                      /       BIT 4:     1=CLEAR TAPE DONE FLAG
+  124                                      /       BIT 5:     1= SKIP IF TAPE DONE FLAG IS SET.
+  125                                      /       BITS 6-11: SIMULATE TAPE SIGNALS (FOR TESTING)
+  126        6154          TMTR=   6154    /PDP-8: TRANSFER TAPE MAINTENANCE REGISTER TO/FROM AC
+  127              
+  128              
+  129        0000          *0000
+  130 00000  0000          0               /PDP8 INTERRUPT RETURN ADDRESS
+  131 00001  7402          HLT             /INTERRUPTS NOT ENABLED
+  132 00002  5001          JMP .-1         /HANG IT UP
+  133              
+  134              
+  135        0010          *10             /AUTO INCREMENT LOCATIONS
+  136              
+  137              
+  138        0020          *20
+  139 00020  5421          JMP I .+1       / SO START 20 WORKS.
+  140 00021  0200              START
+  141              
+  142              
+  143              /PAGE ZERO CONSTANTS
+  144              
+  145 00022  0017  K0017,  0017            /LOW 4 BITS
+  146 00023  0020  K0020,  0020
+  147 00024  0100  K0100,  0100
+  148 00025  0360  K0360,  0360
+  149 00026  0376  K0376,  0376            /FE FOR CHECKSUM
+  150 00027  0377  K0377,  0377            /FF FOR GOOD BLOCK
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 4
+
+
+  151 00030  7000  K7000,  7000
+  152              
+  153              
+  154              /PAGE ZERO VARIABLES
+  155              
+  156 00031  1000  BUFADR, BUFFER          /ADDRESS OF BUFFER START
+  157 00032  0300  BUFOVF, -BUFEND         /MINUS   OF BUFFER END FOR OVERFLOW TEST
+  158              
+  159 00033  7774  RETRY,  -4              /TRY UP TO 4 TIME
+  160 00034  0000  TRIES,  0               /ISZ COUNTER, TRIES REMAINING
+  161 00035  0000  BADCNT, 0               /NUMBER OF RETRIES I.E.BAD READS
+  162 00036  0000  ERRCNT, 0               /NUMBER BAD BLOCKS (FAILED ALL TRIES)
+  163              
+  164              
+  165              /LINC TAPE ROUTINE VARIABLES
+  166 00037  0000  BLKPTR, 0               /POINTER TO BUFFER FOR THE BLOCK READ (3 HEADER + DATA)
+  167 00040  0000  BLOCK,  0               /CURRENT TAPE BLOCK BEING READ
+  168 00041  0000  QUIT,   0               /NONZERO: READ WAS ABORTED BY OPERATOR (OFF END AND SHOE SHINING)
+  169                                      /IF QUIT IS 0, CHECK AND BLKLEN ARE VALID
+  170 00042  0000  CHECK,  0               /READ CHECK VALUE, 7777 IF GOOD.
+  171 00043  0000  BLKLEN, 0               /BLOCK LENGTH THAT WAS READ
+  172              
+  173 00044  0000  CHKSUM, 0               /SUM OF ALL DATA WORDS SENT
+  174 00045  0000  TEMP,   0               /TEMPORARY
+  175              
+  176 00046  0000  BLKCNT, 0               /BLOCKS IN BUFFER COUNTER
+  177 00047  0000  OUTCTR, 0               /ISZ COUNTER    FOR SEND LOOP
+  178 00050  0000  BLKNXT, 0               /BUFFER ADDRESS FOR NEXT BLOCK
+  179 00051  0003  HDRLEN, 3               /BUFFER WORDS USED FOR BLOCK HEADER
+  180                                      /       STATUS (FF OR FD)
+  181                                      /       BLOCK NUMBER
+  182                                      /       BLOCK LENGTH
+  183              
+  184              /ADDRESSES FOR JMS INDIRECT
+  185              
+  186        4452  LTREAD=JMS I .          /LINCTAPE READ A BLOCK (LTREAI)
+  187 00052  0600          LTREAI          /LINCTAPE READ A BLOCK (LTREAI)
+  188        4453  OUTBLK=JMS I .          /SEND A BLOCK OUT SERIAL PORT
+  189 00053  0400          OUTBLI
+  190              
+  191              
+  192              /PAGE 0 ROUTINES
+  193              
+  194 00054  0000  SEND,   0               /SEND BYTE OUT THE SERIAL PORT (AC IS UNMODIFIED)
+  195 00055  6416          TLS2            /SEND IT
+  196 00056  6411          TSF2            /DONE?
+  197 00057  5056          JMP .-1         /WAIT TIL DONE
+  198 00060  5454          JMP I SEND
+  199              
+  200 00061  0000  SEND2,  0               /SEND WORD AS 2 BYTES OUT THE SERIAL PORT, RETURNS AC=0
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 5
+
+
+  201                                      /AC IS THE WORD TO SEND
+  202 00062  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  203 00063  7012          RTR             /BITS 0-3 ARE NOW IN 2-5
+  204 00064  7012          RTR             /BITS 0-3 ARE NOW IN 4-7
+  205 00065  7012          RTR             /BITS 0-3 ARE NOW IN 6-9
+  206 00066  7012          RTR             /BITS 0-3 ARE NOW IN 8-11
+  207 00067  0022          AND K0017       /CLEAR UPPER, KEEP   8-11
+  208 00070  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  209 00071  7200          CLA             /LEAVE AC WITH ZERO
+  210 00072  5461          JMP I SEND2
+  211                      
+  212              
+  213 00073  0000  GETNB,  0               /SUBROUTINE TO GET NEXT BLOCK BUFFER ADDRESS
+  214                                      /SETS LINK IF NO ROOM, STORES INTO BLKNXT
+  215 00074  7300          CLA CLL         /CLEAR AC AND LINK
+  216 00075  1037          TAD BLKPTR      /GET START OF CURRENT BLOCK
+  217 00076  1051          TAD HDRLEN      /SKIP HEADER WORDS
+  218 00077  1043          TAD BLKLEN      /SKIP BLOCK DATA (COULD SET LINK IF BIG BLOCK)
+  219 00100  7430          SZL             /SKIP IF OKAY
+  220 00101  5105          JMP GETNB1      /OVERFLOWED, NO ROOM (LINK IS SET)
+  221                                      /(LINK IS CLEARED)
+  222 00102  3050          DCA BLKNXT      /STORE ADDRESS OF NEXT BLOCK
+  223              
+  224                                      /CHECK IF PAST END OF BUFFER
+  225 00103  1050          TAD BLKNXT
+  226 00104  1032          TAD BUFOVF      /SETS LINK IF OVERFLOWED (NO ROOM)
+  227              
+  228 00105  5473  GETNB1, JMP I GETNB     /EXIT
+  229              
+  230              
+  231        0177          *177
+  232 00177  7402  FINISH, HLT             /NORMAL HALT
+  233              
+  234              
+  235        0200          *200            /STARTING ADDRESS
+  236              
+  237 00200  7604  START,  LAS             /CHECK SWITCH REGISTER IS 0000
+  238 00201  7450          SNA
+  239 00202  5205          JMP START2        
+  240              
+  241 00203  7402          HLT             /SWITCH REGISTER MUST BE 0000
+  242 00204  5200          JMP START
+  243              
+  244              START2,
+  245 00205  7200          CLA
+  246 00206  3040          DCA BLOCK       /START AT BLOCK 0
+  247 00207  3044          DCA CHKSUM      /INITIAL CHECK SUM
+  248 00210  3035          DCA BADCNT      /NUMBER OF BAD BLOCKS
+  249 00211  3036          DCA ERRCNT      /NUMBER OF BAD READS
+  250              
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 6
+
+
+  251              
+  252              RDBUF,                  /READ BLOCKS INTO THE BUFFER
+  253                      
+  254 00212  7200          CLA
+  255 00213  1031          TAD BUFADR      /GET START OF BUFFER
+  256 00214  3037          DCA BLKPTR      /BUFFER ADDRESS FOR THIS BLOCK
+  257 00215  3046          DCA BLKCNT      /CLEAR BLOCKS IN BUFFER COUNTER
+  258              
+  259              READLP,                 /READ ONE BLOCK INTO BUFFER
+  260              
+  261 00216  7200          CLA
+  262 00217  1033          TAD RETRY       /ISZ COUNTER 
+  263 00220  3034          DCA TRIES       /TRIES REMAINING
+  264              
+  265                                      /DISPLAY BLOCK NUMBER IN MQ     
+  266 00221  1040          TAD BLOCK
+  267 00222  7421          MQL             /LOAD MQ FROM AC, CLEAR AC
+  268              
+  269              
+  270              TRYONE,                 /TRY READING A BLOCK (ONE TRY)
+  271                                      
+  272 00223  4452          LTREAD          /JMS TO LINCTAPE READ A BLOCK (LTREAI)
+  273                                      /       BLKPTR IS BUFFER ADDRESS TO STORE DATA
+  274                                      /       BLOCK  IS THE BLOCK TO READ
+  275                                      /RETURNS (STORES): 
+  276                                      /       QUIT  = 0 READ COMPLETED, CHECK AND BLKLEN VALID
+  277                                      /             = NOT ZERO, OPERATOR ABORTED
+  278                                      /       CHECK  = CHECK WORD, =7777 IF OKAY
+  279                                      /       BLKLEN = BLOCK LENGTH READ
+  280                                      /   LINK SET     IF ABORTED BY OPERATOR, 
+  281                                      /   LINK NOT SET IF READ COMPLETED
+  282              
+  283 00224  7430          SZL             /SKIP IF BLOCK FOUND
+  284 00225  5276          JMP OUTBUF      /ABORTED BY OPERATOR, SEND THE BUFFER (IF ANY)
+  285              
+  286                                      /BLOCK WAS FOUND. LOOK AT CHECK WORD (7777 IF GOOD)
+  287 00226  7200          CLA
+  288 00227  1042          TAD CHECK       /=7777 IF GOOD READ
+  289 00230  7040          CMA             /COMPLEMENT AC (=0000 IF GOOD)
+  290 00231  7450          SNA             /SKIP IF BAD
+  291 00232  5251          JMP GOOD        /AC IS ZERO (GOOD)
+  292              
+  293                      /BAD READ, TRY IT AGAIN
+  294              
+  295                      /BUMP BAD READ COUNT, BUT NOT PAST 7777.
+  296 00233  7200          CLA
+  297 00234  1035          TAD BADCNT
+  298 00235  7001          IAC
+  299 00236  7440          SZA             /DON'T STORE IF OVERFLOW (I.E. SATURATE AT 7777)
+  300 00237  3035          DCA BADCNT
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 7
+
+
+  301              
+  302 00240  2034          ISZ TRIES       /ANY TRIES REMAINING?
+  303 00241  5223          JMP TRYONE
+  304              
+  305                      /OUT OF TRIES, SET STATUS AS BAD BLOCK
+  306              
+  307                      /BUMP BAD BLOCK COUNT, BUT NOT PAST 7777.
+  308 00242  7200          CLA
+  309 00243  1036          TAD ERRCNT
+  310 00244  7001          IAC
+  311 00245  7440          SZA             /DON'T STORE IF OVERFLOW (I.E. SATURATE AT 7777)
+  312 00246  3036          DCA ERRCNT
+  313              
+  314 00247  7201          CLA IAC         /AC = 0001
+  315 00250  7040          CMA             /AC = 7776 (-2) IF BAD
+  316                      /JMP GOOD
+  317              GOOD,                   /AC = 0000 IF GOOD, =-2 IF BAD
+  318 00251  1027          TAD K0377       /AC = 0377( FF) IF GOOD, AC = 375 (FD) IF BAD
+  319              
+  320 00252  3437          DCA I BLKPTR    /SAVE READ STATUS IN BUFFER
+  321              
+  322 00253  1037          TAD BLKPTR
+  323 00254  7001          IAC
+  324 00255  3045          DCA TEMP
+  325              
+  326 00256  1040          TAD BLOCK
+  327 00257  3445          DCA I TEMP      /SAVE BLOCK NUMBER IN BUFFER
+  328 00260  2045          ISZ TEMP
+  329 00261  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  330              
+  331 00262  1043          TAD BLKLEN
+  332 00263  3445          DCA I TEMP      /SAVE BLOCK LENGTH IN BUFFER
+  333              
+  334                      /DONE WITH BLOCK, READ ANOTHER IF ROOM IN BUFFER
+  335              
+  336 00264  2046          ISZ BLKCNT      /BUMP NUMBER OF BLOCKS IN BUFFER
+  337 00265  2040          ISZ BLOCK       /GET NEXT BLOCK NUMBER
+  338              
+  339                      /SETUP POINTER FOR NEXT BLOCK
+  340              
+  341 00266  4073          JMS GETNB       /GET BUFFER ADDRESS OF NEXT BLOCK (SETS LINK IF OVERFLOW)
+  342 00267  7630          SZL CLA         /SKIP IF OKAY
+  343 00270  5276          JMP OUTBUF      /CAN'T HAPPEN IF BLOCKS ARE ALL THE SAME SIZE
+  344                                      /I.E. THERE WAS ROOM, BUT NOW THE BUFFER IS FULL ??!!
+  345                                      /     SO SEND THE BUFFER.
+  346 00271  1050          TAD BLKNXT
+  347 00272  3037          DCA BLKPTR      /POINT TO NEXT BLOCK
+  348              
+  349 00273  4073          JMS GETNB       /SEE IF ROOM FOR THE NEW BLOCK (ASSUME CURRENT BLOCK LENGTH)
+  350 00274  7420          SNL             /SKIP IF NO ROOM FOR NEXT BLOCK)
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 8
+
+
+  351 00275  5216          JMP READLP      /WE HAVE ROOM, READ ANOTHER
+  352                      /JMP OUTBUF
+  353              
+  354                      /SEND THE BUFFER
+  355              
+  356 00276  7200  OUTBUF, CLA
+  357 00277  1031          TAD BUFADR      /POINT TO START OF BUFFER
+  358 00300  3037          DCA BLKPTR
+  359                      
+  360 00301  1046          TAD BLKCNT      /SEE IF ANY BLOCKS
+  361 00302  7450          SNA             /SKIP IF BLOCKS
+  362 00303  5315          JMP DONE        /DONE IF NO BLOCKS
+  363 00304  7041          CIA
+  364 00305  3046          DCA BLKCNT      /SAVE AS ISZ COUNTER
+  365              
+  366              OUTONE,                 /SEND ONE BLOCK
+  367              
+  368                                      /SEND DATA BLOCK
+  369 00306  4453          OUTBLK          /JMS TO SEND A BLOCK OUT SERIAL PORT
+  370              
+  371 00307  2046          ISZ BLKCNT
+  372 00310  5306          JMP OUTONE      /SEND ANOTHER BLOCK
+  373              
+  374 00311  7200          CLA
+  375 00312  1041          TAD QUIT        /STILL READING?
+  376 00313  7450          SNA
+  377 00314  5212          JMP RDBUF       /READ ANOTHER BUFFER FULL
+  378              
+  379 00315  7200  DONE,   CLA             /SEND FE AND -CHECKSUM OF ALL WORDS
+  380 00316  1026          TAD K0376       /FE
+  381 00317  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  382              
+  383 00320  7300          CLA CLL
+  384 00321  1044          TAD CHKSUM      /SEND MINUS OF CHECKSUM IN 2 BYTES
+  385 00322  7041          CIA
+  386 00323  4061          JMS SEND2       /SEND AC AS 2 BYTES, RETURNS AC=0
+  387              
+  388                      /REWIND TAPE BY READING BLOCK 0
+  389 00324  7200          CLA
+  390 00325  3040          DCA BLOCK
+  391 00326  1031          TAD BUFADR
+  392 00327  3037          DCA BLKPTR
+  393              
+  394 00330  4452          LTREAD          /JMS TO LINCTAPE READ A BLOCK (LTREAI)
+  395                                      /       BLKPTR IS BUFFER ADDRESS TO STORE DATA
+  396                                      /       BLOCK  IS THE BLOCK TO READ
+  397                                      /RETURNS (STORES): 
+  398                                      /       QUIT  = 0 READ COMPLETED, CHECK AND BLKLEN VALID
+  399                                      /             = NOT ZERO, OPERATOR ABORTED
+  400                                      /       CHECK  = CHECK WORD, =7777 IF OKAY
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC     Page 9
+
+
+  401                                      /       BLKLEN = BLOCK LENGTH READ
+  402                                      /   LINK SET     IF ABORTED BY OPERATOR, 
+  403                                      /   LINK NOT SET IF READ COMPLETED
+  404              
+  405 00331  7200          CLA
+  406 00332  1035          TAD BADCNT      /AC = NUMBER OF BAD READS
+  407              
+  408 00333  5177          JMP FINISH
+  409              
+  410              
+  411                      PAGE
+  412 00400  0000  OUTBLI, 0               /SEND A BLOCK OUT THE SERIAL PORT
+  413              
+  414                                      /SEND STATUS
+  415 00401  7200          CLA
+  416 00402  1437          TAD I BLKPTR
+  417 00403  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  418 00404  2037          ISZ BLKPTR
+  419 00405  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  420              
+  421                                      /SEND BLOCK NUMBER
+  422 00406  7200          CLA
+  423 00407  1437          TAD I BLKPTR
+  424 00410  4061          JMS SEND2       /SEND AC AS 2 BYTES, RETURNS AC=0
+  425 00411  2037          ISZ BLKPTR
+  426 00412  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  427                      
+  428                                      /SEND BLOCK LENGTH
+  429 00413  7200          CLA
+  430 00414  1437          TAD I BLKPTR
+  431 00415  4061          JMS SEND2       /SEND AC AS 2 BYTES, RETURNS AC=0
+  432              
+  433 00416  7200          CLA
+  434 00417  1437          TAD I BLKPTR    /GET BLOCK LENGTH
+  435 00420  7041          CIA
+  436 00421  3047          DCA OUTCTR      /SAVE SEND ISZ COUNTER
+  437              
+  438 00422  2037          ISZ BLKPTR
+  439 00423  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  440                      
+  441              
+  442              OUTLP,  
+  443 00424  2047          ISZ OUTCTR      /DECREMENT WORDS LEFT
+  444 00425  5237          JMP OUT2WD      /MORE THAN 1 LEFT, SEND 2 WORDS AS 3 BYTES
+  445              
+  446                                      /ODD WORD IS ALL THATS LEFT
+  447 00426  7300          CLA CLL
+  448 00427  1437          TAD I BLKPTR    /GET FIRST WORD FROM BUFFER
+  449 00430  1044          TAD CHKSUM      /KEEP SUM OF ALL WORDS SENT
+  450 00431  3044          DCA CHKSUM      /SAVE UPDATED SUM
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC    Page 10
+
+
+  451                      
+  452 00432  1437          TAD I BLKPTR    /GET FIRST WORD FROM BUFFER, AGAIN
+  453              
+  454 00433  4061          JMS SEND2       /SEND AC AS 2 BYTES, RETURNS AC=0
+  455 00434  2037          ISZ BLKPTR
+  456 00435  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  457              
+  458 00436  5277          JMP OUTDN       /DONE SENDING BLOCK (BLOCK SIZE IS ODD)
+  459              
+  460              OUT2WD,                 /SEND 2 WORDS AS 3 BYTES
+  461 00437  7300          CLA CLL
+  462 00440  1437          TAD I BLKPTR    /GET FIRST WORD FROM BUFFER
+  463 00441  1044          TAD CHKSUM      /KEEP SUM OF ALL WORDS SENT
+  464 00442  3044          DCA CHKSUM      /SAVE UPDATED SUM
+  465                      
+  466 00443  1437          TAD I BLKPTR    /GET FIRST WORD FROM BUFFER, AGAIN
+  467              
+  468                                      /SEND  A4 A5 A6 A7   A8 A9 A10 A11
+  469 00444  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  470              
+  471                                      /GET UPPER BITS IN LOWER 4.
+  472 00445  7012          RTR
+  473 00446  7012          RTR
+  474 00447  7012          RTR
+  475 00450  7012          RTR
+  476 00451  0022          AND K0017
+  477 00452  3045          DCA TEMP        /SAVE UPPER BITS, = 0 0 0 0   0 0 0 0   A0 A1 A2 A3
+  478              
+  479 00453  2037          ISZ BLKPTR      /POINT TO 2ND WORD
+  480 00454  7000          NOP             /SAFETY NET (IF POINTER WRAPS, WE'RE DEAD)
+  481              
+  482 00455  7300          CLA CLL
+  483 00456  1437          TAD I BLKPTR    /GET SECOND WORD FROM BUFFER
+  484 00457  1044          TAD CHKSUM      /KEEP SUM OF ALL WORDS SENT
+  485 00460  3044          DCA CHKSUM      /SAVE UPDATED SUM
+  486                      
+  487 00461  1437          TAD I BLKPTR    /GET SECOND WORD FROM BUFFER, AGAIN
+  488              
+  489 00462  7006          RTL
+  490 00463  7006          RTL
+  491 00464  0025          AND K0360       /AC IS 0 0 0 0  B8 B9 B10 B11  0  0  0  0 
+  492 00465  1045          TAD TEMP        /AC IS 0 0 0 0  B8 B9 B10 B11  A0 A1 A2 A3 
+  493              
+  494                                      /
+  495                                      /SEND  B8 B9 B10 B11    A0 A1 A2 A3
+  496 00466  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  497              
+  498 00467  7200          CLA
+  499 00470  1437          TAD I BLKPTR    /GET SECOND WORD FROJM BUFFER, A THIRD TIME
+  500 00471  7012          RTR             /AC IS B11 L B0 B1  B2 B3 B4 B5    B6 
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC    Page 11
+
+
+  501 00472  7012          RTR             
+  502              
+  503                                      /SEND  B0 B1 B2 B3    B4 B5 B6 B7
+  504 00473  4054          JMS SEND        /SEND THE BYTE (AC UNMODIFIED)
+  505 00474  2037          ISZ BLKPTR      /POINT TO NEXT WORD
+  506              
+  507 00475  2047          ISZ OUTCTR      /DONE WITH BLOCK?
+  508 00476  5224          JMP OUTLP       /NOT DONE
+  509              
+  510              OUTDN,                  /DONE SENDING THE BLOCK
+  511 00477  5600          JMP I OUTBLI
+  512              
+  513              
+  514              
+  515              
+  516              / LINC TAPE READ ROUTINE FOR DUMP PROGRAMS
+  517              /       USED BY: DUMPLT, CRCLT     
+  518              /       VERSION A    2017/07/06 WRS
+  519                      
+  520                      PAGE
+  521              
+  522 00600  0000  LTREAI, 0               /SUBROUTINE TO READ A LINCTAPE BLOCK (LTREAD)
+  523                                      /       BLKPTR IS BUFFER ADDRESS TO STORE DATA
+  524                                      /       BLOCK  IS THE BLOCK TO READ
+  525                                      /RETURNS (STORES): 
+  526                                      /       QUIT  = 0 READ COMPLETED, CHECK AND BLKLEN VALID
+  527                                      /             = NOT ZERO, OPERATOR ABORTED
+  528                                      /       CHECK  = CHECK WORD, =7777 IF OKAY
+  529                                      /       BLKLEN = BLOCK LENGTH READ
+  530                                      /   LINK SET     IF ABORTED BY OPERATOR, 
+  531                                      /   LINK NOT SET IF READ COMPLETED
+  532              
+  533 00601  7200          CLA
+  534 00602  7040          CMA             /AC = 7777
+  535 00603  3041          DCA QUIT        /ASSUME OPERATOR ABORT (NOT 0000)
+  536 00604  3042          DCA CHECK       /ASSUME BAD CHECK WORD (NOT 7777)
+  537 00605  3043          DCA BLKLEN      /ASSUME BAD BLOCK LENGTH
+  538              
+  539              
+  540                      /SETUP FOR TAPE BLOCK READ
+  541              
+  542 00606  1273          TAD LTXOW       /GET EXTENDED OPERATION WORD (EXTENDED ADDRESS, NO PAUSE, FIELD 0)
+  543              
+  544 00607  6141          LINC
+  545 00610  0001          AXO             /SEND DATA TO CONTROLLER
+  546 00611  0002          PDP
+  547              
+  548 00612  7200          CLA
+  549 00613  1037          TAD BLKPTR      /GET BUFFER ADDRESS FOR THIS BLOCK
+  550 00614  1051          TAD HDRLEN      /SKIP HEADER WORDS
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC    Page 12
+
+
+  551 00615  3045          DCA TEMP        /SAVE TAPE BUFFER ADDRESS
+  552 00616  1045          TAD TEMP
+  553              
+  554 00617  6141          LINC
+  555 00620  0023          TMA             /AC -> TAPE MEMORY ADDRESS SETUP REGISTER
+  556 00621  0002          PDP
+  557              
+  558 00622  7200          CLA
+  559 00623  1040          TAD BLOCK
+  560 00624  3227          DCA LTWRD2      /STORE AS WORD 2 OF TAPE INSTRUCTION
+  561              
+  562              
+  563                      /READ THE TAPE BLOCK
+  564              
+  565 00625  6141          LINC
+  566 00626  0702          0702            /LINCTAPE INSTRUCTION
+  567                                      /BITS 0-5 = 07   OPCODE
+  568                                      /BIT    6 = 0    OPCODE
+  569                                      /BIT    7 = 0    STOP MOTION
+  570                                      /BIT    8 = 0    0=UNIT 0
+  571                                      /BITS 9-11 = 2  OPERATION (2 = READ W/O CHECK)
+  572 00627  0000  LTWRD2, 0               /WORD 2 (BLOCK NUMBER)
+  573 00630  0002          PDP
+  574              
+  575              
+  576                      /WAIT FOR DONE OR OPERATOR ABORT
+  577              
+  578              LTWAIT,                 /WAIT FOR TAPE DONE
+  579              
+  580 00631  7604          LAS             /READ SWITCH REGISTER
+  581 00632  7710          SPA CLA         /SKIP IF SR0 IS OFF
+  582 00633  5261          JMP LTQUIT      /OPERATOR SET SR0, RESET AND EXIT
+  583                      
+  584 00634  1024          TAD K0100       /SET BIT 5 TO SKIP IF TAPE DONE
+  585 00635  6151          TMIR            /SKIP IF TAPE DONE
+  586 00636  5231          JMP LTWAIT      /KEEP WAITING
+  587              
+  588                      /TAPE DONE IS SET       
+  589              
+  590                      /CALCULATE BLOCK LENGTH
+  591              
+  592 00637  7200          CLA
+  593 00640  1045          TAD TEMP        /START OF TAPE BUFFER
+  594 00641  7041          CIA             /TWO'S COMPLEMENT
+  595 00642  3045          DCA TEMP        /TEMPORARY IS MINUS START OF BLOCK
+  596              
+  597                      /GET TAPE MEMORY ADDRESS (WHERE NEXT WORD WOULD STORE)
+  598                      /USING TAPE MAINTENANCE REGISTERS
+  599 00643  7200          CLA
+  600 00644  1030          TAD K7000       /SELECT TMA -> AC
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC    Page 13
+
+
+  601 00645  6151          TMIR            /SET TAPE MAINTENANCE INSTRUCTION REGISTER                              
+  602 00646  7200          CLA
+  603 00647  6154          TMTR            /READ TMA (TAPE MEMORY ADDRESS)
+  604                                      /AC IS (LAST WORD + 1) POINTER
+  605              
+  606 00650  1045          TAD TEMP        /MINUS START OF BUFFER
+  607 00651  3043          DCA BLKLEN      /SAVE BLOCK LENGTH              
+  608              
+  609                      /GET CHECK WORD
+  610              
+  611 00652  6141          LINC            /GET THE CHECK FROM THE TAPE ACCUMULATOR (TAC)
+  612 00653  0003          TAC             /AC IS THE CHECK WORD (SHOULD BE 7777)
+  613 00654  0002          PDP
+  614              
+  615 00655  3042          DCA CHECK       /SAVE CHECK WORD (SHOULD BE 7777)
+  616                      
+  617 00656  7300          CLA CLL         /CLEAR LINK (READ COMPLETED)
+  618 00657  3041          DCA QUIT        /CLEAR QUIT FLAG
+  619              
+  620 00660  5272          JMP LTEXIT      /DONE
+  621              
+  622              
+  623              LTQUIT,                 /OPERATOR ABORTED.
+  624              
+  625                                      /ABORT LINC TAPE INSTRUCTION
+  626 00661  7200          CLA             /FORCE I/O PRESET
+  627 00662  1023          TAD K0020       /BIT 7  1=I/O PRESET PULSE
+  628              
+  629 00663  6141          LINC
+  630 00664  0004          ESF             /AC -> SPECIAL FUNCTION REG             
+  631 00665  0002          PDP
+  632              
+  633 00666  7604  LTWT2,  LAS             /WAIT FOR SR0 OFF
+  634 00667  7510          SPA             /SKIP IF SR0 IS OFF
+  635 00670  5266          JMP LTWT2       /WAITING FOR SR0 TO BE OFF
+  636              
+  637 00671  7120          CLL CML         /SET LINK (BAD READ)
+  638                      /JMP LTEXIT
+  639              
+  640 00672  5600  LTEXIT, JMP I LTREAI
+  641              
+  642              
+  643 00673  0030  LTXOW,  0030            /TC12 EXTENDED OPERATION WORD
+  644                                      /BITS  0-2 000  EXTENDED MEMORY ADDRESS (PDP8 FIELD)
+  645                                      /BIT   3     0  NOT USED
+  646                                      /BIT   4     0  MARK CONDITION,           0=OFF
+  647                                      /BIT   5     0  TAPE INTERRUPT,           0=DISABLE
+  648                                      /BIT   6     0  MAINTENANCE MODE,         0=OFF
+  649                                      /BIT   7     1  EXTENDED ADDRESS MODE,    1=ON
+  650                                      /BIT   8     1  NO PAUSE DURING EXECUTION, 1=ON
+
+
+
+      / DUMPLT     PDP-12 LINCTAPE DUMP PROGRAM   I.E. CAPTURE A LINC    Page 14
+
+
+  651                                      /BIT   9     0  HOLD UNIT MOTION,         0=NO
+  652                                      /BITS 10-11  0  EXTENDED UNITS,            00=UNITS 0/1
+  653              
+  654              
+  655                      PAGE
+  656              
+  657        1000  BUFFER=.                /BUFFER
+  658                                      /EACH BLOCK IS STORED AS 'BLOCK LENGTH + 3' WORDS:
+  659                                      /    STATUS BYTE:  0377 (0xFF) IF GOOD, 0375 (0xFD) IF BAD
+  660                                      /    BLOCK NUMBER:
+  661                                      /    BLOCK LENGTH:
+  662                                      /    BLOCK DATA ('BLOCK LENGTH' WORDS)
+  663              
+  664        7500  BUFEND=7500             /PRESERVE 7600-7777 FOR OS/8
+  665              
+  666                      $
+
+      No detected errors
+      No links generated

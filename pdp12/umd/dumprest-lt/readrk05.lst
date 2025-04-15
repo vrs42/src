@@ -1,0 +1,141 @@
+    1             / RK05 READ CHECK
+    2             / Do a read check on all sectors.  Header words should be checked in all
+    3             / sectors except 0.  0 probably missed since won't be first after seek
+    4             / To run start at 0200 with SR9-11 with drive number to test
+    5             / Program will halt on error, hit continue to go on to next sector.
+    6             / If the switch register is not zero at the end of a pass the program
+    7             / will halt
+    8       6741          DSKP=6741
+    9       6742          DCLR=6742
+   10       6743          DLAG=6743
+   11       6744          DLCA=6744
+   12       6745          DRST=6745
+   13       6746          DLDC=6746
+   14             
+   15       0020          *20
+   16 00020 0000  DRIVE,  0
+   17 00021 0200  K0200,  0200
+   18 00022 4000  K4000,  4000
+   19 00023 0000  FLD,    0
+   20 00024 0000  SECT,   0
+   21 00025 0000  CYL,    0
+   22 00026 4520  MAXCYL, 4520
+   23 00027 0000  EXBIT,  0
+   24 00030 0000  REDDAT, 0000
+   25 00031 3000  CURENT, 3000
+   26 00032 0017  K17,    17
+   27 00033 0006  K6,     6
+   28             
+   29       0200          *200
+   30 00200 7704          CLA CLL OSR
+   31 00201 7004          RAL
+   32 00202 0033          AND K6          / Clear out high bits such as 0200 start address
+   33 00203 3020          DCA DRIVE
+   34 00204 7200  RESTRT, CLA
+   35 00205 3024          DCA SECT
+   36 00206 3025          DCA CYL
+   37 00207 3027          DCA EXBIT
+   38 00210 7301  RECAL,  CLA CLL IAC
+   39 00211 6742          DCLR
+   40 00212 1020          TAD DRIVE
+   41 00213 6746          DLDC
+   42 00214 7326          CLA CLL CML RTL
+   43 00215 6742          DCLR
+   44 00216 6741          DSKP
+   45 00217 5216          JMP .-1
+   46 00220 1021          TAD K0200
+   47 00221 1020          TAD DRIVE
+   48 00222 6746          DLDC
+   49 00223 6741          DSKP
+   50 00224 5223          JMP .-1
+   51 00225 6745          DRST
+   52 00226 7041          CIA
+   53 00227 1022          TAD K4000
+   54 00230 7640          SZA CLA
+   55 00231 5233          JMP BADSTA
+
+
+
+              JMP READ                                                    Page 1
+
+
+   56 00232 5234          JMP READ
+   57 00233 7402  BADSTA, HLT
+   58             
+   59 00234 7301  READ,   CLA CLL IAC
+   60 00235 6742          DCLR
+   61 00236 1031          TAD CURENT
+   62 00237 6744          DLCA
+   63 00240 1020          TAD DRIVE
+   64 00241 1030          TAD REDDAT
+   65 00242 1023          TAD FLD
+   66 00243 1027          TAD EXBIT
+   67 00244 6746          DLDC
+   68 00245 1025          TAD CYL
+   69 00246 1024          TAD SECT
+   70 00247 6743          DLAG
+   71 00250 1027          TAD EXBIT
+   72 00251 7010          RAR
+   73 00252 1025          TAD CYL
+   74 00253 1024          TAD SECT
+   75 00254 7010          RAR
+   76 00255 6741          DSKP
+   77 00256 5255          JMP .-1
+   78 00257 6745          DRST
+   79 00260 7041          CIA
+   80 00261 1022          TAD K4000
+   81 00262 7640          SZA CLA
+   82 00263 5333          JMP ERROR
+   83 00264 7305  NEXT,   CLA CLL IAC RAL
+   84 00265 1024          TAD SECT
+   85 00266 0032          AND K17
+   86 00267 3024          DCA SECT
+   87 00270 7240          CLA CMA
+   88 00271 1024          TAD SECT
+   89 00272 7440          SZA
+   90 00273 5277          JMP CHK0
+   91 00274 7200          CLA
+   92 00275 3024          DCA SECT
+   93 00276 5303          JMP INCCYL
+   94 00277 7001  CHK0,   IAC
+   95 00300 7450          SNA
+   96 00301 2024          ISZ SECT
+   97 00302 5234          JMP READ
+   98             
+   99 00303 1027  INCCYL, TAD EXBIT
+  100 00304 7440          SZA
+  101 00305 5321          JMP CHKCYL
+  102 00306 7200  INCTRK, CLA
+  103 00307 1032          TAD K17
+  104 00310 7001          IAC
+  105 00311 1025          TAD CYL
+
+
+
+              JMP READ                                                    Page 2
+
+
+  106 00312 3025          DCA CYL
+  107 00313 1025          TAD CYL
+  108 00314 7440          SZA
+  109 00315 5234          JMP READ
+  110 00316 2027          ISZ EXBIT
+  111 00317 5234          JMP READ
+  112 00320 7402          HLT
+  113 00321 7200  CHKCYL, CLA
+  114 00322 1025          TAD CYL
+  115 00323 7041          CIA
+  116 00324 1026          TAD MAXCYL
+  117 00325 7440          SZA
+  118 00326 5306          JMP INCTRK
+  119 00327 7604  DONE,   CLA OSR
+  120 00330 7440          SZA
+  121 00331 7402          HLT
+  122 00332 5204          JMP RESTRT
+  123 00333 7200  ERROR,  CLA
+  124 00334 6745          DRST
+  125 00335 7402          HLT
+  126 00336 5264          JMP NEXT
+  127                     $
+
+      No detected errors

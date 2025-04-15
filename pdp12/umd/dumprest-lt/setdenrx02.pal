@@ -1,0 +1,65 @@
+/ RX01 Set Density
+/ This program will set the density on a disk.  This will only work on a
+/ RX02 operating in RX28 mode.
+/ To run start at 0200.
+/    SR9-11 shoulb be drive number
+/    SR0 should be 1 for double density (RX02), 0 for single density (RX01)
+/ Should halt at label GDHLT (140) with AC = 0 if it worked.
+/ At normal exit hitting cont will restart the program
+
+        LCD=6751        / Load the command reg with AC
+        XDR=6752        / Load or read the transfer register
+        STR=6753        / Skip on transfer request flag
+        SER=6754        / Skip on error flag
+        SDN=6755        / Skip on done flag
+        INTR=6756       / AC = 0 interrupt off, 1 = on
+        INIT=6757       / Initialize RX8/RX01
+
+        *20
+DRIVE,  0               / Drive # * 2
+DRVMSK, 60              / Mask for drive bits
+DENCMD,	010		/ Set density command
+DEN,	0		/ Density bit for command
+CHARI,	111		/ Character I
+STARTF,	START
+
+	*140
+GDHLT,	HLT
+	JMP I STARTF
+
+        *200
+START,	CDF 0		/ Init all our variables
+	CAF
+        CLA CLL OSR	/ Get drive
+        RTL
+        RTL
+        AND DRVMSK
+        DCA DRIVE
+        CLA CLL OSR	/ Get density
+	RAL
+	CLA
+	RTR
+	RTR
+	DCA DEN
+
+RECAL,  CLA CLL
+        INIT
+        SDN            / Done?
+        JMP .-1
+
+TYPE,   0
+	TAD     DENCMD    /Make a set density command
+        TAD     DRIVE
+	TAD	DEN
+        LCD
+        STR
+        JMP     .-1
+	CLA
+	TAD	CHARI
+        XDR             /Send character I to start format
+	SDN
+	JMP .-1
+        SER
+	JMP GDHLT
+	HLT		/Error on format command
+	$

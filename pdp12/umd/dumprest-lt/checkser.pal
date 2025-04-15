@@ -1,0 +1,55 @@
+/ Serial Port Test
+/
+/ This program will read characters from the serial port and write them
+/ to memory starting at address 0.  If you use the sendtape program with
+/ the files sertest.dat you should have the following pattern in memory
+/ Addr Value
+/  0     1
+/  1     2
+/  2     3
+/  3     4
+/  4    10
+/  5    20
+/  6    40
+/  7   100
+/ 10   200
+/ 11     0
+/ 12   377
+/ 13   376
+/ 14   375
+/ 16   367
+/ 17    16  (Address of characters received)
+/
+/ To run start at 0200.
+/ Program will not halt
+
+        INAD=030                / Address of serial input, 30 for console
+        KCF2=6000 INAD
+        KSF2=6001 INAD
+        KCC2=6002 INAD
+        KRS2=6004 INAD
+        KIE2=6005 INAD
+        KRB2=6006 INAD
+
+        OUTAD=040               / Address of serial output, 40 for console
+        TFL2=6000 OUTAD
+        TSF2=6001 OUTAD
+        TCF2=6002 OUTAD
+        TPC2=6004 OUTAD
+        TSK2=6005 OUTAD
+        TLS2=6006 OUTAD
+
+        *17
+BUFLOC, 7777            / Address to store next word received
+
+        *200
+START,  CLA CLL CMA     / Init all our variables
+	DCA BUFLOC
+
+READ,   KSF2            / Have character waiting
+        JMP .-1         / No
+        CLA
+        KRB2            / Get character
+        DCA I BUFLOC    / Save through auto increment location
+	JMP READ
+	$
