@@ -1,0 +1,133 @@
+   1               /  PACK-PUNCH READER
+   2                       *200
+   3 000200  7402          HLT             / Wrong Start Address!
+   4               
+   5                       *7421
+   6 007421  6032  BLK,    KCC             / Fetch a character
+   7 007422  6031          KSF
+   8 007423  5222          JMP .-1
+   9 007424  6036          KRB             / Read the character
+  10 007425  7106          CLL RTL         / Shift up
+  11 007426  7006          RTL
+  12 007427  7510          SPA             / Leader-trailer?
+  13 007430  5222          JMP BLK+1       / Yes, try again
+  14 007431  7006          RTL             / No, finish shift
+  15 007432  6031          KSF             / Wait for low byte
+  16 007433  5232          JMP .-1
+  17 007434  6034          KRS             / OR in low byte
+  18 007435  3726          DCA I LOC       / Store assembled word
+  19 007436  2326          ISZ LOC         / Bump pointer
+  20 007437  2333          ISZ CNT         / Bump counter
+  21 007440  5221          JMP BLK         / Not done, go again
+  22               
+  23               / At this point STOR, TOTL, and SUM were loaded,
+  24               / but not summed.  Set up to load in earnest.
+  25 007441  7200          CLA
+  26 007442  1330          TAD TOTL        / Make TOTL negative
+  27 007443  7041          CIA
+  28 007444  3330          DCA TOTL
+  29 007445  1331          TAD SUM         / Make SUM negative
+  30 007446  7041          CIA
+  31 007447  3331          DCA SUM
+  32 007450  4310  REPT,   JMS READ        / Read high byte
+  33 007451  7106          CLL RTL         / Shift up 4
+  34 007452  7006          RTL
+  35 007453  3332          DCA A1          / Save it
+  36 007454  4310          JMS READ        / Read middle byte
+  37 007455  3335          DCA A2          / Save it
+  38 007456  1335          TAD A2          / Get low 4 bits
+  39 007457  0336          AND P17
+  40 007460  1332          TAD A1          / Finish first word
+  41 007461  3727          DCA I STOR      / Store it
+  42 007462  4341          JMS CHKS        / Update Checksum
+  43 007463  2327          ISZ STOR        / Update STOR pointer
+  44 007464  2330          ISZ TOTL        / Update counter
+  45 007465  7410          SKP             / Not done, keep going
+  46 007466  5303          JMP OUT         / Done, go check checksum
+  47 007467  1335          TAD A2          / Get second byte
+  48 007470  0340          AND P360        / Mask out 4 bits used
+  49 007471  7106          CLL RTL         / Shift it up
+  50 007472  7006          RTL
+  51 007473  3332          DCA A1          / Store as A1
+  52 007474  4310          JMS READ        / Get last of 3 bytes
+  53 007475  1332          TAD A1          / Assemble second word
+  54 007476  3727          DCA I STOR      / Store it
+  55 007477  4341          JMS CHKS        / Update Checksum
+  56 007500  2327          ISZ STOR        / Update STOR pointer
+  57 007501  2330          ISZ TOTL        / Update counter
+  58 007502  5250          JMP REPT        / Not done, go do more
+  59               
+  60               / At this point, the block was loaded, and the
+  61               / checksum should be zero.
+  62 007503  7200  OUT,    CLA
+  63 007504  1331          TAD SUM         / Checksum now zero?
+  64 007505  7440          SZA
+  65 007506  7402          HLT             / No, halt
+  66 007507  5317          JMP STRT        / Yes, load another block
+  67               
+  68 007510  0000  READ,   0               / Read next byte to AC
+  69 007511  7300          CLA CLL
+  70 007512  6032          KCC             / Fetch a character
+  71 007513  6031          KSF
+  72 007514  5313          JMP .-1
+  73 007515  6036          KRB             / Read the character
+  74 007516  5710          JMP I READ      / Return to caller
+  75               
+  76               / Start Here!
+  77 007517  7300  STRT,   CLA CLL
+  78 007520  1325          TAD REF         / Reset LOC to point to STOR
+  79 007521  3326          DCA LOC
+  80 007522  1334          TAD M3          / Init CNT to -3
+  81 007523  3333          DCA CNT
+  82 007524  5221          JMP 7421
+  83               
+  84 007525  7527  REF,    STOR
+  85 007526  7527  LOC,    STOR
+  86 007527  0000  STOR,   0
+  87 007530  0000  TOTL,   0
+  88 007531  0000  SUM,    0
+  89 007532  0000  A1,     0
+  90 007533  0000  CNT,    0
+  91 007534  7775  M3,     7775
+  92 007535  0000  A2,     0
+  93 007536  0017  P17,    17
+  94 007537  0000  A3,     0
+  95 007540  7760  P360,   7760
+  96               
+  97 007541  0000  CHKS,   0               / Update the checksum
+  98 007542  1727          TAD I STOR      / Get word as stored
+  99 007543  0356          AND P77         / Low 6 bits
+ 100 007544  1331          TAD SUM         / Add to sum
+ 101 007545  3331          DCA SUM
+ 102 007546  1727          TAD I STOR      / Get word again
+ 103 007547  0357          AND MHUN        / High 6 bits
+ 104 007550  7112          CLL RTR         / Shift them down
+ 105 007551  7012          RTR
+ 106 007552  7012          RTR
+ 107 007553  1331          TAD SUM         / Add to sum
+ 108 007554  3331          DCA SUM
+ 109 007555  5741          JMP I CHKS      / Return to caller
+ 110 007556  0077  P77,    77              / Low 6 bits
+ 111 007557  7700  MHUN,   7700            / High 6 bits
+ 112               $
+
+A1      7532
+A2      7535
+A3      7537 unreferenced
+BLK     7421
+CHKS    7541
+CNT     7533
+LOC     7526
+M3      7534
+MHUN    7557
+OUT     7503
+P17     7536
+P360    7540
+P77     7556
+READ    7510
+REF     7525
+REPT    7450
+STOR    7527
+STRT    7517
+SUM     7531
+TOTL    7530
