@@ -1,0 +1,92 @@
+   1                       *7670
+   2               D07670, *.+1            / Checksum storage
+   3               S07671, *.+1            / Get a character
+   4 007672  6031  L07672, KSF             / Character ready?
+   5 007673  5272          JMP L07672      / No, check again
+   6 007674  6036          KRB             / Yes, read it
+   7 007675  5671          JMP I S07671    / and return it
+   8               P07676, *.+1            / Location counter
+   9               D07677, *.+1            / Remaining length of block
+  10 007700  0000  D07700, 0               / CDF prototype
+  11               S07701, *.+1            / Assemble word, add to checksum
+  12 007702  1364          TAD D07764      / Merge in saved bits
+  13 007703  3364          DCA D07764      / Save result word
+  14 007704  1364          TAD D07764      / Get result word
+  15 007705  1270          TAD D07670      / Add to checksum
+  16 007706  7430          SZL             / Overflow?
+  17 007707  7101          CLL IAC         / Yes, increment checksum
+  18 007710  3270          DCA D07670      / Store new checksum
+  19 007711  1364          TAD D07764      / Get result word
+  20 007712  5701          JMP I S07701    / and return it
+  21               S07713, *.+1            / Read two words (3 characters)
+  22 007714  4271          JMS S07671      / Get a character
+  23 007715  7106          CLL RTL         / Shift left 4
+  24 007716  7006          RTL 
+  25 007717  3364          DCA D07764      / Save it
+  26 007720  4271          JMS S07671      / Get a character
+  27 007721  0340          AND D07740      / Mask for lower 4
+  28 007722  4301          JMS S07701      / Assemble and update checksum
+  29 007723  3335          DCA S07735      / Save first word
+  30 007724  6036          KRB             / Get middle character again
+  31 007725  7106          CLL RTL         / Shift left 4
+  32 007726  7006          RTL 
+  33 007727  0376          AND D07776      / Mask for upper 4
+  34 007730  3364          DCA D07764      / Save it
+  35 007731  1276          TAD P07676      / Display location counter during wait
+  36 007732  4271          JMS S07671      / Get a character
+  37 007733  4301          JMS S07701      / Assemble and update checksum
+  38 007734  5713          JMP I S07713    / return second word
+  39               S07735, *.+1            / Store a word, adjust length, loc.
+  40 007736  3676          DCA I P07676    / Store a word
+  41 007737  2276          ISZ P07676      / No, increment location counter
+  42 007740  0017  D07740, 17              / ????
+  43 007741  2277          ISZ D07677      / Last word?
+  44 007742  5735          JMP I S07735    / and return
+  45 007743  5365          JMP L07765      / Yes, go start another block
+  46 007744  4313  L07744, JMS S07713      / Get 2 words
+  47 007745  7200          CLA             / Ignore 2nd for now
+  48 007746  1335          TAD S07735      / Get first word
+  49 007747  4335          JMS S07735      / Store it
+  50 007750  1364          TAD D07764      / Get 2nd word
+  51 007751  4335          JMS S07735      / Store it
+  52 007752  5371          JMP L07771      / Go checksum if done
+  53 007753  6032  L07753, KCC             / Start here
+  54 007754  4271  L07754, JMS S07671      / Get a character
+  55 007755  7440          SZA             / Zero?
+  56 007756  5354          JMP L07754      / No, keep looking
+  57 007757  4271          JMS S07671      / Yes, Get next character
+  58 007760  3270          DCA D07670      / Save it
+  59 007761  1300          TAD D07700      / Get CDF instruction
+  60 007762  6034          KRS             / Merge in this character
+  61 007763  3364          DCA .+1         / Save merged word
+  62               D07764, *.+1            / Change data field
+  63 007765  4313  L07765, JMS S07713      / Get 2 words
+  64 007766  3277          DCA D07677      / Store 2nd word (length)
+  65 007767  1335          TAD S07735      / Get first word
+  66 007770  3276          DCA P07676      / Set location counter
+  67 007771  1277  L07771, TAD D07677      / Get length remaining
+  68 007772  7640          SZA CLA         / Is it zero?
+  69 007773  5344          JMP L07744      / No, go do some loading
+  70 007774  1270          TAD D07670      / Yes, get checksum
+  71 007775  2270          ISZ D07670      / Better be -1
+  72 007776  7402  D07776, HLT             / Oops, checksum error
+  73 007777  5353          JMP L07753      / OK, go start another segment
+  74               $
+
+D07670  7670
+D07677  7677
+D07700  7700
+D07740  7740
+D07764  7764
+D07776  7776
+L07672  7672
+L07744  7744
+L07753  7753
+L07754  7754
+L07765  7765
+L07771  7771
+P07676  7676
+S07671  7671
+S07701  7701
+S07713  7713
+S07735  7735
