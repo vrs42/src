@@ -1,0 +1,289 @@
+*20
+/SPFLT
+/SINGLE PRECISION FLOATING POINT PACKAGE
+/BY DILL, STAUFFER & STACY
+/U.N.CAROLINA
+	*1400
+M1,	 0
+E1,	 0
+M2,	 0
+E2,	 0
+/CONS FOR FIX
+/TO FLT CONV
+K3,	 13
+/PICK 1---
+/COMMON TO ALL
+/SUBROUTINES
+P1,	 ADA  I 
+	3
+	STA 
+	P3
+	ADA  I 
+	-6003
+	STC  3
+	LDA  3
+	STC  1
+	LDA  I  3
+	STC  2
+	LDA  I  3
+	STC  3
+	LDA  2
+	STC  M2
+	LDA  I  2
+	STC  E2
+	LDA  1
+	STC  M1
+	LDA  I  1
+	STC  E1
+	SET  I  1
+	M1
+	SET  I  2
+	M2
+	JMP  0
+/ADD SUBROUT
+/SUB ENTRANCE
+	CLR 
+	ADD  0
+	JMP  P1
+	ADD  M2
+	COM 
+	STC  M2
+	JMP  .+4
+/ADD ENTRANCE
+	CLR 
+	ADD  0
+	JMP  P1
+	LDA  1
+	BCO  2
+	APO 
+	JMP  .+4
+	LDA  I 
+Z5,	 NOP 
+	JMP  .+3
+	LDA  I 
+	JMP  N1
+	STC  A2
+	ADD  E2
+	COM 
+	ADD  E1
+	AZE 
+	JMP  .+3
+	LDA  2
+	JMP  A2-1
+	APO  I 
+	JMP  .+6
+	COM 
+	SET  I  1
+	M2
+	SET  I  2
+	M1
+	STA  3
+	LDA  1
+	AZE  I 
+	JMP  A4
+	LDA  3
+	ADA  I 
+	-13
+	APO  I 
+	JMP  P2
+	ADA  I 
+	SCR  I  13
+	STC  A1
+	LDA  2
+A1,	 0
+	JMP  R2
+	ADM  1
+A2,	 0
+	BCO  2
+	APO  I 
+	JMP  P2
+	LDA  1
+	SCR  I  1
+	BCO  I 
+	4000
+	JMP  R2
+	STA  1
+	SET  2
+K1,	 1
+	LDA  I  2
+	ADD  K1
+	STA  2
+/PICK 2
+/COMMON TO ALL
+/SUBROUTINES
+P2,	 LDA  1
+	STA  3
+	LDA  I  1
+	STA  I  3
+	CLR 
+P3,	 0
+/ROUNDS OFF
+R1,	 SRO  I 
+	5252
+	JMP  0
+R2,	 STC  A1
+	ADD  0
+	STC  R3
+	ADD  A1
+	APO 
+	JMP  .+4
+	LZE 
+	ADD  K1
+	JMP  0
+	LZE  I 
+	ADD  K2
+R3,	 0
+/DIVIDE SUB
+	CLR 
+	ADD  0
+	JMP  P1
+	ADD  E2
+	COM 
+	JMP  E3
+	LDA  1
+	BCO  2
+	ROL  1
+	BCL  I 
+K2,	 7776
+	ADD  Z5
+	STC  Z4
+	STA  3
+	LDA  2
+	AZE 
+	JMP  .+4
+	LDA  I 
+	3700
+	STC  E1
+	APO 
+	COM 
+	STA  2
+	LDA  1
+	APO 
+	COM 
+	STA  1
+	COM 
+	ADA  2
+	APO  I 
+	JMP  D1
+	LDA  1
+	SCR  I  1
+	JMP  R1
+	STC  M1
+	ADD  E1
+	ADD  K1
+	STC  E1
+D1,	 LDA  2
+	COM 
+	JMP  .+2
+D2,	 LDA  2
+	ADA  1
+	ADA  1
+	STA  1
+	APO  I 
+	JMP  D3
+	AZE 
+	JMP  D4
+D3,	 LDA  3
+	BSE  I 
+D5,	 4000
+	STA  3
+	SRO 
+	D5
+	JMP  D7
+	JMP  D1
+D4,	 SRO 
+	D5
+	JMP  D7
+	JMP  D2
+D7,	 LDA  3
+	SCR  I  1
+	BCL  I 
+	4000
+Z4,	 0
+	STA  3
+	JMP  M3
+/MULTIPLY SUB
+	CLR 
+	ADD  0
+	JMP  P1
+	ADD  E2
+	JMP  E3
+	LDA  1
+	MUL 
+	M2+4000
+	STA  3
+	LDA  1
+	MUL  2
+	ROL  I  2
+	LDA  3
+M3,	 ROL  1
+	BCO  3
+	APO 
+	JMP  M4
+	LDA  3
+	ROL  I  1
+	STA  1
+	CLR 
+	ADD  E1
+	ADD  K2
+	STC  E1
+	JMP  P2
+M4,	 LDA  3
+	JMP  R1
+	STA  1
+	JMP  P2
+/FIX TO FLOAT
+/ENTER WITH ADD
+/IN A REGISTER
+	STC  1
+	LDA  1
+	STC  E2
+	SET  I  1
+	E2
+	ADD  0
+	STC  P3
+	JMP  P1+21
+/NORMALIZE SUB
+N1,	 SET  2
+	1
+	XSK  I  2
+	LDA  1
+	AZE 
+	JMP  N2
+	STA  2
+	JMP  P2
+N2,	 ROL  1
+	BCO  1
+	APO 
+	JMP  P2
+	LDA  2
+	ADD  K2
+	STA  2
+	LDA  1
+	ROL  1
+	STA  1
+	JMP  N2
+/EXPONENT CHK
+E3,	 ADM 
+	E1
+	APO 
+	COM 
+	ADD  N1
+	APO 
+	HLT 
+	JMP  0
+/TFL 
+	CLR 
+	ADD  0
+	ADD  A4+1
+	JMP  P1+2
+A4,	 SET  1
+	2
+	JMP  P2
+/END SPFLT
+$R 
+	ADD  E1
+	ADD  K2
+	STC  E1
+	JMP  P2
+M4,	 LDA

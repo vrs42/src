@@ -1,0 +1,768 @@
+
+
+
+
+
+
+
+
+
+
+                               SORT/MERGE/XTRACT
+
+               A Package Of OS/8 Compatible Sort - Merge Programs
+
+
+
+                           Small Computer Laboratory
+                    Department of Physiology and Biophysics
+                    West Virginia University Medical Center
+                        Morgantown, West Virginia 26506
+
+
+
+                                 SORT Version 8
+                                  June 1, 1977
+
+
+
+                                MERGE Version 2
+                                  June 1, 1977
+
+
+
+                                XTRACT Version 1
+                                  June 1, 1977
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               SORT/MERGE/XTRACT
+
+              This  document  describes  a  package  of  programs  for
+         dealing with OS/8 ASCII files.  The principal utility is SORT
+         which was written in it's original version by C. G. Roby Jr..
+         MERGE and XTRACT are companion  programs  to  assist  in  the
+         efficient  sorting  of large data sets.  MERGE was written by
+         James B. Coryell of Dataproducts Corporation  and  XTRACT  by
+         Thomas  W.  McIntyre  and  Alan  Smothers  of  WVU.  JBC also
+         extensively revised  SORT  from  version  6  to  7.   TMC  is
+         responsible for the present versions of all the programs.  
+
+
+                                     SORT
+
+              SORT  is  a program to sort OS/8 compatible ASCII files.
+         The sorting is by records.  A  record  is  defined  to  be  a
+         string  of  no  more  than 512 ASCII characters.  A record is
+         terminated by "n" lines or  an  arbitrary  Record-Mark  (rm).
+         Normally any of the characters LF, FF, or VT will be taken as
+         a line terminator.  CR is always ignored.  If /Y is given  as
+         an option, FF is also ignored.  The string consists of one or
+         more lines.  A line is terminated  with  a  line  feed.   All
+         other  control  characters except tabs are ignored.  A record
+         which has only control characters is called a 'null'  record.
+         'Null'  records  are ignored.  That is, there will be no null
+         records in the output file.  
+
+              The user has the option to define fields for the sorting
+         either  by  fixed  column  positions  or bounded by arbitrary
+         delimiting characters.  The sorting can be  either  ascending
+         or  descending within each field.  The sorting procedure used
+         is a multi-pass sort-merge with intermediate temporary output
+         files.   The devices for the output files may be specified by
+         the user to optimize the sorting.  
+
+              To run SORT under OS/8, type in response to the  monitor
+         ".":  
+
+                       .R SORT
+         or            .R SORT (field definitions)
+         or            .R SORT (field definitions) n
+         or            .R SORT (field definitions) n #rm
+
+              When  SORT  is  loaded it calls Command Decoder for user
+         input of I/O specifications.  In response to the asterisk the
+         user  may  specify  up  to  nine  input files and up to three
+         output files.  The input files will  be  construed  to  be  a
+         single file.  The first output file is the sorted output, the
+         next  two  are  the  intermediate   work   files.    If   the
+         intermediate  files  are omitted, the files DSK:SRTWK1.TM and
+         DSK:SRTWK2.TM are created.  If only devices are specified for
+         the  second  and  third  output  files,  then  SRTWK1.TM  and
+         SRTWK2.TM will be created on the user specified devices.  For
+         small  or  slow I/O devices, the temporary files should be on
+
+
+
+                                    SORT-2
+
+
+
+
+
+         different devices to improve the sort speed.  The first  pass
+         output  is  to  the  third  output  file.  The lengths of the
+         intermediate files will be one  and  one-half  to  twice  the
+         length  of  all the input files.  The intermediate files must
+         reside on directory devices.  If SORT cannot open  these  two
+         files,  an  error will be printed out.  The option switch "S"
+         may be  used  to  specify  BASIC  compatible  stripped  ASCII
+         compares.   The  input  files are still assumed to be in full
+         ASCII, but the strange compares of BASIC are used  (i.e.  the
+         control  characters  and  numbers  are  "later"  in the ASCII
+         sequence than the alphabetics).  If this option is used,  the
+         delimiter  form of field specification can not be used with a
+         numeric field.  Examples of command decoder lines follow:  
+
+                       *SRTOUT<INPUT
+
+              SRTWK1.TM and SRTWK2.TM are  created  on  DSK:.   SRTOUT
+         will  go  to DSK: when sorting is complete.  INPUT is assumed
+         to be on DSK:.  
+
+                       *DSK:SRTOUT,SYS:WORKB,DSK:WORKA<SYS:INPUT/Z
+
+              On a system with slow or small mass  store  devices  the
+         'Zigzag'  option  will  optimize  the  I/O  operations.   The
+         devices for the files should be  alternated  in  the  command
+         decoder  line  as  shown and the option specified.  SORT will
+         make an extra pass if necessary to avoid reading and  writing
+         on  the  same device.  This option should not be used on disk
+         since it will generally  require  an  additional  pass  which
+         usually  will take longer than the one disk copy.  There need
+         not be room on the final output device for both a  work  file
+         and  the  output  since  the work file will have been deleted
+         before the final pass.  
+
+                       *SRTOUT,DTA1:,SYS:<INPUT/S/T
+
+              INPUT will be sorted and sent to SRTOUT on device  DSK:.
+         The  files  DTA1:SRTWK1.TM  and SYS:SRTWK2.TM will be used as
+         intermediate files.  The comparisons will be made on stripped
+         6  bit  codes.   The  /T  will  cause  a  line  starting with
+         control-T to over-ride the sort field definitions.  
+
+
+
+
+
+                               FIELD DEFINITIONS
+
+              The field definitions for the sorting are entered on the
+         line  with  the "R SORT" command to the OS/8 monitor, or as a
+         line or lines in the input file using  the  "/"  option  with
+         command  decoder  to  select the desired control line.  There
+         are two possible formats for  field  definitions:  column  or
+         delimiter.   A  total of 32 keys may be defined by columns or
+         42 by delimiter.  
+
+
+
+                                    SORT-3
+
+
+
+
+
+
+
+                             COLUMN DEFINED FIELDS
+
+              To enter definitions by column, type:  
+
+                  (Starting col., length, C or N, A or D; ...)
+
+              Each field to be used in the sorting is defined  as  the
+         initial column of the field and the field length.  Additional
+         parameters are Character or Numeric sort specified by C or N,
+         and  Ascending  or Descending order specified by A or D.  All
+         parameters within a field are separated by commas  and  field
+         definitions  are  separated  by  semicolons.   The fields are
+         defined in order as major field, 1st minor, 2nd  minor,  etc.
+         Fields  are  not  reordered  on output so that the individual
+         records  maintain  their  original  internal  sequence.   The
+         entire  set  of  definitions must be enclosed by parentheses.
+         Tabs in the input file are expanded to enough spaces  to  tab
+         to fixed tab stops of 9, 17, 25, ...  
+
+              If  any  fields  are  defined  the  starting column must
+         always be given.  If the length is omitted it is  assumed  to
+         be one.  If the type is omitted it is assumed to be Character
+         and if the order is omitted it is assumed  to  be  Ascending.
+         For example:  
+
+                       .R SORT (7,3; 10,4,,D)
+
+         defines the major field to start at column 7 and go to column
+         9, Character, Ascending; and defines one minor field starting
+         at  column  10 and going to column 13, Character, Descending.
+         Note that if a parameter is omitted, the commas must still be
+         present  if  any  other  parameters  follow in the same field
+         definition.  
+
+              For multiple-line records, the last character of a  line
+         immediately precedes the first character of the next line.  
+         For example, the three-line record:  
+
+         ABC
+         DEFGHI
+         JKLM
+
+         is equivalent to the single-line record:  
+
+         ABCDEFGHIJKLMN 
+
+
+                            DELIMITER DEFINED FIELDS
+
+              Alternatively,  fields  may  be  defined by a delimiting
+         character.  Any ASCII character  may  be  used.   The  format
+         using delimiters is:  
+
+
+
+
+                                    SORT-4
+
+
+
+
+
+
+
+
+
+                  (=Delimiter char., field no., C or N, A or D; ...)
+         or       (#Delimiter code,....................)
+
+              The  first item must be the equal sign which is followed
+         by the delimiting character.  The "=delimiter char."  can  be
+         replaced  with  "#223"  where "223" is the octal value of the
+         delimiter. (Used to get around Keyboard Monitor limitations).
+         This construction is not repeated in minor field definitions.
+         The fields are then specified by number with  one  being  the
+         field  to  the left of the first occurrence of the delimiting
+         character.  The remaining parameters  are  the  same  as  for
+         column definitions.  Tabs in the input file are not expanded.
+         For example:  
+
+                       .R SORT (=#, 3; 2,,D)
+         or            .R SORT (#243, 3; 2,,D)
+
+         defines the major field to lie between the second  and  third
+         occurrence of the # and to be sorted by Character, Ascending;
+         and defines one minor field  between  the  first  and  second
+         occurrences  of # to be sorted by Character, Descending.  The
+         tab character is convenient for sorting tabulated records but
+         is inconvenient to use in this documentation.  
+
+              For multiple-line records, the end of line is equivalent
+         to placing a  delimiter  character  at  that  position.   For
+         example,  if # was the delimiting character and the following
+         three-line record was given to SORT:  
+
+         ABC#DEFGHI
+         JKLM
+         NOP#QRS
+
+         then SORT would use it as if the record had been  a  one-line
+         record:  
+
+         ABC#DEFGHI#JKLM#NOP#QRS 
+
+
+
+
+
+                               RECORD DEFINITION
+
+              The  number  n  following  the  right parenthesis of the
+         field specification, if present, is the number of lines which
+         SORT will use as a single record.  If this number is omitted,
+         then SORT will use each input line as a record.  The  #rm  if
+         present will cause the arbitrary octal code (rm) to terminate
+         the record if found before n lines.   (#rm  must  be  in  the
+         range of 201-376 octal).  
+
+
+
+                                    SORT-5
+
+
+
+
+
+
+              For example:  
+
+                       .R SORT (field definitions) 3 #244
+
+         indicates  that  each  record  consists  of  1  to  3  lines,
+         terminated by the third line-feed or the  first  "$"  (dollar
+         sign) found.  If you use the #rm then n should be longer than
+         the largest record.  One should note that if the  input  file
+         has  extra  lines which do not constitute a full record, then
+         that record is lost.  That is,  if  there  are  6  lines  per
+         record,  and  there are 4 extra lines at the end of the input
+         file, these 4 lines are lost.  If record marks  are  used  as
+         the end of line character, the character following the record
+         mark  becomes  the  first  character  of  the  next   record.
+         (Usually  this  is  a  carriage return, which results in each
+         record beginning with a blank line.  This can be  avoided  by
+         making the record mark the first character of each record and
+         placing an "extra" record mark at the end of the file.   This
+         has  the  effect of making the extraneous blank line the last
+         line of each record rather  than  the  first  and  simplifies
+         field counting.) 
+
+
+                             DEFAULT SPECIFICATION
+
+              If  no  fields  are defined at all, SORT assumes a field
+         from column 1 to 80 to be sorted by  character  in  ascending
+         order using single line records.  Thus:  
+
+                                 .R SORT
+         is equivalent to        .R SORT (1,80,C,A)
+
+         This serves to alphabetize unit records which either begin at
+         column one or have a uniform first character such as a tab.  
+
+
+
+                             INFILE CONTROL RECORDS
+
+              The same rules apply to INFILE  CONTROL  RECORDS  as  to
+         definitions on the command (.R SORT) line.  The difference is
+         that  the  selected  control   line   must   start   with   a
+         control-character  ^A thru ^H, or ^N thru ^X.  The characters
+         ^I (tab), ^J (lf), ^K (vt), ^L (ff),  and  ^M  (cr)  are  not
+         used.   In  multiline records, the infile field definition is
+         considered a non-sorting  record.   Therefore  it  should  be
+         terminated  by  a  record mark or padded with enough lines to
+         make it one  record  long.   If  there  is  only  one  infile
+         definition record (i.e. only one line starting with a control
+         character in the file), the default record definition of  one
+         line  records  is used to read it and padding is unnecessary.
+         If there is more than one such line, the second must  conform
+         to  the  record  definition  of  the  first  if  the first is
+         selected by the option switch.  Very  little  harm  can  come
+
+
+
+                                    SORT-6
+
+
+
+
+
+         from  using the record definition character after each infile
+         definition record except in the use of XTRACT  where  it  may
+         cause   the  Boundary  Records  to  be  improperly  assigned.
+         Therefore, do not use more than one  infile  definition  with
+         XTRACT and do not use a record terminator for it.  If you are
+         confused, see the example with the XTRACT writeup at the  end
+         of this document.  
+
+              To  select  an  infile  definition at run time, type "/"
+         followed   by   the   letter   which   corresponds   to   the
+         control-character.   Sorting  lines  starting with ^A thru ^H
+         will be passed to the  front  of  the  output  file  in  same
+         sequence  as  found in file.  (This is useful to force titles
+         to front of sort).  Line starting with ^N  thru  ^X  will  be
+         dropped  from  the output file.  If /S is used on the command
+         line, the file will be sorted in BASIC stripped  ASCII  using
+         the  infile  definition  line  starting  with  ^S.   The same
+         restriction applies to  the  /R  option  of  MERGE.   If  the
+         control  line  is  not  at  the  start of input file the sort
+         parameters will be changed when the line is found.  This  may
+         cause  strange  output  sorts  as pass 2 will not re-sort the
+         first part of the file.  There can be more than  one  control
+         line in the file and each definition selected will change the
+         sort at the point where it is found.  
+
+
+
+
+
+                                SORTING METHODS
+
+              SORT can  either  sort  a  field  by  characters  or  by
+         numbers.  
+
+              When  sorting  by  characters, SORT uses the 8-bit ASCII
+         sorting sequence.  That is, a space (240(8)) is lower in  the
+         character  sequence  than a zero character (260) and they are
+         both lower than an 'A' (301).  A tab is always  converted  to
+         spaces except when it is used as a delimiter character.  SORT
+         does not use any character whose  ASCII  equivalent  is  less
+         than 240.  
+
+              When sorting by numbers, SORT converts the number by the
+         following  algorithm.   Leading  spaces  in  the  field   are
+         ignored.   A  plus  or minus sign indicates whether or not to
+         negate the final result.  The sign can be directly  in  front
+         of  the  first  digit  or may be separated from the number by
+         spaces.  Conversion begins with a digit 0-9 and ends when the
+         field  is  exhausted  or  when  a  non-numeric  character  is
+         recognized.  Numbers should be in the range -2048  to  +2047.
+         If  numbers  in  the  record are not in this range, break the
+         numeric field down into a numeric field with range  as  above
+         and  a  character field for the remainder of it.  However, it
+         is usually easier to just sort such numbers as  ASCII  fields
+         if  they  are  right justified.  Signed numbers with floating
+
+
+
+                                    SORT-7
+
+
+
+
+
+         sign are the only  exception.   For  left  justified  numeric
+         fields  there  is  no  method  available for handling numbers
+         larger than 2047 in absolute value.  
+
+
+
+
+
+                           SPECIAL OPERATING FEATURES
+
+              SORT can be chained to in the normal  way  described  in
+         the  OS/8  Handbooks,  particularly in the description of the
+         User Service Routine functions.  When SORT is chained to,  it
+         assumes that the Command Decoder area of field 1 has been set
+         up with appropriate input and output files.  It also  assumes
+         that  location  01000+  has  been  initialized with a command
+         string of the from that SORT expects.   This  is  simply  any
+         string  which  has a left parenthesis, the field definitions,
+         and a right parenthesis to end them.  An optional number  for
+         number  of lines per record can also be given.  The line must
+         end with a zero word.  SORT will also take the command string
+         from the input file if "/" option is used.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                    SORT-8
+
+
+
+
+
+                                     MERGE
+
+              MERGE  will  merge  2  sorted  input files into 1 output
+         file.  Strange but predictable results  will  occur  if  both
+         input  files are not sorted in the merge sequence.  MERGE has
+         no work files.  
+
+              MERGE has a replace option "/R".  With this option if  a
+         line in file#1 matches a line in file#2 in the sorted fields,
+         the line from file#1 will go to the output file, and the line
+         from  file#2  will be dropped.  This provides a way to update
+         records with a new file#1 replacing the match in old  file#2.
+         To  do  a delete without replacing, bring in a dummy line and
+         later use TECO or EDIT to find and delete the dummy lines  in
+         the output file.  
+
+              To  run  MERGE  type  in response to the command decoder
+         asterisk:  
+
+
+         *OUTPUT<FILE1,FILE2(OPTIONS)
+
+
+         no work files are created  and  the  process  proceeds  in  a
+         single   pass.   All  record  and  field  specifications  are
+         identical to those described for SORT.  
+
+
+                                    XTRACT
+
+              XTRACT can be used to reduce the  size  of  a  data  set
+         before  sorting.  The RECORD and FIELD definitions for XTRACT
+         are identical to those for SORT and MERGE.  XTRACT also  uses
+         a  pair  of  sentinal  records called the Lower Bound and the
+         Upper Bound.  These are taken as the first two records in the
+         input  stream.   In  the  basic XTRACT operation, all records
+         greater than or equal to the lower bound  and  less  than  or
+         equal  to  the  upper  bound a passed to the output file.  An
+         option switch (/V) is available to invert the  sense  of  the
+         operation.   If  /V  is  specified all records lower than the
+         lower bound or greater than the upper bound are passed to the
+         output  file.   The  following  example  shows a control file
+         containing the record and field  definition  information  and
+         boundary  records  to  extract  all  names  starting with the
+         letters G to N:  
+
+
+         ^G THIS STARTS WITH CTRL/G (#240,3,C,A) 15 #243
+         DUMMY
+         DUMMY G
+         #
+         DUMMY NZZZZ
+         #
+
+
+
+
+
+                                    SORT-9
+
+
+
+
+
+         note that the boundary records need not look exactly like the
+         actual input records as long as they conform to the field and
+         record definitions.  The actual input records likely have  an
+         identification  key  on the first line of the record with the
+         name on the second line.  The records are  no  more  than  15
+         lines  long  and end with the # record terminator.  It should
+         also be  noted  that  the  infile  sort  key  should  not  be
+         terminated  by  the record terminator since at the time it is
+         read, the default record definition  is  in  effect  (1  line
+         records).   If  a  #  record  mark were used the record count
+         would be off  by  one  and  the  boundary  records  would  be
+         improperly  read.   On  the  other hand when record marks are
+         used, each record terminates with the  record  mark  and  the
+         CR-LF  pair  that  follows  the record mark becomes the first
+         line of the next multi-line record.  Therefore, there must be
+         an  extra  dummy  line preceding the first boundary record if
+         record marks are being used.  This problem can be  alleviated
+         by  using  leading,  rather than trailing record marks but at
+         the expense of making the data file more confusing  to  read.
+         Leading record marks cause the troublesome carriage return to
+         be the last line rather  than  the  first  of  the  multiline
+         record.  
+
+              To  run  XTRACT  first  prepare  the file containing the
+         boundary  records  and  optionally  the  field   and   record
+         definitions,  then  type  .R XTRACT  and  in  response to the
+         command decoder's asterisk:  
+
+
+         *OUTPUT<BOUNDS,INPUT(OPTIONS)
+
+
+         as for MERGE the process will proceed in  one  pass  with  no
+         work  files.  Once again the field and record definitions are
+         identical to those for SORT.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   SORT-10
+
+
+
+
+
+                                 OPTION SUMMARY
+
+
+            /S     Sort using BASIC'S sixbit ASCII characters.  
+
+            /Y     Ignore formfeed characters imbedded  in  the  input
+                   file.  
+
+
+
+                            SPECIAL OPTION for SORT
+
+
+
+            /Z     Optimize sorting for slow I/O devices.  
+
+
+                           SPECIAL OPTION for MERGE
+
+
+            /R     Merge  two  files, replacing duplicate lines in the
+                   second input file with lines from the  first  input
+                   file.  
+
+
+                           SPECIAL OPTION for XTRACT
+
+
+            /V     Invert  the  sense  of  record  extraction, extract
+                   those records falling  outside  the  range  of  the
+                   boundary records.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                      NOTE
+
+         All  octal numbers must be in the range of 201 to 376.  (Sort
+         forces the parity bit on while reading input).  
+
+
+
+
+
+                                   SORT-11
+
+
+
+
+
+
+
+
+
+                             FATAL ERROR MESSAGES
+
+
+         OE?     OUTPUT ERROR 
+
+
+         OER     NO ROOM FOR OUTPUT FILE 
+
+
+         IE      INPUT ERROR, FILENAME 
+
+
+         OE      CAN'T OPEN OUTPUT FILE 
+
+
+         WD      WORK DEVICE IS NOT DIRECTORY ORIENTED 
+
+
+         NRW     NO ROOM FOR WORK FILE 
+
+
+         FE      FATAL SORT PROGRAM ERROR 
+
+
+         FI      INPUT EXCEEDED BUFFER.  
+
+
+         IS      ILLEGAL SYNTAX IN SORT SPECIFICATION.  
+
+
+
+
+                           NON-FATAL ERROR MESSAGES
+
+
+         IE 512  INPUT RECORD EXCEEDS 512 CHARACTERS.  TRUNCATING.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   SORT-12
+

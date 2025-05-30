@@ -1,0 +1,202 @@
+                  The Use of TM8E Magnetic Tape
+
+                          on the PDP-8
+
+
+
+
+     Industry compatable magnetic tape remains  the  most  widely
+supported  and cost efficient means for storing large data bases.
+Although character codes and record length  often  vary,  9-track
+tapes  written on one computer can generally be read on any other
+computer equiped for 9-track tape.  In order to  use  DEC's  TM8E
+controller  and  9-track TU-10 drive, it is essential that rather
+extensive software changes be made in order to write  tapes  that
+can  be  efficiently  referenced  on  the  PDP-8  and  which  are
+compatable with other computers (including other DEC  computers).
+This writeup describes some of the hardware/software deficiencies
+of DEC's  TM8E/TU-10  hardware  and  accompanying  software,  and
+describes the use of the MTFOTP program and TM8EZ handler written
+to circumvent these deficiencies.
+
+     The TM8E allows the user to write on 9-track tape in  either
+of  two  modes:   "Core-dump"  mode  which essentially treats the
+9-track tape as if it were 7-track, and "9-track" mode which only
+writes  the eight right-most bits from each twelve bit word.  The
+latter mode does not allow convential OS/8 buffers to be written,
+and  then read without the loss of one-third of the characters in
+the buffer!  The former produces tapes which cannot  be  read  on
+other 7- or 9-track drives because 9-tracks are actually written,
+but without  industry  compatable  parity  and  CRC  information.
+Thus,  data  written  on  such  a system is retrievable only by a
+PDP-8 and cannot be read by a different  computer  for  analysis.
+In  addition,  MCPIP  and  PIP,  the  only OS/8 programs that are
+reasonably designed to reference  magnetic  tape,  are  extremely
+awkward to use.  They require extensive tape motion to keep track
+of what is on a tape (MCPIP), or demand  the  user  assume  total
+responsibility  for  keeping  track  of what data is where (PIP).
+CAMP only allows for positioning of the magnetic  tape  and  does
+not transfer information.
+
+     One additional problem with the TM8E is that a hardware  EMA
+increment  error  prevents reading or writing core location 70000
+with any available handler.
+
+     We have solved these difficulties (except the EMA  increment
+error) as follows:
+
+     I.  TM8EZ magnetic tape handler.
+
+     A new handler was written which uses the  calling  sequences
+as  documented  in  the OS/8 Software Support Handbook, and reads
+and writes standard OS/8  buffers.   However,  because  the  TM8E
+hardware will not write standard OS/8 buffers in 9-track mode, it
+is necessary that the handler  reformat  the  data  into  a  form
+compatable  with  the hardware.  (Standard buffers can be written
+Mag-Tape for the PDP-8                                     Page 2
+
+
+in "core-dump" mode but then tapes cannot  be  read  on  industry
+compatable drives.) This requires that (1) more than two pages of
+code are necessary for the handler and (2) an  additional  buffer
+is necessary between the OS/8 buffer and the magnetic tape.  This
+additional code is stored in system block 66 (the block used  for
+the extended TD8E handler) and executed in the first two pages of
+the field defined in the source file.  The bulk of the  remainder
+of  this same field is then used as buffer area.  In general, the
+highest available field of core is dedicated to this purpose with
+programs  that  use the TM8EZ handler.  System block 66 is loaded
+by the program TM8ESU, which may be run explicitly, or which will
+be  run  automatically  the  first time TM8EZ is called following
+rebuilding (not rebooting) of the system.  TM8EZ is  loaded  with
+BUILD in exactly the same manner as any other handler.
+
+     The TM8EZ handler is only necessary if  the  user  wants  to
+write  machine  independent  9-track  magnetic  tapes.  Otherwise
+DEC's TM8E handler is sufficient.  Note  that  a  hardware  "bug"
+makes  it  impossible to read or write location 0 of field 7 with
+either handler without generating an error.  (This is because the
+EMA-7  increment  error  is  not  gated  with the EMA-7 increment
+enable  bit.)  To  implement  the  TM8EZ  handler,  in  the  file
+TM8ESU.PA,  set  MYFLD=<the  field  for  the extended handler and
+buffer>, then compile, load and  save  TM8ESU.SV.   In  the  file
+TM8EZ.PA,  set  XFIELD=<same field as MYFLD>, compile, then using
+BUILD, load TM8EZ and insert TM8X,MTA0.
+
+     Use of the TM8EZ handler produces  default  records  of  384
+eight  bit bytes (256 12 bit words or one OS/8 block), each frame
+being decoded from the twelve bit PDP-8 words according  to  OS/8
+ASCII convention.
+
+     II.  MTFOTP (Mag-Tape-File-Oriented-Transfer-Program)
+
+     MTFOTP is a modification to DEC's FOTP which treats magnetic
+tape  (MTA0:   only) as a special directory oriented device while
+at the same time retaining  other  FOTP  functions.   Indeed,  by
+using  the name FOTP.SV for MTFOTP.SV, CCL commands equivalent to
+those used to copy to and from other directory devices  may  also
+reference  magnetic  tape.   Four  additional  features have been
+added for convenience in using magnetic  tape,  and  are  invoked
+using the appropriate option switches:
+
+     /P -- Causes the mag-tape to be positioned before the  first
+           record  of  the  specified file.  The file can then be
+           read by any program as if  it  came  from  a  non-file
+           structured device.
+
+     /S -- Use a sub-file directory on the mag-tape.
+                On output, the output file  name  (or  the  first
+           input  file  name  if  no output name is given) is the
+           only entry make in the main mag-tape  directory.   All
+           input files (wildcards are legal) are copied and their
+           names are entered into a "sub-file directory".
+Mag-Tape for the PDP-8                                     Page 3
+
+
+                On input from mag-tape, if a /S is specified, the
+           first  input  file  name  is  the name of the sub-file
+           directory and is not transferred.  The remaining input
+           files  are  transferred  from  this  sub-file.   If no
+           second file is specified, *.* is assumed and all files
+           in the sub-file are transferred.
+                This feature allows similar files to  be  grouped
+           together  and  referenced with a single name.  It also
+           allows a mechanism to circumvent the OS/8 maximum file
+           limit.
+
+     /Z -- Zero the mag-tape directory.  Note that MTA0:  must be
+           the  output  device.  Input files are ignored.  A zero
+           directory  must  exist  before  any   files   can   be
+           transferred.
+
+     =nn - This option transferrs nn  files  beginning  with  the
+           first  file  in  the  input  list  if  input  is  from
+           mag-tape.  Subsequent files are  those  in  sequential
+           order immediately following the specified file.
+
+
+     MTFOTP requires 12K of core.  It will work with  DEC's  TM8E
+handler  if  the handler is placed in file mode (use SET).  For a
+7-track TU-10, the DEC supplied TM8E handler must  be  used.   If
+the  TM8EZ  handler  is used, an additional field is required and
+TM8EZ and TM8ESU must be  assembled  accordingly.   As  supplied,
+TM8EZ  and  TM8ESU will use field 3.  The following commands show
+an example of how to backup device  DSK:   on  mag-tape  sub-file
+BACK.01:
+
+      COPY  MTA0:</Z     /First  zero  the  tape's  directory  if
+                         necessary.    Note   that   this   is  a
+                         different  technique  than  for  zeroing
+                         directories on other devices.
+
+      COPY MTA0:BACK.01<DSK:*.*/S
+
+To restore the device, use the command:
+
+     COPY DSK:<MTA0:BACK.01/S
+
+     When using MTFOTP on magnetic tape, the first  file  on  the
+tape  is  essentially  a  dump of an OS/8 directory with an extra
+padding record to protect the file mark.   The  length  of  every
+file (except sub-files) is exactly one "block" so that the "start
+block" of a file is really the file number.   Sub-files  are  N+1
+files long where N is the number of files in the sub-file and the
+additional file is for the  sub-file  directory.   Sub-files  and
+sub-file directories cannot be changed once they are written.
+
+     MTFOTP changes the device control word so that MTA0:   looks
+like  a  directory  device  when  MTFOTP  is  running  but like a
+non-file structured device to all other  programs.   MTFOTP  also
+changes the device control word to make MTA0:  a read-only device
+Mag-Tape for the PDP-8                                     Page 4
+
+
+until the system  is  rebooted.   This  protects  the  user  from
+accidently  overwriting  the  directory.  It is still possible to
+write on tapes without MTFOTP using programs which do  not  check
+the device control word for device properties and after rebooting
+the system.
+
+     III.  DIROVL directory overlay for mag-tape
+
+     DIROVL is an overlay to DEC's DIRECT program (as distributed
+by DECUS) which allows it to access directories on magnetic tapes
+and output the directories  in  the  same  format  as  for  other
+file-oriented devices.  The CCL command
+
+     DIR MTA0:
+
+will produce a listing  of  a  magnetic  tape's  directory.   The
+command
+
+     DIR MTA0:<sfd name>/S
+
+will produce a listing of a sub-file directory from the mag-tape.
+The  /T  option  allows the user to obtain a directory listing of
+all sub-files on a tape.  For example, the command
+
+     DIR MTA0:/T/A=4-L
+
+will produce a line printer listing of the main directory and all
+sub-file   directories.    All   directories   (except  the  main
+directory) will be alphabetized and listed in four columns.

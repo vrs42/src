@@ -1,0 +1,342 @@
+
+
+
+                       DEC10 for the PDP-8
+
+
+
+
+     DEC10 runs on a PDP-8 and allows  the  user  to  communicate
+with  a  PDP-10  via  the  PDP-8's  console  terminal and a KL8-J
+asynchronous communications interface.  The user  can  engage  in
+two-way  conversation  with the PDP-10 as if the PDP-8's terminal
+were hooked directly to the PDP-10.  In addition,  the  user  can
+issue  commands  which transfer files between any OS/8 device and
+the PDP-10 disk.
+
+     Communication with the PDP-10 is  initiated  with  the  OS/8
+command
+
+        .R DEC10
+
+or the CCL command
+
+        .TEN
+
+to  which the PDP-10 will respond if it is connected and running.
+The next "." to appear on the  terminal  is  a  prompt  from  the
+PDP-10  and  not from OS/8.  At this point, the user can type any
+legal command to the PDP-10 and receive its reply as if the PDP-8
+was not even present.
+
+
+
+     1.0  SPECIAL COMMANDS
+
+     If the user begins a command after  the  PDP-10  "."  prompt
+with  a  "/", the command will be intercepted by the OS/8 command
+decoder and will result in any of several actions.   The  command
+must   include   one   or   more   switches   and   an   optional
+device:filename.ext specification.  Since the "/" is  transmitted
+to  the  command  decoder,  the  command must begin with a switch
+specification.  Other switches, of course, may appear anywhere in
+the command line and may be combined in any logical combination.
+
+
+
+     1.1  Login Switch -- /L=nn
+
+     The  /L  switch  logs  the  user  onto  the  PDP-10  account
+[1001,10nn].   The  user  must  supply  the password.  If used in
+conjunction with other switches, the "/L" is superfluous  if  the
+equals  option is non-zero.  If /L is specified without an equals
+option, or if the equals option is zero,  the  PDP-10  is  logged
+onto  account  [1001,1004]  and  the  password is supplied by the
+PDP-8.  The user may log onto any PDP-10 account with an explicit
+LOGIN command.
+DEC10 for the PDP-8                                        Page 2
+
+
+     1.2  Logoff And Return Switches -- /O And /X
+
+     If either  /O  or  /X  is  included  in  a  command  decoder
+specification,  control will be returned to OS/8 after completion
+of the current command.  /O will log the user off of  the  PDP-10
+and /X will return to OS/8 without logging the user off.
+
+
+
+     1.3  Crash Character -- ^\
+
+     If the user gets stuck (for example if the  PDP-10  crashes)
+and  the  normal commands don't work, control will be returned to
+OS/8 when the user types a CTRL-\ (control  backslash,  which  on
+some terminals is a CTRL-SHIFT-L).
+
+
+
+     1.4  Help -- /H
+
+     For a summary of commands and switches, type "/H".
+
+
+
+     2.0  FILE TRANSMISSION -- /S AND /R
+
+     Files may be transmitted to or from the PDP-10.   The  basic
+command is
+
+        /S dev:filename.ext
+
+to send files to the PDP-10 and
+
+        /R dev:filename.ext
+
+to  receive files from the PDP-10.  For this form of the command,
+the files must have the same name on the PDP-10  and  the  PDP-8.
+Only  one  file  can be received with one command.  Several files
+may be sent  with  one  command,  however.   In  this  case,  the
+filenames  and  devices  are separated with commas using standard
+OS/8 conventions and the "wild card" characters "?" and  "*"  are
+allowed.  If no OS/8 device is stated, DSK:  is assumed and if no
+extension is stated, .X0 is assumed.
+
+
+
+     2.1  Explicit PDP-10 Filenames -- /N
+
+     Since OS/8 only  allows  2  character  extensions,  explicit
+names  must  be  specified  to  transfer  PDP-10 files with three
+character extensions.  If the /N option is specified,  the  DEC10
+program  will  prompt  the  user  for  the PDP-10 filename.  This
+feature may also be used to specify devices on the  PDP-10  other
+than DSK:.
+DEC10 for the PDP-8                                        Page 3
+
+
+     2.2  Binary Files -- /B
+
+     Addition  of  the  /B  switch  to  a  /S   or   /R   command
+specification  will  result  in  SKED  format  binary files being
+transmitted.  Files transmitted from the PDP-8 are assumed to  be
+24  bit  integer  numbers  and are stored on the PDP-10 in "image
+mode" format.  The second 12 bit word of each pair on  the  PDP-8
+is  assumed  to  contain the high order bits.  This format may be
+used to backup .SV files on the PDP-10.
+
+
+
+     2.3  PAL10 Image Files -- /I
+
+     Addition of the /I switch to a /S or /R command  results  in
+transmission  of  PDP-10  "image mode" files created by the cross
+assembler PAL10 from the PDP-10 to the PDP-8.  Only the low order
+8 bits of each 36 bit word are transmitted.  Files will be stored
+on the PDP-8 in  a  format  accepted  by  ABSLDR.   "Image  mode"
+transfer from the PDP-8 to the PDP-10 is not implemented.
+
+
+
+     2.4  Execute --/E
+
+     It is possible to send a file to be  executed  as  a  PDP-10
+command  rather  than  having the file stored on the disk.  To do
+this, use the /E switch rather  than  the  /S  switch.   Caution:
+Since  the  entire  file is sent without regard to responses from
+the PDP-10, the file must not be  longer  than  the  PDP-10  will
+allow the user to type ahead.
+
+
+
+     3.0  USING DEC10 WITH PDP-8 CCL AND BATCH
+
+     All of the above commands  may  be  specified  in  a  single
+command  line  with  the  CCL  command  TEN.   When  a legal file
+transmission command is specified as part of the CCL command TEN,
+control  always returns to OS/8 and the user is logged off unless
+the /X switch was specified.  This feature can be  used  to  send
+files  and  submit  jobs  to  the  PDP-10  under OS/8 batch.  For
+example:
+
+        .TEN DATA.10/S/B/L/X    /Login and send a data
+                                /file, binary mode, to the PDP-10.
+                                /Don't logout when done.
+        .TEN SU10/E             /Submit a batch job to the
+                                /PDP-10 to process the data.
+                                /SU10.X0 contains the statement
+                                /  "SU filename"
+                                /Logoff when submitted.
+DEC10 for the PDP-8                                               Page 4
+
+
+Actual comments from the first record of the source file DEC10.PA.______ ________ ____ ___ _____ ______ __ ___ ______ ____ _________
+
+/DEC-10 SYSTEM CONTROLLER -- V 6.07
+/
+/ALLOWS THE PDP-8 TO SIMULATE A REMOTE TERMINAL
+/TO A PDP-10.  IN CONVERSATION MODE, THE PDP-8'S
+/CONSOLE TERMINAL CAN BE USED TO COMMUNICATE WITH THE
+/PDP-10 AS IF THE PDP-8 WAS NOT PRESENT AND THE
+/TERMINAL WAS CONNECTED DIRECTLY TO THE PDP-10.
+/IN ADDITION, FILES CAN BE TRANSMITTED IN EITHER
+/DIRECTION BETWEEN PDP-8 AND PDP-10 PERIPHERAL
+/DEVICES.
+/
+/
+/       WRITTEN BY:
+/               ROBERT W. PHELPS
+/               BEHAVIOR LABORATORY
+/               DEPT. OF RADIATION BIOLOGY AND BIOPHYSICS
+/               UNIVERSITY OF ROCHESTER MEDICAL CENTER
+/               ROCHESTER, NY  14642
+/
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+/
+/       OCCULT COMMANDS SENT BY DEC-10 TO THE DEC-10:
+/       ------ -------- ---- -- ------ -- --- ------
+/               [NOTE:  FOR CHANGES IN THESE OCCULT COMMANDS WHEN
+/               THE "PIP" OPTION IS USED (MAKING IT UNNECESSARY
+/               TO HAVE "SEND3.SAV" ON THE PDP-10), SEE SECTION VI
+/               IN THE DISCUSSION ON CHANGES BELOW.]
+/
+/I.     INITIALIZATION
+/
+/       ^Z ^Z 000 ^Z ^C ^C TTY NO TAB PAGE NO FORM<CR>
+/       I<CR>
+/               /THE ^Z^Z000^Z IS REQUIRED TO GET OUT OF "SEND" AFTER
+/               /  CERTAIN ERRORS HAVE OCCURRED.
+/
+/II.    SEND
+/
+/       RU DSKC:SEND3[1001,1002]<CR>
+/       <FILENAME>=<CR>
+/               (FILE IS SENT HERE)
+/       ^Z^Z<CHECKSUM>^Z
+/               [REPEAT ABOVE 3 LINES FOR EACH FILE]
+/
+/III.   SEND BINARY
+/
+/       RU DSKC:SEND3[1001,1002]<CR>
+/       <FILENAME>=/B<CR>
+/               (FILE IS SENT HERE INCL'D'G <NULL>'S AND SPECIAL CHARACTERS)
+/       ^Z^Z<CHECKSUM>^Z (IN THIS MODE, ^Z IS AN ACTUAL CHARACTER
+/                       IF FOLLOWED BY 0 (NOT AN EOF))
+/               [REPEAT ABOVE 3 LINES FOR EACH FILE]
+/
+DEC10 for the PDP-8                                               Page 5
+
+
+/IV.    RECEIVE
+/
+/       RU DSKC:SEND3[1001,1002]<CR>
+/       <FILENAME><CR>
+/               (RECEIVE FILE UNTIL TWO 232'S (^Z) FOLLOWED BY
+/                       THREE DIGIT CHECKSUM)
+/
+/V.     RECEIVE BINARY
+/
+/       RU DSKC:SEND3[1001,1002]<CR>
+/       <FILENAME>/B<CR>
+/               (FOR SKED AND SAVE FILES)
+/
+/VI.    RECEIVE IMAGE
+/
+/       RU DSKC:SEND3[1001,1002]<CR>
+/       <FILENAME>/I<CR>
+/               (FOR PAL10 IMAGE MODE FILES)
+/
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+/
+/THE OBVIOUS CHANGES THAT MUST BE MADE IN THIS PROGRAM FOR IT
+/TO RUN WITH OTHER PDP-10 INSTALLATIONS ARE LISTED BELOW.  THERE
+/MAY BE OTHERS.
+/
+/I.     THE FIRST CHARACTER OF THE LINE PRINTED IN RESPONSE TO THE "I"
+/       COMMAND (INITIA) -- "U" IN OUR CASE FOR "U OF R ..." --
+/       IS USED TO TURN ON ECHOING.
+/
+/       1. IT IS LOCATED AT <STARTR>+6
+/       2. THERE MAY BE PROBLEMS REQUIRING SPECIAL PROGRAMING IF THIS
+/               CHARACTER OCCURS IN THE INITIALIZATION LINE.
+/
+/II.    DEFAULT LOGIN [PPN] AND PASSWORD ARE LOCATED AT <LOGIN> IN
+/       PACKED ASCII.  SPECIAL HANDLING FOR THE
+/       EQUALS OPTION LOCATED AT <BNOEQ>.
+/
+/III.   CHARACTER TO INITIATE ECHOING AFTER A LOGIN ("J" IN OUR
+/       CASE FOR "JOB ...") IS LOCATED AT <LOC11>+1.
+/
+/IV.    THE DEC-10 MUST HAVE TWO FILES AND THE [PPN]'S AND DEVICES
+/       IF NECESSARY MUST IN THE APPROPRIATE TEXT MESSAGES.  THESE
+/       FILES ARE:
+/               1. END.8        [NO LONGER NEEDED -- FILES
+/                               CAN NO LONGER BE RECEIVED WITHOUT
+/                               USING THE "SEND" PROGRAM.]
+/
+/               2. SEND3.SAV    (ALSO SEE SECTION VI. BELOW)
+/                               IS USED INSTEAD OF PIP FOR SENDING TO
+/                               THE DEC-10 TO INCREASE THE SPEED OF
+/                               TRANSMISSION (PIM MODE) AND TO ALLOW
+/                               BINARY FILES TO BE SENT.  IT ALSO CHECKS
+/                               CHECKSUMS FOR EACH FILE SENT.
+/
+/V.     IOT'S FOR THE KL8J OR OTHER INTERFACE USED FOR CONNECTING
+/       TO THE PDP-10 LINE ARE DEFINED ON PAGE 2-1.
+/
+DEC10 for the PDP-8                                               Page 6
+
+
+/VI.    BY DEFINING A VARIABLE "PIP", THIS PROGRAM MAY BE OPTIONALLY
+/       ASSEMBLED TO USE "PIP" RATHER THAN "SEND3" FOR SENDING FILES FROM
+/       THE PDP-8 TO THE PDP-10.  IN THIS CASE, NO CHECKSUMS ARE
+/       COMPUTED AND BINARY FILES CANNOT BE TRANSMITTED.
+/
+/PIP=0
+/
+/       CHANGES IN THE OCCULT COMMANDS ARE AS FOLLOWS:
+/       1. INITILIZATION:
+/
+/               ^S ^C ^C TTY ECHO NO TAB NO TAPE PAGE NO FORM<CR><LF>
+/                       /THE ^S IS REQUIRED TO GET OUT OF TAPE MODE
+/                       /  IF ^Q WAS PREVIOUSLY SENT.  THIS CAN HAPPEN
+/                       /  IF A SEND OPERATION IS PREMATURELY ABORTED.
+/
+/       2. SEND
+/
+/               TTY NO PAGE NO ECHO TAPE<CR>
+/               R PIP<CR>
+/               <FILENAME>=TTY:^Q<CR><LF>
+/
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+/
+/CORE MAP:
+/       ENTRY POINTS
+/               NORMAL ENTRY:  00200
+/               CCL ENTRY   :  00201
+/
+/       00200-00377     ENTRY POINT AND STARTUP CODE
+/       00000-01777     COMMAND DECODER
+/       00000-02777     INPUT DIRECTORY
+/       10000-11777     USER SERVICE ROUTINE
+/       12000-13577     FILE LOOKUP MODIFIED FROM 'DIRECT.PA'
+/       20000-27577     DEC-10 PROGRAM
+/
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+/
+/TO ASSEMBLE AND LOAD:
+/
+/       .COM DEC10
+/       .LOAD DEC10
+/       .SAVE SYS DEC10
+/
+/       TO USE "PIP" FOR SENDING FILES:
+/               1. REMOVE THE COMMENT "/" FROM PIP=0 ABOVE
+/               2. ASSEMBLE, LOAD, SAVE AND USE AS ABOVE
+/
+/       TO USE "SEND3" FOR SENDING FILES:
+/               1. ASSEMBLE, LOAD, AND SAVE AS FOR "PIP"
+/               2. SEND "SEND3.FAI" TO THE PDP-10
+/               3. ASSEMBLE, LOAD AND SAVE "SEND3" ON THE PDP-10
+/               4. REASSEMBLE, LOAD, AND SAVE DEC10 WITH "PIP" UNDEFINED
+/
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\

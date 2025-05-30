@@ -1,0 +1,177 @@
+		    SPECIAL PURPOSE SUBROUTINES		    SPECIAL PURPOSE SUBROUTINES		    _______ _______ ___________
+
+			  FOR FORTRAN IV			  FOR FORTRAN IV			  ___ _______ __
+
+
+	This list contains a brief description of subroutines written to
+extend the capabilities of D.E.C.'s FORTRAN IV for the PDP-8 and PDP-12.
+Most of the subroutines will run on either PDP-8 or PDP-12 systems
+with or without a hardward FPP.  A few are obviously unique to the
+PDP-12 because they use devices such as the LINK-tape or LINK-scope.
+	These routines were written by:
+
+		Robert W. Phelps
+		Dept. of Rad. Biol. & Biophysics
+		University of Rochester Medical Center
+		Rochester, NY  14642
+
+They are available from the author and from DECUS.
+(If requests are made to the author, please include a marked
+DEC or LINK tape and return postage.)
+
+
+
+
+MODE8MODE8_____
+
+	An 8-mode subroutine may be called from FORTRAN IV by
+the following statements:
+
+	EXTERNAL <name>
+	CALL MODE8 (<name>, <arg1>, <arg2>, ... )
+
+A maximum of six arguments are allowed and arguments not used
+may be omitted.  Thus the simplest call is:
+
+	EXTERNAL <name>
+	CALL MODE8 (<name>)
+
+If arguments are passed, they are truncated to integer values between
+0 and 4095.  The values of the arguments are passed in both directions
+just as in any other FORTRAN subroutine, however, arrays may
+NOT be passed.
+
+	8-mode code must be assembled by RALF and must be completely
+page relocatable.  The subroutine is effectively called by the
+following code in MODE8:
+
+	CDF <calling field>
+	CIF <field of subroutine being called>
+	JMS <name>
+	JMP <return to FORTRAN>
+	  <value of argument 1>
+	  <value of argument 2>
+	   .
+	   .
+	   .
+
+A sample program is included in the source of MODE8.
+SPECIAL PURPOSE SUBROUTINE DIRECTORY (continued)
+
+
+RLINK -- (Entry into READB)RLINK_____
+
+      Allows single LINK tape blocks to be read into a 256
+element array.  The calling sequence is:
+
+	DIMENSION <buffer>(256)
+	CALL RLINK (<block>, <buffer>)
+
+Integer values between 0 and 4095 are read from block <block>
+from the LINK format LINK-tape on unit one (1), and
+are returned as elements of the array <buffer>.  The patch described
+in the USR writeup must be included in FRTS so RLINK can determine
+the highest field of core for a data buffer.  Unpredictable results
+may occure if more than one device with a non-resident handler is
+used without using USR to open the files.
+	(RLINK is an entry point in the READB subroutine and thus
+does not exist as an individual program.)
+
+
+IOTIOT___
+
+      Allows 8-mode IOT's to be issued.  Calling sequence:
+
+      CALL IOT (INST, AC)
+
+INST is the 8-mode IOT instruction in decimal.    				      _______
+
+AC is the value of the accumulator when the instruction is
+issued.  If the IOT changes this value, the new value is
+returned.  This feature may be used to read the switch register
+if the instruction LAS is issued in place of an IOT.
+
+
+USRUSR___
+
+      This routine allows run-time declaration of files.  The
+calling sequence is:
+
+      CALL USR (UNIT, DFNAME, FUNCT, ERROR)
+
+For more information, see the accompanying documentation.
+
+
+PLOTIT and PREVUPLOTIT     PREVU______     _____
+
+      Additions to the FORTRAN IV plotting capability.  These
+routines are described in the accompaning documentation.
+SPECIAL PURPOSE SUBROUTINE DIRECTORY (continued)
+
+
+TVTV__
+
+      Allows ASCII (formatted) information to be displayed on the
+LINKscope in the background mode when executing FORTRAN programs.
+The routine is designed for more rapid interaction with the user
+than is possible using the teletype as an output device.  The
+calling sequence is:
+
+      EXTERNAL TV
+      CALL MODE8 (TV, UNIT)
+
+UNIT is a logical unit number (usually defined to be NULL:).  The
+current contents of the OS/12 buffer associated with this device
+is displayed on the scope in the background mode.  The FORTRAN
+function BACKSPACE allows overwriting a line and REWIND erases
+the screen.
+      Input from the keyboard using the LINKscope to display the
+typed line is possible using the TVIN handler.  To use TVIN, the
+NULL handler must be used as the output device associated with
+the TV display and the buffers for both NULL and TVIN must be in
+the same field.  (This will be the case if USR was used to
+open these files.)  All standard formatted read commands are
+allowed, e.g.
+
+      READ (7, 100) I
+  100 FORMAT (I5)
+
+where 7 is the unit number associated with TVIN.  A device error
+is printed if NULL does not exist or if the buffer fields of NULL and
+TVIN are different.  TVIN can only be used under FORTRAN IV.
+
+
+READB & WRITEBREADB	WRITEB_____	______
+
+      Allows reading/writing binary files in FORTRAN.	The
+calling sequence is:
+
+      DIMENSION BUFR(256)
+      CALL READB (UNIT, BUFR)
+	 or
+      CALL WRITEB (UNIT, BUFR)
+
+This reads/writes the next block of 256 12-bit binary words
+from/to logical unit number UNIT into/from the 256 element array
+BUFR.	The values read/written are between 0 and 4095.
+
+      The program will not read or write past an end of file.	To
+check for an end of file, code the following:
+
+      EXTERNAL EOF
+      LOGICAL EOF
+      IF (EOF) GO TO 900
+      .
+      <continue source code>
+      .
+  900 <process end of file>
+SPECIAL PURPOSE SUBROUTINE DIRECTORY (continued)
+
+
+	To load new subroutines into the FORTRAN library, the
+subroutine's source must be assembled with the RALF assembler
+and the ".RL" file then added to the FORTRAN IV library
+with the program LIBRA.  An example of how this is done is
+included in the accompanying writeup on the subroutine USR.
+For more information, see the OS/8 handbook chapter on FORTRAN IV.
+

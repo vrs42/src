@@ -1,0 +1,211 @@
+
+
+
+        Protocol for PDP-8 <==> PDP-10 Communication        ________ ___ _____ ____ ______ _____________
+
+
+
+     I.  INTRODUCTION     __  ____________
+
+     This document describes the protocol by which files are
+transmitted  between the PDP-8 and PDP-10 in our laboratory.
+Files are transmited on normal aschronous terminal lines  at
+up  to 9600 baud in eight bit bytes.  The same line can also
+be used as a remote terminal.  Decoding and encoding of  the
+bytes  are performed by programs running on the computers on
+either end of the line.  For ASCII files, each byte  is  one
+ASCII   character.   For  other  file  types,  decoding  and
+encoding algothrithms vary with the type of data.
+
+     All characters including NUL's and  control  characters
+are  legal  and  can be transmitted.  Only the character 232
+(^Z) requires special handling.
+
+     A single 24 bit longitudinal checksum is  computed  for
+each  file  and  transmitted  after the entire file has been
+sent.   No  transverse  parity  is  transmitted.    In   our
+experience,  it  is  rare  for  parity  errors to occur even
+during transmission of very large files.
+
+     ASCII files are transmitted "always mark"  which  means
+that all characters have the 200 bit set.  Although this bit
+is immaterial to the PDP-10's 7-bit ASCII, it is required by
+several older programs on the PDP-8.
+
+
+     II.  Transmission of 232 (^Z)     ___  ____________ __ ___ ____
+
+     The character 232 has been chosen as the PIM mode break
+character  on  the  PDP-10  and  is  also used, depending on
+context, as an end of file character.  The  meaning  of  the
+232  is  determined  by  looking at the following character.
+The possibilities are:
+
+          (1) 232-001:  The 232 is only  a  break  character
+     (see below, section III) and is not part of the file.
+
+          (2) 232-000:  The 232 is  part  of  the  file  and
+     should be included as a single eight bit byte.  It also
+     causes a break but this is of no consequence.
+
+          (3) 232-232:   This   combination   represents   a
+     logical end of file.  A three byte checksum follows.
+
+                                                      Page 2
+
+
+     III.  PDP-10 PIM Break     ____  ______ ___ _____
+
+     Transmission both to and from the PDP-10 is done in PIM
+mode.  Input to the PDP-10 requires a "break" at least every
+64(10) characters because  of  an  idiosyncrasy  in  SCNSER.
+Thus  for  transmission  to the PDP-10, every 64th character
+transmitted must be the character  232.   The  232  must  be
+followed  by  a  001 to signify the meaning of the 232.  The
+001 must be included in the character count  in  determining
+when  to send the 232's.  A final 232 is also required after
+the checksum to awaken  the  program  for  its  receipt  and
+processing.  This break sequence is not used when the PDP-10
+is the sending the file to another computer.
+
+
+     IV.  Checksum Computation     ___  ________ ___________
+
+     The checksum is the sum of  the  number  of  characters
+plus  the  sum  of all eight bit bytes transmitted including
+all  232-000,  232-001  and  232-232  sequences,   but   not
+including  the  checksum  characters  themselves.  The two's
+complement of the checksum modulo 2**24  is  transmitted  as
+three  eight  bit  bytes  as follows (bits are numbered 1-24
+from left to right):
+
+     First byte:        bits 17-24
+
+     Second byte:       bits 05-12
+
+     Third byte:        bits 13-16 and bits 01-04
+
+
+       ______________________________________________________
+       |                                                    |
+       |                       ___________________________  |
+     __|__                   __|__                       |  |       _                       _
+    /     \                 /     \                      |  |
+   |0|0|0|0|0|0|0|0|0|1|1|1|1|1|1|1|1|1|1|2|2|2|2|2|     |  |
+HO |1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4| LO  |  |
+            \_____________/         \_____________/      |  |
+                   |        _______________|             |  |                                           _
+                    \      /                             |  |
+                     \    /                              |  |
+                      \  /                 ______________|  |                                                         _
+                       \/                  |                |
+                       /\                  |       _________|                                                            _
+                      /  \                 |       |
+                     /    \                |       |
+         ___________/      \               |       |
+   ______|______      ______|______      __|__   __|__         _                  _              _       _
+  /             \    /             \    /     \ /     \
+ |1|1|1|2|2|2|2|2|  |0|0|0|0|0|1|1|1|  |1|1|1|1|0|0|0|0|
+ |7|8|9|0|1|2|3|4|  |5|6|7|8|9|0|1|2|  |3|4|5|6|1|2|3|4|
+      Byte  1            Byte  2            Byte  3
+                                                      Page 3
+
+
+     V.  XON/XOF Control     __  _______ _______
+
+     The sending computer must accept XON (^Q) and XOF  (^S)
+characters from the destination computer to turn on and turn
+off transmission respectively.  The use of these  characters
+and their meaning is standard on DEC computers.
+
+     VI.  Example     ___  _______
+
+     The following example shows the bytes transmitted  when
+a file is sent to the PDP-10:
+
+     Original file:
+
+               THIS IS A TEST FILE.
+               12345678901234567890.
+               ABCDEFGHIJKLMNOPQRSTUVWXYZ.
+               abcdefghijklmnopqrstuvwxyz.
+
+     Bytes transmitted:
+
+          324  310  311  323  240  311  323  240  301  240
+          324  305  323  324  240  306  311  314  305  256
+          215  212
+
+          261  262  263  264  265  266  267  270  271  260
+          261  262  263  264  265  266  267  270  271  260
+          256  215  212  
+
+          301  302  303  304  305  306  307  310  311  312
+          313  314  315  316  317  320  321  322  232  001
+          323  324  325  326  327  330  215  212  
+
+          341  342  343  344  345  346  347  350  351  352
+          353  354  355  356  357  360  361  362  363  364
+          365  366  367  370  371  372  215  212  
+
+          232  232  070  373  017  232  
+
+Each line ends with a <CR><LF> sequence just as the original
+file  does.   Note that after 63(10) characters is a 232-001
+sequence to produce a break.  The last line above represents
+the   end   of   file   sequence   (232-232),  the  checksum
+(070-373-017) and the  final  break  character  (232).   The
+original checksum (the negative of the sum of the characters
+plus the number of  characters)  was  7773070  before  being
+divided as explained above (section IV) into three eight bit
+bytes.
+                                                      Page 4
+
+
+     VII.  SEND3.FAI -- Control program on the PDP-10.     ____  _________ __ _______ _______ __ ___ _______
+
+     The protocol for the PDP-10 has been implemented in the
+MACRO  program  SEND3.FAI[1001,1002]  and is accessed by the
+command .RU DSKC:SEND3[1001,1002].  SEND3 begins  by  typing
+an asterik ("*") to which the PDP-8 responds with one of the
+following responses:
+
+
+     (1) dev:filename.ext
+
+          Transmit the specified file from the PDP-10 to the
+          PDP-8.
+
+     (2) dev:filename.ext/I
+
+          Transmit the specified file from the PDP-10 to the
+          PDP-8 in PAL10 binary (PDP-10 image) mode.
+
+     (3) dev:filename.ext/B
+
+          Transmit the specified file from the PDP-10 to the
+          PDP-8 in SKED binary format.
+
+     (4) dev:filename.ext=
+
+          Open the specified file for output.  Send one  XON
+          (^Q)  to  begin  transmission.   Then accept ASCII
+          data from the PDP-8 and write it to the file.
+
+     (5) dev:filename.ext=/B
+
+          Same as (4) except write the file in  SKED  binary
+          format.
+
+If dev:  is not specified,  DSK:   is  assumed.   When  file
+transmission is complete, control returns to the monitor for
+PDP-10 ==> PDP-8 transmission and to the "*" prompt in SEND3
+for   PDP-8 ==> PDP-10   transmission.   If  a  checksum  is
+detected, an error message is sent  to  the  PDP-8  and  the
+output file extension is changed to .CSE.
+
+
+     VIII.  DEC10.PA -- Control program on the PDP-8.     _____  ________ __ _______ _______ __ ___ ______
+
+     An explaination of this program will be  found  in  the
+file DEC10.MEM.

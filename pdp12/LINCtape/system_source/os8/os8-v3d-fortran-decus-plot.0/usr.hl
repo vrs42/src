@@ -1,0 +1,141 @@
+
+
+			USR for FORTRAN IV			USR for FORTRAN IV			___ ___ _______ __
+
+	This subroutine allows users of DEC's FORTRAN IV for the PDP-8
+and PDP-12 to open and close files at execution time.	It can be used
+to open files for reading or writing on any legal OS/8 device with
+such files subject only to the standard OS/8 restrictions (e.g. only one
+output file can be open on a given device at a given time, etc.).
+A second output file can be opened on a device after the first one is
+closed, and multiple input files can be simultaneously open, of course.
+USR is called from FORTRAN by the following statement:
+
+	CALL USR (UNIT, NAME, FUNCT, ERROR)	CALL USR (UNIT, NAME, FUNCT, ERROR)
+
+Description of variables:
+
+	UNIT  - Logical unit number.  Only numbers 5 thru 9 are
+		allowed.  1000(8) words of core are allocated to each unit
+		number for its buffer and handler but this core is used
+		only if the corresponding unit number is used.	As the user's
+		FORTRAN program gets larger, there eventually will not be enough
+		core for the program and for all logical unit numbers.	When
+		this happens, USR automatically eliminates first unit 5,
+		then unit 6, and so forth from the allowable logical unit
+		numbers, thus protecting the user's program.  If the user
+		specifies a logical unit number outside the range 5 thru
+		9, or a logical unit number that has been eliminated
+		because of the size of the user's program, ERROR=3 will
+		be returned (see below).
+
+	NAME  - Device:filename.ext.  This variable must be an ASCII string
+		of up to 18 characters.  It can be a Hollerith literal,
+		(i.e., a character string enclosed within single quotes)
+		or an array (of dimension 3) loaded with a DATA statement
+		or a READ statement with format 3A6.  Inbeded spaces
+		and null characters ('@') are ignored in this field.
+
+	FUNCT - Function code:	2 - open file for input.
+				3 - open file for output.
+				4 - close output file.
+			If FUNCT is negative, the first character of
+			every line is treated as a FORTRAN IV carriage
+			control character.  If FUNCT is positive, all
+			characters are output as such.
+		Note:  The output filename given for a close (FUNCT=4)
+		request must agree with the corresponding open request
+		for that unit.	If it does not, the file will be closed
+		and given the name in the close request, but no check
+		will be made for duplicate file names and it may
+		therefore be difficult to reference the file at a
+		later time.  Closing a file with zero blocks (i.e. one that
+		has not been written to) or closing an input file (a file
+		opened with FUNCT=2) will delete that filename from the
+		directory.
+USR for FORTRAN IV (continued)
+
+
+
+
+	ERROR - Returns error condition:
+			0 - No errors.
+			1 - Illegal (non-existant?) device.
+			2 - Illegal (non-existant input) filename.
+			3 - Illegal unit number.  Unit number is not between
+				5 and 9 or the requested unit number has been
+				preempted by a large user program.
+			4 - Illegal function code.  Function code not between
+				2 and 4.
+
+	None of the above errors is fatal.  If they occur, execution
+will continue and it is the user's responsibility to check these errors and
+handle them apropriately.  However, it is a fatal error if the user
+defines a device with a non-resident handler external to USR and then
+tries to open a file with USR.  In this case, the computer will reply:
+
+	USER ERROR USR	  0002
+
+and execution will be terminated.
+
+
+EXAMPLES:EXAMPLES:
+
+1. Define unit 9 to be the existing file NEW.DA on device DSK:.
+	CALL USR (9, 'NEW.DA', 2, ERROR)	CALL USR (9, 'NEW.DA', 2, ERROR)
+
+2. Define unit 8 to be the existing file JUNK.TX on device LTA0:.
+	CALL USR (8, 'LTA0:JUNK.TX', 2, ERROR)	CALL USR (8, 'LTA0:JUNK.TX', 2, ERROR)
+
+3. Read the name of a file from the keyboard terminal (unit 4).
+   (If no device is included in the input statment, DSK: is assumed.)
+   Open the file for output.  When the program is done, close the file.
+	DIMENSION NAME(3)	DIMENSION NAME(3)
+	READ (4, 100) NAME	READ (4, 100) NAME
+   100	FORMAT (3A6)   100	FORMAT (3A6)
+	CALL USR (7, NAME, 3, ERROR)	CALL USR (7, NAME, 3, ERROR)
+	  <continue program>
+	CALL USR (7, NAME, 4, ERROR)	CALL USR (7, NAME, 4, ERROR)
+
+
+USR for FORTRAN IV (continued)
+
+
+
+
+GETTING USR ON THE AIR:GETTING USR ON THE AIR:
+
+	USR is written in RALF (FPP assembler) language and can be included
+in the FORTRAN IV library.  The following commands will assemble the program
+and include it in the user's FORTRAN IV library:
+
+	.R RALF			/Run the RALF assembler
+	*USR<USR		/Assemble USR; loader module to file USR.RL
+	.R LIBRA		/Run the FORTRAN IV librarian program
+	*FORLIB<USR		/Insert USR into the library.  If there is
+				/  insufficient space in the library or its
+				/  directory, the following command may be
+				/  necessary:
+				/*FORLIB[10]<FORLIB,USR/Z=50
+	*^C			/Return to OS/8 moniter
+
+	One patch must be made to FRTS so USR will know how much core
+is available.	The patch deletes code which initializes FRTS when an
+Analex line printer is present in the system.	The following commands
+will insert this patch:
+
+	.GET SYS:FRTS
+	.ODT
+	*12475/ xxxx 7300;1311;3010;1023;3410;3410;1025;3410;1026
+	*12506/ xxxx 3410;7000;5766;0120
+	*^C
+	.SAVE SYS:FRTS
+
+The following additinal patch must be made if an Analex line printer is
+included in the system:
+
+	*12507/ 7000 6652
+	*240/ 7450 0
+	*511/ 6663 6651
+	*513/ 6667 6652
+

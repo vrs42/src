@@ -1,0 +1,434 @@
+
+
+
+
+
+
+
+
+
+
+                          MEDIA MANAGEMENT UTILITIES
+
+                                  Version 5
+
+
+
+
+
+
+           In  many  installations, especially those where many DECtapes
+      or LINCtapes are used, a  problem  evolves  concerning  filing  of
+      programs,  their copies, backups, and even some archival programs.
+      A series of programs has been written as  a  partial  solution  to
+      this  problem.  Currently, there are four programs in this series:
+      MEDIAI, SORT, MEDIAO, and FIND.  Other programs will be  added  to
+      this  set  when  the need and the time becomes available for them.
+      Also discussion among other installations  with  this  problem  is
+      promoting  ideas  in  this  direction.  MEDIAI and MEDIAO are just
+      simple pre- and post- processors to SORT.  MEDIAI makes sure  that
+      the  input  file  has  a volume number associated with each entry.
+      MEDIAO does some simple  formatting  for  output.   FIND  performs
+      "wild" searches on the Master Directory produced by MEDIAI.  
+
+           A sample documented run follows:  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+           The  system  device  (which in our case is also assigned DSK)
+      should contain the programs MEDIAI, SORT, and MEDIAO.   The  tapes
+      that will be included in the final cross-reference listing will be
+      mounted on another OS/8 device.  To start off, type "R MEDIAI"  in
+      response to the Keyboard Monitor's dot:  
+
+                .R MEDIAI
+                *
+
+      At  this  point, the Command Decoder has been invoked and the user
+      must type in a directory output file (which must be given and must
+      be  on  a  file  structured device), an optional directory listing
+      device (which, if given, must not be a  file  structured  device),                                    ___                                 
+      and  one  input  device,  which  of  course,  must  also  be  file
+      structured.  If any of the above rules are violated, the user will
+      be notified.  An example Command Decoder line is:  
+
+                *DIRECT.XX,LPT:<LTA1:
+
+      After all files are opened up, MEDIAI then types out:  
+
+                VOLUME NO.   1:
+
+      At  this  point,  enter  one  of  the  following  characters after
+      mounting a tape on LTA1:.  
+
+      Y    The directory will be read.  If  a  second  output  file  was
+           given,  two  listings  will  come  out  on  it.  The first is
+           equivalent to PIP's /E directory printout;  The second is  an
+           alphabetized directory printout.  At the same time, the first
+           output file will receive  the  same  information  as  the  /E
+           listing  with  the volumne number appended to each line.  The
+           volume number is then incremented by one.  
+
+      N    The volume number is incremented by one.  No  I/O  operations
+           are performed.  The new volume number is then printed out.  
+
+      N    Where  'n'  is  in  the  range  1-4095.  The volume number is
+           changed to 'n'.  No I/O operations are  performed.   The  new
+           volume number is printed out.  At this time you may then type
+           in 'Y' or 'N'  or  any  other  legal  option  character.   An
+           example:  
+
+                VOLUME NO.   5:27
+                VOLUME NO.  27:
+
+           Now the user may type in 'Y' or any other option.  
+
+      V    The  Command  Decoder  is  invoked and a new volume device is
+           asked for.  Type in an input device according  to  the  rules
+           stated  at  the  beginning.  This changes the device handler.
+           For example:  
+
+
+
+
+                                     MEDIA-2
+
+
+
+
+
+
+
+
+
+                VOLUME NO.   3:V
+                *LTA6:
+
+                VOLUME NO.   3:
+
+           Mount the next tape on device LTA6 before hitting 'Y' or  any
+           other character.  
+
+      U    Indicate  to  MEDIAI  that  you  are  to enter the name of an
+           existing master  directory  as  update  input.   The  Command
+           Decoder  will  be invoked so that you may type in the name of
+           the old master directory.  For example:  
+
+                VOLUME NO.  45:U
+                *RKA1:DIRECT.DI
+
+           At this point, all indices which are in DIRECT.DI but not yet
+           in  the  new  directory  output file, will be sent to the new
+           directory output file.  After this is completed, then  MEDIAI
+           will  automatically  perform  as  if the 'E' command had been
+           entered.  
+
+      E    No more volumes are to be read.  End  all  files  by  closing
+           them and return to the system to run the next program.  
+
+           At this point, we now must sort the output file to generate a
+      sorted file of directory entries sorted by filename or  extension.
+      The  Master Directory we have just created may also be searched by
+      the FIND program which is described later in  this  document.   To
+      generate  a  file sorted according to filename, type the following
+      in response to the monitor's dot:  
+
+                .R SORT NAME.EX
+
+      The Command Decoder will be invoked and respond with a "*".   Type
+      in the following line:  
+
+                *SORT1<DIRECT.XX/F
+
+      where  DIRECT.XX  was  output  from MEDIAI.  Of course, device and
+      filename specification can be given  for  a  tape-only  system  to
+      speed  the  sort  process  up (see the SORT documentation).  For a
+      two-tape system, one may use:  
+
+                *SYS:SORT1,SYS:SRTWK1.TM,LTA1:SRTWK2.TM<SYS:DIRECT.XX
+
+      After SORT completes th task assigned to it, it will return to the
+      Keyboard Monitor.  
+
+
+
+
+                                     MEDIA-3
+
+
+
+
+
+
+
+
+
+           To  generate  a  file  sorted  by  extension  rather  than by
+      filename, the following should be typed to the Keyboard Monitor:  
+
+                .R SORT
+
+      Again, the Command Decoder will be invoked and respond  with  "*".
+      Enter:  
+
+                *SORT2<DIRECT.TM/E
+
+      or a line similiar to the expanded Command Decoder line above.  
+
+           The  files  generated by SORT above are now used by MEDIAO to
+      generate the final cross-reference directory listings.  To run the
+      program MEDIAO, enter:  
+
+                .R MEDIAO
+                *
+
+      The  asterisk  (*)  indicates  that  the  Command Decoder has been
+      invoked and  is  waiting  for  input/output  specifications.   The
+      output  file  may  be  to any OS/8 device, file structured or not.
+      The input file should be the sorted directory output (either SORT1
+      or  SORT2  above).  If a cross-reference by filename is preferred,
+      the following line should be typed in:  
+
+                *LPT:<SORT1
+
+      A cross-reference listing of filenames and the  volumes  on  which
+      they  reside  is  printed  on the line printer.  Two listings come
+      out.  One is just a listing of filenames and the  volume  numbers.
+      The  second  contains  the length of files and the date associated
+      with it, along with  volume  numbers.   If  a  cross-reference  by
+      extensions is preferred, then the following line should be entered
+      on the Command Decoder line:  
+
+                *LPT:<SORT2/X
+
+      The /X option must be used when  the  input  has  been  sorted  by
+      extensions.   The same cross-reference listings will be printed on
+      the output device.  
+
+           There are a few options which may be entered on  the  Command
+      Decoder  line  to  MEDIAO.  /1 Is used to do a simple filename and
+      volume cross-reference.  This is the  first  listing  which  comes
+      out.   /2  Is used to do the second listing which comes out.  This
+      one includes the length of the file and the last  date  associated
+      with  it.   /F is used to skip to a new page when the first letter
+      of the filename (or extension if /X) changes.   Normally  a  blank
+
+
+
+                                     MEDIA-4
+
+
+
+
+
+      line  separates new letter groups.  /X tells MEDIAO that the input
+      has been sorted by extension.  If neither  /1  nor  /2  have  been
+      given,  then  both cross-reference listings will be generated.  If
+      no output device has been specified, LPT: is assumed.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     MEDIA-5
+
+
+
+
+
+                                       FIND
+
+           The program FIND is conveniently used for quick  searches  of
+      the  Master  Directory.  FIND operates on the output of the MEDIAI
+      program before it is sorted.  The Master  Directories  created  by
+      MEDIAI  can  be  kept  on  the  system  disk  or  a special Master
+      Directory device.  
+
+           To use the FIND program type:  
+
+                                      .R FIND
+
+
+      The program will type out its version message and  the  *  prompt.
+      You  may  specify  any output device to hold the list of files and
+      volumes.  Input specifications are wild specifications accepting ?
+      and  *  anywhere  in  the  field.  This is somewhat different from
+      FOTP's usage.  The * if present  is  interpreted  as  filling  the
+      remainder  of  the  field  with  question  marks.   If  no  master
+      directory is specified the file MASDIR.DR on SYS: is  looked  for.
+      No  checks  are made to determine if the file is actually a master
+      directory.   If  the  /D  option  is  specified  the  first  input
+      specification  is  taken as a directory device name specification.
+      The input is in star mode but the file must be fully specified  to
+      be  found.   If  the  command  line  is terminated with an altmode
+      command is returned to the monitor level.  Otherwise, the  command
+      decoder  is  recalled for another file specification set.  Another
+      master directory specification may be given at this time.  
+
+                Below are some simple examples of Command Decoder  lines
+      for FIND:  
+
+                *TV:<AB*.*                 _          
+
+      All  files  whose  first two characters are "AB" are listed on the
+      TV.  
+
+                *LTA1:FOODIR.DR,*.RO/D                 _                      
+
+      A new master directory FOODIR.DR is read from LTA1 and  all  files
+      with  the  RO  extension  are  listed on the default output device
+      (TTY:).  If FOODIR.DR is an entry in the directory  it  is  listed
+      also.  
+
+                *DIRYY.DR<DSK:DIRXX.DR,??DDT.*                 _                              
+
+      The  file  DIRYY.DR on DSK: receives a listing of all files in the
+      directory DIRXX.DR on DSK which  have  any  two  first  characters
+      followed by DDT and any extension.  
+
+           FIND  may  be  chained  to  and  if so it expects the command
+      decoder area to be set  up  with  the  file  specifications.   The
+      CCL FIND  command  if  implemented  should use star mode decoding.
+
+
+
+                                     MEDIA-6
+
+
+
+
+
+      FIND allows two page handlers for both input and output.  
+
+           These programs were written to perform a "quick"  and  useful
+      job  of  ordering  our tapes.  There are ideas floating around our
+      installation concerning better cataloguing and  usage  procedures,
+      but  nothing  definite  has been started.  Feedback from others in
+      our  situation  would  be  appreciated  and  exchanges  of   ideas
+      encouraged.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     MEDIA-7
+

@@ -1,0 +1,154 @@
+
+/PARAMETERS FOR RTS-8 TASKS     (VERSION  PAL8-V9H  04/29/77  PAGE 1
+
+   1                /PARAMETERS FOR RTS-8 TASKS     (VERSION 2)
+
+/PARAMETERS FOR RTS-8 TASKS     (VERSION  PAL8-V9H  04/29/77  PAGE 5
+
+   2                /TASK TABLE SETUP - "TASK", "CUR","INIWT", AND "START"
+   3                /MUST BE DEFINED BY TASK:
+   4   
+   5          1214          *TASK^2+MSGTBL
+   6   01214  0000          ZBLOCK  2       /MESSAGE BUFFER INITIALLY CLEAR
+   7          1256          *TASK^4+TSTABL
+   8   01256  0044          CUR%10+CUR      /INITIAL FLAGS
+   9   01257  0200          START
+  10   01260  0000          0               /INITIAL AC 0
+  11          1310          *TASK+TFTABL
+  12   01310  0000          INIWT
+
+/       DUMMY QTASK SENDER #1             PAL8-V9H  04/29/77  PAGE 6
+
+  13                /       DUMMY QTASK SENDER #1
+  14   
+  15          0007  TASK=   USER1
+  16          0040  CUR=    40
+  17          0000  INIWT=  0
+  18   
+  19          0004          FIELD   CUR%10
+  20   
+  21          0200          *200
+  22   40200  7300  START,  CLA CLL         /SUSPEND THY SELF
+  23   40201  4020          CAL
+  24   40202  0004          SUSPND
+  25   40203  4020          CAL
+  26   40204  0011          SENDW
+  27   40205  0011          QTASK
+  28   40206  0210          MSG1
+  29   40207  5200          JMP     START
+  30   
+  31   40210  0000  MSG1,   ZBLOCK 3
+  32   40213  2031          LTA^10+1+2000   /POST MSG AND DELETE LTA1:FILE AFTER RUN
+  33   40214  0235          FLNAM1          /FILENAME POINTER
+  34   40215  5622          TEXT    !.R FRTS!
+  35   40216  4006
+  36   40217  2224
+  37   40220  2300
+  38   40221  5203          TEXT    !*CURVE!
+  39   40222  2522
+  40   40223  2605
+  41   40224  0000
+  42   40225  5222          TEXT    !*RKB0:DATA/7$!
+  43   40226  1302
+  44   40227  6072
+  45   40230  0401
+  46   40231  2401
+  47   40232  5767
+  48   40233  4400
+  49   40234  7777          7777
+  50   
+  51   40235  2124  FLNAM1, FILENAME QTEMP
+  52   40236  0515
+  53   40237  2000
+  54   40240  0000
+  55   
+  56          0400          PAGE
+
+$                                         PAL8-V9H  04/29/77  PAGE 7
+
+  57                $
+
+$                                         PAL8-V9H  04/29/77  PAGE 8
+
+AC0002 7326      RUNWT  1000
+AC2000 7332      SEND   0000
+AC3777 7350      SENDW  0011
+AC4000 7330      SHERTZ 0012
+AC7775 7346      SKPINS 0006
+AC7776 7344      START  0200
+BLKARG 0010      SUSPND 0004
+CAL    4020      SWPWT  0400
+CHECKP 0000      TASK   0007
+CLKQLN 0022      TFTABL 1301
+CLKTYP 0001      TODH   0037
+CLOCK  0001      TODL   0036
+CUR    0040      TSTABL 1222
+DATE   0040      TSWFLG 0035
+DERAIL 0007      TTDEV  0041
+DNEWT  0001      TTY    0005
+EAE    0000      UNBARG 0012
+EFWT   2000      USERWT 0100
+ENABWT 0040      USER1  0007
+EORMWT 0200      USER2  0010
+FLNAM1 0235      WAITE  0002
+FREE   4000      WAITM  4425
+HERTZ  0012
+HGHFLD 0070
+INIWT  0000
+KBDEV  0040
+LTA    0003
+MCR    0004
+MCREF  0041
+MCRSYS 0001
+MSGTBL 1176
+MSGWT  0020
+MSG1   0210
+NETWT  0010
+NONRWT 4000
+NTASKS 0012
+OSFILL 0000
+OSFLDS 0003
+OSKBDV 0003
+OSSYSD 0002
+OSTTDV 0004
+OS8    0012
+OS8F   0006
+PARTNS 0000
+PDP12  0001
+PDP8E  0000
+POST   0005
+POSTDS 5424
+PWRFAL 0000
+QDEV2  0024
+QTASK  0011
+QUNIT2 0004
+RECEIV 0001
+RK8    0002
+RUN    0003
+
+
+
+ERRORS DETECTED: 0
+LINKS GENERATED: 0
+
+
+
+
+CAL         23    25  
+CUR          8     8    16#   19  
+FLNAM1      33    51# 
+INIWT       12    17# 
+LTA         32  
+MSGTBL       5  
+MSG1        28    31# 
+QTASK       27  
+QTEMP       51  
+SENDW       26  
+START        9    22#   29  
+SUSPND      24  
+TASK         5     7    11    15# 
+TFTABL      11  
+TSTABL       7  
+USER1       15  
+
+V3 

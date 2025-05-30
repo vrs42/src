@@ -1,0 +1,158 @@
+
+
+
+
+	     DYNAMIC PLOTTING UNDER OS/12 FORTRAN IV	     DYNAMIC PLOTTING UNDER OS/12 FORTRAN IV	     _______ ________ _____ _____ _______ __
+
+I.  INTRODUCTION    INTRODUCTION    ____________
+      The plotting routines supplied for use with DEC's FORTRAN
+IV provide for on-line plotting but require total dedication of
+the CPU while the plot is being produced.  For long plots, this
+requires long periods of time during which the CPU is idle but
+cannot be used.  The routines described here allow plots to be
+produced under interrupt control while the CPU performs other
+tasks.  In particular, they allow the user to create a plot file,
+preview it on the scope, select the plots (s)he likes to be
+plotted on the CALCOMP plotter, and while they are being plotted,
+preview additional plots and add selected ones to the plot file.
+
+II.  CREATING AND PLOTTING DISK FILES     CREATING AND PLOTTING DISK FILES     ________ ___ ________ ____ _____
+      The routines in the FORTRAN library have been modified so
+use of the standard FORTRAN plot package will produce a plot file
+on logical unit 9.  (The user must remember to open unit 9 to
+avoid an I/O error.)  To plot the file currently being created or
+a file created previously, the following code should be inserted
+into the FORTRAN program:
+
+      EXTERNAL PLOTIT
+      CALL MODE8 (PLOTIT, UNIT)
+
+
+PLOTIT is a routine in the FORTRAN library written in 8-mode
+code.	The subroutine MODE8 is a RALF code program which allows
+calling 8-mode programs from FORTRAN.
+
+UNIT is the logical unit number of the file to be plotted.  This
+may be the same file as the one being created with the plotter
+routines or it may be a different file.  If UNIT=0, plotting will
+continue from the point in the file where it previously stopped.
+This feature has been added in case the user is plotting the file
+(s)he is in the process of creating, but because of a telephone
+call, etc., has allowed the plotter to "catch up".
+
+      An external variable PDONE exists which indicates the state
+of the plotter.  PDONE=0 if the plotter is busy and PDONE=1 if
+the plotter is not busy.  PLOTIT should never be called when
+PDONE is zero.  To prevent this from happening, the following
+code can be inserted into the FORTRAN source program:
+
+      EXTERNAL PDONE, PLOTIT
+      LOGICAL PDONE
+      IF (PDONE) CALL MODE8 (PLOTIT, UNIT)
+
+It is especially important to do this if UNIT=0.
+
+III.  PREVIEWING A PLOT      PREVIEWING A PLOT      __________ _ ____
+      For the purpose of previewing, plots are divided into
+"frames".  A "frame" is the amount of the total plot which is to
+appear together as one unit.  To define the end of a frame, the
+user must call XYPLOT with a pen control equal to -1, thus:
+
+FORTRAN IV PLOTTING (continued)
+
+
+      CALL XYPLOT (0, 0, -1)
+
+      Once a plot is written to a disk file, it can be previewed
+on the storage oscilloscope (not the LINK scope) by using the
+following code:
+
+      EXTERNAL PREVU
+      CALL MODE8 (PREVU, UNIT, SIZE)
+
+PREVU is an 8-mode subroutine in the FORTRAN library.	It returns
+to the calling program after each frame has been plotted.  To
+continue to the next frame, it must be called with the value of
+UNIT=0.
+
+UNIT is the logical unit number of the file to be previewed.
+This may be the same file as the one being created with the
+plotter routines or it may be a different file.  If UNIT=0,
+previewing will continue from the point in the file where it
+previously stopped.
+
+SIZE can be used to increase the size of the display.	SIZE can
+have the values 0, 1 or 2 which represent multiplicative
+increases in the size of the display of 1, 2 or 4 times
+respectively.
+
+IV.  INTERNAL OPERATION     INTERNAL OPERATION     ________ _________
+      XYPLOT is called with three parameters, an X coordinate, a
+Y coordinate and a PEN control.  To generate a plot file, these
+numbers are simply output to a (unformatted) FORTRAN file after
+the three parameters are packed, X, Y, and PEN from one call to
+XYPLOT into the three words of a floating point variable and 85
+floating point variables per record.  Thus, each OS/8 block of
+the file contains a list of parameters used in the various calls
+to XYPLOT.
+      Negative PEN control values are handled in a special way:
+If PEN is any negative value other than -3 (which redefines the
+origin), it is used by XYPLOT, and PREVU to define a new "frame".
+      The file must always be terminated by a PEN control of zero
+to indicate to PLOTIT and PREVU that the end of file has been
+reached.  Normally, the user need not be concerned about this.
+PLOTS writes a zero and then BACKSPACEs over it.  Also, XYPLOT
+writes a zero and BACKSPACEs over it after every end of frame is
+written.  Finally, PLEXIT writes a final zero to terminate a plot
+before closing the file.  If the user chooses to copy a frame
+using the FORTRAN unformatted read and write routines, he must
+remember to handle these zero's properly.  The correct code to
+copy one frame of a plot from unit 9 to unit 8 is:
+
+      DIMENSION A(85)
+   10 READ (9) A
+      WRITE (8) A
+      IF (A(1).NE.0) GO TO 10
+C	    DONE, BACKSPACE OVER THE ZERO IF DESIRED
+      BACKSPACE 8
+C	    REWIND 9 IF DESIRED
+      REWIND 9
+FORTRAN IV PLOTTING (continued)
+
+
+V.  GETTING THE PLOT ROUTINES ON THE AIRV.  GETTING THE PLOT ROUTINES ON THE AIR    _______ ___ ____ ________ __ ___ ___
+
+	Three RALF modules must be inserted into the FORTRAN IV
+library in order for dynamic plotting to work.  The following
+code will do this:
+
+	.R RALF
+	*XYPLOT<XYPLOT
+	.R RALF
+	*PREVU<PREVU
+	.R RALF
+	*PLOTIT<PLOTIT
+	.R LIBRA
+	*FORLIB<XYPLOT,PLOTIT,PREVU/R
+	*^C
+
+At this point, the computer will list several duplicate entry
+points because of the replacement of the old XYPLOT with the
+new.  If there is insufficient room in the library, or some other
+problem, refer to the LIBRA section of the OS/8 FORTRAN IV
+documentation from D.E.C.
+	Finally, the handlers for TVIN: and NULL: must be inserted.
+These are inserted into the OS/8 moniter by BUILD.  Note that
+although TVIN: is a legal device as far as OS/8 is concerned,
+unpredictable results will occure if it is referenced outside of
+FORTRAN.  The following code will insert these devices:
+
+	.R PAL8
+	*NULL<NULL
+	.R BUILD	/A version of BUILD updated to the user's
+			/  current system should be used here.
+	$LO NULL
+	$IN NULL,NULL
+	$IN NULL,TVIN
+	$BO
+
