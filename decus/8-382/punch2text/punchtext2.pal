@@ -1,0 +1,173 @@
+	ADDR=40		/20 punch, 40 teletype
+	TPLS=6006 ADDR
+	TPSF=6001 ADDR
+/ tape labeler  SA=200, core=200-734
+/ by John Wilson 05-Jan-85
+/ Modifications to font by David Gesswein 13-April-14
+/ echo typed input on high-speed punch
+/ Modified to print ascii version after text when return entered
+	*10
+PTR1,	0
+PTR2,	0
+	*200
+START,	CLA CMA
+	TAD (BUF
+	DCA PTR2
+	DCA TLEN
+LOOP1,	KSF             /wait for input
+	JMP .-1
+	KRB             /get it
+	AND P0177
+	DCA TEMP
+	TAD (-15	/ CR
+	TAD TEMP
+	SNA
+	JMP PTEXT
+	CLA
+	TAD TEMP
+	TAD M0141
+	SPA
+	JMP UPPER
+	CLA
+        TAD M0040	/convert lower case to upper
+	TAD TEMP
+	DCA TEMP
+UPPER,	CLA
+	TAD TEMP
+	DCA I PTR2
+	ISZ TLEN
+	TAD TEMP
+	TAD M0040       /convert space::backarrow to 00::77
+	DCA TEMP        /save
+	TAD TEMP        /get it back again
+	CLL RTL         /*4
+	NOP             /(bug fix, replacing 7006/RTL)
+	TAD TEMP        /*5
+	TAD BASEM1      /add table base -1
+	DCA PTR1        /save in auto-index loc
+	TAD M0005       /init count to -(# of columns), clear AC
+	DCA COUNT
+LOOP2,	TAD I PTR1      /get next column (auto-index)
+	TPLS            /punch it
+	TPSF            /spin until done
+	JMP .-1
+	CLA             /AC=0 for next time
+	ISZ COUNT       /done all columns?
+	JMP LOOP2       /loop if not
+	TPLS            /punch one more column of zeros
+	TPSF            /spin until done
+	JMP .-1
+	JMP LOOP1       /back around for next char
+PTEXT,	JMS PLDR
+	CLA CMA
+	TAD (BUF
+	DCA PTR2
+TRIM,	TAD I PTR2	/drop leading spaces
+	TAD (-40	/space
+	SNA
+	JMP TRIM
+	CLA CMA		/point back to first non space
+	TAD PTR2
+	DCA PTR2
+PTLOOP,	CLA CMA
+	TAD TLEN
+	SPA
+	JMP DONE
+	DCA TLEN
+	TAD I PTR2
+	TPLS             /punch it
+	TPSF             /spin until done
+	JMP .-1
+	JMP PTLOOP
+DONE,	JMS PLDR
+	JMP START
+PLDR,	0
+	TAD (-20
+	DCA COUNT
+PLDRL,	CLA
+	TPLS             /punch it
+	TPSF             /spin until done
+	JMP .-1
+	ISZ COUNT
+	JMP PLDRL
+	JMP I PLDR
+/ data (besides location 10)
+M0040,	-40            /-40 (offset from blank to 00)
+P0177,	177
+M0141,	-141           /(a)
+TEMP,	0               /temp for computing index into table
+M0005, 	7773            /-5 (- # columns per char)
+COUNT, 	0               /column counter
+TLEN,	0
+	PAGE
+BASEM1,	.               /base of table, -1
+	DECIMAL
+	0;0;0;0;0		/SPACE
+	0;0;223;223;0		/!
+	0;7;0;7;0		/"
+	40;255;40;255;40	/#
+	134;137;255;137;113	/$
+	131;99;24;198;193	/%
+	108;146;172;64;160	/&
+	0;0;7;7;0		/'
+	0;60;66;129;0		/(
+	0;129;66;60;0		/)
+	84;56;255;56;84		/*
+	16;16;255;16;16		/+
+	0;160;64;0;0		/,
+	16;16;16;16;16		/-
+	0;192;192;0;0		/.
+	128;96;24;6;1		//
+	126;161;137;133;126	/0
+	132;130;255;128;128	/1
+	194;161;145;137;134	/2
+	66;137;137;137;118	/3
+	12;10;137;255;136	/4
+	199;137;137;137;248	/5
+	126;137;137;137;114	/6
+	1;1;249;5;2		/7
+	118;137;137;137;118	/8
+	70;137;137;137;126	/9
+	0;96;96;0;0		/:
+	0;128;96;96;0		/;
+	16;40;68;130;0		/<
+	12;12;12;12;12		/=
+	130;68;40;16;0		/>
+	4;2;177;10;4		/?
+	56;68;154;188;152	/@
+	254;9;9;9;254		/A
+	255;137;137;137;118	/B
+	126;129;129;129;129	/C
+	255;129;129;129;126	/D
+	255;137;137;137;137	/E
+	255;9;9;9;1		/F
+	126;129;129;145;243	/G
+	255;8;8;8;255		/H
+	129;129;255;129;129	/I
+	96;128;129;127;1	/J
+	255;8;20;34;193		/K
+	255;128;128;128;128	/L
+	255;2;12;2;255		/M
+	255;2;60;64;255		/N
+	126;129;129;126;0	/O
+	255;9;9;9;6		/P
+	124;129;161;65;190	/Q
+	255;25;41;73;134	/R
+	134;137;137;137;113	/S
+	1;1;255;1;1		/T
+	127;128;128;128;127	/U
+	63;96;192;96;63		/V
+	127;128;112;128;127	/W
+	195;36;24;36;195	/X
+	3;4;218;4;3		/Y
+	193;161;145;137;135	/Z
+	0;255;129;129;129	/[
+        1;6;24;96;128		/\
+	129;129;129;255;0	/]
+	4;2;255;2;4		/up arrow (^)
+	128;128;128;128;128	/_
+	0;1;2;4;0		/`
+
+BUF,	0
+ 
+	$
