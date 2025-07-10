@@ -1,6 +1,6 @@
 BIN = ../bin
 PA = life.pal kalied.pal
-PA = kaleid.pa spacex.pa spcwr3.pa life.pa
+PA = kaleid.pa spacex.pa spcwr3.pa life.pa icbm12.pa
 BN  = $(PA:.pa=.bn) $(PAL:.pal=.bn)
 
 image: all
