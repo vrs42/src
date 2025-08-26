@@ -1,0 +1,249 @@
+   1               /3 RF08 NON SYSTEM HANDLER / NULL:
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               /      SR
+  46               
+  47                       RF08=1          /CHANGE TO 0 FOR DF32 HANDLER
+  48               
+  49                       *0
+  50               
+  51 000000  7776          -2
+  52                       IFNZRO RF08 <
+  53 000001  2206          DEVICE RF;DEVICE RF;4064;RF&177;ZBLOCK 2
+     000002  0000  
+     000003  2206  
+     000004  0000  
+     000005  4064  
+     000006  0024  
+     000007  0000  
+     000010  0000  
+  54                       >
+  55                       IFZERO RF08 <
+  56                       DEVICE DF;DEVICE DF;4124;DF&177;ZBLOCK 2
+  57                       >
+  58 000011  2206          DEVICE RF;DEVICE NULL;0240;NULL&177;ZBLOCK 2
+     000012  0000  
+     000013  1625  
+     000014  1414  
+     000015  0240  
+     000016  0117  
+     000017  0000  
+     000020  0000  
+  59               
+  60                       SCA=7751
+  61                       SWC=7750
+  62               
+  63                       RFVERSION="A&77
+  64                       NULLVERSION="A&77
+  65                      *200
+  66               
+  67 000200  0000  INITLC, 0               /PATCH TO 232 TO HAVE NULL STORE ^Z IN BUFFER
+  68 000201  7330  SYSER,  CLA CLL CML RAR /4000
+  69 000202  2365          ISZ SYSCNT      /TRY AGAIN?
+  70 000203  7610          SKP CLA
+  71 000204  5313          JMP SFIELD      /WHY BOTHER
+  72 000205  7346          CLA CLL CMA RTL
+  73 000206  1224          TAD RF
+  74 000207  3224          DCA RF          /RESET PARAMETERS AND TRY AGAIN
+  75 000210  5227          JMP RETRY
+  76 000211  0000  T1,     0
+  77 000212  0000  T2,     0
+  78               
+  79 000213  0000  CTLC,   0
+  80 000214  6034          KRS
+  81 000215  0377          AND (177
+  82 000216  1376          TAD (-3
+  83 000217  7650          SNA CLA
+  84 000220  6031          KSF
+  85 000221  5613          JMP I CTLC
+  86 000222  6203  CIFCDF, CIF CDF 0       /RETURN TO OS/8 IF USER TYPED ^C
+  87 000223  5664          JMP I S7600
+  88                       ZBLOCK 224-.
+  89                       IFNZRO .-224 <ADRERR,QQQQ>      /ENTRY PT MUST BE RELATIVE 24
+  90               DF,
+  91 000224  0001  RF,     RFVERSION
+  92 000225  7346          CLA CLL CMA RTL /-3
+  93 000226  3365          DCA SYSCNT      /# TRYS ON ERROR
+  94 000227  1624  RETRY,  TAD I RF        /HANDLER RUNS IN USER'S DATA FIELD
+  95 000230  7004          RAL
+  96 000231  7206          CLA RTL
+  97 000232  1366          TAD S6603
+  98 000233  3277          DCA SFUN        /EITHER A READ OR WRITE
+  99 000234  1624          TAD I RF
+ 100 000235  0367          AND S70
+ 101 000236  3313          DCA SFIELD      /GET FIELD OF BUFFER
+ 102 000237  1624          TAD I RF
+ 103 000240  7004          RAL
+ 104 000241  0264          AND S7600
+ 105 000242  7041          CIA
+ 106 000243  3211          DCA T1          /SET UP WORD COUNT
+ 107 000244  7240          CLA CMA
+ 108 000245  2224          ISZ RF
+ 109 000246  1624          TAD I RF
+ 110 000247  3212          DCA T2          /BUFFER ADDRESS-1
+ 111 000250  2224          ISZ RF
+ 112 000251  6214          RDF
+ 113 000252  1254          TAD SCDF
+ 114 000253  3261          DCA RESRDF
+ 115 000254  6201  SCDF,   CDF 0
+ 116 000255  1211          TAD T1
+ 117 000256  3775          DCA I (SWC
+ 118 000257  1212          TAD T2
+ 119 000260  3774          DCA I (SCA
+ 120 000261  7402  RESRDF, HLT             /RESTORE USER'S DATA FIELD
+ 121                       IFZERO RF08 <
+ 122                       TAD I RF
+ 123                       RTL
+ 124                       AND S3700
+ 125                       >
+ 126 000262  1313          TAD SFIELD
+ 127 000263  6615          6615            /LOAD DISK EXTENDED MEMORY
+ 128 000264  7600  S7600,  7600
+ 129                       IFNZRO RF08 <
+ 130 000265  1624          TAD I RF
+ 131 000266  7012          RTR
+ 132 000267  7012          RTR
+ 133 000270  0316          AND S377
+ 134 000271  6643          6643            /LOAD HIGH ORDER
+ 135                       >
+ 136 000272  1624          TAD I RF
+ 137 000273  7012          RTR
+ 138 000274  7012          RTR
+ 139 000275  7010          RAR
+ 140 000276  0370          AND S7400
+ 141 000277  7402  SFUN,   HLT             /BECOMES DISK IOT.(READ OR WRITE)
+ 142 000300  6214          RDF
+ 143 000301  1222          TAD CIFCDF
+ 144 000302  3313          DCA SFIELD
+ 145                       IFZERO  RF08    <6622>
+ 146 000303  6623          IFNZRO  RF08    <6623>
+ 147 000304  5303          JMP .-1
+ 148 000305  4213          JMS CTLC
+ 149 000306  2224          ISZ RF
+ 150 000307  6621          6621            /SKIP ON ERROR
+ 151 000310  7410          IFNZRO RF08 <SKP        /SENSE OF SKIP IS REVERSED>
+ 152 000311  5201          JMP SYSER
+ 153 000312  2224          ISZ RF
+ 154 000313  7402  SFIELD, HLT             /RETURN TO PROPER FIELD
+ 155 000314  6601          6601            /CLEAR TROUBLESOME FLAG
+ 156 000315  5624          JMP I RF
+ 157               
+ 158                       IFZERO RF08 <S3700,     3700>
+ 159 000316  0377          IFNZRO RF08 <S377,      0377>
+ 160 000317  0001  NULL,  NULLVERSION
+ 161 000320  7200          CLA
+ 162 000321  6214          RDF
+ 163 000322  1222          TAD CIFCDF
+ 164 000323  3363          DCA NULRET
+ 165 000324  4213          JMS CTLC
+ 166 000325  1717          TAD I NULL      /GET FN WORD
+ 167 000326  3277          DCA SFUN
+ 168 000327  2317          ISZ NULL        /POINT TO CORE LOC
+ 169 000330  1717          TAD I NULL      /GET START OF BUFFER
+ 170 000331  3211          DCA T1
+ 171 000332  2317          ISZ NULL        /POINT TO BLOCK NUMBER
+ 172 000333  2317          ISZ NULL        /POINT TO ERROR RETURN
+ 173 000334  1277          TAD SFUN
+ 174 000335  7710          SPA CLA
+ 175 000336  5356          JMP BYE         /LEAVE BUFFER ALONE ON A WRITE
+ 176 000337  1277          TAD SFUN
+ 177 000340  0367          AND S70         /ISOLATE FIELD OF BUFFER
+ 178 000341  1254          TAD SCDF
+ 179 000342  3351          DCA NFIELD
+ 180 000343  1277          TAD SFUN
+ 181 000344  7104          CLL RAL
+ 182 000345  0264          AND S7600       /GET NO. OF WDS IN BUFFER
+ 183 000346  7041          CIA
+ 184 000347  3212          DCA T2
+ 185 000350  1200          TAD INITLC
+ 186 000351  7402  NFIELD, HLT             /GO TO FIELD OF BUFFER
+ 187 000352  3611          DCA I T1        /ZERO BUFFER
+ 188 000353  2211          ISZ T1
+ 189 000354  2212          ISZ T2
+ 190 000355  5352          JMP .-3
+ 191 000356  1277  BYE,    TAD SFUN
+ 192 000357  7004          RAL             /PUT R/W BIT IN LINK
+ 193 000360  7224          CLA CML RAL     /AC=1 IF READING
+ 194 000361  7450          SNA
+ 195 000362  2317          ISZ NULL        /POINT TO GOOD RETURN IF WRITE
+ 196 000363  7402  NULRET, HLT             /BACK TO USER'S DATA FIELD, INST FIELD
+ 197 000364  5717          JMP I NULL      /RETURN
+ 198               
+ 199 000365  0000  SYSCNT, 0
+ 200 000366  6603  S6603,  6603
+ 201 000367  0070  S70,    70
+ 202 000370  7400  S7400,  7400
+ 203 000374  7751          $
+     000375  7750  
+     000376  7775  
+     000377  0177  
+
+BYE     0356
+CIFCDF  0222
+CTLC    0213
+DF      0224 unreferenced
+INITLC  0200
+NFIELD  0351
+NULL    0317
+NULLVE  0001
+NULRET  0363
+RESRDF  0261
+RETRY   0227
+RF      0224
+RF08    0001
+RFVERS  0001
+S377    0316
+S6603   0366
+S70     0367
+S7400   0370
+S7600   0264
+SCA     7751
+SCDF    0254
+SFIELD  0313
+SFUN    0277
+SWC     7750
+SYSCNT  0365
+SYSER   0201
+T1      0211
+T2      0212

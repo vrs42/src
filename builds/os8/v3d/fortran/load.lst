@@ -1,0 +1,4155 @@
+   1               / OS/8 F4 LOADER, V24A
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               //
+  10               /
+  11               /
+  12               /
+  13               /
+  14               /COPYRIGHT (C) 1974, 1975
+  15               /DIGITAL EQUIPMENT CORPORATION, MAYNARD, MASS.
+  16               /
+  17               /
+  18               /
+  19               /THIS SOFTWARE IS FURNISHED UNDER A LICENSE FOR USE ONLY ON A
+  20               /SINGLE COMPUTER SYSTEM AND MAY BE COPIED ONLY WITH THE INCLU-
+  21               /SION OF THE ABOVE COPYRIGHT NOTICE.  THIS SOFTWARE, OR ANT OTHER
+  22               /COPIES THEREOF, MAY NOT BR PROVIDED OR OTHERWISE MADE AVAILABLE
+  23               /TO ANY OTHER PERSON EXCEPT FOR USE ON SUCH SYSTEM AND TO ONE WHO
+  24               /AGREES TO THESE LICENSE TERMS.  TITLE TO AND OWNERSHIP OF THE
+  25               /SOFTWARE SHALL AT ALL TIMES REMAIN IN DEC.
+  26               /
+  27               /
+  28               /THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT
+  29               /NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL
+  30               /EQUIPMRNT COROPATION.
+  31               /
+  32               /DEC ASSUMES NO RESPONSIBILITY FOR THE USE OR RELIABILITY OF ITS
+  33               /SOFTWARE ON EQUIPMENT WHICH IS NOT SUPPLIED BY DEC.
+  34               /
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               / FIXES FOR V23 J.K.    1975
+  42               /
+  43               / .CORE ROUTINE- RECONIZE CORE RESTRICTION
+  44               /
+  45               /
+  46               /
+  47               /       CHAMGES FOR OS/8 V3D AND OS/78 BY P.T.
+  48               /       .CHANGED VERSION NUMBER TO 24A
+  49               /       .PUT IN NEW DATE ALGORITHM
+  50               /
+  51               /
+  52               VERNUM=24
+  53               PATCH="A
+  54               
+  55               ESDPG=  7400            /START OF ESD REFERENCE PG IN FIELD 1
+  56               LHDR=   7200            /WD0 IN CORE OF LDR HDR IN FIELD 1
+  57               OS8SWS= 7643
+  58               OSJSWD= 7746
+  59               OS8DCB= 7760
+  60               OSDATE= 7666
+  61               AC7776= CLL STA RAL
+  62               AC7775= CLL STA RTL
+  63               AC4000= CLA STL RAR
+  64               AC2000= CLA STL RTR
+  65               AC0002= CLA STL RTL
+  66               
+  67               /       PASS0 DEFINITIONS
+  68               /       ----- -----------
+  69               
+  70               MCTTBL= 6000            /MODULE COUNT TABLE BASE
+  71               OVTLEN= 2^20^7+2+1      /2 WORDS/OVERLAY, 2 FOR MAIN & 1 FGL
+  72               OVLTBL= MCTTBL-OVTLEN   /(FGL = FOR GOOD LUCK)
+  73               MODTBL= 21^7+MCTTBL+3   /START OF MODULE TABLE
+  74               NUMMOD= 7200-MODTBL%3   /NUMBER OF ENTRIES IN MODULE TABLE
+  75               PTRIO=  NDX6            /FLD1;INIT SET TO 7617-1
+  76               RALFBF= 7000            /FLD1;BLK TO READ"ESD"FOR FILE CHK
+  77               /LOADER IMAGE HEADER BLOCK DUMMY SECTION
+  78               
+  79                       NOPUNCH
+  80                       *LHDR
+  81 007200  0002          2               /LOADER IMAGE FILE ID
+  82 007201  0000  QRTSWP, ZBLOCK  2       /SWAPPER ARGS TO LOAD AND START USER MAIN
+     007202  0000  
+  83 007203  0000  QHGHAD, ZBLOCK  2       /HIGHEST ADDRESS USED BY THIS PROGRAM
+     007204  0000  
+  84 007205  0000  QVERNO, 0               /LOADER VERSION NUMBER
+  85 007206  0000  QDPFLG, 0               /"D.P. HARDWARE REQUIRED" FLAG
+  86 007207  0000  QUSRLV, ZBLOCK  40      /USER OVERLAY LEVEL DSRN INFO
+     007210  0000  
+     007211  0000  
+     007212  0000  
+     007213  0000  
+     007214  0000  
+     007215  0000  
+     007216  0000  
+     007217  0000  
+     007220  0000  
+     007221  0000  
+     007222  0000  
+     007223  0000  
+     007224  0000  
+     007225  0000  
+     007226  0000  
+     007227  0000  
+     007230  0000  
+     007231  0000  
+     007232  0000  
+     007233  0000  
+     007234  0000  
+     007235  0000  
+     007236  0000  
+     007237  0000  
+     007240  0000  
+     007241  0000  
+     007242  0000  
+     007243  0000  
+     007244  0000  
+     007245  0000  
+     007246  0000  
+  87 007247  0000  LDBUFS, ZBLOCK  50      /PASS2 BUFFER POINTERS
+     007250  0000  
+     007251  0000  
+     007252  0000  
+     007253  0000  
+     007254  0000  
+     007255  0000  
+     007256  0000  
+     007257  0000  
+     007260  0000  
+     007261  0000  
+     007262  0000  
+     007263  0000  
+     007264  0000  
+     007265  0000  
+     007266  0000  
+     007267  0000  
+     007270  0000  
+     007271  0000  
+     007272  0000  
+     007273  0000  
+     007274  0000  
+     007275  0000  
+     007276  0000  
+     007277  0000  
+     007300  0000  
+     007301  0000  
+     007302  0000  
+     007303  0000  
+     007304  0000  
+     007305  0000  
+     007306  0000  
+     007307  0000  
+     007310  0000  
+     007311  0000  
+     007312  0000  
+     007313  0000  
+     007314  0000  
+     007315  0000  
+     007316  0000  
+  88                       ENPUNCH
+  89               
+  90               
+  91                       /RTS ENTRY POINTS
+  92                       /** SOME OF THESE MAY CHANGE IN FUTURE VERSIONS OF RTS **
+  93                       /**     (I HOPE NOT)
+  94               
+  95               JARGER= 204
+  96               JBAK=   210
+  97               JDATE=  203
+  98               JDEF=   213
+  99               JDISMS= 412
+ 100               JENDF=  211
+ 101               JEOFSW= 16
+ 102               JEXIT=  223
+ 103               JHANG=  524
+ 104               JIDLE=  227
+ 105               JINT=   403
+ 106               JRDAO=  217
+ 107               JREADO= 221
+ 108               JRENDO= 206
+ 109               JRETRN= 235
+ 110               JREW=   212
+ 111               JRSVO=  207
+ 112               JRUO=   215
+ 113               JSWAP=  222
+ 114               JT812=  225
+ 115               JUERR=  204
+ 116               JWDAO=  216
+ 117               JWRITO= 220
+ 118               JWUO=   214
+ 119                      *0
+ 120 000000  0000  TMP0,   0               /TMP0-TMP4 FOR GEN. USE
+ 121 000001  0000  TMP1,   0
+ 122 000002  0000  TMP2,   0
+ 123 000003  0000  TMP3,   0
+ 124               
+ 125                       *10             /INDEX REGISTERS
+ 126 000010  0000  NDX0,   0
+ 127 000011  0000  NDX1,   0
+ 128 000012  0000  NDX2,   0
+ 129 000013  0000  NDX3,   0
+ 130 000014  0000  NDX4,   0
+ 131 000015  0000  NDX5,   0
+ 132 000016  0000  NDX6,   0
+ 133 000017  5434  NDX7,   OVLTBL-1        /POINTER INTO OVERLAY LENGTH TABLE
+ 134               
+ 135 000020  0200  USR,    200             /USR CALL: COULD BE 200 OR 7700
+ 136 000021  1600  PPACK,  PACK            /CHANGED TO TTYO BY ERROR ROUTINE
+ 137 000022  0000  IOFLG,  0
+ 138 000023  2437  SYMTM3, SYMTBL-3
+ 139 000024  0000  ORGFLG, 0
+ 140 000025  0000  RFPTR1, 0
+ 141 000026  0000  GPTR,   0
+ 142 000027  0000  LBPTR,  0
+ 143 000030  0000  TRPCNT, 0
+ 144 000031  0000  P2FLG,  0
+ 145 000032  0000  CZFLG,  0
+ 146 000033  0000  F1FLG,  0
+ 147 000034  0000  S8FLG,  0
+ 148 000035  7777  OVRFLO, -1
+ 149 000036  7777  SWITZ,  -1
+ 150 000037  7774  SVMAIN, -4              /0 IF /S SPECIFIED
+ 151 000040  0000  DPFLG,  0
+ 152                        
+ 153               /MORE PAGE ZERO LOCATIONS
+ 154 000041  0000  GTYP,   0
+ 155 000042  0000  EPTR,   0
+ 156 000043  0000  EPT2,   0
+ 157 000044  0000  ETYP,   0
+ 158 000045  0000  BPTR,   0
+ 159 000046  0000  BPT2,   0
+ 160 000047  0000  REFPTR, 0
+ 161 000050  0000  RLEN,   0
+ 162 000051  0000  FTMP0,  0;0
+     000052  0000  
+ 163 000053  0000  RBLK,   0
+ 164 000054  0000  FATAL,  0
+ 165 000055  7247  BP,     LDBUFS  /POINTER INTO PASS2 BUFFER ARRAY
+ 166 000056  0001  A1,     1;0     /CURRENT ADDRESS IN FIELDS 1-7
+     000057  0000  
+ 167 000060  0000  LNONUM, 0
+ 168 000061  0000  LBCNT,  0
+ 169 000062  0000  BLKCNT, 0
+ 170 000063  0000  TRAPV,  0;0
+     000064  0000  
+ 171 000065  0000  BLKSIZ, 0
+ 172 000066  0000  BSECTP, 0       /POINTER INTO BINARY SECTION TABLE (PASS 2)
+ 173 000067  0000  OUTINH, 0
+ 174 000070  0000  BLKBEG, 0
+ 175 000071  0000  NEWBLK, 0
+ 176 000072  0000  NEWLEN, 0
+ 177 000073  0000  MCNT,   0
+ 178 000074  0000  MBGCNT, 0
+ 179 000075  0000  TMP4,   0
+ 180 000076  0000  TMP5,   0
+ 181                       PAGE
+ 182               /LOADER STARTS AT 200
+ 183               
+ 184 000200  2202          ISZ     .+2     /NON-CHAIN ENTRY
+ 185 000201  5602          JMP I   .+1     /CHAIN ENTRY
+ 186 000202  4600          START
+ 187               
+ 188               /COME HERE TO READ/WRITE THE LOADER IMAGE.
+ 189                        
+ 190 000203  0000  LDRIO,  0               /AC=4000 FOR WRITE, 0 FOR READ
+ 191 000204  3237          DCA     LDRIOC  /STORE READ/WRITE
+ 192 000205  4777          JMS I   (NEWBUF
+ 193 000206  1055          TAD     BP
+ 194 000207  3240          DCA     LDRIOA
+ 195 000210  2240          ISZ     LDRIOA
+ 196 000211  1640          TAD I   LDRIOA
+ 197 000212  3241          DCA     LDRIOB  /BLOCK #
+ 198 000213  2240          ISZ     LDRIOA
+ 199 000214  1640          TAD I   LDRIOA  /NUMBER OF BLOCKS LEFT IN SECTION
+ 200 000215  7550          SPA SNA
+ 201 000216  5243          JMP     LDRIOR  /NULL BUFFER - JUST IN CASE
+ 202 000217  1177          TAD     [-4
+ 203 000220  7500          SMA
+ 204 000221  7200          CLA             /IF >4 BLOCKS LEFT ONLY DO 4
+ 205 000222  1176          TAD     [4
+ 206 000223  7112          CLL RTR
+ 207 000224  7012          RTR
+ 208 000225  7012          RTR
+ 209 000226  1237          TAD     LDRIOC  /ADD READ/WRITE
+ 210 000227  6201          CDF 0
+ 211 000230  1776          TAD I   (OUTFLD
+ 212 000231  1375          TAD     (-CDF
+ 213 000232  3237          DCA     LDRIOC  /STORE R/W + BLOCK COUNT + FLD BITS
+ 214 000233  1070          TAD     BLKBEG
+ 215 000234  3240          DCA     LDRIOA
+ 216 000235  4575          JMS I   [IOHAN  /DF MUST BE 0 HERE!
+ 217 000236  2144          LIMGU           /LOADER IMAGE FILE
+ 218 000237  0000  LDRIOC, 0
+ 219 000240  0000  LDRIOA, 0
+ 220 000241  0000  LDRIOB, 0
+ 221 000242  6211          CDF 10
+ 222 000243  7200  LDRIOR, CLA
+ 223 000244  5603          JMP I LDRIO
+ 224 000245  0000  SETBGX,        0
+ 225 000246  7201          CLA IAC
+ 226 000247  1026          TAD     GPTR
+ 227 000250  4252          JMS     SETBPT  /EXTREMELY COMMON SEQUENCE
+ 228 000251  5645          JMP I   SETBGX
+ 229               
+ 230 000252  0000  SETBPT, 0
+ 231 000253  3045          DCA     BPTR    /STORE BPTR
+ 232 000254  7201          CLA IAC
+ 233 000255  1045          TAD     BPTR
+ 234 000256  3046          DCA     BPT2    /AND PTR TO NEXT WD
+ 235 000257  5652          JMP I   SETBPT
+ 236 000260  1114  ORGMSG, TEXT    /ILLEGAL ORIGIN/
+     000261  1405  
+     000262  0701  
+     000263  1440  
+     000264  1722  
+     000265  1107  
+     000266  1116  
+     000267  0000  
+ 237 000270  1726  SYMMSG, TEXT    /OVER SYMB/
+     000271  0522  
+     000272  4023  
+     000273  3115  
+     000274  0200  
+ 238 000275  1417  IOMSG,  TEXT    %LOADER I/O ERROR%
+     000276  0104  
+     000277  0522  
+     000300  4011  
+     000301  5717  
+     000302  4005  
+     000303  2222  
+     000304  1722  
+     000305  0000  
+ 239 000306  1723  ENTMSG, TEXT    %OS/8 ENTER ERROR%
+     000307  5770  
+     000310  4005  
+     000311  1624  
+     000312  0522  
+     000313  4005  
+     000314  2222  
+     000315  1722  
+     000316  0000  
+ 240 000375  1577          PAGE
+     000376  2721  
+     000377  2666  
+ 241               /TTYHAN- TTY HANDLER FOR OUTPUT OF ANY MESSAGE IN ANY FIELD.
+ 242               /       MESSAGE MUST BE FIELD CONTAINED & TERMINATE WITH 0
+ 243               /       HANDLER CAN BE CALLED ACROSS FLDS WITH AC CLR.
+ 244               /       RTN WITH"IF & DF" SET TO CALLING FLD.
+ 245               /
+ 246               /       CALL    CDF X   /X=FLD OF CALLER*10
+ 247               /               CIF Y   /Y=FLD OF TTYHAN*10
+ 248               /               JMS  TTYHAN
+ 249               /               CDF Z   /Z=FLD OF MESS.BUF
+ 250               /               BUFADR  /MESS BUF. ADDR.
+ 251               /
+ 252 000400  0000  TTYHAN, 0
+ 253 000401  1377          TAD     (6203   /SETUP MICRO INSTR
+ 254 000402  6214          RDF             /CDF & CIF FOR RTN
+ 255 000403  3242          DCA     CRLFF+1
+ 256 000404  1600          TAD I   TTYHAN  /SET UP FLD OF
+ 257 000405  3214          DCA     TTYCDF  /MESS BUF
+ 258 000406  2200          ISZ     TTYHAN
+ 259 000407  7040          CMA
+ 260 000410  1600          TAD I   TTYHAN  /SET UP MESS BUFF ADDR-1
+ 261 000411  3244          DCA     MESADR
+ 262 000412  2200          ISZ     TTYHAN
+ 263 000413  3245          DCA     MESADR+1
+ 264 000414  0000  TTYCDF, 0
+ 265 000415  4321          JMS     CRLF
+ 266 000416  2245  TTYLP,  ISZ     MESADR+1
+ 267 000417  5222          JMP     .+3
+ 268 000420  1644          TAD I   MESADR
+ 269 000421  5231          JMP     HAF
+ 270 000422  2244          ISZ     MESADR
+ 271 000423  7240          CLA CMA
+ 272 000424  3245          DCA     MESADR+1
+ 273 000425  1644          TAD I   MESADR
+ 274 000426  7012          RTR
+ 275 000427  7012          RTR
+ 276 000430  7012          RTR
+ 277 000431  0174  HAF,    AND     [77
+ 278 000432  7450          SNA
+ 279 000433  5241          JMP     CRLFF
+ 280 000434  1173          TAD     [240
+ 281 000435  0174          AND     [77
+ 282 000436  1173          TAD     [240
+ 283 000437  4313          JMS     TTYO
+ 284 000440  5216          JMP     TTYLP
+ 285 000441  4321  CRLFF,  JMS     CRLF
+ 286 000442  0000          0
+ 287 000443  5600          JMP I   TTYHAN
+ 288 000444  0000  MESADR, 0
+ 289 000445  0000          0
+ 290 000446  0000  RTNOS8,        0               /HERE ON PASS1 FATAL ERROR
+ 291 000447  7240          STA
+ 292 000450  6211          CDF 10
+ 293 000451  3776          DCA I   (OVLTBL /PRINT SYMBOL MAP W/O OVERLAY LENGTH TABLE
+ 294 000452  4775  DOMAP,  JMS I (SYMMAP
+ 295 000453  6201          CDF
+ 296 000454  1646          TAD I RTNOS8    /ADDR OF TTY
+ 297 000455  3260          DCA .+3         /MSG
+ 298 000456  4572          JMS I [TTYHAN
+ 299 000457  6201          CDF
+ 300 000460  0000          0
+ 301 000461  1374          TAD     (TTYO
+ 302 000462  3021          DCA     PPACK   /FAKE OUT SYMBOL PRINTER
+ 303 000463  1060          TAD     LNONUM
+ 304 000464  3041          DCA     GTYP    /PUT LEVEL AND OVERLAY IN GTYP
+ 305 000465  4773          JMS I   (CVLOVL /OUTPUT LEVEL AND OVERLAY
+ 306 000466  7346          AC7775
+ 307 000467  3076          DCA     TMP5    /PRINT 3 DIGIT FILE-WITHIN-OVERLAY
+ 308 000470  1073          TAD     MCNT
+ 309 000471  1074          TAD     MBGCNT
+ 310 000472  7001          IAC
+ 311 000473  7106          CLL RTL
+ 312 000474  7004          RAL
+ 313 000475  4772          JMS I   (CVRT
+ 314 000476  4321          JMS     CRLF    /OUTPUT CRLF AFTERWARDS
+ 315 000477  5700          JMP I .+1       /RTN TO
+ 316 000500  7605          7605            /OS8
+ 317               
+ 318 000501  0001  LDRNAM, 1;0617;2224;2216;1404   /SYS:FORTRN.LD
+     000502  0617  
+     000503  2224  
+     000504  2216  
+     000505  1404  
+ 319 000506  0000          ZBLOCK  5               /NO DEFAULT SYMBOL MAP DEVICE
+     000507  0000  
+     000510  0000  
+     000511  0000  
+     000512  0000  
+ 320               
+ 321 000513  0000  TTYO,   0
+ 322 000514  6046          TLS
+ 323 000515  6041          TSF
+ 324 000516  5315          JMP     .-1
+ 325 000517  7200          CLA
+ 326 000520  5713          JMP I   TTYO
+ 327               /
+ 328 000521  0000  CRLF,   0
+ 329 000522  1371          TAD     (215
+ 330 000523  4313          JMS     TTYO
+ 331 000524  1370          TAD     (212
+ 332 000525  4313          JMS     TTYO
+ 333 000526  5721          JMP I   CRLF
+ 334               /OS8ER- USED WHEN AN OS/8 ERROR OCCURS WHICH IS FATAL
+ 335               
+ 336 000527  0000  OS8ER,  0
+ 337 000530  6201          CDF 0
+ 338 000531  4572          JMS I   [TTYHAN
+ 339 000532  6201          CDF 0           /FLD OF MESS BUF
+ 340 000533  0535          SYSERR          /ADR OFMESS BUF
+ 341 000534  5571          JMP I   [7605   /RTN TO OS8
+ 342               
+ 343 000535  2331  SYSERR, TEXT    /SYSTEM ERROR/
+     000536  2324  
+     000537  0515  
+     000540  4005  
+     000541  2222  
+     000542  1722  
+     000543  0000  
+ 344 000544  4040  TYTBL,  4040            /CHARS FOR SMAP
+ 345 000545  0530          0530            /EX (EXTERN)
+ 346 000546  4040          4040            /GOOD TYPES ARE
+ 347 000547  4040          4040            /SPACES
+ 348 000550  1505          1505            /ME (MUL ENTRY)
+ 349 000551  1523          1523            /MS (MUL SECTN)
+ 350 000552  4040          4040            /GEN 8MOD SECT
+ 351 000553  4040          4040            /8MOD COM SECT
+ 352 000554  4040          4040            /8MOD F1 SECT
+ 353 000570  0212          PAGE
+     000571  0215  
+     000572  1651  
+     000573  1727  
+     000574  0513  
+     000575  1400  
+     000576  5435  
+     000577  6203  
+ 354               /IOHAN- I/O HANDLER 1)FETCHES A OS8 DEVICE HANDLER;
+ 355               /       2)CHKS FOR E.O.FILE;3)ISSUES CALL TO THE HANDLER.
+ 356               /       RTN TO CALLER WITH "IOFLG" SET IF
+ 357               /       NUM OF BLKS TRANSF LESS THAN REQ AMT.
+ 358               /       CAN BE CALLED FROM ANY FLD
+ 359               /       IF AC=0,DO ALL OF THE ABOVE.
+ 360               /       IF AC=DEV NUM,DO ONLY "FETCH"PART
+ 361               /
+ 362               /       CALL    CDF X
+ 363               /               CIF Y
+ 364               /               JMS  IOHAN
+ 365               /               ADDR  /PTR TO UNIT,LEN,STBLK OF FILE IN FLD 1
+ 366               /               ARG(1)/OS8 ARG: FCN CTRL WD
+ 367               /               ARG(2)/ "     : TRNASF BUF ADR
+ 368               /               ARG(3)/ "     : REL STBLK OF TRANSF
+ 369               /
+ 370 000600  0000  IOHAN,  0
+ 371 000601  3337          DCA     UNITSV  /SAV DEV NUM IF ONE
+ 372 000602  3022          DCA     IOFLG   /CLR FLG
+ 373 000603  6214          RDF
+ 374 000604  1362          TAD     P6201
+ 375 000605  3341          DCA     GETCDF+1
+ 376 000606  1316          TAD     P6203   /SETUP CIF & CDF FOR
+ 377 000607  6214          RDF             /RTN JMP
+ 378 000610  3333          DCA     RTNIO
+ 379               /FETCH A DEV HANDLER OR LOOKUP ENTRY PT
+ 380               /IF DESIRED HANDLER IS IN CORE
+ 381 000611  1337          TAD     UNITSV  /GET DEV NUM IF ONE
+ 382 000612  7650          SNA CLA         /JUST A FETCH?
+ 383 000613  5216          JMP     .+3     /NO
+ 384 000614  4345          JMS     INQIRE  /YES
+ 385 000615  5333          JMP     RTNIO
+ 386 000616  1600          TAD I   IOHAN   /GET PTR TO UNIT(DEV NUM)
+ 387 000617  3336          DCA     ULSADR
+ 388 000620  6211          CDF 10
+ 389 000621  1736          TAD I   ULSADR  /GET DEV NUM
+ 390 000622  0170          AND     [17
+ 391 000623  7450          SNA
+ 392 000624  4567          JMS I   [OS8ER
+ 393 000625  3337          DCA     UNITSV
+ 394 000626  4345          JMS     INQIRE
+ 395               /CHK FOR E.O.FILE
+ 396 000627  2200          ISZ     IOHAN
+ 397 000630  4340          JMS     GETCDF
+ 398 000631  1600          TAD I   IOHAN   /GET FCN CTRL WD
+ 399 000632  7106          CLL RTL         /NUM OF PAGES IS CONVRTED
+ 400 000633  7006          RTL             /TO NUM BLKS & PUT
+ 401 000634  7006          RTL             /IN BITS 8-11
+ 402 000635  0170          AND     [17
+ 403 000636  3000          DCA     TMP0    /NUM BLKS TO TRANSF
+ 404               /SETUP FCN CTRL WD; TRANSF BUF ADR; & ABS STBLK OF TRANSF
+ 405               /FOR OS8 CALL TO HANDLER
+ 406 000637  1600          TAD I   IOHAN   /FCN CTRL WD
+ 407 000640  3326          DCA     FCNWD
+ 408 000641  2200          ISZ     IOHAN
+ 409 000642  1600          TAD I   IOHAN   /TRANSF BUF ADR
+ 410 000643  3327          DCA     FCNWD+1
+ 411 000644  2200          ISZ     IOHAN
+ 412 000645  1600          TAD I   IOHAN   /GET REL STBLK & BUILD
+ 413 000646  1000          TAD     TMP0    /ABS STBLK
+ 414 000647  7141          CIA CLL
+ 415 000650  2336          ISZ     ULSADR
+ 416 000651  6211          CDF 10
+ 417 000652  1736          TAD I   ULSADR  /FILE LEN-(REL STB+NUM BLKS)
+ 418 000653  7460          SNL SZA         /E.O.FILE CONDITION?
+ 419 000654  5257          JMP     .+3     /YES
+ 420 000655  7200          CLA             /NO
+ 421 000656  5305          JMP     SETSBN
+ 422 000657  1000          TAD     TMP0
+ 423 000660  7540          SMA SZA         /ANY BLKS TO TRANSF?
+ 424 000661  5271          JMP     IOH     /YES
+ 425 000662  7200          CLA             /NO
+ 426               /CHK IF FILE LEN=0; IF SO DO SEQ STUFF
+ 427 000663  1736          TAD I   ULSADR
+ 428 000664  7650          SNA CLA         /SEQ DEV?
+ 429 000665  5272          JMP     IOH+1   /YES
+ 430 000666  7040          CMA             /NO,=-1 IF NUM BLKS TRANSF L.T. REQ
+ 431 000667  3022          DCA     IOFLG
+ 432 000670  5333          JMP     RTNIO
+ 433 000671  3000  IOH,    DCA     TMP0    /THIS NUM OF BLKS
+ 434               /UPDATE FCN CTRL WD IN OS8 CALL
+ 435 000672  1326          TAD     FCNWD
+ 436 000673  0377          AND     (4077   /REMOVE REQ NUM OF PGS
+ 437 000674  3326          DCA     FCNWD   /& PUT IN THE
+ 438 000675  1000          TAD     TMP0    /ALTERED NUM
+ 439 000676  7112          CLL RTR
+ 440 000677  7012          RTR
+ 441 000700  7012          RTR
+ 442 000701  1326          TAD     FCNWD
+ 443 000702  3326          DCA     FCNWD
+ 444 000703  7040          CMA             /=-1 IF NUM BLKS TRANSF L.T. REQ
+ 445 000704  3022          DCA     IOFLG
+ 446               /SETUP STARTING BLK NUMBER
+ 447               /
+ 448 000705  2336  SETSBN, ISZ     ULSADR
+ 449 000706  6211          CDF 10
+ 450 000707  1736          TAD I   ULSADR  /GET ABS STBLK
+ 451 000710  4340          JMS     GETCDF  /GET DF
+ 452 000711  1600          TAD I   IOHAN   /ADD REL STBLK
+ 453 000712  3330          DCA     FCNWD+2
+ 454 000713  1600          TAD I   IOHAN   /UPDATE REL STBLK
+ 455 000714  1000          TAD     TMP0    /BY NUM BLKS OF TRANSF
+ 456 000715  3600          DCA I   IOHAN
+ 457               /CALL TO THE HANDLER
+ 458 000716  6203  P6203,  CIF CDF 0       /IOHAN & OS8 DEV HAN IN FLD 0
+ 459 000717  6031          KSF             /CHK FOR CTRLC
+ 460 000720  5325          JMP .+5
+ 461 000721  6034          KRS
+ 462 000722  1376          TAD (-203
+ 463 000723  7650          SNA CLA
+ 464 000724  5571          JMP I [7605
+ 465 000725  4735          JMS I   IOENT
+ 466 000726  0000  FCNWD,  0
+ 467 000727  0000          0
+ 468 000730  0000          0
+ 469 000731  5343          JMP     HNDERR  /ERROR RETURN OF CALL
+ 470 000732  2200          ISZ     IOHAN
+ 471 000733  0000  RTNIO,  0               /CIF INSTR
+ 472 000734  5600          JMP I   IOHAN
+ 473 000735  0000  IOENT,  0
+ 474 000736  0000  ULSADR, 0
+ 475 000737  0000  UNITSV, 0
+ 476               /
+ 477 000740  0000  GETCDF, 0
+ 478 000741  0000          0
+ 479 000742  5740          JMP I   GETCDF
+ 480               
+ 481 000743  4566  HNDERR, JMS I   [RTNOS8
+ 482 000744  0275          IOMSG
+ 483               /INQIRE- DETERMINE IF DESIRED DEV HANDLER IS IN CORE
+ 484               /       & IF SO,GET ITS ENTRY PT
+ 485                       DVTBL=7647
+ 486 000745  0000  INQIRE, 0
+ 487 000746  6211          CDF 10
+ 488 000747  1337          TAD     UNITSV
+ 489 000750  1375          TAD     (DVTBL-1
+ 490 000751  3335          DCA     IOENT   /ADR OF ENRTY PT IN RESID. TBL
+ 491 000752  1735          TAD I   IOENT   /GET ENTRY PT IF ONE
+ 492 000753  3335          DCA     IOENT
+ 493 000754  1335          TAD     IOENT
+ 494 000755  7640          SZA CLA         /DEV HAN WAS IN CORE?
+ 495 000756  5745          JMP I   INQIRE  /YES
+ 496 000757  1374          TAD     (7201   /NO
+ 497 000760  3366          DCA     P6201+4
+ 498 000761  1337          TAD     UNITSV  /GET DEV NUM BK
+ 499 000762  6201  P6201,  CDF 0
+ 500 000763  6212          CIF 10
+ 501 000764  4420          JMS I   USR
+ 502 000765  0001          1
+ 503 000766  0000          0
+ 504 000767  4567          JMS I   [OS8ER
+ 505 000770  1366          TAD     .-2
+ 506 000771  3335          DCA     IOENT
+ 507 000772  5745          JMP I   INQIRE
+ 508 000774  7201          PAGE
+     000775  7646  
+     000776  7575  
+     000777  4077  
+ 509 001000  0000  NXTESD,        0
+ 510 001001  2042          ISZ EPTR        /ADV PTR TO
+ 511 001002  2042          ISZ EPTR        /WD 0 OF
+ 512 001003  1042          TAD EPTR        /NEXT ENTRY
+ 513 001004  0165          AND [377        /IF AT BLK
+ 514 001005  7650          SNA CLA         /BOUNDARY
+ 515 001006  1176          TAD [4          /BUMP IT FOUR
+ 516 001007  1042          TAD EPTR
+ 517 001010  4564          JMS I   [SETEPT
+ 518 001011  1163          TAD [3          /CHECK FOR
+ 519 001012  1042          TAD EPTR        /END OF
+ 520 001013  3000          DCA TMP0        /ESD
+ 521 001014  1400          TAD I TMP0      /TYPE WD
+ 522 001015  0170          AND [17         /TO AC B8-B11
+ 523 001016  7440          SZA             /LAST ESD?
+ 524 001017  2200          ISZ NXTESD      /NO
+ 525 001020  3044          DCA ETYP        /SAVE TYPE
+ 526 001021  5600          JMP I NXTESD
+ 527 001022  0000  ADVOVR,        0               /UPDATE PASS1 PASS2 ARGS
+ 528 001023  2073          ISZ MCNT        /MORE MODS IN THIS OVR?
+ 529 001024  5303          JMP SAMOVR      /YES
+ 530 001025  4315          JMS NXTOVR      /SET ARGS FOR NEXT OVER
+ 531 001026  5246          JMP EOLVL       /RTN HERE= END OF LEVEL
+ 532 001027  1031          TAD P2FLG       /DOING PASS2 ?
+ 533 001030  7700          SMA CLA
+ 534 001031  5242          JMP BY10        /NO
+ 535 001032  1377          TAD (2          /GET NEW LDR
+ 536 001033  1066          TAD BSECTP      /IMAGE REL BLK
+ 537 001034  3000          DCA TMP0        /FOR NEXT OVR
+ 538 001035  1000          TAD     TMP0
+ 539 001036  3010          DCA     NDX0
+ 540 001037  1410          TAD I   NDX0    /LENGTH OF OVERLAY
+ 541 001040  1400          TAD I   TMP0    /PLUS OLD RELATIVE BLOCK
+ 542 001041  3400          DCA I   TMP0    /EQUALS NEW RELATIVE BLOCK
+ 543 001042  1060  BY10,   TAD LNONUM      /ADD 1 TO BITS
+ 544 001043  1376          TAD (20         /4-7 OF LEVEL
+ 545 001044  3060          DCA LNONUM      /AND OVR LAY NUM
+ 546 001045  5303          JMP SAMOVR
+ 547 001046  4315  EOLVL,  JMS NXTOVR      /GET NXT OVR NEW LEVEL
+ 548 001047  5307          JMP SAMOV4      /HERE=END OF ALL LEVELS
+ 549 001050  1060          TAD LNONUM      /ADD 1 TO
+ 550 001051  0162          AND [3400       /THE LEVEL
+ 551 001052  1375          TAD (400        /BITS (1-3)
+ 552 001053  3060          DCA LNONUM      /AND CLEAR THE OVR BITS
+ 553 001054  1031          TAD P2FLG
+ 554 001055  7700          SMA CLA         /DOING PASS2 ?
+ 555 001056  5263          JMP BY7         /NO
+ 556 001057  1176          TAD [4
+ 557 001060  1066          TAD BSECTP      /UPDATE BIN SECTION PTR
+ 558 001061  3066          DCA BSECTP
+ 559 001062  5303          JMP SAMOVR
+ 560 001063  2774  BY7,   ISZ I (LEVSYM+2 /SET THE INTERNAL LEVEL SYMBOL TO LEVLN+1
+ 561 001064  1373          TAD (LEVSYM     /ENTER NEW
+ 562 001065  4561          JMS I [LOOK     /LEVEL SYMBOL INTO GST
+ 563 001066  1176          TAD [4
+ 564 001067  1060          TAD LNONUM      /SET TYPE
+ 565 001070  3426          DCA I GPTR      /TO PROG SECTION
+ 566 001071  7001          IAC             /SET PTR TO
+ 567 001072  1026          TAD GPTR        /NEW LEVEL
+ 568 001073  3560          DCA I [LVPTR
+ 569 001074  1446  LEVRND, TAD I   BPT2
+ 570 001075  7100          CLL
+ 571 001076  1165          TAD     [377    /ROUND UP OLD LEVEL
+ 572 001077  0157          AND     [7400   /TO A BLOCK BOUNDARY
+ 573 001100  7430          SZL
+ 574 001101  2445          ISZ I   BPTR    /MIND THE CARRIES!
+ 575 001102  3446          DCA I   BPT2
+ 576 001103  1163  SAMOVR, TAD [3          /ADV PTR TO
+ 577 001104  1025          TAD RFPTR1      /NXT RALF
+ 578 001105  3025          DCA RFPTR1      /MODULE
+ 579 001106  5622          JMP I ADVOVR
+ 580 001107  2222  SAMOV4, ISZ     ADVOVR  /BUMP RETURN
+ 581 001110  1031          TAD     P2FLG
+ 582 001111  7710          SPA CLA
+ 583 001112  5303          JMP     SAMOVR  /SKIP ROUNDUP IF PASS 2
+ 584 001113  4772          JMS I (LEVLUP   /MERGE OVERLAY SIZE INTO LEVEL SIZE
+ 585 001114  5274          JMP LEVRND      /AND RND UP LAST LEVEL
+ 586 001115  0000  NXTOVR,        0               /HERE AT END OF OVERLAY
+ 587 001116  2350          ISZ MTBL        /GET NUM OF
+ 588 001117  1750          TAD I MTBL      /MOD IN NXT
+ 589 001120  7450          SNA             /OVR
+ 590 001121  5715          JMP I NXTOVR    /=END OF LEVEL
+ 591 001122  3074          DCA     MBGCNT
+ 592 001123  1074          TAD     MBGCNT
+ 593 001124  7041          CIA
+ 594 001125  3073          DCA MCNT
+ 595 001126  1031          TAD     P2FLG
+ 596 001127  7700          SMA CLA
+ 597 001130  4772          JMS I (LEVLUP   /SET CUR. LEVL =MAX (CUR LEVL, CURNT OVR)
+ 598 001131  2315          ISZ NXTOVR      /RTN P+1 IF
+ 599 001132  5715          JMP I NXTOVR    /NOT END OF LEVEL
+ 600                
+ 601                
+ 602 001133  0000  SETCNT, 0
+ 603 001134  1371          TAD     (MCTTBL+1       /PTR TO MOD
+ 604 001135  3350          DCA MTBL        /COUNT TBL
+ 605 001136  1750          TAD I MTBL      /-NUM IN
+ 606 001137  3074          DCA     MBGCNT
+ 607 001140  1074          TAD     MBGCNT
+ 608 001141  7041          CIA             /MAIN
+ 609 001142  3073          DCA MCNT
+ 610 001143  1370          TAD     (MODTBL+3       /PTR TO TOP
+ 611 001144  3025          DCA RFPTR1      /OF MOD TBL
+ 612 001145  3767          DCA I (OVRSIZ
+ 613 001146  3766          DCA I (OVRSIZ+1
+ 614 001147  5733          JMP I SETCNT
+ 615 001150  0000  MTBL,   0
+ 616 001166  2150          PAGE
+     001167  2147  
+     001170  6175  
+     001171  6001  
+     001172  4507  
+     001173  2050  
+     001174  2052  
+     001175  0400  
+     001176  0020  
+     001177  0002  
+ 617               /LOOKUP OR ENTER A SYMBOL INTO
+ 618               /GLOBAL SYMBOL TABLE (GST). PTR
+ 619               /TO SYMBOL IN FIELD 1 IS IN
+ 620               /AC. USUALLY ITS AN ESD.
+ 621               /RTN P+1=NO MATCH
+ 622               /RTN P+2=MATCH
+ 623                
+ 624 001200  0000  LOOK,   0
+ 625 001201  3000          DCA TMP0        /PTR TO SYM
+ 626 001202  6211          CDF 10
+ 627 001203  1400          TAD I TMP0      /SELECT
+ 628 001204  7012          RTR             /BUCKET
+ 629 001205  7012          RTR             /A-Z, SPACE
+ 630 001206  7012          RTR             /OR POUND
+ 631 001207  0174          AND [77
+ 632 001210  1377          TAD (BUCKET-1   /PTR TO BUCKET
+ 633 001211  3001  LOP5,   DCA TMP1        /PTR TO PREV ENTRY
+ 634 001212  1401          TAD I TMP1      /PTR TO NEXT ENTRY
+ 635 001213  7450          SNA             /0=BUCKET BOTTOM
+ 636 001214  5264          JMP HOOKIN      /NO MATCH
+ 637 001215  7001          IAC             /APPEND SYMBOL
+ 638 001216  3026          DCA GPTR        /LOOK FOR
+ 639 001217  7346          AC7775          /3 WORD MATCH
+ 640 001220  3002          DCA TMP2
+ 641 001221  1000          TAD TMP0
+ 642 001222  3042          DCA EPTR
+ 643 001223  1442  YUCCH,  TAD I EPTR
+ 644 001224  7141          CIA CLL
+ 645 001225  1426          TAD I GPTR
+ 646 001226  7640          SZA CLA
+ 647 001227  5260          JMP YECCH       /SYMBOLS DIFFER
+ 648 001230  2042          ISZ EPTR
+ 649 001231  2026          ISZ GPTR
+ 650 001232  2002          ISZ TMP2        /ALL MATCH?
+ 651 001233  5223          JMP YUCCH       /NO
+ 652 001234  2200          ISZ LOOK        /BUMP RTN
+ 653 001235  1442  SETTYP, TAD I EPTR      /GET ESD TYPE
+ 654 001236  0170          AND [17
+ 655 001237  3044          DCA ETYP
+ 656 001240  7201          CLA IAC
+ 657 001241  1042          TAD     EPTR
+ 658 001242  4564          JMS I   [SETEPT /BUMP EPTR AND SET EPT2
+ 659 001243  1442          TAD I EPTR      /GET ESD NUM
+ 660 001244  7012          RTR             /IN B1-B7
+ 661 001245  7012          RTR             /AND SET
+ 662 001246  0376          AND (177        /REFERENCE
+ 663 001247  1375          TAD (ESDPG      /POINTER
+ 664 001250  3047          DCA REFPTR
+ 665 001251  1426          TAD I GPTR      /SET GST
+ 666 001252  0170          AND [17         /TYPE
+ 667 001253  3041          DCA GTYP        /FIELD BITS OF
+ 668 001254  1442          TAD I EPTR      /VALUE WORDS
+ 669 001255  0156          AND [7          /CLR
+ 670 001256  3442          DCA I EPTR      /HI 9
+ 671 001257  5600          JMP I LOOK
+ 672 001260  7430  YECCH, SZL             /IS NEW GUY LESS THAN GST ENTRY?
+ 673 001261  5264          JMP HOOKIN      /YES HOOK-IN HERE
+ 674 001262  1401          TAD I TMP1
+ 675 001263  5211          JMP LOP5        /TRY NEXT
+ 676 001264  1401  HOOKIN, TAD I TMP1      /GET FWD LINK
+ 677 001265  3414          DCA I NDX4      /TO NEXT INTO
+ 678 001266  1014          TAD NDX4        /NEW. PUT FWD
+ 679 001267  3401          DCA I TMP1      /LINK TO NEW INTO PREV.
+ 680 001270  1000          TAD TMP0        /3 SYM
+ 681 001271  3042          DCA EPTR        /INTO GST
+ 682 001272  7346          AC7775
+ 683 001273  3002          DCA TMP2
+ 684 001274  1442          TAD I EPTR
+ 685 001275  3414          DCA I NDX4
+ 686 001276  2042          ISZ EPTR
+ 687 001277  2002          ISZ TMP2
+ 688 001300  5274          JMP .-4
+ 689 001301  2014          ISZ NDX4        /SET PTR TO
+ 690 001302  1014          TAD NDX4        /WORD 4 (TYPE)
+ 691 001303  3026          DCA GPTR        /OF GST
+ 692 001304  2014          ISZ NDX4        /SET PTR TO NEXT
+ 693 001305  2014          ISZ NDX4        /FREE ENTRY
+ 694 001306  1156          TAD [7          /SEE IF
+ 695 001307  1014          TAD NDX4        /GST IS FULL
+ 696 001310  1315          TAD ENDSYM      /END OF GST
+ 697 001311  7750          SPA SNA CLA
+ 698 001312  5235          JMP SETTYP      /ITS OK
+ 699 001313  4566          JMS I [RTNOS8   /SYMBOL TABLE
+ 700 001314  0270          SYMMSG          /OVER FLOW
+ 701 001315  2344  ENDSYM, 1-OVLTBL
+ 702                        
+ 703 001316  0000  SETEPT, 0
+ 704 001317  3042          DCA     EPTR
+ 705 001320  7201          CLA IAC
+ 706 001321  1042          TAD     EPTR
+ 707 001322  3043          DCA     EPT2    /SET PTR TO BOTH WDS OF DBLWD
+ 708 001323  5716          JMP I   SETEPT
+ 709 001324  0000  GETTYP,        0               /ADV GST PTR
+ 710 001325  1156          TAD [7          /TO WD 4 OF
+ 711 001326  1026          TAD GPTR        /ENTRY
+ 712 001327  3026          DCA GPTR        /CHECK FOR
+ 713 001330  1026          TAD GPTR
+ 714 001331  1315          TAD ENDSYM
+ 715 001332  7700          SMA CLA
+ 716 001333  5724          JMP I GETTYP
+ 717 001334  1426          TAD I GPTR      /END OF GST.
+ 718 001335  7640          SZA CLA         /IF NOT END,
+ 719 001336  2324          ISZ GETTYP      /ISZ RETURN.
+ 720 001337  5724          JMP I GETTYP
+ 721               
+ 722 001340  0000  OLINE,  0               /OUTPUT A LINE OF TEXT TO THE SYMBOL MAP
+ 723 001341  3076          DCA     TMP5
+ 724 001342  1476  OLINLP, TAD I   TMP5
+ 725 001343  4774          JMS I   (HAFWD
+ 726 001344  1476          TAD I   TMP5
+ 727 001345  2076          ISZ     TMP5
+ 728 001346  0174          AND     [77
+ 729 001347  7640          SZA CLA
+ 730 001350  5342          JMP     OLINLP
+ 731 001351  4555          JMS I   [PCRLF  /DOUBLE SPACE AFTERWARDS
+ 732 001352  4555          JMS I   [PCRLF
+ 733 001353  5740          JMP I   OLINE
+ 734 001374  1531          PAGE
+     001375  7400  
+     001376  0177  
+     001377  1777  
+ 735               /HERE TO OUTPUT SYMBOL MAP
+ 736               /EACH SYMBOL IN GST IS 7 WORDS LONG
+ 737               /THE FORMAT IS:
+ 738               /WD0  PTR TO NEXT ALPHABETICAL SYMBOL
+ 739               /WD1  SYMBOL NAME IN PACKED SIX BIT
+ 740               /WD2  ASCII. 00 IS INTERPRETED AS SPACE
+ 741               /WD3  SIX CHARS MAX PER SYMBOL
+ 742               /WD4  B0=1=TRAP VECT SYMBOL ON PASS1 OR
+ 743               /     B0=1=PASS2 ERROR, B1-B3=LEVEL NUM
+ 744               /     (0-7)  B4-B7=OVERLAY NUM (0-17)
+ 745               /     B8-B11=TYPE. TYPE FORMAT IS:
+ 746               /       0=END OF ESD TBL (NA TO LDR)
+ 747               /       1=ENTRY POINT
+ 748               /       2=EXTERN
+ 749               /       3=COMMON SECTION
+ 750               /       4=PROGRAM SECTION
+ 751               /       5=MULTIPLE ENTRY POINT
+ 752               /       6=MULTIPLE SECTION
+ 753               /       7=GENERAL 8-MODE SECTION
+ 754               /      10=FIELD1 8-M0DE SECTION
+ 755               /      11=COMMON PG0 8-MODE SECTION
+ 756               /      12-17=UNDEFINED
+ 757               /
+ 758               /WD5  B0-B8=PTR TO PARENT SYMBOL (0R 0)
+ 759               /     ON PASS1 =TRAP VECTOR DISPLACEMENT
+ 760               /     ON PASS2
+ 761               /     B9-B11=FIELD BITS OF SYMBOL
+ 762               /WD6  ADDR  BITS OF SYMBOL
+ 763                        
+ 764               /OUTPUT FORMAT OF MAP IS:
+ 765               /
+ 766               /SYMBOL VALUE LEVEL OVRNUM TYPE(*)
+ 767               /
+ 768               /THE TYPE COLUMN IS EITHER 2 BLANKS OR
+ 769               /EX=EXTERN
+ 770               /ME=MULTIPLE ENTRY POINT
+ 771               /MS=MULTIPLE SECTION
+ 772               /ASTERISK MEANS SOME TYPE OF ILLEGAL
+ 773               /REFERENCE TO A SYMBOL AND USUALLY
+ 774               /MEANS A LOADER ORIGINATED TRAP HAS
+ 775               /BEEN GENERATED SOMEWHERE IN THE BINARY
+ 776               /E.G. SUBR GROG AT LEVEL 2 CALLS SUBR
+ 777               /COLUMBO AT LEVEL 1. A USER 7 TRAP
+ 778               /WOULD BE GENERATED IN SUBR GROG, AND
+ 779               /THE SYMBOL COLUMBO WOULD HAVE AN
+ 780               /ASTERISK ASIDE OF IT IN THE TYPE
+ 781               /COLUMN
+ 782 001400  0000  SYMMAP,        0
+ 783 001401  6201          CDF
+ 784 001402  1777          TAD I (LDRNAM+5 /MAP UNIT
+ 785 001403  7450          SNA             /IS IT 0 ?
+ 786 001404  5324          JMP NOMAP       /YES, NO MAP TO OUTPUT
+ 787 001405  4575          JMS I [IOHAN    /FETCH HANDLER
+ 788 001406  1777          TAD I (LDRNAM+5 /ENTER OUTPUT
+ 789 001407  6212          CIF 10
+ 790 001410  4420          JMS I USR
+ 791 001411  0003          3
+ 792 001412  0507  MPBLK,  LDRNAM+6
+ 793 001413  0000          0
+ 794 001414  5353          JMP     ENTERR  /WHOOPS WE HAVE AN ENTER ERROR
+ 795 001415  1777          TAD I   (LDRNAM+5
+ 796 001416  0170          AND     [17
+ 797 001417  6211          CDF 10
+ 798 001420  3776          DCA I   (SMAPU  /STORE SYMBOL MAP UNIT
+ 799 001421  1376          TAD     (SMAPU  /SYMMAP ARGS
+ 800 001422  3010          DCA NDX0        /FOR I/O
+ 801 001423  1213          TAD MPBLK+1     /LENGTH
+ 802 001424  7041          CIA
+ 803 001425  3410          DCA I NDX0
+ 804 001426  1212          TAD MPBLK
+ 805 001427  3410          DCA I NDX0
+ 806 001430  1375          TAD (BUCKET     /START AT 1ST
+ 807 001431  3050          DCA RLEN        /BUCKET (A)
+ 808 001432  1374          TAD (-42        /DO UP UNTIL BUT NOT INCL.
+ 809 001433  3053          DCA RBLK        /POUND SIGN
+ 810 001434  7346          AC7775          /INIT PACK ARGS
+ 811 001435  3054          DCA FATAL
+ 812 001436  1373          TAD     (RALFBF
+ 813 001437  3075          DCA TMP4
+ 814 001440  1301          TAD SM600
+ 815 001441  3062          DCA BLKCNT
+ 816 001442  4555          JMS I   [PCRLF
+ 817 001443  1372          TAD     (TLINE
+ 818 001444  4771          JMS I   (OLINE
+ 819 001445  1370          TAD     (STLINE
+ 820 001446  4771          JMS I   (OLINE  /OUTPUT TITLE AND SUBTITLE
+ 821 001447  1450          TAD I RLEN      /1ST SYM
+ 822 001450  3026  LOP10,  DCA GPTR
+ 823 001451  1026          TAD GPTR        /ANY MORE IN
+ 824 001452  7440          SZA             /THIS BUCKET ?
+ 825 001453  5326          JMP JOUSYM      /YES
+ 826 001454  2050          ISZ RLEN        /NXT BUCKET
+ 827 001455  2053          ISZ RBLK        /DONE ALL
+ 828 001456  5247          JMP LOP10-1     /NO
+ 829 001457  2036          ISZ SWITZ       /BEEN HERE BEF?
+ 830 001460  5267          JMP DUNMP       /YES ALL DONE
+ 831 001461  7240          CLA CMA         /SET FOR JUST
+ 832 001462  3053          DCA RBLK        /POUND SYMS
+ 833 001463  1037          TAD SVMAIN
+ 834 001464  7450          SNA             /DO ONLY #MAIN?
+ 835 001465  5247          JMP LOP10-1     /NO - DO ALL # SYMBOLS
+ 836 001466  7200  PRMAIN, CLA             /** REPLACED WITH JMS I (OUTSYM **
+ 837 001467  1177  DUNMP, TAD [-4         /OUT PUT
+ 838 001470  3076          DCA TMP5        /THE HIGHEST LOCATION
+ 839 001471  1056          TAD A1          /USED BY THE PROGRAM
+ 840 001472  1367          TAD (4060       /FLD BITS
+ 841 001473  4331          JMS HAFWD
+ 842 001474  1057          TAD A1+1
+ 843 001475  4766          JMS I (CVRT
+ 844 001476  1365          TAD     (HLINE
+ 845 001477  4771          JMS I   (OLINE  /PRINT " = HIGHEST LOC USED"
+ 846 001500  4764          JMS I   (PROVLY /PRINT OVERLAY TABLE
+ 847 001501  7200  SM600,  CLA             /** AC NOT 0 ON RETURN**
+ 848 001502  1363          TAD (214
+ 849 001503  4421          JMS I PPACK
+ 850 001504  1362          TAD (232        /CTRL Z
+ 851 001505  4421  OUFILP, JMS I PPACK
+ 852 001506  1062          TAD     BLKCNT  /HAVE WE FILLED
+ 853 001507  1175          TAD     [600    /A BLOCK UP COMPLETELY?
+ 854 001510  7640          SZA     CLA
+ 855 001511  5305          JMP     OUFILP  /NO
+ 856 001512  6201          CDF             /CLOSE SYMMAP
+ 857 001513  1761          TAD I (SYLST    /AC=LENGTH
+ 858 001514  3322          DCA SMPCLN
+ 859 001515  1777          TAD I (LDRNAM+5 /MAP UNIT
+ 860 001516  6212          CIF 10
+ 861 001517  4420          JMS I USR
+ 862 001520  0004          4
+ 863 001521  0507          LDRNAM+6
+ 864 001522  0000  SMPCLN, 0
+ 865 001523  4567          JMS I [OS8ER
+ 866 001524  6211  NOMAP,  CDF 10
+ 867 001525  5600          JMP I SYMMAP
+ 868 001526  4760  JOUSYM, JMS I (OUTSYM
+ 869 001527  1426          TAD I GPTR      /NEXT SYM TO DO
+ 870 001530  5250          JMP     LOP10
+ 871 001531  0000  HAFWD, 0               /OUTPUT THE 2 6 BIT ASCII CHARS IN AC
+ 872 001532  3003          DCA TMP3
+ 873 001533  1003          TAD TMP3        /LEFT HALF 1ST
+ 874 001534  7012          RTR
+ 875 001535  7012          RTR
+ 876 001536  7012          RTR
+ 877 001537  4343          JMS SIXTO8
+ 878 001540  1003          TAD TMP3
+ 879 001541  4343          JMS SIXTO8
+ 880 001542  5731          JMP I HAFWD
+ 881                        
+ 882 001543  0000  SIXTO8, 0               /CVRT AC FROM
+ 883 001544  0174          AND     [77     /6 TO 8 BIT ASCII
+ 884 001545  7440          SZA
+ 885 001546  1173          TAD     [240    /TURN ZEROS TO BLANKS
+ 886 001547  0174          AND     [77
+ 887 001550  1173          TAD     [240
+ 888 001551  4421          JMS I PPACK     /PUT IN BUFF IN PS/8 FORMAT
+ 889 001552  5743          JMP I SIXTO8
+ 890               
+ 891 001553  3757  ENTERR, DCA I   (DOMAP  /CANCEL SYMBOL MAP FROM RTNOS8
+ 892 001554  4566          JMS I   [RTNOS8 /AS WE MASY HAVE COME FROM SYMMAP
+ 893 001555  0306          ENTMSG
+ 894 001557  0452          PAGE
+     001560  1672  
+     001561  1646  
+     001562  0232  
+     001563  0214  
+     001564  2400  
+     001565  2117  
+     001566  1651  
+     001567  4060  
+     001570  2104  
+     001571  1340  
+     001572  2067  
+     001573  7000  
+     001574  7736  
+     001575  2000  
+     001576  2141  
+     001577  0506  
+ 895               /PACK ASCII IN AC INTO OUTPUT BUFF IN
+ 896               /OS/8 3 WORD FORMAT TO 2 12 BIT WORDS
+ 897                        
+ 898 001600  0000  PACK,   0
+ 899 001601  2054          ISZ FATAL       /3RD WORD ?
+ 900 001602  5215          JMP ONEOR2      /NO
+ 901 001603  3000          DCA TMP0        /SAVE CHAR
+ 902 001604  7344          AC7776          /BU BUFF PTR
+ 903 001605  1075          TAD TMP4
+ 904 001606  3075          DCA TMP4
+ 905 001607  7346          AC7775
+ 906 001610  3054          DCA FATAL       /RESET CNTR
+ 907 001611  4227          JMS ROL         /POSITION HI
+ 908 001612  3475          DCA I TMP4
+ 909 001613  2075          ISZ TMP4
+ 910 001614  4227          JMS ROL         /POSITION LO
+ 911 001615  3475  ONEOR2, DCA I TMP4
+ 912 001616  2075          ISZ TMP4
+ 913 001617  2062          ISZ BLKCNT      /BLOCK FULL ?
+ 914 001620  5600          JMP I PACK      /NO
+ 915 001621  4240          JMS WRBUF
+ 916 001622  1245          TAD     SBPTR
+ 917 001623  3075          DCA TMP4        /RESET ARGS
+ 918 001624  1377          TAD (-600
+ 919 001625  3062          DCA BLKCNT
+ 920 001626  5600          JMP I PACK
+ 921                        
+ 922 001627  0000  ROL,    0
+ 923 001630  1000          TAD TMP0        /3RD CHAR
+ 924 001631  7006          RTL             /POSITION
+ 925 001632  7006          RTL             /BITS
+ 926 001633  3000          DCA TMP0        /SAV FOR NXT CALL ON LO
+ 927 001634  1000          TAD TMP0
+ 928 001635  0157          AND [7400
+ 929 001636  1475          TAD I TMP4      /ADD IN OLDY
+ 930 001637  5627          JMP I ROL
+ 931                        
+ 932 001640  0000  WRBUF,  0               /WRITE OUT
+ 933 001641  6201          CDF             /SYM MAP
+ 934 001642  4575          JMS I [IOHAN    /BUFFER
+ 935 001643  2141          SMAPU           /ADDR OF SYM U
+ 936 001644  4210          200^1!4000!10   /1 BLK OF FLD 1
+ 937 001645  7000  SBPTR,  7000            /1ST ADDR
+ 938 001646  0000  SYLST,  0               /REL BLK
+ 939 001647  6211          CDF 10
+ 940 001650  5640          JMP I WRBUF
+ 941 001651  0000  CVRT,  0               /CONVERT AC TO
+ 942 001652  3326          DCA CVRTMP      /ASCII NUM
+ 943 001653  1076          TAD TMP5        /-NUM OF DIGITS
+ 944 001654  3001          DCA TMP1        /TO CONVERT
+ 945 001655  1326  LOP7,   TAD CVRTMP      /CVRT LEFT TO
+ 946 001656  7006          RTL             /RIGHT
+ 947 001657  7004          RAL             /3 BITS PER
+ 948 001660  3326          DCA CVRTMP      /DIGIT
+ 949 001661  1326          TAD CVRTMP
+ 950 001662  7004          RAL
+ 951 001663  0156          AND [7
+ 952 001664  1376          TAD (260
+ 953 001665  4421          JMS I   PPACK
+ 954 001666  2001          ISZ TMP1        /ENOUGH ?
+ 955 001667  5255          JMP LOP7        /NO
+ 956 001670  4775          JMS I (HAFWD    /OUTPUT A PAIR
+ 957 001671  5651          JMP I CVRT      /OF SPACES
+ 958               
+ 959 001672  0000  OUTSYM, 0               /DO ONE SYMBOL
+ 960 001673  3011          DCA     NDX1    /ADDRESS IN AC ON ENTRY
+ 961 001674  7346          AC7775
+ 962 001675  3002          DCA TMP2
+ 963 001676  1411          TAD I NDX1      /SYMBOL IS 1ST
+ 964 001677  4775          JMS I (HAFWD
+ 965 001700  2002          ISZ TMP2
+ 966 001701  5276          JMP .-3
+ 967 001702  1411          TAD I NDX1      /SAVE
+ 968 001703  3041          DCA GTYP        /TYPE
+ 969 001704  1411          TAD I NDX1      /FLD OF SYMBOL
+ 970 001705  4352          JMS     PR15
+ 971 001706  4327          JMS     CVLOVL  /CONVERT ADDR, LEVEL, OVERLAY
+ 972 001707  1041          TAD GTYP        /NOW DO TYPE
+ 973 001710  0374          AND (17         /ITS B8-B11
+ 974 001711  1373          TAD (TYTBL-1    /PTR TO TBL OF
+ 975 001712  3000          DCA TMP0        /CHAR PAIRS FOR
+ 976 001713  6201          CDF 0
+ 977 001714  1400          TAD I TMP0      /TYPE EG EX FOR
+ 978 001715  6211          CDF 10
+ 979 001716  4775          JMS I (HAFWD    /EXTERN
+ 980 001717  1041          TAD GTYP        /IF ERROR WAS
+ 981 001720  7710          SPA CLA         /FOUND DURING PASS2 B0 OF TYPE=1 EG ILLEGAL SUBR CALL. * ON MAP INDICATES
+ 982 001721  1372          TAD (12         /PASS2 ERROR
+ 983 001722  1173          TAD [240
+ 984 001723  4421          JMS I   PPACK
+ 985 001724  4344          JMS     PCRLF
+ 986 001725  5672          JMP I OUTSYM
+ 987               
+ 988 001726  0000  CVRTMP, 0
+ 989 001727  0000  CVLOVL,        0
+ 990 001730  7240          CLA CMA
+ 991 001731  3076          DCA TMP5        /DO LEVEL NUM
+ 992 001732  1041          TAD GTYP        /ITS B1-B3 OF
+ 993 001733  7004          RAL             /OF TYPE WORD
+ 994 001734  4251          JMS CVRT
+ 995 001735  7344          AC7776          /DO OVER NUM
+ 996 001736  3076          DCA TMP5        /ITS B4-B7 OF
+ 997 001737  1041          TAD GTYP        /TYPE WORD
+ 998 001740  7006          RTL             /POSITION INTO
+ 999 001741  0371          AND (1700       /HI 2 DIGITS
+1000 001742  4251          JMS CVRT
+1001 001743  5727          JMP I   CVLOVL
+1002               
+1003 001744  0000  PCRLF,  0
+1004 001745  1370          TAD (215        /EOL
+1005 001746  4421          JMS I   PPACK
+1006 001747  1367          TAD (212
+1007 001750  4421          JMS I   PPACK
+1008 001751  5744          JMP I   PCRLF
+1009               
+1010 001752  0000  PR15,   0
+1011 001753  0156          AND [7
+1012 001754  1366          TAD (4060
+1013 001755  4775          JMS I (HAFWD
+1014 001756  1177          TAD [-4         /NOW DO ADDR OF
+1015 001757  3076          DCA TMP5        /SYMBOL
+1016 001760  1411          TAD I NDX1
+1017 001761  4251          JMS     CVRT
+1018 001762  5752          JMP I   PR15
+1019 001766  4060          PAGE
+     001767  0212  
+     001770  0215  
+     001771  1700  
+     001772  0012  
+     001773  0543  
+     001774  0017  
+     001775  1531  
+     001776  0260  
+     001777  7200  
+1020               /PASS 2 OF LOADER - TRANSFORMS BINARIES INTO LOADER IMAGE FILE
+1021               
+1022 002000  3060  PASS2,  DCA LNONUM      /SET FOR MAIN
+1023 002001  4777          JMS I (BLDTV    /BUILD TRAP VECTOR
+1024 002002  1061          TAD LBCNT       /PROCESS LIBR
+1025 002003  7041          CIA             /MODULES 1ST
+1026 002004  7450          SNA             /ANY TO DO?
+1027 002005  5217          JMP BY12        /NO
+1028 002006  3061          DCA LBCNT       /=-NUM TO DO
+1029 002007  1027          TAD LBPTR       /PTR TO 1ST
+1030 002010  3025          DCA RFPTR1      /LIBR MOD
+1031 002011  4277          JMS SETREF      /INIT RELOC ARGS AND PROCESS TXT
+1032 002012  1163          TAD [3          /ADV TO NXT
+1033 002013  1025          TAD RFPTR1      /LIBR MOD.
+1034 002014  3025          DCA RFPTR1
+1035 002015  2061          ISZ LBCNT       /DONE LIBR?
+1036 002016  5211          JMP .-5         /NO
+1037 002017  4776  BY12,   JMS I (SETCNT   /SET ARGS TO PROCESS USER MODS.
+1038 002020  4277          JMS SETREF      /DO 1 MOD
+1039 002021  4775          JMS I (ADVOVR   /ADVANCE ARGS
+1040 002022  5220          JMP .-2         /RTN HERE IF MORE TO DO
+1041 002023  4774          JMS I   (WRALL  /WRITE OUT ALL THE RESIDENT BIN BLOCKS
+1042               /END OF PASS 2 - RETURN TO OS8 OR CHAIN TO RSYS
+1043               
+1044 002024  1373          TAD     (7616
+1045 002025  3010          DCA     NDX0
+1046 002026  1772          TAD I   (LIMGU  /SAVE UNIT AND BLOCK OF LOADER IMAGE
+1047 002027  3410          DCA I   NDX0    /FILE IN CD AREA IN CASE WE CHAIN
+1048 002030  1771          TAD I   (LIMGU+2
+1049 002031  3410          DCA I   NDX0    /TO THE RUN-TIME-SYSTEM
+1050 002032  3410          DCA I   NDX0    /A PRECAUTION
+1051 002033  6201          CDF 0
+1052 002034  6212          CIF 10
+1053 002035  4420          JMS I   USR
+1054 002036  0010          10              /LOCK USR IN
+1055 002037  1370          TAD     (200
+1056 002040  3020          DCA     USR
+1057 002041  1767          TAD I   (LDRNAM
+1058 002042  6212          CIF 10
+1059 002043  4420          JMS I   USR
+1060 002044  0004          4
+1061 002045  0502          LDRNAM+1        /CLOSE LOADER IMAGE FILE
+1062 002046  0000  LDCLEN, 0
+1063 002047  4567          JMS I   [OS8ER  /OOPS!
+1064 002050  4766          JMS I   (SYMMAP /PRINT SYMBOL TABLE IF REQUESTED
+1065 002051  1765          TAD I   (OS8SWS
+1066 002052  6201          CDF 0
+1067 002053  0364          AND     (40     /TEST /G SWITCH
+1068 002054  7650          SNA CLA
+1069 002055  5571          JMP I   [7605   /NOT ON - RETURN TO OS8
+1070 002056  7201          CLA IAC
+1071 002057  6212  CHAIN,  CIF 10
+1072 002060  4420          JMS I   USR
+1073 002061  0002  CHCODE, 2
+1074 002062  2073          RTSNAM          /LOOKUP RTS
+1075 002063  0000          0
+1076 002064  5270          JMP     NORTS
+1077 002065  1363          TAD     (6
+1078 002066  3261          DCA     CHCODE  /CHANGE LOOKUP TO CHAIN
+1079 002067  5257          JMP     CHAIN
+1080               
+1081 002070  3762  NORTS,  DCA I   (LDRNAM+5       /KILL SECOND STORAGE MAP
+1082 002071  4566          JMS I   [RTNOS8
+1083 002072  2465          RTSMSG
+1084 002073  0622  RTSNAM, 0622;2423;0000;2326     /FRTS.SV
+     002074  2423  
+     002075  0000  
+     002076  2326  
+1085 002077  0000  SETREF,        0
+1086 002100  4761          JMS I (RDRLES   /GET MODULE ESD TABLE
+1087 002101  7344          AC7776
+1088 002102  3042          DCA EPTR
+1089 002103  4707  LOP12,  JMS I .+4       /GET NXTESD
+1090 002104  5317          JMP BY11        /ALL DONE
+1091 002105  1042          TAD EPTR        /LOOK UP
+1092 002106  4561          JMS I [LOOK     /SYMBOL
+1093 002107  1000          NXTESD
+1094 002110  7240          CLA CMA         /IGNORE ESD IF
+1095 002111  1044          TAD ETYP        /ITS AN ENTRY
+1096 002112  7650          SNA CLA         /POINT
+1097 002113  5303          JMP LOP12       /IGNORE
+1098 002114  1026          TAD GPTR        /PUT ADDR OF
+1099 002115  3447          DCA I REFPTR    /GST SYM IN
+1100 002116  5303          JMP LOP12       /ESD REF. PAGE
+1101 002117  6201  BY11,   CDF 0           /COMPUTE 1ST
+1102 002120  1042          TAD EPTR        /TEXT BLK
+1103 002121  0157          AND [7400
+1104 002122  7106          CLL RTL
+1105 002123  7006          RTL
+1106 002124  7004          RAL
+1107 002125  7001          IAC
+1108 002126  3760          DCA I   (TXTBLK
+1109 002127  7240          CLA CMA         /SET CNT TO -1
+1110 002130  3062          DCA BLKCNT      /TO KICK OFF 1ST TXT READ
+1111 002131  1025          TAD RFPTR1      /PTR TO
+1112 002132  3757          DCA I   (TXTBLK-3       /RALF MOD
+1113 002133  6211          CDF 10
+1114 002134  4756          JMS I (TXTSCN   /RELOCATE
+1115 002135  5677          JMP I SETREF    /TEXT
+1116 002156  3000          PAGE
+     002157  3146  
+     002160  3151  
+     002161  2421  
+     002162  0506  
+     002163  0006  
+     002164  0040  
+     002165  7643  
+     002166  1400  
+     002167  0501  
+     002170  0200  
+     002171  2146  
+     002172  2144  
+     002173  7616  
+     002174  2435  
+     002175  1022  
+     002176  1133  
+     002177  2200  
+1117 002200  0000  BLDTV, 0               /BUILD UP
+1118 002201  1030          TAD TRPCNT      /TRAP VECTOR
+1119 002202  7650          SNA CLA         /ANY TO DO?
+1120 002203  5600          JMP I BLDTV     /NO
+1121 002204  1206          TAD .+2         /GET BASE
+1122 002205  4561          JMS I [LOOK     /ADDR OF
+1123 002206  2043          TRPSYM          /TRAP VECT
+1124 002207  2026          ISZ GPTR
+1125 002210  1426          TAD I GPTR
+1126 002211  3000          DCA TMP0
+1127 002212  2026          ISZ GPTR
+1128 002213  1426          TAD I GPTR
+1129 002214  3001          DCA TMP1
+1130 002215  1000          TAD TMP0        /FOR SUBR
+1131 002216  3063          DCA TRAPV       /TRPVEC
+1132 002217  1001          TAD TMP1
+1133 002220  3064          DCA TRAPV+1
+1134 002221  4303          JMS     NEWORG  /PROCESS NEW ORIGIN
+1135 002222  3030          DCA TRPCNT      /WILL BE USED TO MARK GST SYMS
+1136 002223  1225          TAD .+2         /THAT HAVE A VECTOR ENTRY
+1137 002224  4561          JMS I [LOOK     /GET SWAPPER
+1138 002225  2055          SWPSYM          /ADDR
+1139 002226  2026          ISZ GPTR
+1140 002227  2026          ISZ GPTR
+1141 002230  1426          TAD I GPTR
+1142 002231  3025          DCA RFPTR1
+1143 002232  1023         TAD SYMTM3      /SCAN GST
+1144 002233  3026  LOP11,  DCA GPTR        /FOR ALL
+1145 002234  4554          JMS I [GETTYP   /TRAP SYMS
+1146 002235  5600          JMP I BLDTV     /ALL DONE
+1147 002236  1426          TAD I GPTR      /IF TYPE WD
+1148 002237  7700          SMA CLA         /B0=1, THEN SYMBOL NEEDS A VECTOR ENTRY
+1149 002240  5234          JMP LOP11+1     /TRY NEXT 1ST WD OF ENTRY IS
+1150 002241  1377          TAD     (3000   /TRAP3
+1151 002242  4553          JMS I [PUTBIN
+1152 002243  1025          TAD RFPTR1      /NXT IS
+1153 002244  4553          JMS I [PUTBIN   /SWAP ADDR
+1154 002245  7330          CLL CML CLA RAR         /CLR B0
+1155 002246  1426          TAD I GPTR      /OF TYPE WD
+1156 002247  3426          DCA I GPTR
+1157 002250  1426          TAD I   GPTR
+1158 002251  2026          ISZ GPTR
+1159 002252  7006          RTL
+1160 002253  7006          RTL
+1161 002254  3000          DCA     TMP0    /HAVE TO MUSH SOME BITS AROUND:
+1162 002255  1000          TAD     TMP0    /OVERLAY NUMBER MOVES FROM B4-7 TO B0-3
+1163 002256  0157          AND     [7400
+1164 002257  3001          DCA     TMP1    /LEVEL NUMBER MOVES FROM B1-3 TO B6-8
+1165 002260  1000          TAD     TMP0
+1166 002261  7006          RTL
+1167 002262  7006          RTL
+1168 002263  0376          AND     (70
+1169 002264  1001          TAD     TMP1
+1170 002265  1426          TAD I GPTR      /ADD FLD BITS TO MESS
+1171 002266  4553          JMS I [PUTBIN
+1172 002267  1030          TAD TRPCNT      /ADV VECT
+1173 002270  1375          TAD (10         /ENTRY NUM
+1174 002271  3030          DCA TRPCNT      /COUNTER
+1175 002272  1426          TAD I GPTR      /TAG HI 9
+1176 002273  1030          TAD TRPCNT      /OF GST SYM
+1177 002274  3426          DCA I GPTR      /WD5 WITH TV ENTRY NUMBER
+1178 002275  2026          ISZ GPTR
+1179 002276  1426          TAD I GPTR      /ENTER
+1180 002277  4553          JMS I [PUTBIN   /ADDR
+1181 002300  7344          AC7776
+1182 002301  1026          TAD GPTR
+1183 002302  5233          JMP LOP11       /FOR THIS SYM
+1184 002303  0000  NEWORG,        0
+1185 002304  1066          TAD     BSECTP
+1186 002305  4564          JMS I   [SETEPT /SET PTR TO CURRENT SECTION
+1187 002306  1443          TAD I   EPT2
+1188 002307  7141          CIA CLL
+1189 002310  1001          TAD     TMP1
+1190 002311  3003          DCA     TMP3
+1191 002312  1003          TAD     TMP3
+1192 002313  0374          AND     (6000
+1193 002314  3002          DCA     TMP2    /DO A DOUBLE PRECISION SUBTRACT
+1194 002315  7024          CML RAL
+1195 002316  1442          TAD I   EPTR
+1196 002317  7141          CIA CLL
+1197 002320  1000          TAD     TMP0
+1198 002321  7510          SPA
+1199 002322  5352          JMP     BADORG  /OUT OF RANGE
+1200 002323  7110          CLL RAR
+1201 002324  1002          TAD     TMP2    /COMBINE AND SHIFT RIGHT 8
+1202 002325  7004          RAL
+1203 002326  7006          RTL
+1204 002327  7006          RTL             /(I.E. LEFT 5)
+1205 002330  3002          DCA     TMP2
+1206 002331  1002          TAD     TMP2
+1207 002332  2043          ISZ     EPT2
+1208 002333  1443          TAD I   EPT2    /ADD TO RELATIVE BLOCK OF SECTION
+1209 002334  3071          DCA     NEWBLK
+1210 002335  2043          ISZ     EPT2
+1211 002336  1002          TAD     TMP2
+1212 002337  7041          CIA
+1213 002340  1443          TAD I   EPT2
+1214 002341  7510          SPA
+1215 002342  5352          JMP     BADORG  /ORIGIN OUT OF RANGE
+1216 002343  3072          DCA     NEWLEN
+1217 002344  4773          JMS I   (NEWBB  /GET BUFFER USING NEWBLK AND NEWLEN
+1218 002345  1003          TAD     TMP3
+1219 002346  0372          AND     (1777
+1220 002347  1070          TAD     BLKBEG
+1221 002350  3065          DCA     BLKSIZ  /FORM POINTER INTO PROPER BUFFER
+1222 002351  5703          JMP I   NEWORG
+1223 002352  4566  BADORG, JMS I   [RTNOS8
+1224 002353  0260          ORGMSG          /ORIGIN OUT OF CURRENT FILE LIMITS
+1225 002354  5703          JMP I   NEWORG
+1226 002372  1777          PAGE
+     002373  2600  
+     002374  6000  
+     002375  0010  
+     002376  0070  
+     002377  3000  
+1227 002400  0000  PROVLY,        0       /ROUTINE TO PRINT OVERLAY INFO IN SYMBOL MAP
+1228 002401  4555          JMS I   [PCRLF
+1229 002402  1377          TAD     (OTLINE
+1230 002403  4776          JMS I   (OLINE
+1231 002404  1375          TAD     (OVLTBL-1
+1232 002405  3011          DCA     NDX1
+1233 002406  1411  PROVLP, TAD I   NDX1    /GET ENTRY
+1234 002407  7510          SPA             /TEBLE ENDS WITH -1
+1235 002410  5600          JMP I   PROVLY
+1236 002411  3041          DCA     GTYP
+1237 002412  1173          TAD     [240
+1238 002413  4421          JMS I   PPACK
+1239 002414  4774          JMS I   (CVLOVL /PRINT LEVEL AND OVERLAY
+1240 002415  1041          TAD     GTYP
+1241 002416  4773          JMS I   (PR15   /PRINT 15-BIT LENGTH
+1242 002417  4555          JMS I   [PCRLF
+1243 002420  5206          JMP     PROVLP
+1244               
+1245 002421  0000  RDRLES, 0               /READ A
+1246 002422  1025          TAD RFPTR1      /PTR TO RALF
+1247 002423  3227          DCA RLARG-1     /MOD
+1248 002424  3232          DCA RLARG+2     /STRT AT BLK 0
+1249 002425  6201          CDF             /AND READ
+1250 002426  4575          JMS I [IOHAN    /3 BLKS INTO
+1251 002427  0000          0               /10000-11400
+1252 002430  0610  RLARG,  200^3!10
+1253 002431  0000          0
+1254 002432  0000          0
+1255 002433  6211          CDF 10
+1256 002434  5621          JMP I RDRLES
+1257               /STARTING WITH THE LATEST,
+1258               /WRITE OUT ALL CORE RESIDENT
+1259               /BINARY BUFFERS
+1260                        
+1261 002435  0000  WRALL,  0
+1262 002436  1055          TAD BP
+1263 002437  7001          IAC             /PTR TO
+1264 002440  3000          DCA TMP0        /CURNT BLK
+1265 002441  1400          TAD I TMP0
+1266 002442  7650          SNA CLA         /ALL DONE ?
+1267 002443  5635          JMP I   WRALL   /YES
+1268 002444  7330          AC4000
+1269 002445  4772          JMS I (LDRIO    /WRITE IT
+1270 002446  1455          TAD I BP
+1271 002447  7450          SNA
+1272 002450  5635          JMP I WRALL
+1273 002451  3055          DCA     BP
+1274 002452  5236          JMP     WRALL+1
+1275               
+1276 002453  4566  NOTREL, JMS I   [RTNOS8
+1277 002454  2455          RELMSG
+1278               
+1279 002455  0201  RELMSG, TEXT    /BAD INPUT FILE/
+     002456  0440  
+     002457  1116  
+     002460  2025  
+     002461  2440  
+     002462  0611  
+     002463  1405  
+     002464  0000  
+1280               
+1281 002465  1617  RTSMSG, TEXT    /NO FRTS/
+     002466  4006  
+     002467  2224  
+     002470  2300  
+1282 002471  0000  MERGE, 0
+1283 002472  4771          JMS I (GETTXT   /COMBINE TXT
+1284 002473  3051          DCA FTMP0       /PAIR WITH
+1285 002474  4771          JMS I (GETTXT   /PAIR WHOSE
+1286 002475  3052          DCA FTMP0+1     /ADDR IS IN BPTR
+1287 002476  7100          CLL
+1288 002477  1446          TAD I   BPT2
+1289 002500  1052          TAD     FTMP0+1
+1290 002501  3001          DCA     TMP1
+1291 002502  7004          RAL
+1292 002503  1445          TAD I   BPTR
+1293 002504  1051          TAD     FTMP0
+1294 002505  0156          AND     [7
+1295 002506  3000          DCA     TMP0
+1296 002507  1051          TAD     FTMP0   /GET THE OPCODE OR WHATEVER
+1297 002510  0152          AND     [7770   /IS IN THE HIGH 9 BITS
+1298 002511  1000          TAD     TMP0    /AND COMBINE THEM WITH THE RELOCATED ADDRESS
+1299 002512  4553          JMS I   [PUTBIN /AND OUTPUT THE MESS
+1300 002513  1001          TAD     TMP1
+1301 002514  4553          JMS I   [PUTBIN /DON'T FORGET WORD 2
+1302 002515  5671          JMP I MERGE
+1303               
+1304 002516  0000  GETCTL, 0               /GET TEXT
+1305 002517  4771          JMS I (GETTXT   /CTRL WORD
+1306 002520  3000          DCA TMP0        /B4-B11
+1307 002521  1000          TAD TMP0        /IS TYPE
+1308 002522  0165          AND [377        /INDICATOR
+1309 002523  3047          DCA REFPTR      /SOMETIMES
+1310 002524  1047          TAD REFPTR      /ITS AN ESD.
+1311 002525  1370          TAD (ESDPG      /WHEN IT IS,
+1312 002526  3026          DCA GPTR        /GPTR PNTS
+1313 002527  1426          TAD I GPTR      /TO THE
+1314 002530  3026          DCA GPTR        /CORRESPONDING GST SYM (WORD 4)
+1315 002531  4551          JMS I   [SETBGX /AND BPTR POINTS TO THE VALUE
+1316 002532  1000          TAD TMP0        /TEXT TYPE
+1317 002533  7006          RTL             /IS IN
+1318 002534  7006          RTL             /B0-B3
+1319 002535  7004          RAL             /PUT IN
+1320 002536  0170          AND [17         /AC8-AC11
+1321 002537  1316          TAD     GETCTL
+1322 002540  3316          DCA     GETCTL  /USE IT TO BUMP RETURN ADDRESS
+1323 002541  5716          JMP I GETCTL
+1324 002570  7400          PAGE
+     002571  3141  
+     002572  0203  
+     002573  1752  
+     002574  1727  
+     002575  5434  
+     002576  1340  
+     002577  2131  
+1325               /COME HERE ON ORIGIN OR WHEN CROSSING
+1326               /AN AREA BOUNDARY TO SELECT A BINARY
+1327               /CORE BUFFER FOR A NEW LOADER IMAGE
+1328               /AREA. THE BINARY BUFFER TABLE
+1329               /ASSOCIATES CORE BUFFERS TO LOADER
+1330               /IMAGE AREAS.
+1331               
+1332               /EACH ENTRY HAS FOUR WORDS - THEY CONTAIN:
+1333               
+1334               /WORD 1         POINTER TO BUFFER OF NEXT EARLIEST REFERENCE
+1335               /WORD 2         RELATIVE BLOCK NUMBER (0 IF UNUSED)
+1336               /WORD 3         NUMBER OF BLOCKS LEFT UNTIL END OF SECTION
+1337               /WORD 4         BUFFER ADDRESS AND FIELD
+1338               
+1339               /EACH ENTRY MAPS FROM 1 TO 4 BLOCKS (400 TO 2000 OCTAL WORDS) FROM THE
+1340               /ADDRESSES GENERATED BY THE LOADER ONTO THE LOADER IMAGE FILE.
+1341               /THE RELATIVE BLOCK NUMBERS ARE ALWAYS OF THE FORM S+4N, WHERE
+1342               /S IS THE RELATIVE BLOCK NUMBER OF THE NEAREST BINARY SECTION
+1343               / (A BINARY SECTION IS AN OVERLAY OR "MAIN").
+1344               
+1345               /THE BUFFERS ARE ORGANIZED AS A CHAIN IN ORDER OF REFERENCE,
+1346               /WITH WORD 1 BEING THE LINK TO THE NEXT EARLIEST BUFFER.  IN CASE
+1347               /A BUFFER NEEDS TO BE WRITTEN THE CHAIN IS TRAVERSED AND THE LAST BUFFER
+1348               /WRITTEN OUT, SINCE IT WAS THE LEAST RECENTLY ACCESSED.
+1349 002600  0000  NEWBB, 0               /ENTER WITH NEW
+1350 002601  1055          TAD     BP
+1351 002602  3015          DCA     NDX5    /SAVE CURRENT "MOST RECENT" BUFFER
+1352 002603  1415          TAD I   NDX5
+1353 002604  7041          CIA
+1354 002605  1071          TAD     NEWBLK  /CHECK WHETHER THE BUFFER WE WANT
+1355 002606  7650          SNA CLA         /IS THE CURRENT BUFFER
+1356 002607  5264          JMP     QUIKIE  /YES - SAVE GRIEF
+1357 002610  1055  NEWBB4, TAD BP          /MAKE THE CURNT
+1358 002611  3302          DCA BPPREV      /BUFFER THE PREVIOUS BUFF
+1359 002612  1455          TAD I BP        /MAK THE BUF OF
+1360 002613  3055          DCA BP          /NEXT EARLIEST REFERENCE THE NEW CURNT BUFF
+1361 002614  1055          TAD BP          /GET THE PTR TO
+1362 002615  7001          IAC             /LDR IMAGE BLK
+1363 002616  3346          DCA CURBLK      /IN THIS BUFF
+1364 002617  1746          TAD I CURBLK    /HAVE WE SCANNED
+1365 002620  7041          CIA             /IS NEWBLK
+1366 002621  1071          TAD NEWBLK      /IN CORE
+1367 002622  7650          SNA CLA         /?
+1368 002623  5257          JMP GOTBLK      /YES
+1369 002624  1455          TAD I BP        /ARE WE AT THE
+1370 002625  7640          SZA CLA         /BUFFER OF EARLIEST REF?
+1371 002626  5210          JMP NEWBB4      /NO DO NEXT
+1372 002627  7120          STL             /INITIALIZE LINK AS FLAG
+1373 002630  1746          TAD I CURBLK    /IS THERE A 
+1374 002631  7650          SNA CLA         /BLK TO WRITE?
+1375 002632  5236          JMP     VIRGIN  /NO - NONE TO READ, EITHER
+1376 002633  7330          AC4000
+1377 002634  4777          JMS I   (LDRIO  /YES WRITE IT
+1378 002635  7100          CLL             /SET FLAG THAT BUFFER WAS WRITTEN
+1379 002636  1071  VIRGIN, TAD     NEWBLK
+1380 002637  3746          DCA I   CURBLK
+1381 002640  2346          ISZ     CURBLK
+1382 002641  1072          TAD     NEWLEN  /STORE NEW BLOCK # AND LENGTH
+1383 002642  3746          DCA I   CURBLK  /IN BUFFER CONTROL WORD
+1384 002643  7010          RAR             /GET "VIRGIN FLAG"
+1385 002644  3266          DCA     NEWBUF
+1386 002645  1303          TAD     MAXBLK
+1387 002646  7140          CMA CLL
+1388 002647  1071          TAD     NEWBLK  /CHECK IF THE BLOCK WE'RE MAPPING
+1389 002650  7620          SNL CLA         /IS LARGER THAN ANY OTHER SO FAR -
+1390 002651  5254          JMP     .+3     /IF SO WE DON'T HAVE TO READ IT
+1391 002652  1071          TAD     NEWBLK
+1392 002653  3303          DCA     MAXBLK  /UPDATE MAXBLK
+1393 002654  1266          TAD     NEWBUF  /LINK = MAX FLAG, SIGN = VIRGIN FLAG
+1394 002655  7720          SNL SMA CLA     /IF NEITHER IS ON,
+1395 002656  4777          JMS I   (LDRIO  /READ THE BLOCKS INTO THE BUFFER
+1396 002657  1455  GOTBLK, TAD I   BP
+1397 002660  3702          DCA I   BPPREV  /BREAK NEW BUFFER OUT OF THE CHAIN
+1398 002661  7240          STA
+1399 002662  1015          TAD     NDX5    /NDX5 CONTAINS PTR TO OLD "MOST RECENT" + 1
+1400 002663  3455          DCA I   BP      /MAKE NEW BUFFER THE BUFFER OF LATEST REFERENCE
+1401 002664  4266  QUIKIE, JMS     NEWBUF  /SET UP FOR PUTBIN
+1402 002665  5600          JMP I NEWBB     /AND RETURN
+1403               /COME HERE TO CUMPUTE A 15 BIT
+1404               /BUFFER ADDRESS FROM AN ENTRY
+1405               /IN THE BINARY BUFFER TABLE.
+1406                        
+1407 002666  0000  NEWBUF, 0
+1408 002667  1163          TAD     [3
+1409 002670  1055          TAD     BP
+1410 002671  3321          DCA     OUTFLD
+1411 002672  1721          TAD I   OUTFLD  /LOAD ADRESS AND FIELD
+1412 002673  0376          AND     (7600
+1413 002674  3070          DCA     BLKBEG
+1414 002675  1721          TAD I   OUTFLD
+1415 002676  0375          AND     (70
+1416 002677  1374          TAD     (CDF
+1417 002700  3321          DCA     OUTFLD  /DECOMPOSE INTO ADDRESS AND CDF
+1418 002701  5666          JMP I NEWBUF
+1419               
+1420 002702  0000  BPPREV, 0
+1421 002703  0000  MAXBLK, 0
+1422               /COME HERE TO STORE 1 WORD
+1423               /IN SOME BINARY OUTPUT BUFFER
+1424                        
+1425 002704  0000  PUTBIN, 0
+1426 002705  3002          DCA TMP2        /SAVE DATA
+1427 002706  1024          TAD ORGFLG      /N.E. 0 MEANS
+1428 002707  7640          SZA CLA         /INHIBIT
+1429 002710  5704          JMP I PUTBIN    /BINARY OUTPUT BECAUSE OF NEW ORIGIN
+1430 002711  1067          TAD OUTINH      /N.E. 0 MEANS
+1431 002712  7650          SNA CLA         /INHIBIT BIN OUT BECAUSE OF BAD ORIGIN
+1432 002713  5321          JMP OUTFLD              /ITS OK
+1433 002714  1467          TAD I OUTINH    /SET B0 OF
+1434 002715  7004          RAL             /OFFENDING GST
+1435 002716  7130          CLL CML RAR     /SYMBOL
+1436 002717  3467          DCA I OUTINH    /SEE SUBR REORG
+1437 002720  5704          JMP I PUTBIN    /FOR DEFINITION OF C(OUTINH)
+1438 002721  0000  OUTFLD, 0               /CDF X
+1439 002722  1002          TAD TMP2        /STORE IT
+1440 002723  3465          DCA I BLKSIZ    /AWAY
+1441 002724  6211          CDF 10          /RESTORE FLD
+1442 002725  2065          ISZ BLKSIZ      /BUMP PTR
+1443 002726  1070          TAD     BLKBEG
+1444 002727  7041          CIA
+1445 002730  1065          TAD BLKSIZ      /HAVE WE
+1446 002731  0373          AND (1777       /CROSSED A
+1447 002732  7640          SZA CLA         /BLK BOUND?
+1448 002733  5704          JMP I PUTBIN    /NO
+1449 002734  1071          TAD     NEWBLK
+1450 002735  1176          TAD     [4
+1451 002736  3071          DCA     NEWBLK
+1452 002737  1072          TAD     NEWLEN
+1453 002740  1177          TAD     [-4
+1454 002741  3072          DCA     NEWLEN  /BUMP BLOCK NUMBER AND REMAINING BLOCKS
+1455 002742  4200          JMS NEWBB       /SELECT A NEW BUFFER
+1456 002743  1070          TAD     BLKBEG
+1457 002744  3065          DCA     BLKSIZ  /RE-INITIALIZE WORD POINTER
+1458 002745  5704          JMP I   PUTBIN
+1459 002746  0000  CURBLK, 0
+1460 002773  1777          PAGE
+     002774  6201  
+     002775  0070  
+     002776  7600  
+     002777  0203  
+1461               /COME HERE TO SCAN AND RELOCATE
+1462               /THE TEXT OF AN ENTIRE MODULE
+1463                        
+1464 003000  0000  TXTSCN, 0               /SET CTRL WD
+1465 003001  4777          JMS I (GETCTL   /ARGS. RTN TO .+1,2,3, OR 4
+1466 003002  5310          JMP RELC2       /SPECIAL TYPE
+1467 003003  5314          JMP RELC6       /DIRECT COPY
+1468 003004  5324          JMP REORG       /NEW ORIGIN
+1469 003005  1426          TAD I GPTR      /RELOCATE FPP
+1470 003006  0170          AND [17         /PAIR
+1471 003007  3000          DCA TMP0        /GST SYM TYPE
+1472 003010  7344          AC7776          /IS RELOCATION
+1473 003011  1000          TAD TMP0        /WITH RESPECT
+1474 003012  7640          SZA CLA         /TO GST EXTERN?
+1475 003013  5231          JMP BY2         /NO
+1476 003014  4341  SETTRP, JMS GETTXT      /BAD TEXT.
+1477 003015  7200          CLA
+1478 003016  4341          JMS GETTXT      /IGNORE RELOCATION AND MAKE AN ERROR TRAP
+1479 003017  7200          CLA
+1480 003020  1376          TAD     (3000   /=TRAP3
+1481 003021  4553          JMS I [PUTBIN
+1482 003022  1375          TAD (JUERR      /RTS ERROR
+1483 003023  4553          JMS I [PUTBIN   /TRAP SUBR
+1484 003024  1426  BY2M5,  TAD I GPTR      /SET ILLEGAL
+1485 003025  7004          RAL             /REFERENCE
+1486 003026  7130          CLL CML RAR     /BIT IN
+1487 003027  3426          DCA I GPTR      /GST TYPE WD
+1488 003030  5201          JMP TXTSCN+1    /DO NEXT
+1489 003031  1374  BY2,    TAD (-5         /RELOCATE TO
+1490 003032  1000          TAD TMP0        /A MULTIPLE
+1491 003033  7650          SNA CLA         /ENTRY?
+1492 003034  5214          JMP SETTRP      /YES
+1493 003035  1426          TAD I GPTR      /CHECK FOR LEGALITY OF REFERENCE
+1494 003036  0373          AND (0360       /WITH RESPECT TO LEVEL AND OVERLAY NUMBER
+1495 003037  3001          DCA TMP1        / = GST OVER NUM
+1496 003040  1060          TAD LNONUM      /=CURNT MOD
+1497 003041  0162          AND [3400       /LEVEL NUM
+1498 003042  3002          DCA TMP2
+1499 003043  1426          TAD I   GPTR
+1500 003044  0162          AND     [3400
+1501 003045  7450          SNA             /RELOCATE TO MAIN?
+1502 003046  5306          JMP RELC        /YES, ITS OK
+1503 003047  7041          CIA             /IS RELOCATION
+1504 003050  1002          TAD TMP2        /ACROSS LEVELS
+1505 003051  7440          SZA             /?
+1506 003052  5261          JMP TSTTRP      /YES
+1507 003053  1060          TAD LNONUM      /=CURRENT MOD
+1508 003054  0373          AND (0360       /OVER NUM
+1509 003055  7041          CIA
+1510 003056  1001          TAD TMP1        /WITHIN LEVL CALL IS LEGAL ONLY
+1511 003057  7650          SNA CLA         /IF WITHIN OVR ALSO.
+1512 003060  5306          JMP RELC        /ITS OK
+1513                              /** TSTTRP REPLACED BY "SKP CLA" IF /U SPECIFIED
+1514 003061  7700  TSTTRP, SMA CLA         /NOT OK - IS X LEVL LO TO HI?
+1515 003062  5214          JMP SETTRP      /NO
+1516 003063  1445          TAD I BPTR      /TRAP VECT
+1517 003064  1152          TAD [7770       /SUBTRACT 1 FROM ENTRY NUM
+1518 003065  0152          AND [7770       /IN HIGH 9 BITS OF GST WD 5
+1519 003066  7110          CLL RAR         /DIV BY 2 TO GET ENTRY NUM * 4
+1520 003067  1064          TAD     TRAPV+1 /LINK IS 0
+1521 003070  3772          DCA I   (SYMX+1 /STORE VECTOR ENTRY ADDRESS
+1522 003071  7004          RAL
+1523 003072  1063          TAD     TRAPV   /IN SYMX AS A DOUBLEWORD
+1524 003073  3771          DCA I   (SYMX
+1525 003074  1371          TAD (SYMX
+1526 003075  4550          JMS I   [SETBPT /COMBINE IT WITH TXT PAIR
+1527 003076  4770          JMS I (MERGE    /I.E. RELOCATE TO TRAP VECT
+1528 003077  1051          TAD     FTMP0
+1529 003100  0156          AND     [7
+1530 003101  7450          SNA
+1531 003102  1052          TAD     FTMP0+1
+1532 003103  7650          SNA CLA         /WERE LOW ORDER 15 BITS OF TXT=0?
+1533 003104  5201          JMP TXTSCN+1    /YES, ITS OK
+1534 003105  5224          JMP BY2M5       /SET ILL REF BIT. NOTE TRAP IS NOT GENERATED
+1535               
+1536 003106  4770  RELC,   JMS I (MERGE    /MAKE FPP PAIR AND STORE IN BIN BUFFER
+1537 003107  5201          JMP TXTSCN+1    /DO NEXT
+1538 003110  1047  RELC2,  TAD REFPTR      /CHK IND.
+1539 003111  7650          SNA CLA         /FOR SPECIAL TYPE
+1540 003112  5600          JMP I TXTSCN    /0=END OF TEXT
+1541 003113  5201          JMP TXTSCN+1    /1=IGNORE 1 WORD OF TEXT
+1542 003114  1047  RELC6,  TAD REFPTR      /IND HOLDS
+1543 003115  7041          CIA             /NUM OF WDS
+1544 003116  3047          DCA REFPTR      /TO COPY
+1545 003117  4341          JMS GETTXT
+1546 003120  4553          JMS I [PUTBIN
+1547 003121  2047          ISZ REFPTR
+1548 003122  5317          JMP .-3
+1549 003123  5201          JMP TXTSCN+1
+1550 003124  2024  REORG,  ISZ ORGFLG      /SET INHIBIT BIN OUT FLG
+1551 003125  4770          JMS I (MERGE    /GET NEW ORIGIN
+1552 003126  1426          TAD I GPTR      /SEE IF
+1553 003127  0367          AND (3760       /ORIGIN IS
+1554 003130  7041          CIA             /TO A DIFFERENT
+1555 003131  1060          TAD LNONUM      /BINARY SECTION
+1556 003132  7640          SZA CLA         /?
+1557 003133  1026          TAD     GPTR    /YES - SET INHIBIT/ERROR FLAG
+1558 003134  7450          SNA
+1559 003135  4766          JMS I   (NEWORG /NO - SET UP NEW ORIGIN
+1560 003136  3067          DCA     OUTINH
+1561 003137  3024          DCA     ORGFLG
+1562 003140  5201          JMP TXTSCN+1
+1563 003141  0000  GETTXT,        0               /GET ONE WORD OF TEXT FROM THE BUFFER
+1564 003142  2062          ISZ     BLKCNT
+1565 003143  5356          JMP     RDTCDF
+1566 003144  6201          CDF             /TO READ IN
+1567 003145  4575          JMS I [IOHAN    /RALF TEXT
+1568 003146  0000          0               /PTR TO UNIT
+1569 003147  1010          200^4!10        /OR 200^17!20
+1570 003150  0000          0
+1571 003151  0002  TXTBLK, 2
+1572 003152  1350          TAD .-2         /SET TXT
+1573 003153  3053          DCA RBLK        /BUF PTR
+1574 003154  1363          TAD TXTWDS      /-NUM OF
+1575 003155  3062          DCA BLKCNT      /WDS-1 IN
+1576 003156  6211  RDTCDF, CDF 10          /OR CDF 20
+1577 003157  1453          TAD I   RBLK
+1578 003160  6211          CDF 10
+1579 003161  2053          ISZ     RBLK
+1580 003162  5741          JMP I   GETTXT  /RETURN
+1581 003163  6000  TXTWDS, -2000           /OR -7400
+1582 003166  2303          PAGE
+     003167  3760  
+     003170  2471  
+     003171  2152  
+     003172  2153  
+     003173  0360  
+     003174  7773  
+     003175  0204  
+     003176  3000  
+     003177  2516  
+1583               /ENTER A SYMBOL INTO GST. PTR TO ESD
+1584               /SYMBOL IS IN AC
+1585                
+1586 003200  5601          JMP I PUTSYM    /FOR XPAGE RTN
+1587 003201  0000  PUTSYM, 0
+1588 003202  4561          JMS I [LOOK     /LOOKUP SYMBOL
+1589 003203  5777          JMP I (NOMAT    /NEW SYMBOL DISPOSITION
+1590               /TYPE OF MATCH 2 EXTERNS, 2 COMMONS, ETC.
+1591               /ETYP HOLDS SYM TYPE FOR ESD GTYP HOLDS GST TYPE
+1592                        
+1593 003204  1376          TAD (5
+1594 003205  3000          DCA TMP0        /FOR ME,MS
+1595 003206  1044          TAD ETYP
+1596 003207  1375          TAD (-7
+1597 003210  7510          SPA
+1598 003211  1374          TAD (2
+1599 003212  1176          TAD [4
+1600 003213  7110          RAR CLL
+1601 003214  7040          CMA
+1602 003215  3002          DCA TMP2
+1603 003216  7060          CML CMA         /GET -1
+1604 003217  1041          TAD GTYP        /RESTR LNK, GET GST TYP-1
+1605 003220  7004          RAL
+1606 003221  1373          TAD (MYSTIC     /GET ADDR OF 4 CODES
+1607 003222  3001          DCA TMP1
+1608 003223  6201          CDF 0
+1609 003224  1401          TAD I TMP1      /GET 4 CODES
+1610 003225  6211          CDF 10
+1611 003226  2002  CTST,   ISZ TMP2        /WHICH CODE ?
+1612 003227  5246          JMP SHFT3       /NOT THIS 1
+1613 003230  0156          AND [7
+1614 003231  1234          TAD T2J         /PICK UP JMP I
+1615 003232  3233          DCA .+1
+1616 003233  0000          0
+1617 003234  5635  T2J,    JMP I .+1
+1618 003235  3265          ISCOM3          /FORT COMM N FLD1 SECTION
+1619 003236  3200          PUTSYM-1        /ESD IS EXT JUST EXIT
+1620 003237  3400          REP             /GST IS EXT GO REPLACE
+1621 003240  3260          MULENT          /MULTIPLE ENTS
+1622 003241  3270          ISCOM           /2 F COMMS OR 2 COMMZS OR 2 FLD1S
+1623 003242  3251          BADDY           /MULTIPLE SECTS
+1624 003243  3251          BADDY           /UNDEF TYPES
+1625 003244  3251          BADDY
+1626 003245  3251          BADDY
+1627 003246  7010  SHFT3,  RAR
+1628 003247  7012          RTR
+1629 003250  5226          JMP CTST
+1630 003251  1073  BADDY, TAD     MCNT
+1631 003252  1074          TAD     MBGCNT
+1632 003253  3275          DCA     MTMCNT  /SAVE PARAMS FOR ERROR MESSAGE LATER
+1633 003254  7201          CLA IAC
+1634 003255  1060          TAD     LNONUM  /MULTIPLE SECTION
+1635 003256  3054          DCA     FATAL
+1636 003257  2000          ISZ TMP0        /IS FATAL
+1637 003260  1426  MULENT, TAD I GPTR      /SET TYPE TO
+1638 003261  0372          AND (7760       /5 FOR MUL ENT
+1639 003262  1000          TAD TMP0        /OR 6 FOR
+1640 003263  3426          DCA I GPTR      /MUL. SECTION
+1641 003264  5601          JMP I PUTSYM
+1642               
+1643 003265  1371  ISCOM3, TAD     (11     /F COMM N FLD1 (RITE9=11)
+1644 003266  3426          DCA I GPTR      /SET TYP TO F1
+1645 003267  2033          ISZ F1FLG
+1646 003270  4551  ISCOM,  JMS I   [SETBGX
+1647 003271  1045          TAD BPTR        /UPDATE
+1648 003272  3447          DCA I REFPTR    /ESD REFERENCE PTR
+1649 003273  4770          JMS I   (MAXCOM /PUT LARGER OF 2 COMMONS INTO
+1650 003274  5601          JMP I PUTSYM    /GST WORDS 5 AND 6
+1651 003275  0000  MTMCNT, 0
+1652               /THE FOLOWING TABLE IS USED TO
+1653               /DISPOSITION SYMBOL MATCHES BETWEEN
+1654               /A RALF ESD AND A GST SYMBOL
+1655               /EACH DIGIT IN THE TABLE IS AN INDEX
+1656               /INTO A TABLE THAT IS USED TO CALL
+1657               /ROUTINES TO HANDLE THE VARIOUS TYPES
+1658               /OF MATCHES:
+1659               /       0=FORT COMMON AND FLD1 SECTION
+1660               /       1=ANY MATCH WITH ESD EXTERN
+1661               /       2=ANY MATCH WITH GST EXTERN
+1662               /       3=MULTIPLE ENTRY POINTS
+1663               /       4=2 FORT COMMONS OR 2 FIELD1
+1664               /           SECTIONS OR 2 COMMZ SECTS
+1665               /       5=MULTIPLE SECTIONS
+1666               /     6-7=UNDEFINED AND HALT
+1667               /
+1668               /THE FIRST 2 WORDS COVER ALL POSSIBLE
+1669               /MATCHES WITH GST TYPE 1, THE SECOND
+1670               /TWO WORDS ARE FOR GST TYPE 2 ETC
+1671               /THE 4 DIGITS IN THE FIRST WORD OF
+1672               /ANY PAIR CORRESPOND TO ESD TYPES
+1673               /11,7,3,1 RESPECTIVELY
+1674               /ESD CORRESPONDENCE FOR THE 2ND WORD
+1675               /IS 12,10,4,2
+1676               /ESD TYPE 12 IS UNDEFINED
+1677                        
+1678 003276  5553  MYSTIC, 5553            /G1 E(11,7,3,1)
+1679 003277  7551          7551            /E(12,10,4,2)
+1680 003300  2222          2222            /G2 E(11,7,3,1)
+1681 003301  7221          7221            /E(12,10,4,2)
+1682 003302  0545          0545            /G3
+1683 003303  7551          7551
+1684 003304  5555          5555            /G4
+1685 003305  7551          7551
+1686 003306  5553          5553            /G5
+1687 003307  7551          7551
+1688 003310  5555          5555            /G6
+1689 003311  7551          7551
+1690 003312  5555          5555            /G7
+1691 003313  7551          7551
+1692 003314  5555          5555            /G10
+1693 003315  7451          7451
+1694 003316  4505          4505            /G11
+1695 003317  7551          7551
+1696               
+1697 003320  0000  ESDSCN, 0
+1698 003321  7346          CLL STA RTL     /-3
+1699 003322  1767          TAD I   (0
+1700 003323  7640          SZA CLA
+1701 003324  5766          JMP I   (NOTREL /NOT RALF MODULES - NASTY!
+1702 003325  1774          TAD I (2        /CHK FOR DP
+1703 003326  7710          SPA CLA         /HARDWARE REQUIRED
+1704 003327  2040          ISZ DPFLG       /ISZ=YES
+1705 003330  7344          AC7776          /ENTER ESD OF MODULE
+1706 003331  3042          DCA EPTR        /INTO GST. ESD STARTS AT 10000
+1707 003332  4765          JMS I   (NXTESD /GET NXT 1
+1708 003333  5720          JMP I ESDSCN    /NO MORE
+1709 003334  1042          TAD EPTR
+1710 003335  4201          JMS     PUTSYM  /ENTER IT
+1711 003336  5332          JMP .-4         /DO ANOTHER
+1712               
+1713 003337  1525  MSMSG,  TEXT    /MULT SECT/
+     003340  1424  
+     003341  4023  
+     003342  0503  
+     003343  2400  
+1714 003344  1726  CORMSG, TEXT    /OVER CORE/
+     003345  0522  
+     003346  4003  
+     003347  1722  
+     003350  0500  
+1715 003351  1726  LIMSG,  TEXT    /OVER IMAG/
+     003352  0522  
+     003353  4011  
+     003354  1501  
+     003355  0700  
+1716 003356  1617  MNMSG,  TEXT    /NO MAIN/
+     003357  4015  
+     003360  0111  
+     003361  1600  
+1717 003365  1000          PAGE
+     003366  2453  
+     003367  0000  
+     003370  4525  
+     003371  0011  
+     003372  7760  
+     003373  3276  
+     003374  0002  
+     003375  7771  
+     003376  0005  
+     003377  3425  
+1718               /CONTINUATION OF SUB PUTSYM
+1719                        
+1720 003400  3041  REP,    DCA GTYP
+1721 003401  7346          AC7775          /REPLACE GST
+1722 003402  1044          TAD ETYP        /EXTERN
+1723 003403  7450          SNA             /IS IT A REF TO COMMON?
+1724 003404  5335          JMP MNSECN      /YES
+1725 003405  1236          TAD M4          /IS IT A REF
+1726 003406  7700          SMA CLA         /8 MODE SECN ?
+1727 003407  5225          JMP NOMAT
+1728 003410  1426          TAD I GPTR      /NO CHK FOR
+1729 003411  0162          AND [3400       /CROSS LEVEL
+1730 003412  7041          CIA             /REFERENCE
+1731 003413  3000          DCA TMP0        /COMPARE WITH
+1732 003414  1060          TAD LNONUM      /CURNT LEVEL
+1733 003415  0162          AND [3400
+1734 003416  7450          SNA             /DOING MAIN ?
+1735 003417  5225          JMP NOMAT       /YES DONT CHK FOR TRAP ENTRY
+1736 003420  1000          TAD TMP0
+1737 003421  7650          SNA CLA         /X LEVEL?
+1738 003422  5225          JMP NOMAT
+1739 003423  2030          ISZ TRPCNT      /YES BUMP TRAP VECTOR COUNTER
+1740 003424  7330          AC4000          /SET B0=1, GST SYM WILL GO IN TRAP VECTOR
+1741 003425  3041  NOMAT,  DCA GTYP
+1742 003426  1044          TAD ETYP        /ENTER GST
+1743 003427  1377          TAD (.+3-1      /WORDS 4,5,6.
+1744 003430  3000          DCA TMP0        /DISPATCH ESD
+1745 003431  5400          JMP I TMP0      /TYPE 1,2,3,4
+1746 003432  5276          JMP ENTMN2      /ENTRY POINT
+1747 003433  5274          JMP ENTMN       /EXTERN
+1748 003434  5335          JMP MNSECN      /COMMON SECN
+1749 003435  5243          JMP PRGSCN      /PROGRAM SECN
+1750 003436  7774  M4,     -4
+1751 003437  7771  M7,     -7
+1752 003440  5334          JMP MNS8        /GEN 8 MODE SCT
+1753 003441  5332          JMP MNCZ        /COMM 8 MODE
+1754 003442  5330          JMP MNF1        /FLD1 8 MODE
+1755 003443  1060  PRGSCN,        TAD LNONUM
+1756 003444  0162          AND [3400       /IS IT A MAIN
+1757 003445  7650          SNA CLA         /?
+1758 003446  5335          JMP MNSECN      /YES
+1759 003447  1547          TAD I   [OVRSIZ
+1760 003450  3000          DCA     TMP0
+1761 003451  1546          TAD I   [OVRSIZ+1
+1762 003452  3001          DCA     TMP1    /SAVE OLD OVERLAY SIZE
+1763 003453  7100          CLL
+1764 003454  1443          TAD I   EPT2
+1765 003455  1001          TAD     TMP1
+1766 003456  3546          DCA I   [OVRSIZ+1
+1767 003457  7004          RAL
+1768 003460  1442          TAD I   EPTR
+1769 003461  1000          TAD     TMP0
+1770 003462  3547          DCA I   [OVRSIZ /SET OVLY SIZE = OVLY SIZE + SECTION SIZE
+1771 003463  1000          TAD     TMP0
+1772 003464  3442          DCA I   EPTR
+1773 003465  1001          TAD     TMP1
+1774 003466  3443          DCA I   EPT2    /SET SECTION SIZE = OLD OVERLAY SIZE
+1775 003467  1026          TAD GPTR        /PUT ADDR OF
+1776 003470  7001          IAC             /GST WD5 OF
+1777 003471  3447          DCA I REFPTR    /SECTION SYM INTO ESD REFERENCE PAGE
+1778 003472  1160  ENTM2,  TAD [LVPTR      /SET REFERENCE
+1779 003473  3047          DCA REFPTR      /TO PARENT SYM =WD5 OF #YLVLN
+1780 003474  1060  ENTMN,  TAD LNONUM      /=CURNT OVRLAY AND CURNT LEVEL NUM
+1781 003475  5342          JMP MNSEC5
+1782 003476  1060  ENTMN2,        TAD LNONUM      /SEE IF ENTRY
+1783 003477  0162          AND [3400       /POINT IS IN
+1784 003500  7650          SNA CLA         /MAIN?
+1785 003501  5274          JMP ENTMN       /YES
+1786 003502  1447          TAD I REFPTR    /IS PARENT
+1787 003503  4550          JMS I   [SETBPT /REFERENCE TO
+1788 003504  7240          CLA CMA         /COMMON?
+1789 003505  1047          TAD REFPTR      /LOOK FOR
+1790 003506  3000          DCA TMP0        /TYPE CODE 3
+1791 003507  7346          AC7775
+1792 003510  1400          TAD I TMP0
+1793 003511  7450          SNA
+1794 003512  5274          JMP ENTMN       /YES, HANDLE LIKE A MAIN ENTRY POINT
+1795 003513  1236          TAD M4          /IS IT A REF
+1796 003514  7650          SNA CLA         /TO AN 8 SECT?
+1797 003515  5342          JMP MNSEC5      /YES HANDLE LIKE MAIN
+1798 003516  7100          CLL
+1799 003517  1446          TAD I   BPT2
+1800 003520  1443          TAD I   EPT2
+1801 003521  3443          DCA I   EPT2    /SET OVR ENT = OVR ENT + OVR
+1802 003522  7004          RAL
+1803 003523  1445          TAD I   BPTR
+1804 003524  0156          AND     [7      /WATCH HIGH-ORDER BITS
+1805 003525  1442          TAD I   EPTR
+1806 003526  3442          DCA I   EPTR
+1807 003527  5272          JMP ENTM2       /SIZE OF SECTION
+1808 003530  2033  MNF1,   ISZ F1FLG       /SET FOR NE TO
+1809 003531  5335          JMP MNSECN      /0 SO DO8S WILL
+1810 003532  2032  MNCZ,   ISZ CZFLG       /KNOW THESE
+1811 003533  5335          JMP MNSECN      /TYPES OF SECTS
+1812 003534  2034  MNS8,  ISZ S8FLG       /EXIST AND WILL FIT THEM INTO CORE
+1813 003535  1026  MNSECN, TAD GPTR        /PUT ADDR OF
+1814 003536  7001          IAC             /GST WD5 OF
+1815 003537  3447          DCA I REFPTR    /SECTION SYM INTO ESD REFERENCE PAGE
+1816 003540  1376          TAD (SYMX+1     /THIS VALUE
+1817 003541  3047          DCA REFPTR      /YIELDS 0 IN HI 9 WD 5 OF GST SYM
+1818 003542  1044  MNSEC5, TAD ETYP        /SYM TYPE TO AC8-11. AC MAY HAVE
+1819 003543  1041          TAD GTYP        /LEVEL AND OVR BITS (AC1-7) ALREADY SET
+1820 003544  3426          DCA I GPTR      /GST WD4 HOLDS SYMBOL TYPE
+1821 003545  4551          JMS I   [SETBGX /SET BPTR TO GST WORD
+1822 003546  3000          DCA     TMP0    /PREPARE FOR DIVISION BY 7
+1823 003547  1447          TAD I   REFPTR
+1824 003550  1375          TAD     (2-SYMTBL       /GET OFFSET FROM SYMTBL
+1825 003551  1237          TAD     M7
+1826 003552  2000          ISZ     TMP0
+1827 003553  7500          SMA
+1828 003554  5351          JMP     .-3     /DIVIDE BY REPEATED SUBTRACTION
+1829 003555  7240          STA             /AC IS NOT NECESSARILY ZERO!
+1830 003556  1000          TAD     TMP0
+1831 003557  7106          CLL RTL         /ROTATE SYMBOL NUMBER INTO AC BITS 0-8
+1832 003560  7004          RAL
+1833 003561  1442          TAD I   EPTR    /AND INSERT IT INTO THE ADDRESS
+1834 003562  3445          DCA I   BPTR    /DOUBLEWORD TO FORM THE GST
+1835 003563  1443          TAD I   EPT2    /ADDRESS DOUBLEWORD
+1836 003564  3446          DCA I   BPT2
+1837 003565  5766          JMP I .+1
+1838 003566  3200          PUTSYM-1
+1839 003575  5340          PAGE
+     003576  2153  
+     003577  3431  
+1840 003600  3410  STPAS1,        DCA I   NDX0    /ZERO OUT GST
+1841 003601  2317          ISZ     STCNT   /NDX0 SET UP BY PASS0
+1842 003602  5200          JMP     STPAS1
+1843 003603  4777          JMS I (SETCNT   /SET MOD CNTS
+1844 003604  4776          JMS I (RDRLES   /READ A RALF ESD
+1845 003605  4775          JMS I (ESDSCN   /PROCESS IT
+1846 003606  4774          JMS I (ADVOVR   /UPDATE COUNTS
+1847 003607  5204          JMP .-3         /DO NEXT
+1848 003610  1316          TAD     LIBRSW
+1849 003611  7650          SNA CLA         /LIBRARY SEARCH POSSIBLE?
+1850 003612  5773          JMP I   (DOCORE /NO - SKIP IT
+1851 003613  1023          TAD SYMTM3      /TOP OF
+1852 003614  3026          DCA GPTR        /GST
+1853 003615  1025          TAD RFPTR1      /1ST FREE
+1854 003616  3027          DCA LBPTR       /ENTRY IN MODULE TBL THIS IS WHERE LIBR MODULES WILL GO
+1855 003617  4772          JMS I (GETEXT   /GET AN
+1856 003620  5223          JMP .+3         /EXTERN
+1857 003621  4772  LOP4,   JMS I (GETEXT
+1858 003622  1355          TAD RESFLG      /=1 IF
+1859 003623  3022          DCA IOFLG       /LIBR CAT IS ENTIRELY CORE RES
+1860 003624  3331          DCA LBREC       /SET I/O FOR
+1861 003625  3353          DCA LSTBLK      /BLK 0 OF LIBRARY
+1862 003626  3053          DCA RBLK        /SET REL BLK
+1863 003627  3050          DCA RLEN        /AND LENGTH
+1864 003630  5243          JMP BY3         /TO 0
+1865 003631  1011  NXTENT, TAD NDX1        /ADV TO
+1866 003632  0177          AND [-4         /NXT ENTRY
+1867 003633  1371          TAD (2          /BUT GET
+1868 003634  3011          DCA NDX1        /LENGTH OF
+1869 003635  4770          JMS I (GETLEN   /PREV ONE 1ST
+1870 003636  2356          ISZ NUMENT      /MORE IN CORE?
+1871 003637  5244          JMP BY3+1               /YES
+1872 003640  1022          TAD IOFLG       /END OF
+1873 003641  7640          SZA CLA         /CATALOGUE?
+1874 003642  5221          JMP LOP4        /YES, NO MATCH ON THIS EXTERN
+1875 003643  4320  BY3,    JMS RDLBR       /GET NEXT
+1876 003644  1177          TAD [-4         /CAT. BLKS
+1877 003645  1026          TAD GPTR        /LOOK FOR
+1878 003646  3010          DCA NDX0        /LIBR MATCH
+1879 003647  7346          AC7775
+1880 003650  3000          DCA TMP0
+1881 003651  6201  LBFLD, CDF 0           /CDF 20 IF GREATER THAN 8K CORE
+1882 003652  1411          TAD I NDX1
+1883 003653  6211          CDF 10
+1884 003654  7040          CMA             /IS IT THE END
+1885 003655  7450          SNA             /OF CAT ?
+1886 003656  5221          JMP LOP4        /YES
+1887 003657  7001          IAC
+1888 003660  1410          TAD I NDX0
+1889 003661  7640          SZA CLA         /MATCH 1?
+1890 003662  5231          JMP NXTENT      /NO TRY NXT LIBR ENTRY
+1891 003663  2000          ISZ TMP0        /ALL MATCH?
+1892 003664  5251          JMP LBFLD       /NO
+1893 003665  4770          JMS I (GETLEN   /UPDATE RBLK,
+1894 003666  7240          CLA CMA         /RLEN
+1895 003667  1025          TAD RFPTR1      /ENTER MOD
+1896 003670  3010          DCA NDX0        /INTO TBL
+1897 003671  1767          TAD I (MODTBL   /LIBR UNIT
+1898 003672  3410          DCA I NDX0
+1899 003673  1050          TAD RLEN        /LENGTH OF
+1900 003674  3410          DCA I NDX0      /MODULE
+1901 003675  1766          TAD I (MODTBL+2 /STARTING BLOCK OF LIBRARY, +
+1902 003676  1053          TAD RBLK        / RELATIVE BLOCK OF MODULE =
+1903 003677  3410          DCA I NDX0      / ABSOLUTE BLK OF MOD
+1904 003700  2061          ISZ LBCNT       /=NUM OF LIBR MOD IN MAIN
+1905 003701  1026          TAD GPTR        /SAVE GST
+1906 003702  3353          DCA LSTBLK      /PTR
+1907 003703  4776          JMS I (RDRLES   /READ IN ESD
+1908 003704  3060          DCA LNONUM      /SET FOR MAIN
+1909 003705  4775          JMS I (ESDSCN   /PROCESS ESD
+1910 003706  1163          TAD [3          /ADV MODULE
+1911 003707  1025          TAD RFPTR1      /TBL PTR
+1912 003710  3025          DCA RFPTR1
+1913 003711  1353          TAD LSTBLK
+1914 003712  3026          DCA GPTR
+1915 003713  2354          ISZ MLEFT       /MOD TBL FULL?
+1916 003714  5221          JMP LOP4        /NO DO SOME MORE
+1917 003715  5773          JMP I (DOCORE
+1918               
+1919 003716  0000  LIBRSW, 0               /NON-ZERO IF LIBRARY SEARCH POSSIBLE
+1920 003717  5005  STCNT,  SYMTBL-OVLTBL
+1921 003720  0000  RDLBR, 0
+1922 003721  1022          TAD IOFLG       /IS THIS
+1923 003722  7640          SZA CLA         /THE END
+1924 003723  5344          JMP ENDLB       /OF CAT.?
+1925 003724  6201          CDF             /NO
+1926 003725  4575          JMS I [IOHAN    /READ SOME
+1927 003726  6172          MODTBL          /MORE
+1928 003727  1200  LBARG,  200^5           /OR 200^17!20
+1929 003730  4600          LB0BUF          /OR 0
+1930 003731  0000  LBREC,  0               /REL CAT BLK
+1931 003732  1331          TAD LBREC       /GET -NUM OF
+1932 003733  7041          CIA             /BLKS READ,
+1933 003734  1353          TAD LSTBLK      /AND COMPUTE
+1934 003735  3000          DCA TMP0        /THE NUM OF
+1935 003736  1365          TAD (-100       /ENTRIES IN
+1936 003737  2000          ISZ TMP0        /CORE.  THERE
+1937 003740  5336          JMP .-2         /ARE 100 PER
+1938 003741  3357          DCA OLDCNT      /BLOCK
+1939 003742  1331          TAD LBREC       /UPDATE
+1940 003743  3353          DCA LSTBLK      /LSTBLK
+1941 003744  1357  ENDLB,  TAD OLDCNT
+1942 003745  3356          DCA NUMENT
+1943 003746  7240          CLA CMA         /SET PTR TO
+1944 003747  1330          TAD LBARG+1     /1ST ENTRY
+1945 003750  3011          DCA NDX1
+1946 003751  6211          CDF 10
+1947 003752  5720          JMP I RDLBR
+1948 003753  0000  LSTBLK, 0
+1949 003754  0000  MLEFT,  0
+1950 003755  0001  RESFLG, 1
+1951 003756  0000  NUMENT, 0
+1952 003757  0000  OLDCNT, 0
+1953 003765  7700          PAGE
+     003766  6174  
+     003767  6172  
+     003770  4545  
+     003771  0002  
+     003772  4562  
+     003773  4000  
+     003774  1022  
+     003775  3320  
+     003776  2421  
+     003777  1133  
+1954               
+1955               /END OF PASS 1 - FIT EVERYTHING INTO CORE
+1956               
+1957 004000  1030  DOCORE, TAD TRPCNT
+1958 004001  7650          SNA CLA
+1959 004002  5214          JMP LOP3-3      /NO OVRS
+1960 004003  1377          TAD (TRPSYM     /ENTER TRAP
+1961 004004  4561          JMS I [LOOK     /VECT. SYM
+1962 004005  1176          TAD [4          /ITS A
+1963 004006  3426          DCA I GPTR      /MAIN SECN
+1964 004007  2026          ISZ GPTR        /GST WD6
+1965 004010  2026          ISZ GPTR        /HOLDS LENGTH
+1966 004011  1030          TAD TRPCNT      /GET SIZE OF
+1967 004012  7106          RTL CLL         /TRAP VECTOR
+1968 004013  3426          DCA I GPTR      /= NUMBER OF ENTRIES * 4
+1969 004014  4776          JMS I (DO8S     /GO DO ALL 8 MODE SECTIONS
+1970 004015  1023          TAD SYMTM3      /ALLOCATE
+1971 004016  3026          DCA GPTR        /CORE FOR
+1972 004017  4554  LOP3,   JMS I [GETTYP   /ALL MAIN NON 8 MODE
+1973 004020  5227          JMP DUNMN       /SECTIONS
+1974 004021  7346          AC7775          /4=PROG
+1975 004022  1426          TAD I GPTR      /SECN, 3=COMMON
+1976 004023  7110          RAR CLL
+1977 004024  7650          SNA CLA
+1978 004025  4775          JMS I (FIT      /GO FIT SECN
+1979 004026  5217          JMP LOP3
+1980 004027  7240  DUNMN, STA
+1981 004030  3417          DCA I   NDX7    /TERMINATE OVERLAY LENGTH LIST
+1982 004031  1056          TAD     A1
+1983 004032  3774          DCA I   (OVLTBL /STORE ENTRY FOR LEVEL 0
+1984 004033  1057          TAD     A1+1
+1985 004034  3773          DCA I   (OVLTBL+1
+1986 004035  1057          TAD     A1+1
+1987 004036  7100          CLL
+1988 004037  1165          TAD     [377
+1989 004040  0157          AND     [7400
+1990 004041  7430          SZL
+1991 004042  2056          ISZ     A1      /(WATCH CARRY!)
+1992 004043  3057          DCA     A1+1    /DITTO FOR NON-FIELD 0
+1993 004044  7201          CLA IAC         /WILL HOLD
+1994 004045  3062          DCA BLKCNT      /SIZE OF LOADER IMAGE
+1995 004046  1372          TAD (1460       /RESET INT.
+1996 004047  3771          DCA I (LEVSYM+2 /#YLVLN SYM
+1997 004050  1370          TAD (QUSRLV-1   /WHERE OVRLAY
+1998 004051  3013          DCA NDX3        /DSRN INFO GOES IN LHDR
+1999 004052  7201          CLA IAC
+2000 004053  3413          DCA I   NDX3    /USER MAIN IS LEVEL 0
+2001 004054  1367          TAD     (10
+2002 004055  3413          DCA I   NDX3    /SET UP LOADING INFORMATION FOR USER MAIN
+2003 004056  7240          STA             /IN THE USRLV TABLE JUST LIKE
+2004 004057  1056          TAD     A1      /ANY OTHER OVERLAY LEVEL
+2005 004060  7110          CLL RAR
+2006 004061  1057          TAD     A1+1    /LENGTH HAS TO BE COMPUTED FROM
+2007 004062  7004          RAL             /CORE LENGTH
+2008 004063  7006          RTL
+2009 004064  7006          RTL
+2010 004065  3000          DCA     TMP0
+2011 004066  7201          CLA IAC
+2012 004067  3413          DCA I   NDX3    /USER MAIN FIRST THING IN LDR IMAGE
+2013 004070  1000          TAD     TMP0
+2014 004071  3413          DCA I   NDX3
+2015 004072  1000          TAD     TMP0
+2016 004073  1062  LOP6,  TAD BLKCNT      /UPDATE LENGTH
+2017 004074  3062          DCA BLKCNT      /OF LDR IMAGE
+2018 004075  2771          ISZ I (LEVSYM+2 /NEXT LEVEL
+2019 004076  1366          TAD (LEVSYM     /LOOKUP
+2020 004077  2326          ISZ NLVL
+2021 004100  4561          JMS I [LOOK     /#YLVLN
+2022 004101  5327          JMP     DUNLVL  /DONE ALL OVR LEVELS
+2023 004102  4775          JMS I (FIT      /FIT LEVEL
+2024 004103  2026          ISZ GPTR        /IN CORE
+2025 004104  1413          TAD I   NDX3    /NUMBER OF OVERLAYS ON THIS LEVEL - ALSO
+2026 004105  7041          CIA             /SERVES AS AN INDICATOR TO THE RUN-TIME
+2027 004106  3000          DCA     TMP0    /SYSTEM THAT THIS LEVEL IS INITIALLY
+2028 004107  1426          TAD I   GPTR    /UNINHABITED.
+2029 004110  0156          AND     [7      /GET FIELD BITS
+2030 004111  7106          CLL RTL
+2031 004112  7004          RAL
+2032 004113  2026          ISZ     GPTR
+2033 004114  1426          TAD I   GPTR    /AND ADDRESS BITS
+2034 004115  3413          DCA I   NDX3    /PUT-EM OUT
+2035 004116  1062          TAD     BLKCNT  /STARTING BLOCK OF LEVEL
+2036 004117  3413          DCA I   NDX3
+2037 004120  1065          TAD     BLKSIZ
+2038 004121  3413          DCA I   NDX3    /LENGTH OF A SINGLE OVERLAY IN THE LEVEL
+2039 004122  1065          TAD BLKSIZ      /(NUM OF OVRS)*
+2040 004123  2000          ISZ TMP0        /NUM OF BLKS
+2041 004124  5322          JMP .-2         /AC=LENGTH OF LEVEL
+2042 004125  5273          JMP LOP6        /DO NEXT LEVEL
+2043 004126  0000  NLVL,   0
+2044 004127  7200  DUNLVL,        CLA             /AC NOT ZERO!
+2045 004130  1023          TAD SYMTM3      /NOW RESOLVE
+2046 004131  3026          DCA GPTR        /ALL OTHER SYMBOLS
+2047 004132  4554  LP1,    JMS I [GETTYP
+2048 004133  5765          JMP I   (ALLDN1 /ALL DONE
+2049 004134  4551          JMS I   [SETBGX /SET BPTR TO GST WD5
+2050 004135  1445          TAD I   BPTR
+2051 004136  0152          AND     [7770
+2052 004137  7450          SNA
+2053 004140  5332          JMP     LP1     /NO RELATIVE SYMBOL - DON'T RELOCATE
+2054 004141  3042          DCA     EPTR
+2055 004142  1042          TAD     EPTR    /FIGURE OUT THE SYMBOL TABLE ADDRESS
+2056 004143  7112          CLL RTR         /OF THE RELATIVE SYMBOL BY
+2057 004144  7170          STL CMA RAR     /TAKING 7 * THE RELATIVE SYMBOL NUMBER
+2058 004145  1042          TAD     EPTR    /IN BITS 0-8 AND ADDING IN THE BASE
+2059 004146  1364          TAD     (SYMTBL-1       /ADDRESS OF THE SYMBOL TABLE
+2060 004147  4564          JMS I   [SETEPT
+2061 004150  1443          TAD I   EPT2
+2062 004151  7100          CLL
+2063 004152  1446          TAD I   BPT2
+2064 004153  3446          DCA I   BPT2
+2065 004154  7004          RAL
+2066 004155  1445          TAD I   BPTR
+2067 004156  0156          AND     [7      /THROW AWAY THE OLD RELATIVE SYMBOL #
+2068 004157  1442          TAD I   EPTR
+2069 004160  3445          DCA I   BPTR    /AND PERFORM THE RELOCATION
+2070 004161  5332          JMP     LP1             /DO AGAIN
+2071 004164  2441          PAGE
+     004165  4200  
+     004166  2050  
+     004167  0010  
+     004170  7206  
+     004171  2052  
+     004172  1460  
+     004173  5436  
+     004174  5435  
+     004175  4451  
+     004176  4400  
+     004177  2043  
+2072 004200  1056  ALLDN1,        TAD     A1
+2073 004201  3777          DCA I   (QHGHAD /SAVE HIGHEST PROGRAM ADDRESS
+2074 004202  1057          TAD     A1+1    /SO THAT RTS WILL KNOW HOW MUCH ROOM
+2075 004203  3776          DCA I   (QHGHAD+1 /IT HAS FOR BUFFERS & THINGS
+2076 004204  1054          TAD FATAL       /ANY MULTIPLE
+2077 004205  7450          SNA             /SECTIONS?
+2078 004206  5216          JMP NOMSCT      /NO
+2079 004207  3060          DCA     LNONUM
+2080 004210  6201          CDF 0
+2081 004211  1775          TAD I   (MTMCNT
+2082 004212  3074          DCA     MBGCNT  /RESTORE ERROR PARAMETERS
+2083 004213  6211          CDF 10
+2084 004214  4566          JMS I   [RTNOS8
+2085 004215  3337          MSMSG
+2086 004216  1374  NOMSCT, TAD (SASYM      /GET STRT
+2087 004217  4561          JMS I [LOOK     /ADDR MAIN
+2088 004220  7410          SKP             /NO MAIN
+2089 004221  5224          JMP .+3
+2090 004222  4566          JMS I   [RTNOS8
+2091 004223  3356          MNMSG
+2092 004224  1037          TAD SVMAIN      /IF .NE. SET TO
+2093 004225  7440          SZA             /POINT TO GST
+2094 004226  1026          TAD GPTR        /FOR PND MAIN
+2095 004227  3037          DCA SVMAIN      /FOR /S THINGS IN SYMMAP RT.
+2096 004230  6201          CDF 0
+2097 004231  1773          TAD I   (JOUSYM
+2098 004232  3772          DCA I   (PRMAIN /ENABLING PRINTING OF #MAIN ON ERRORS
+2099 004233  6211          CDF 10
+2100 004234  2026          ISZ GPTR
+2101 004235  1426          TAD I GPTR      /MAKE SWAPPER CONTROL WORD
+2102 004236  3771          DCA I (QRTSWP   /LEVEL 0, OVERLAY 0 IS MAIN
+2103 004237  2026          ISZ GPTR
+2104 004240  1426          TAD I GPTR      /12 BIT ADDR
+2105 004241  3770          DCA I (QRTSWP+1
+2106 004242  1040          TAD DPFLG       /N.E. MEANS LDR IMAGE NEEDS DP HRDWRE
+2107 004243  3767          DCA I (QDPFLG   /RETAIN INFO IN LHDR FOR PASS3
+2108 004244  6201         CDF 0           /FETCH LDR
+2109 004245  1766          TAD I   (LDRNAM /IMAGE
+2110 004246  4575          JMS I [IOHAN    /HANDLER
+2111 004247  1062          TAD     BLKCNT
+2112 004250  7106          CLL RTL         /SINCE WE KNOW THE LENGTH OF THE
+2113 004251  7530          SZL SPA         /LDR IMAGE FILE, TELL IT TO THE USR
+2114 004252  7200          CLA             /(UNLESS ITS >255)
+2115 004253  7006          RTL
+2116 004254  7430          SZL
+2117 004255  7200          CLA
+2118 004256  1766          TAD I   (LDRNAM /OPEN LDR
+2119 004257  6212          CIF 10          /IMAGE
+2120 004260  4420          JMS I USR
+2121 004261  0003          3
+2122 004262  0502  LDRBLK, LDRNAM+1
+2123 004263  0000  LDRLEN, 0
+2124 004264  5765          JMP I   (ENTERR
+2125 004265  1062          TAD BLKCNT      /SEE IF LDR
+2126 004266  7120          STL             /IMAGE WILL
+2127 004267  1263          TAD LDRLEN      /FIT ON
+2128 004270  7670          SZL SNA CLA     /TENTATIVE FILE
+2129 004271  5274          JMP .+3         /IT FITS
+2130 004272  4566          JMS I   [RTNOS8 /OUTPUT FILE
+2131 004273  3351          LIMSG           /TOO SMALL
+2132 004274  1062          TAD BLKCNT      /CLOSE LDR
+2133 004275  3764          DCA I   (LDCLEN /IMAGE FILE
+2134 004276  1363          TAD     (LIMGU-1        /PASS2
+2135 004277  3010          DCA NDX0
+2136 004300  1766          TAD I   (LDRNAM
+2137 004301  6211          CDF 10
+2138 004302  0170          AND [17
+2139 004303  3410          DCA I NDX0      /UNIT
+2140 004304  1062          TAD BLKCNT
+2141 004305  3410          DCA I NDX0      /LENGTH
+2142 004306  1262          TAD LDRBLK
+2143 004307  3410          DCA I NDX0      /STRT BLK
+2144 004310  6201          CDF 0
+2145 004311  4575          JMS I   [IOHAN
+2146 004312  2144          LIMGU           /WRITE OUT LOADER IMAGE HEADER BLOCK
+2147 004313  4210          4210
+2148 004314  7200          LHDR
+2149 004315  0000          0               /IN RELATIVE BLOCK 0 OF LOADER IMAGE FILE
+2150 004316  6211          CDF 10
+2151               /SET UP TABLE THAT RELATES
+2152               /BINARY SECTINS TO LDR
+2153               /IMAGE RELATIVE BLOCK NUMS.
+2154               /1 DBL WD AND 2 SINGLE-WD ARGUMENTS PER
+2155               /SECTION (15 BIT ADDR, RELATIVE
+2156               /BLOCK, AND LENGTH).  THERE ARE
+2157               /8 SECTIONS
+2158               /(MAIN, LEVL1,....,LEVL7)
+2159               /TABLE STARTS AT LHDR AND
+2160               /IS USED BY SUBR NEWORG
+2161                        
+2162 004317  1362          TAD (LHDR-1
+2163 004320  3011          DCA NDX1
+2164 004321  1361          TAD (QUSRLV     /NOW DO THE
+2165 004322  3010          DCA NDX0        /8 LEVELS
+2166 004323  1152          TAD [-10
+2167 004324  3000          DCA TMP0
+2168 004325  1410  SETSLP, TAD I   NDX0
+2169 004326  3066          DCA     BSECTP
+2170 004327  1066          TAD     BSECTP
+2171 004330  7112          CLL RTR
+2172 004331  7010          RAR
+2173 004332  0156          AND     [7
+2174 004333  3411          DCA I   NDX1    /FIRST COMES 15-BIT ADDRESS
+2175 004334  1066          TAD     BSECTP
+2176 004335  0157          AND     [7400
+2177 004336  3411          DCA I   NDX1
+2178 004337  1410          TAD I   NDX0
+2179 004340  3411          DCA I   NDX1    /THEN RELATIVE BLOCK NUMBER
+2180 004341  1410          TAD I   NDX0
+2181 004342  3411          DCA I   NDX1    /THEN LENGTH
+2182 004343  2010          ISZ     NDX0    /SKIP OVER NEXT OVERLAY COUNT
+2183 004344  2000          ISZ     TMP0
+2184 004345  5325          JMP     SETSLP
+2185 004346  1360          TAD (LHDR       /PTR TO TOP
+2186 004347  3066          DCA BSECTP      /OF TABLE
+2187 004350  7240          CLA CMA         /SET FLG
+2188 004351  3031          DCA P2FLG       /FOR SUBR ADVOVR
+2189 004352  5753          JMP I .+1
+2190 004353  2000          PASS2
+2191 004360  7200          PAGE
+     004361  7207  
+     004362  7177  
+     004363  2143  
+     004364  2046  
+     004365  1553  
+     004366  0501  
+     004367  7206  
+     004370  7202  
+     004371  7201  
+     004372  1466  
+     004373  1526  
+     004374  2062  
+     004375  3275  
+     004376  7204  
+     004377  7203  
+2192 004400  0000  DO8S,  0               /DO 8 SECTIONS
+2193 004401  1032          TAD CZFLG       /ANY 8 MODE
+2194 004402  7640          SZA CLA         /COMMONS ?
+2195 004403  4221          JMS     FIT8S   /GO FIT IT
+2196 004404  1033          TAD F1FLG       /ANY 8 MODE
+2197 004405  7650          SNA CLA         /FIELD 1 ?
+2198 004406  5211          JMP .+3         /NO
+2199 004407  7240          STA
+2200 004410  4221          JMS     FIT8S
+2201 004411  1034          TAD S8FLG       /ANY GEN 8 MODE
+2202 004412  7650          SNA CLA         /SECTIONS ?
+2203 004413  5600          JMP I DO8S      /NO ALL DONE
+2204 004414  1152          TAD [7770       /THIS WILL
+2205 004415  3035          DCA OVRFLO      /INHIBIT FLD1 OVER FLOW ERR
+2206 004416  7201          CLA IAC
+2207 004417  4221          JMS     FIT8S
+2208 004420  5600          JMP I DO8S
+2209                        
+2210               /FIT 8 MODE SECTIONS
+2211                        
+2212 004421  0000  FIT8S,  0
+2213 004422  1152          TAD     [7770
+2214 004423  3250          DCA STYPE       /-8M0DE SECT TYPE (7-11)
+2215 004424  1023          TAD SYMTM3      /SEARCH GST FOR
+2216 004425  3026          DCA GPTR        /8 MODE SECTNS
+2217 004426  4554  F8SECT, JMS I [GETTYP
+2218 004427  5621          JMP I FIT8S     /ALL DONE
+2219 004430  1250          TAD STYPE
+2220 004431  1426          TAD I GPTR
+2221 004432  7640          SZA CLA         /8 SECTION ?
+2222 004433  5226          JMP F8SECT      /NO
+2223 004434  4551          JMS I   [SETBGX
+2224 004435  1446          TAD I   BPT2
+2225 004436  1377          TAD     (177    /ROUND SECTION LENGTH
+2226 004437  0376          AND     (7600   /TO A PAGE BOUNDARY
+2227 004440  3446          DCA I   BPT2
+2228 004441  4775          JMS I (FIT      /NOW FIT IT
+2229 004442  1035          TAD OVRFLO      /SEE IF FLD1
+2230 004443  1056          TAD A1          /IS OVR FLOWED ****
+2231 004444  7750          SPA SNA CLA     /?
+2232 004445  5226          JMP F8SECT      /DO ANOTHER
+2233 004446  4566  TOOBIG, JMS I   [RTNOS8
+2234 004447  3344          CORMSG          /PRINT ERROR & GO AWAY
+2235 004450  0000  STYPE,  0
+2236 004451  0000  FIT,   0               /FIT SECTION
+2237 004452  4551          JMS I   [SETBGX /SET BPTR TO POINT TO GST WD5
+2238 004453  1446          TAD I   BPT2
+2239 004454  0157          AND     [7400
+2240 004455  7104          CLL RAL
+2241 004456  1445          TAD I   BPTR
+2242 004457  7006          RTL
+2243 004460  7006          RTL             /GET LENGTH OF SEGMENT IN BLOCKS
+2244 004461  3065          DCA     BLKSIZ
+2245 004462  1446          TAD I   BPT2
+2246 004463  7100          CLL
+2247 004464  1057          TAD     A1+1
+2248 004465  3076          DCA     TMP5
+2249 004466  1057          TAD     A1+1
+2250 004467  3446          DCA I   BPT2
+2251 004470  1076          TAD     TMP5
+2252 004471  3057          DCA     A1+1    /SET BPTR = A1
+2253 004472  7004          RAL             /WHILE SETTING A1 = A1 + BPTR
+2254 004473  1445          TAD I   BPTR
+2255 004474  1056          TAD     A1
+2256 004475  3076          DCA     TMP5
+2257 004476  1076          TAD     TMP5
+2258 004477  0152          AND     [7770
+2259 004500  7640          SZA CLA         /IF NEW ADDRESS IS > 77777,
+2260 004501  5246          JMP     TOOBIG  /THE THING WILL NEVER FIT
+2261 004502  1056          TAD     A1
+2262 004503  3445          DCA I   BPTR
+2263 004504  1076          TAD     TMP5
+2264 004505  3056          DCA     A1
+2265 004506  5651          JMP I   FIT     /RETURN
+2266 004507  0000  LEVLUP,        0               /LEVEL = MAX (LEVEL, OVRSIZ); OVRSIZ=0
+2267 004510  1547          TAD I   [OVRSIZ
+2268 004511  1060          TAD     LNONUM
+2269 004512  3417          DCA I   NDX7    /RECORD THE SIZE OF THIS OVERLAY
+2270 004513  1546          TAD I   [OVRSIZ+1       /FOR THE SYMBOL MAP PRINTOUT
+2271 004514  3417          DCA I   NDX7
+2272 004515  1147          TAD     [OVRSIZ
+2273 004516  4564          JMS I   [SETEPT
+2274 004517  1560          TAD I   [LVPTR
+2275 004520  4550          JMS I   [SETBPT
+2276 004521  4325          JMS     MAXCOM
+2277 004522  3443          DCA I   EPT2
+2278 004523  3442          DCA I   EPTR
+2279 004524  5707          JMP I   LEVLUP
+2280                        
+2281 004525  0000  MAXCOM, 0               /BPTR = MAX (EPTR, BPTR)
+2282 004526  1442          TAD I   EPTR
+2283 004527  7141          CIA CLL
+2284 004530  1445          TAD I   BPTR
+2285 004531  7640          SZA CLA         /CHECK HIGH-ORDER WORDS FIRST
+2286 004532  5336          JMP     .+4     /THEY DIFFER
+2287 004533  1443          TAD I   EPT2
+2288 004534  7141          CIA CLL
+2289 004535  1446          TAD I   BPT2    /USE LOW ORDER WORDS IF HIGH ORDERS ARE =
+2290 004536  7630          SZL CLA         /IS EPTR > BPTR?
+2291 004537  5725          JMP I   MAXCOM  /NO - EXIT
+2292 004540  1442          TAD I   EPTR
+2293 004541  3445          DCA I   BPTR
+2294 004542  1443          TAD I   EPT2
+2295 004543  3446          DCA I   BPT2    /YES - BPTR=EPTR
+2296 004544  5725          JMP I   MAXCOM
+2297 004545  0000  GETLEN,        0
+2298 004546  6201          CDF 0           /OR CDF 20
+2299 004547  1411          TAD I NDX1      /LEN OF ENTRY
+2300 004550  6211          CDF 10
+2301 004551  7450          SNA             /=0 MEANS LENGTH HAS ALREADY
+2302 004552  5745          JMP I GETLEN    /BEEN COMPUTED.  NE 0 MEANS
+2303 004553  3000          DCA TMP0        /ENTRY POINT IS THE 1ST IN A NEW MODULE
+2304 004554  1050          TAD RLEN        /UPDATE REL
+2305 004555  1053          TAD RBLK        /BLOCK AND
+2306 004556  3053          DCA RBLK        /LENGTH OF
+2307 004557  1000          TAD TMP0        /NEW MODULE
+2308 004560  3050          DCA RLEN
+2309 004561  5745          JMP I GETLEN
+2310               
+2311 004562  0000  GETEXT, 0               /LOOK FOR GST
+2312 004563  4554          JMS I   [GETTYP /EXTERN
+2313 004564  5774          JMP I (DOCORE   /END OF GST
+2314 004565  1426          TAD I GPTR      /TYPE WD TO AC
+2315 004566  0170          AND [17         /B8-B11
+2316 004567  7112          RTR CLL         /2=EXTERN
+2317 004570  7640          SZA CLA         /GOT ONE?
+2318 004571  5363          JMP .-6         /NO, RETRY
+2319 004572  5762          JMP I GETEXT
+2320 004574  4000          PAGE
+     004575  4451  
+     004576  7600  
+     004577  0177  
+2321               
+2322               LB0BUF= .
+2323               /START OF PROGRAM
+2324                        
+2325 004600  2206  START,  ISZ     XSTRT   /IF CHAINED TO
+2326 004601  6213          CIF CDF 10
+2327 004602  7344          CLL STA RAL
+2328 004603  0777          AND I   (7643   /AND OUT THE /L SWITCH
+2329 004604  3777          DCA I   (7643
+2330 004605  5606          JMP I .+1
+2331 004606  2443  XSTRT,  PASS0
+2332               /THIS SUBROUTINE SHOULD RESIDE IN THE
+2333               /FIELD 0 I/O BUFFER SINCE IT
+2334               /EXECUTES ONLY ONCE
+2335               /SUBROUTINE TO DETERMINE CORE SIZE
+2336               /
+2337               /THIS WORKS ON ANY PDP-8 FAMILY COMPUTER.
+2338               /THE VALUE,FROM 1 TO 10(OCTAL) OF THE 1ST NON-EXISTENT
+2339               /MEMORY FLD IS RETURNED IN THE AC.
+2340               /
+2341               /NOTE--THIS ROUTN MUST BE PLACED IN FLD 0
+2342               /
+2343 004607  0000  CORE,   0
+2344 004610  1376          TAD     (6203
+2345 004611  6214          RDF
+2346 004612  3255          DCA     CORTN
+2347 004613  6201          CDF 0
+2348 004614  1775          TAD I   (7777
+2349 004615  0240          AND     COR70
+2350 004616  7450          SNA
+2351 004617  5223          JMP     CORELP
+2352 004620  7112          CLL RTR
+2353 004621  7010          RAR
+2354 004622  5255          JMP     CORTN
+2355 004623  6201  CORELP, CDF 0           /NEEDED FOR PDP-8L
+2356 004624  1261          TAD TRYFLD      /GET FLD TO TST
+2357 004625  7106          CLL RTL
+2358 004626  7004          RAL
+2359 004627  0240          AND     COR70   /MASK USEFUL BITS
+2360 004630  1223          TAD     CORELP
+2361 004631  3232          DCA     .+1     /SET UP CDF TO FLD
+2362 004632  0000          0
+2363 004633  1657          TAD I   CORLOC  /SAV CURRENT CONTENTS
+2364 004634  7000          NOP             /HACK FOR PDP-8
+2365 004635  3232          DCA     .-3
+2366 004636  1234          TAD     .-2     /7000 IS A GOOD PATTERN
+2367 004637  3657          DCA I   CORLOC
+2368 004640  0070  COR70,  70              /HACK FOR PDP-8.,NO-OP
+2369 004641  1657          TAD I   CORLOC  /TRY TO READ BK 7000
+2370 004642  7400          7400            /HACK FOR PDP-8,.NO-OP
+2371 004643  1242          TAD     .-1     /GUARD AGAINST WRAP AROUND
+2372 004644  1260          TAD     CORLOC+1        /TAD 1400
+2373 004645  7640          SZA CLA
+2374 004646  5253          JMP     .+5     /NON EXISTENT FLD EXIT
+2375 004647  1232          TAD     COR70-6 /RESTORE CONTENS DESTROYED
+2376 004650  3657          DCA I   CORLOC
+2377 004651  2261          ISZ     TRYFLD /TRY NXT HIGHER FLD
+2378 004652  5223          JMP     CORELP
+2379 004653  1261          TAD     TRYFLD
+2380 004654  1375          TAD     (-1
+2381 004655  0000  CORTN,  0
+2382 004656  5607          JMP I   CORE
+2383 004657  4642  CORLOC, COR70+2         /ADR TO TST IN EACH FLD
+2384 004660  1400          1400            /7000+7400+1400=0
+2385 004661  0001  TRYFLD, 1               /CURRENT FLD TO TST
+2386 004775  7777          PAGE
+     004776  6203  
+     004777  7643  
+2387                      *6600
+2388 006600  0000  DATCHG, 0                       /FIND THE MONTH/YEAR
+2389 006601  7112          CLL RTR                 /THIS CODE FINDS THE MONTH
+2390 006602  7010          RAR                     /BY CALCULATING THE ADDRESS
+2391 006603  0377          AND     (777            /OF THE CORRECT MONTH 
+2392 006604  7112          CLL RTR                 /IN THE TABLE OF MONTHS
+2393 006605  7012          RTR
+2394 006606  0376          AND     (36
+2395 006607  1375          TAD     (MONTHS-3       /HAVE THE ADDRESS OF MONTH-1
+2396 006610  3012          DCA     NDX2            /SAVE IT IN FIELD 0, PAGE 0
+2397 006611  6201          CDF 0                   /CHANGE DATA FIELD TO 0
+2398 006612  1412          TAD I   NDX2            /GET FIRST 2 CHARS. OF MONTH
+2399 006613  6211          CDF 10                  /CHANGE DATA FIELD TO 1
+2400 006614  3774          DCA I   (LDATE+2        /INSERT INTO THE TEXT LINE
+2401 006615  6201          CDF 0                   /CHANGE DATA FIELD TO 0
+2402 006616  1412          TAD I   NDX2            /GET LAST 2 CHARS. OF MONTH
+2403 006617  6211          CDF 10                  /CHANGE DATA FIELD TO 1
+2404 006620  3773          DCA I   (LDATE+3        /INSERT INTO THE TEXT LINE
+2405 006621  1772          TAD I   (OSDATE         /GET THE DATE--FIND THE YEAR
+2406 006622  0371          AND     (7              /GET THE YEAR OFFSET BITS
+2407 006623  3770          DCA I   (YRTEMP         /STORE THEM AWAY
+2408 006624  6201          CDF 0                   /CHANGE DATA FIELD TO 0
+2409 006625  1767          TAD I   (7777           /GET THE DATE EXTENSION BITS
+2410 006626  6211          CDF 10                  /CHANGE DATA FIELD TO 1
+2411 006627  0366          AND     (600            /MASK TO GET BITS 3 AND 4
+2412 006630  7112          CLL RTR                 /ROTATE TO GET THEM INTO
+2413 006631  7012          RTR                     /BIT POSITIONS 7 AND 8
+2414 006632  1365          TAD     (106            /GET THE NEW BASE YEAR
+2415 006633  1770          TAD I   (YRTEMP         /ADD THE YEAR OFFSET BITS
+2416 006634  6212          CIF 10                  /CHANGE THE DATA FIELD TO 1
+2417 006635  5600          JMP I   DATCHG          /HAVE THE YEAR
+2418 006636  0000  GETDAT, 0
+2419 006637  1770          TAD I   (YRTEMP         /GET THE YEAR
+2420 006640  0364          AND     (7700           /MASK AND ROTATE
+2421 006641  7112          CLL RTR                 /TO GET THE FIRST
+2422 006642  7012          RTR                     /DIGIT (IN SIXBIT)
+2423 006643  7012          RTR
+2424 006644  1363          TAD     (5500           /STICK A HYPHEN IN FRONT
+2425 006645  3762          DCA I   (LDATE+4        /PUT IN THE TEXT LINE
+2426 006646  1770          TAD I   (YRTEMP         /GET THE YEAR AGAIN
+2427 006647  0361          AND     (77             /MASK AND ROTATE TO
+2428 006650  7106          CLL RTL                 /GET THE SECOND DIGIT
+2429 006651  7006          RTL                     /(IN SIXBIT)
+2430 006652  7006          RTL
+2431 006653  1360          TAD     (40             /STICK A SPACE AFTER IT
+2432 006654  6212          CIF 10                  /CHANGE INSTRUCTION FIELD TO 1
+2433 006655  5636          JMP I   GETDAT
+2434 006656  5512  MONTHS, 5512;0116              /-JAN
+     006657  0116  
+2435 006660  5506          5506;0502               /-FEB
+     006661  0502  
+2436 006662  5515          5515;0122               /-MAR
+     006663  0122  
+2437 006664  5501          5501;2022               /-APR
+     006665  2022  
+2438 006666  5515          5515;0131               /-MAY
+     006667  0131  
+2439 006670  5512          5512;2516               /-JUN
+     006671  2516  
+2440 006672  5512          5512;2514               /-JUL
+     006673  2514  
+2441 006674  5501          5501;2507               /-AUG
+     006675  2507  
+2442 006676  5523          5523;0520               /-SEP
+     006677  0520  
+2443 006700  5517          5517;0324               /-OCT
+     006701  0324  
+2444 006702  5516          5516;1726               /-NOV
+     006703  1726  
+2445 006704  5504          5504;0503               /-DEC
+     006705  0503  
+2446 006760  0040          PAGE
+     006761  0077  
+     006762  2101  
+     006763  5500  
+     006764  7700  
+     006765  0106  
+     006766  0600  
+     006767  7777  
+     006770  2544  
+     006771  0007  
+     006772  7666  
+     006773  2100  
+     006774  2077  
+     006775  6653  
+     006776  0036  
+     006777  0777  
+2447 000146  2150         FIELD 1
+     000147  2147  
+     000150  0252  
+     000151  0245  
+     000152  7770  
+     000153  2704  
+     000154  1324  
+     000155  1744  
+     000156  0007  
+     000157  7400  
+     000160  2151  
+     000161  1200  
+     000162  3400  
+     000163  0003  
+     000164  1316  
+     000165  0377  
+     000166  0446  
+     000167  0527  
+     000170  0017  
+     000171  7605  
+     000172  0400  
+     000173  0240  
+     000174  0077  
+     000175  0600  
+     000176  0004  
+     000177  7774  
+2448               /PAGE 0 FLD1 TAGS FOR PASS0
+2449               /(PASS 0 LIVES WITH THE USR RESIDENT)
+2450               
+2451               NMCTS=  20
+2452               MODCNT= 21
+2453               LVLCNT= 22
+2454               OVRCNT= 23
+2455               PTRULS= 24
+2456               MXFLD=  25
+2457                      *2000
+2458                
+2459               /START OF GLOBAL SYMBOL TABLE
+2460               /BUCKET COMES FIRST, INTERNAL
+2461               /SYMBOLS AND FIELD 1 CONSTANTS ARE
+2462               /HERE ALSO.  GST RUNS FROM
+2463               /SYMTBL TO OVLTBL-1
+2464                
+2465 012000  2154  BUCKET, AAAAAA;0;0;0;EEEEEE;0   /A,B,C,D,E,F
+     012001  0000  
+     012002  0000  
+     012003  0000  
+     012004  2163  
+     012005  0000  
+2466 012006  0000          0;0;0;0;0;0     /G-L
+     012007  0000  
+     012010  0000  
+     012011  0000  
+     012012  0000  
+     012013  0000  
+2467 012014  0000          0;0;0;0;0;0     /M-R
+     012015  0000  
+     012016  0000  
+     012017  0000  
+     012020  0000  
+     012021  0000  
+2468 012022  0000          0;0;0;0;0;0     /S-X
+     012023  0000  
+     012024  0000  
+     012025  0000  
+     012026  0000  
+     012027  0000  
+2469 012030  0000          0;0             /Y,Z
+     012031  0000  
+2470 012032  0000          0;0;0;0;0       /UNUSED BUCKETS MUST BE 0
+     012033  0000  
+     012034  0000  
+     012035  0000  
+     012036  0000  
+2471 012037  0000          0               /SPACE (FOR BLANK COMMON)
+2472 012040  0000          0;0
+     012041  0000  
+2473 012042  2172          POUND           /POUND SIGN FOR INTERNAL SYMBOLS, ALL ARE OF THE FORM (POUND     XXXXX)
+2474 012043  4331  TRPSYM,        TEXT    '#YTRAP'
+     012044  2422  
+     012045  0120  
+     012046  0000  
+2475 012047  0000          0       /TRAP VECTOR
+2476 012050  4331  LEVSYM, TEXT    '#YLVL0'
+     012051  1426  
+     012052  1460  
+     012053  0000  
+2477 012054  0000          0       /OVERLAY LEVEL
+2478 012055  4323  SWPSYM, TEXT    '#SWAP'
+     012056  2701  
+     012057  2000  
+2479 012060  0000          0;0
+     012061  0000  
+2480 012062  4315  SASYM,  TEXT    '#MAIN'
+     012063  0111  
+     012064  1600  
+2481 012065  0000          0;0     /STARTING ADDRESS
+     012066  0000  
+2482               
+2483               /TITLE LINE FOR LOADER MAP
+2484                        
+2485 012067  1417  TLINE,  TEXT    'LOADER V'
+     012070  0104  
+     012071  0522  
+     012072  4026  
+     012073  0000  
+2486                       *.-1
+2487 012073  6264  LXX,    VERNUM&70^7+VERNUM+6060 /VERNUM IN SIXBIT
+2488 012074  0140          PATCH&77^100+40 /PATCH LEVEL
+2489 012075  4040  LDATE,  TEXT    '  NO-DA -TE '
+     012076  1617  
+     012077  5504  
+     012100  0140  
+     012101  5524  
+     012102  0540  
+     012103  0000  
+2490 012104  2331  STLINE, TEXT    'SYMBOL VALUE LVL OVLY'
+     012105  1502  
+     012106  1714  
+     012107  4026  
+     012110  0114  
+     012111  2505  
+     012112  4014  
+     012113  2614  
+     012114  4017  
+     012115  2614  
+     012116  3100  
+2491 012117  7540  HLINE,  TEXT    '= 1ST FREE LOCATION'
+     012120  6123  
+     012121  2440  
+     012122  0622  
+     012123  0505  
+     012124  4014  
+     012125  1703  
+     012126  0124  
+     012127  1117  
+     012130  1600  
+2492 012131  1426  OTLINE, TEXT    'LVL OVLY LENGTH'
+     012132  1440  
+     012133  1726  
+     012134  1431  
+     012135  4014  
+     012136  0516  
+     012137  0724  
+     012140  1000  
+2493 012141  0000  SMAPU,  ZBLOCK  3       /SYMMAP UNIT, LENGTH, ST BLK #
+     012142  0000  
+     012143  0000  
+2494 012144  0000  LIMGU,  ZBLOCK  3       /LDR IMG "
+     012145  0000  
+     012146  0000  
+2495 012147  0000  OVRSIZ, 0;0
+     012150  0000  
+2496 012151  2147  LVPTR,  OVRSIZ
+2497 012152  0001  SYMX,   1;SYMTBL-2
+     012153  2440  
+2498               /SYSTEM SYMBOL TABLE
+2499               
+2500 012154  0000  AAAAAA, 0
+2501 012155  0122          TEXT    /ARGERR/
+     012156  0705  
+     012157  2222  
+     012160  0000  
+2502                       *.-1
+2503 012160  0001          1;0
+     012161  0000  
+2504 012162  0204          JARGER
+2505               
+2506 012163  0000  EEEEEE, 0
+2507 012164  0530          TEXT    /EXIT/
+     012165  1124  
+     012166  0000  
+2508 012167  0001          1;0
+     012170  0000  
+2509 012171  0223          JEXIT
+2510               
+2511 012172  2201  POUND,  .+7
+2512 012173  4301          TEXT    /#ARGER/
+     012174  2207  
+     012175  0522  
+     012176  0000  
+2513                       *.-1
+2514 012176  0001          1;0
+     012177  0000  
+2515 012200  0204          JARGER
+2516 012201  2210          .+7
+2517 012202  4302          TEXT    /#BAK/
+     012203  0113  
+     012204  0000  
+2518 012205  0001          1;0
+     012206  0000  
+2519 012207  0210          JBAK
+2520 012210  2217          .+7
+2521 012211  4304          TEXT    /#DATE/
+     012212  0124  
+     012213  0500  
+2522 012214  0001          1;0
+     012215  0000  
+2523 012216  0203          JDATE
+2524 012217  2226          .+7
+2525 012220  4304          TEXT    /#DEF/
+     012221  0506  
+     012222  0000  
+2526 012223  0001          1;0
+     012224  0000  
+2527 012225  0213          JDEF
+2528 012226  2235          .+7
+2529 012227  4304          TEXT    /#DISMS/
+     012230  1123  
+     012231  1523  
+     012232  0000  
+2530                       *.-1
+2531 012232  0001          1;0
+     012233  0000  
+2532 012234  0412          JDISMS
+2533 012235  2244          .+7
+2534 012236  4305          TEXT    /#ENDF/
+     012237  1604  
+     012240  0600  
+2535 012241  0001          1;0
+     012242  0000  
+2536 012243  0211          JENDF
+2537 012244  2253          .+7
+2538 012245  4305          TEXT    /#EOFSW/
+     012246  1706  
+     012247  2327  
+     012250  0000  
+2539                       *.-1
+2540 012250  0001          1;0
+     012251  0000  
+2541 012252  0016          JEOFSW
+2542 012253  2262          .+7
+2543 012254  4305          TEXT    /#EXIT/
+     012255  3011  
+     012256  2400  
+2544 012257  0001          1;0
+     012260  0000  
+2545 012261  0223          JEXIT
+2546 012262  2271          .+7
+2547 012263  4310          TEXT    /#HANG/
+     012264  0116  
+     012265  0700  
+2548 012266  0001          1;0
+     012267  0000  
+2549 012270  0524          JHANG
+2550 012271  2300          .+7
+2551 012272  4311          TEXT    /#IDLE/
+     012273  0414  
+     012274  0500  
+2552 012275  0001          1;0
+     012276  0000  
+2553 012277  0227          JIDLE
+2554 012300  2307          .+7
+2555 012301  4311          TEXT    /#INT/
+     012302  1624  
+     012303  0000  
+2556 012304  0001          1;0
+     012305  0000  
+2557 012306  0403          JINT
+2558 012307  2316          .+7
+2559 012310  4322          TEXT    /#RDAO/
+     012311  0401  
+     012312  1700  
+2560 012313  0001          1;0
+     012314  0000  
+2561 012315  0217          JRDAO
+2562 012316  2325          .+7
+2563 012317  4322          TEXT    /#READO/
+     012320  0501  
+     012321  0417  
+     012322  0000  
+2564                       *.-1
+2565 012322  0001          1;0
+     012323  0000  
+2566 012324  0221          JREADO
+2567 012325  2334          .+7
+2568 012326  4322          TEXT    /#RENDO/
+     012327  0516  
+     012330  0417  
+     012331  0000  
+2569                       *.-1
+2570 012331  0001          1;0
+     012332  0000  
+2571 012333  0206          JRENDO
+2572 012334  2343          .+7
+2573 012335  4322          TEXT    /#RETRN/
+     012336  0524  
+     012337  2216  
+     012340  0000  
+2574                       *.-1
+2575 012340  0001          1;0
+     012341  0000  
+2576 012342  0235          JRETRN
+2577 012343  2352          .+7
+2578 012344  4322          TEXT    /#REW/
+     012345  0527  
+     012346  0000  
+2579 012347  0001          1;0
+     012350  0000  
+2580 012351  0212          JREW
+2581 012352  2361          .+7
+2582 012353  4322          TEXT    /#RSVO/
+     012354  2326  
+     012355  1700  
+2583 012356  0001          1;0
+     012357  0000  
+2584 012360  0207          JRSVO
+2585 012361  2370          .+7
+2586 012362  4322          TEXT    /#RUO/
+     012363  2517  
+     012364  0000  
+2587 012365  0001          1;0
+     012366  0000  
+2588 012367  0215          JRUO
+2589 012370  2377          .+7
+2590 012371  4323          TEXT    /#SWAP/
+     012372  2701  
+     012373  2000  
+2591 012374  0001          1;0
+     012375  0000  
+2592 012376  0222          JSWAP
+2593 012377  2406          .+7
+2594 012400  4324          TEXT    /#T812/
+     012401  7061  
+     012402  6200  
+2595 012403  0001          1;0
+     012404  0000  
+2596 012405  0225          JT812
+2597 012406  2415          .+7
+2598 012407  4325          TEXT    /#UE/
+     012410  0500  
+2599 012411  0000          0
+2600 012412  0001          1;0
+     012413  0000  
+2601 012414  0204          JUERR
+2602 012415  2424          .+7
+2603 012416  4327          TEXT    /#WDAO/
+     012417  0401  
+     012420  1700  
+2604 012421  0001          1;0
+     012422  0000  
+2605 012423  0216          JWDAO
+2606 012424  2433          .+7
+2607 012425  4327          TEXT    /#WRITO/
+     012426  2211  
+     012427  2417  
+     012430  0000  
+2608                       *.-1
+2609 012430  0001          1;0
+     012431  0000  
+2610 012432  0220          JWRITO
+2611 012433  0000          0               /LAST ONE
+2612 012434  4327          TEXT    /#WUO/
+     012435  2517  
+     012436  0000  
+2613 012437  0001          1;0
+     012440  0000  
+2614 012441  0214          JWUO
+2615 012442  0000  SYMTBL, 0               /START OF GST
+2616               /PASS0- THIS IS THE BEGINNING OF PASS0
+2617               
+2618 012443  5247  PASS0,  JMP     .+4     /NORMAL ENTRY PT
+2619 012444  3322          DCA     CDSW    /CHAINED TO ENTRY PT - NO DECODE 1ST TIME
+2620 012445  1377          TAD     (7616
+2621 012446  3016          DCA     PTRIO
+2622 012447  1376          TAD     (-10
+2623 012450  3022          DCA     LVLCNT  /SET LEVEL AND OVERLAY COUNTERS
+2624 012451  3023          DCA     OVRCNT
+2625 012452  6202          CIF 0
+2626 012453  4775          JMS I   (CORE   /DETERMINE CORE SIZE
+2627 012454  3025          DCA     MXFLD
+2628 012455  4774          JMS I   (CORMOV
+2629 012456  6201          CDF 0
+2630 012457  7777          0-1
+2631 012460  6201          CDF 0
+2632 012461  4577          LB0BUF-1        /MOVE LOWER FIELD 0 TO A SAFE PLACE
+2633 012462  6000          -2000
+2634 012463  6201          CDF 0
+2635 012464  1773          TAD I   (OSJSWD /GET JOB STATUS WORD
+2636 012465  0372          AND     (376    /CLEAR DESIRED FLAGS
+2637 012466  1371          TAD     (3403   /SET NO RESTART, USR AND CD AREAS CLEAR
+2638 012467  3773          DCA I   (OSJSWD /AS WELL AS BATCH FLAG
+2639 012470  6211          CDF 10
+2640 012471  1770          TAD I   (OSDATE
+2641 012472  7450          SNA
+2642 012473  5311          JMP     NODATE
+2643 012474  7112          CLL RTR                 /ROTATE AND MASK TO GET THE DAY
+2644 012475  7010          RAR
+2645 012476  0367          AND     (37
+2646 012477  4324          JMS     MAKSXB          /CONVERT TO SIXBIT
+2647 012500  3766          DCA I   (LDATE+1        /PUT THE DAY INTO THE TEXT LINE
+2648 012501  1770          TAD I   (OSDATE         /GET THE DATE---FIND MONTH
+2649 012502  6202          CIF 0                   /CHANGE DATA FIELD TO 0
+2650 012503  4765          JMS I   (DATCHG         /FIND THE MONTH/YEAR
+2651 012504  4324          JMS     MAKSXB          /CONVERT THE YEAR TO SIXBIT
+2652 012505  3344          DCA     YRTEMP          /STORE IT AWAY
+2653 012506  6202          CIF 0                   /CHANGE INSTRUC. FIELD TO 0
+2654 012507  4764          JMS I   (GETDAT         /PRINT THE YEAR
+2655 012510  3763          DCA I   (LDATE+5        /PUT REST OF YEAR IN TEXT LINE
+2656               /SET UP OTHER POINTERS TO MODULE TABLES
+2657               
+2658 012511  1362  NODATE, TAD     (-NUMMOD
+2659 012512  3761          DCA I   (MCTTBL
+2660 012513  1360          TAD     (MCTTBL+1
+2661 012514  3020          DCA     NMCTS   /INITIALIZE MODULE CT TBL PTR
+2662 012515  1357          TAD     (MODTBL+2
+2663 012516  3024          DCA     PTRULS  /INITIALIZE MODULE TBL PTR
+2664 012517  3021          DCA     MODCNT
+2665 012520  3756          DCA I   (MODTBL /CLEAR LIBRARY UNIT
+2666 012521  3420          DCA I   NMCTS   /CLEAR FOR 1ST LEVEL MODULE COUNTS
+2667 012522  5755  CDSW,   JMP I   (RALFLP /ZEROED IF CHAINED TO
+2668 012523  5754          JMP I   (DECO
+2669               
+2670 012524  0000  MAKSXB, 0
+2671 012525  3000          DCA     TMP0
+2672 012526  3001          DCA     TMP1
+2673 012527  1000          TAD     TMP0
+2674 012530  1353          TAD     (-12
+2675 012531  2001          ISZ     TMP1
+2676 012532  7500          SMA
+2677 012533  5330          JMP     .-3     /SUBTRACT 10 IN A LOOP
+2678 012534  1352          TAD     (5772   /AS GOOD A NUMBER AS ANY
+2679 012535  3000          DCA     TMP0
+2680 012536  1001          TAD     TMP1
+2681 012537  7106          CLL RTL
+2682 012540  7006          RTL
+2683 012541  7006          RTL     /GET THE TENS DIGIT INTO POSITION
+2684 012542  1000          TAD     TMP0
+2685 012543  5724          JMP I   MAKSXB
+2686 012544  0000  YRTEMP, 0
+2687 012552  5772          PAGE
+     012553  7766  
+     012554  2612  
+     012555  2600  
+     012556  6172  
+     012557  6174  
+     012560  6001  
+     012561  6000  
+     012562  7524  
+     012563  2102  
+     012564  6636  
+     012565  6600  
+     012566  2076  
+     012567  0037  
+     012570  7666  
+     012571  3403  
+     012572  0376  
+     012573  7746  
+     012574  3600  
+     012575  4607  
+     012576  7770  
+     012577  7616  
+2688               /DECODE COMMAND DECODER INPUT
+2689               
+2690 012600  4777  RALFLP, JMS I   (200
+2691 012601  0005          5               /COMMAND DECODE
+2692 012602  2214          2214            /.RL DEFAULT EXTENSION
+2693 012603  1376          TAD     (7616
+2694 012604  3016          DCA     PTRIO
+2695 012605  1775          TAD I   (OS8SWS+1
+2696 012606  0374          AND     (40
+2697 012607  6201          CDF 0
+2698 012610  7640          SZA CLA         /IS /S SWITCH ON?
+2699 012611  3773          DCA I   (SVMAIN+LB0BUF  /CLEAR (RELOCATED) SVMAIN
+2700 012612  6211  DECO,   CDF 10          /FOR FULL SYMBOL MAP LISTING
+2701 012613  1772          TAD I   (7600   /CHK FOR LOADER IMAGE FILE
+2702 012614  7450          SNA             /OUTPUT FILE?
+2703 012615  5241          JMP     SM      /NO
+2704 012616  0371          AND     (0017   /MUST BE AN "MS" DEV
+2705 012617  1370          TAD     (OS8DCB-1
+2706 012620  3000          DCA     TMP0
+2707 012621  1400          TAD I   TMP0
+2708 012622  7710          SPA CLA         /IS IT?
+2709 012623  5227          JMP     .+4     /YES
+2710 012624  1367  SM1,    TAD     (DEVERR /NO,ERR
+2711 012625  4766          JMS I   (ERORR
+2712 012626  5200          JMP     RALFLP
+2713 012627  1661          TAD I   P7604
+2714 012630  7450          SNA
+2715 012631  1365          TAD     (1404   /.LD
+2716 012632  3661          DCA I   P7604   /INTO EXTENSION IF NONE SPECIFIED
+2717 012633  4764          JMS I   (CORMOV /MOVE LOADER IMAGE FILE NAME
+2718 012634  6211          CDF 10
+2719 012635  7577          7600-1
+2720 012636  6201          CDF 0           /INTO FIELD 0
+2721 012637  5300          LDRNAM+LB0BUF-1
+2722 012640  7773          -5
+2723 012641  1763  SM,     TAD I   (7605   /CHK FOR SYM MAP FILE
+2724 012642  7450          SNA
+2725 012643  5265          JMP     SM2     /NONE
+2726 012644  0371          AND     (17
+2727 012645  1370          TAD     (OS8DCB-1
+2728 012646  3000          DCA     TMP0
+2729 012647  1400          TAD I   TMP0
+2730 012650  7004          RAL             /LOOK AT "READ ONLY" BIT IN DCB
+2731 012651  7710          SPA CLA
+2732 012652  5224          JMP     SM1     /ERROR - NO GOOD FOR OUTPUT
+2733 012653  1762          TAD I   (7611
+2734 012654  7450          SNA
+2735 012655  1361          TAD     (1423   /.LS DEFAULT MAP EXTENSION
+2736 012656  3762          DCA I   (7611
+2737 012657  4764          JMS I   (CORMOV /MOVE SYMMAP FILE NAME INTO FIELD 0
+2738 012660  6211          CDF 10
+2739 012661  7604  P7604,  7605-1
+2740 012662  6201          CDF 0
+2741 012663  5305          LDRNAM+LB0BUF+4
+2742 012664  7773          -5
+2743               /COLLECT INPUT FILES
+2744               
+2745 012665  1760  SM2,    TAD I   (OS8SWS
+2746 012666  7110          CLL RAR
+2747 012667  7630          SZL CLA         / IS /L SWITCH ON?
+2748 012670  5333          JMP     LIBRAR  /YES - THIS IS A LIBRARY FILE
+2749 012671  1416  FILELP, TAD I   PTRIO
+2750 012672  7450          SNA
+2751 012673  5316          JMP     FINLIN  /NO MORE INPUT FILES
+2752 012674  3000          DCA     TMP0
+2753 012675  1000          TAD     TMP0
+2754 012676  0371          AND     (17
+2755 012677  2024          ISZ     PTRULS
+2756 012700  3424          DCA I   PTRULS  /STORE UNIT NUMBER
+2757 012701  1000          TAD     TMP0
+2758 012702  0357          AND     (7760
+2759 012703  7112          CLL RTR
+2760 012704  7012          RTR
+2761 012705  1356          TAD     (7400
+2762 012706  7041          CIA
+2763 012707  2024          ISZ     PTRULS
+2764 012710  3424          DCA I   PTRULS  /STORE LENGTH
+2765 012711  1416          TAD I   PTRIO
+2766 012712  2024          ISZ     PTRULS
+2767 012713  3424          DCA I   PTRULS  /STORE STARTING BLOCK NUMBER
+2768 012714  2021          ISZ     MODCNT
+2769 012715  5271          JMP     FILELP  /CONTINUE
+2770               
+2771 012716  4755  FINLIN, JMS I   (CORDSW /CHECK C AND O SWITCHES
+2772 012717  1760          TAD I   (OS8SWS
+2773 012720  0374          AND     (40
+2774 012721  7640          SZA CLA         /IF THE /G SWITCH IS ON
+2775 012722  5754          JMP I   (EOPAS0 /ITS THE END
+2776 012723  1753          TAD I   (OS8SWS-1
+2777 012724  7710          SPA CLA         /IF AN ALTMODE TERMINATED THE LINE,
+2778 012725  5754          JMP I   (EOPAS0 /DITTO
+2779 012726  1352          TAD     (-MCTTBL-1
+2780 012727  1020          TAD     NMCTS
+2781 012730  7640          SZA CLA         /ARE WE STILL IN THE MAIN SECTION?
+2782 012731  4751          JMS I   (UPDMOD /NO - UPDATE OVERLAY & MODULE COUNTS
+2783 012732  5200          JMP     RALFLP
+2784 012733  1416  LIBRAR,        TAD I   PTRIO
+2785 012734  0371          AND     (17
+2786 012735  3750          DCA I   (MODTBL /STORE LIBRARY PARAMETERS
+2787 012736  1416          TAD I   PTRIO   /NEGLECTING LENGTH, WHICH WILL
+2788 012737  3747          DCA I   (MODTBL+2       /BE FILLED IN LATER
+2789 012740  1416          TAD I   PTRIO
+2790 012741  7650          SNA CLA
+2791 012742  5316          JMP     FINLIN  /ONLY ONE FILE ALLOWED ON THE LINE
+2792 012743  1346          TAD     (MIERR
+2793 012744  5225          JMP     SM1+1   /OTHERWISE ITS MIXED INPUT
+2794 012746  3101          PAGE
+     012747  6174  
+     012750  6172  
+     012751  3000  
+     012752  1777  
+     012753  7642  
+     012754  3200  
+     012755  3023  
+     012756  7400  
+     012757  7760  
+     012760  7643  
+     012761  1423  
+     012762  7611  
+     012763  7605  
+     012764  3600  
+     012765  1404  
+     012766  3063  
+     012767  3107  
+     012770  7757  
+     012771  0017  
+     012772  7600  
+     012773  4637  
+     012774  0040  
+     012775  7644  
+     012776  7616  
+     012777  0200  
+2795               /UPDMOD- UPDATE MODULE COUNT TBL
+2796               
+2797 013000  0000  UPDMOD,0
+2798 013001  7100          CLL
+2799 013002  1021          TAD     MODCNT  /UPDATE -NUM OF
+2800 013003  1777          TAD I   (MCTTBL /UNUSED MODULES
+2801 013004  3777          DCA I   (MCTTBL
+2802 013005  7430          SZL
+2803 013006  5255          JMP     MAXRLF  /MAX NUMBER EXCEEDED
+2804 013007  2023          ISZ     OVRCNT  /BUMP OVERLAY NUMBER
+2805 013010  7610  SKPCLA, SKP CLA
+2806 013011  5261          JMP     MAXOVL  /MORE THAN 16 OVERLAYS IN A LEVEL
+2807 013012  1021          TAD     MODCNT  /UPDATE +NUM OF
+2808 013013  1420          TAD I   NMCTS   /MODULES IN LAST LEVEL
+2809 013014  7450          SNA             /****
+2810 013015  5600          JMP I   UPDMOD
+2811 013016  3420          DCA I   NMCTS
+2812 013017  2020          ISZ     NMCTS   /ADV PTR TO NXT LOC
+2813 013020  3420          DCA I   NMCTS   /ZERO THE NXT LOC IN PREPARATION
+2814 013021  3021          DCA     MODCNT  /CLR CNT FOR NXT LEVEL
+2815 013022  5600          JMP I   UPDMOD
+2816               
+2817               /CORDSW- LOOK FOR SWS C AND O
+2818               
+2819 013023  0000  CORDSW, 0
+2820 013024  1776          TAD I   (OS8SWS+1
+2821 013025  0375          AND     (10
+2822 013026  7650          SNA CLA         /CHECK FOR /U SWITCH
+2823 013027  5234          JMP     CHKCSW
+2824 013030  6201          CDF 0
+2825 013031  1210          TAD     SKPCLA  /INHIBIT LEVEL CHECKING
+2826 013032  3774          DCA I   (TSTTRP
+2827 013033  6211          CDF 10
+2828 013034  1773  CHKCSW, TAD I   (OS8SWS
+2829 013035  7006          RTL
+2830 013036  7710          SPA CLA
+2831 013037  5772          JMP I   (RALFLP
+2832 013040  1776          TAD I   (OS8SWS+1
+2833 013041  7006          RTL
+2834 013042  7700          SMA CLA
+2835 013043  5623          JMP I   CORDSW
+2836               
+2837               /O-SWITCH
+2838               
+2839 013044  4200          JMS     UPDMOD
+2840 013045  2020          ISZ     NMCTS   /ADV PTR FOR NXT GUY
+2841 013046  3420          DCA I   NMCTS   /CLR FOR NXT LEVEL MOD CNT
+2842 013047  1371          TAD     (-21
+2843 013050  3023          DCA     OVRCNT
+2844 013051  2022          ISZ     LVLCNT  /BUMP LEVEL COUNTER
+2845 013052  5772          JMP I   (RALFLP
+2846 013053  1370          TAD     (MXLERR
+2847 013054  5256          JMP     MAXRLF+1        /TOO MANY LEVELS
+2848 013055  1367  MAXRLF,        TAD     (MXRERR
+2849 013056  4263          JMS     ERORR   
+2850 013057  6203          CDF CIF 0
+2851 013060  5766          JMP I   (7605
+2852 013061  1365  MAXOVL, TAD     (MXOERR
+2853 013062  5256          JMP     MAXRLF+1
+2854               
+2855               /ERORR- PRINTS OUT ERROR MESSAGES OF A
+2856               /       BUFR LOCATED IN FLD1
+2857               /       ENTER WITN ADR OF BUFR IN AC
+2858               /
+2859 013063  0000  ERORR,  0
+2860 013064  3277          DCA     BFADR
+2861 013065  6211          CDF 10          /CALL TTYHAN
+2862 013066  4764          JMS I   (CORMOV
+2863 013067  6201          CDF 0
+2864 013070  4577          LB0BUF-1        /MOVE LOWER FIELD 0 BACK
+2865 013071  6201          CDF 0           /SO WE CAN USE THE MESSAGE HANDLER
+2866 013072  7777          0-1
+2867 013073  6000          -2000
+2868 013074  6202          CIF 0
+2869 013075  4763          JMS I   (TTYHAN
+2870 013076  6211          CDF 10
+2871 013077  0000  BFADR,  0
+2872 013100  5663          JMP I   ERORR
+2873 013101  1511  MIERR, TEXT    /MIXED INPUT/
+     013102  3005  
+     013103  0440  
+     013104  1116  
+     013105  2025  
+     013106  2400  
+2874 013107  0201  DEVERR, TEXT    /BAD OUTPUT DEVICE/
+     013110  0440  
+     013111  1725  
+     013112  2420  
+     013113  2524  
+     013114  4004  
+     013115  0526  
+     013116  1103  
+     013117  0500  
+2875 013120  2417  MXRERR, TEXT    /TOO MANY RALF FILES/
+     013121  1740  
+     013122  1501  
+     013123  1631  
+     013124  4022  
+     013125  0114  
+     013126  0640  
+     013127  0611  
+     013130  1405  
+     013131  2300  
+2876 013132  2417  MXLERR, TEXT    /TOO MANY LEVELS/
+     013133  1740  
+     013134  1501  
+     013135  1631  
+     013136  4014  
+     013137  0526  
+     013140  0514  
+     013141  2300  
+2877 013142  2417  MXOERR, TEXT    /TOO MANY OVERLAYS/
+     013143  1740  
+     013144  1501  
+     013145  1631  
+     013146  4017  
+     013147  2605  
+     013150  2214  
+     013151  0131  
+     013152  2300  
+2878 013163  0400          PAGE
+     013164  3600  
+     013165  3142  
+     013166  7605  
+     013167  3120  
+     013170  3132  
+     013171  7757  
+     013172  2600  
+     013173  7643  
+     013174  3061  
+     013175  0010  
+     013176  7644  
+     013177  6000  
+2879               /PASS1, PASS2 INITIALIZATION
+2880                
+2881 013200  4777  EOPAS0, JMS I   (UPDMOD /BUMP COUNTS FOR LAST LINE OF INPUT
+2882 013201  2020          ISZ     NMCTS
+2883 013202  3420          DCA I   NMCTS   /PUT IN A DOUBLE ZERO AT THE END
+2884 013203  4776          JMS I   (CORMOV
+2885 013204  6201          CDF 0
+2886 013205  4577          LB0BUF-1
+2887 013206  6201          CDF 0
+2888 013207  7777          0-1             /MOVE LOWER FIELD 0 BACK INTO PLACE
+2889 013210  6000          -2000
+2890 013211  1775          TAD I   (MODTBL
+2891 013212  7640          SZA CLA         /USER-SPECIFIED LIBRARY?
+2892 013213  5226          JMP     RDLIBH  /YES
+2893 013214  7201          CLA IAC
+2894 013215  4774          JMS I   (200
+2895 013216  0002          2               /LOOKUP
+2896 013217  3334          LIBRY
+2897 013220  0000          0
+2898 013221  5242          JMP     NOLIB   /FORLIB.RL NOT FOUND
+2899 013222  1217          TAD     .-3     /GET STARTING BLOCK
+2900 013223  3773          DCA I   (MODTBL+2
+2901 013224  7201          CLA IAC
+2902 013225  3775          DCA I   (MODTBL /STORE UNIT AND BLOCK #
+2903 013226  7132  RDLIBH, STL RTR
+2904 013227  3772          DCA I   (MODTBL+1       /JUST TO BE CAREFUL
+2905 013230  6202          CIF 0
+2906 013231  4771          JMS I   (IOHAN  /READ BLOCK 0 OF THE LIBRARY CATALOG
+2907 013232  6172          MODTBL
+2908 013233  0210          0210
+2909 013234  7000  PLB,    RALFBF
+2910 013235  0000          0
+2911 013236  7240          STA
+2912 013237  1634          TAD I   PLB
+2913 013240  7650          SNA CLA         /IS IT AN HONEST - TO - GOD LIBRARY?
+2914 013241  5245          JMP     .+4     /YES
+2915 013242  3775  NOLIB,  DCA I   (MODTBL
+2916 013243  3773          DCA I   (MODTBL+2
+2917 013244  3770          DCA I   (RALFBF+3       /ZERO COUNT WORD IN BUFFER
+2918 013245  1770          TAD I   (RALFBF+3
+2919 013246  3772          DCA I   (MODTBL+1       /STORE LENGTH OF CATALOGUE
+2920 013247  1367          TAD (LHDR-1
+2921 013250  3010          DCA NDX0
+2922 013251  1366          TAD (-400
+2923 013252  3000          DCA TMP0
+2924 013253  3410          DCA I NDX0      /0 OUT
+2925 013254  2000          ISZ TMP0        /LDR HDR
+2926 013255  5253          JMP .-2         /GET PAGE 0
+2927               /PASS1 INITIALIZATION CONTINUED
+2928               
+2929 013256  1765          TAD I (MCTTBL   /UNUSED
+2930 013257  3002          DCA TMP2        /MODULES
+2931 013260  1364          TAD     (MCTTBL+2       /GET NUMBER OF OVERLAYS
+2932 013261  3010          DCA NDX0        / IN EACH LEVEL
+2933 013262  1363          TAD (QUSRLV+4 /WHERE THE
+2934 013263  3000          DCA TMP0        /CNTS GO IN
+2935 013264  5274          JMP BY0         /LDR HDR BLK
+2936 013265  2400  LOP0,   ISZ I   TMP0    /INCREMENT NUMBER OF OVERLAYS IN THIS LEVEL
+2937 013266  1410          TAD I   NDX0
+2938 013267  7640          SZA CLA         /END OF LEVEL?
+2939 013270  5265          JMP     LOP0    /NO
+2940 013271  1362          TAD (4          /THIS LEVEL
+2941 013272  1000          TAD TMP0
+2942 013273  3000          DCA TMP0
+2943 013274  3400  BY0,    DCA I   TMP0    /RESET CNT
+2944 013275  1410          TAD I NDX0      /0,0 ENDS
+2945 013276  7640          SZA CLA         /MOD CNT TBL
+2946 013277  5265          JMP LOP0        /DO MORE PTR TO
+2947 013300  1772          TAD I   (MODTBL+1       /GET LENGTH OF LIBRARY CATALOG
+2948 013301  3075          DCA TMP4        /BLOCKS
+2949 013302  1002          TAD TMP2        /CHK FOR MAX
+2950 013303  7640          SZA CLA         /NUM OF RALFS 0=MOD TBL IS FULL
+2951 013304  1775          TAD I (MODTBL   /CHK FOR NO
+2952 013305  6201          CDF
+2953 013306  3761          DCA I (LIBRSW   /LIBRARY AND SET SWITCH ACCORDINGLY
+2954 013307  1002          TAD TMP2        /-NUM LEFT
+2955 013310  3760          DCA I (MLEFT    /OF RALF MODS
+2956 013311  1357          TAD (SYMTBL-1   /PTR TO TOP
+2957 013312  3756          DCA I (NDX4     /OF GST
+2958 013313  1755          TAD I   (OSJSWD
+2959 013314  0354          AND     (7377   /KILL "BATCH PROTECTED" FLAG
+2960 013315  3755          DCA I   (OSJSWD
+2961 013316  7344         AC7776          /IS THERE
+2962 013317  1025          TAD MXFLD       /GREATER THAN 12K OF CORE
+2963 013320  7750          SPA SNA CLA     /?
+2964 013321  5330          JMP LS16K       /NO
+2965 013322  1353          TAD (200^12!30  /SET TXT I/O
+2966 013323  3752          DCA I (TXTBLK-2 /BUFFS UP IN FLD 3
+2967 013324  1377          TAD (-5000      /-WDCNT (12
+2968 013325  3751          DCA I (TXTWDS   /BLKS)
+2969 013326  1350          TAD (6231       /CDF 30
+2970 013327  3747          DCA I (RDTCDF
+2971 013330  1346  LS16K,  TAD (7700       /USR IS NOT
+2972 013331  3745          DCA I (USR      /IN CORE
+2973 013332  6211          CDF 10
+2974 013333  5744          JMP I   (INIBFS
+2975 013334  0617  LIBRY,  0617;2214;1102;2214     /FORLIB.RL
+     013335  2214  
+     013336  1102  
+     013337  2214  
+2976 013344  3450          PAGE
+     013345  0020  
+     013346  7700  
+     013347  3156  
+     013350  6231  
+     013351  3163  
+     013352  3147  
+     013353  2430  
+     013354  7377  
+     013355  7746  
+     013356  0014  
+     013357  2441  
+     013360  3754  
+     013361  3716  
+     013362  0004  
+     013363  7213  
+     013364  6002  
+     013365  6000  
+     013366  7400  
+     013367  7177  
+     013370  7003  
+     013371  0600  
+     013372  6173  
+     013373  6174  
+     013374  0200  
+     013375  6172  
+     013376  3600  
+     013377  3000  
+2977               /THIS IS THE INITIAL BINARY BUFFER TABLE
+2978               
+2979               R=      LDBUFS-BUFTAB
+2980               
+2981 013400  7253  BUFTAB, .+4+R;  0;      0;      3200    /03200-05177
+     013401  0000  
+     013402  0000  
+     013403  3200  
+2982 013404  7257  B8KPT,  .+4+R;  0;      0;      5200    /05200-07177
+     013405  0000  
+     013406  0000  
+     013407  5200  
+2983 013410  7263          .+4+R;  0;      0;      0020    /20000-21777
+     013411  0000  
+     013412  0000  
+     013413  0020  
+2984 013414  7267  B12KPT, .+4+R;  0;      0;      2020    /22000-23777
+     013415  0000  
+     013416  0000  
+     013417  2020  
+2985 013420  7273  B16KPT, .+4+R;  0;      0;      4020    /24000-25777
+     013421  0000  
+     013422  0000  
+     013423  4020  
+2986 013424  7277          .+4+R;  0;      0;      0040    /40000-41777
+     013425  0000  
+     013426  0000  
+     013427  0040  
+2987 013430  7303  B20KPT, .+4+R;  0;      0;      2040    /42000-43777
+     013431  0000  
+     013432  0000  
+     013433  2040  
+2988 013434  7307          .+4+R;  0;      0;      4040    /44000-45777
+     013435  0000  
+     013436  0000  
+     013437  4040  
+2989 013440  7313          .+4+R;  0;      0;      0050    /5000-51777
+     013441  0000  
+     013442  0000  
+     013443  0050  
+2990 013444  0000          0;      0;      0;      2050    /52000-53777
+     013445  0000  
+     013446  0000  
+     013447  2050  
+2991 013450  1025  INIBFS,        TAD     MXFLD
+2992 013451  1377          TAD     (JMP    STBPTR-1
+2993 013452  3253          DCA     .+1
+2994 013453  7402          HLT             /DISPATCH ON NUMBER OF FIELDS
+2995 013454  3204  STBPTR, DCA     B8KPT
+2996 013455  3214          DCA     B12KPT
+2997 013456  3220          DCA     B16KPT
+2998 013457  3230          DCA     B20KPT
+2999 013460  7000          NOP
+3000 013461  7000          NOP             /NOT SET UP TO USE MORE THAN 24K
+3001 013462  7000          NOP
+3002 013463  4776          JMS I   (CORMOV
+3003 013464  6211          CDF 10
+3004 013465  3377          BUFTAB-1        /MOVE THE BINARY BUFFER TABLE
+3005 013466  6211          CDF 10
+3006 013467  7246          LDBUFS-1        /INTO A SAFE PLACE
+3007 013470  7730          -50
+3008 013471  6201          CDF 0
+3009 013472  1022          TAD LVLCNT      /SET -NUM OF
+3010 013473  1375          TAD (11         /LEVELS
+3011 013474  7041          CIA
+3012 013475  3774          DCA I (NLVL
+3013 013476  1373          TAD (-5         /NUM OF LIBR
+3014 013477  3002          DCA TMP2        /BLKS FOR 8K
+3015 013500  7240          CLA CMA
+3016 013501  1025          TAD MXFLD
+3017 013502  7650          SNA CLA         /GREATER THAN 8K CORE?
+3018 013503  5315          JMP TO8K        /NO SET LIBR ARGS
+3019 013504  3772          DCA I (LBARG+1
+3020 013505  1371          TAD (200^12!20  /12 BLKS FLD2
+3021 013506  3770          DCA I (LBARG
+3022 013507  1367          TAD (6221       /CDF 20
+3023 013510  3766          DCA I (LBFLD
+3024 013511  1367          TAD (6221
+3025 013512  3765          DCA I (GETLEN+1
+3026 013513  1364          TAD (-12
+3027 013514  3002          DCA TMP2
+3028 013515  1002  TO8K,   TAD TMP2        /WILL LIBR
+3029 013516  1075          TAD TMP4        /BE CORE
+3030 013517  7740          SMA SZA CLA     /RESIDENT?
+3031 013520  3763          DCA I (RESFLG   /NO
+3032 013521  1362          TAD (SYMTBL-1
+3033 013522  3761          DCA I   (NDX0
+3034 013523  6211         CDF 10
+3035 013524  1360          TAD (ESDPG-1    /ENTER DEFAULT
+3036 013525  3010          DCA NDX0        /VALUES FOR
+3037 013526  1357          TAD (-200       /ESD REF PAGE
+3038 013527  3000          DCA TMP0        /IT SAVES
+3039 013530  1356          TAD (SYMTBL+5   /PROBLEMS WITH
+3040 013531  3410          DCA I NDX0      /EXTERNS
+3041 013532  2000          ISZ TMP0
+3042 013533  5330          JMP .-3
+3043 013534  7326          CLA STL RTL
+3044 013535  3755          DCA I   (LHDR   /STORE LOADER IMAGE CODE IN HEADER
+3045 013536  1354          TAD     (VERNUM
+3046 013537  3753          DCA I   (QVERNO /STORE LOADER VERSION NUMBER
+3047 013540  6202          CIF 0
+3048 013541  5776          JMP I   (STPAS1
+3049 013553  7205          PAGE
+     013554  0024  
+     013555  7200  
+     013556  2447  
+     013557  7600  
+     013560  7377  
+     013561  0010  
+     013562  2441  
+     013563  3755  
+     013564  7766  
+     013565  4546  
+     013566  3651  
+     013567  6221  
+     013570  3727  
+     013571  2420  
+     013572  3730  
+     013573  7773  
+     013574  4126  
+     013575  0011  
+     013576  3600  
+     013577  5253  
+3050               /CORMOV- A CORE MOVE FOR A CHUNK OF CORE IN
+3051               /       ANY FLD TO ANY FLD.
+3052               /
+3053               /       CALL    JMS  CORMOV
+3054               /               CDF Z1  /Z1=FROM FLD
+3055               /               ADDR1   /ADDR OF (1ST LOC-1)
+3056               /               CDF Z2  /Z2=TO FLD
+3057               /               ADDR2   /ADDR OF (1ST LOC-1)
+3058               /               -N      /-OCT NUM OF WDS TO MOV
+3059               /
+3060 013600  0000  CORMOV, 0
+3061 013601  7240          CLA CMA
+3062 013602  1200          TAD     CORMOV
+3063 013603  3010          DCA     NDX0
+3064 013604  1410          TAD I   NDX0
+3065 013605  3216          DCA     TOCDF-2
+3066 013606  1410          TAD I   NDX0
+3067 013607  3011          DCA     NDX1
+3068 013610  1410          TAD I   NDX0
+3069 013611  3220          DCA     TOCDF
+3070 013612  1410          TAD I   NDX0
+3071 013613  3012          DCA     NDX2
+3072 013614  1410          TAD I   NDX0
+3073 013615  3000          DCA     TMP0
+3074 013616  0000          0
+3075 013617  1411          TAD I   NDX1
+3076 013620  0000  TOCDF,  0
+3077 013621  3412          DCA I   NDX2
+3078 013622  2000          ISZ     TMP0
+3079 013623  5216          JMP     TOCDF-2
+3080 013624  6211          CDF 10
+3081 013625  5410          JMP I   NDX0    /RTN
+3082               
+3083                       $$$$$
+
+A1      0056
+AAAAAA  2154
+AC0002  7326 unreferenced
+AC2000  7332 unreferenced
+AC4000  7330
+AC7775  7346
+AC7776  7344
+ADVOVR  1022
+ALLDN1  4200
+B12KPT  3414
+B16KPT  3420
+B20KPT  3430
+B8KPT   3404
+BADDY   3251
+BADORG  2352
+BFADR   3077
+BLDTV   2200
+BLKBEG  0070
+BLKCNT  0062
+BLKSIZ  0065
+BP      0055
+BPPREV  2702
+BPT2    0046
+BPTR    0045
+BSECTP  0066
+BUCKET  2000
+BUFTAB  3400
+BY0     3274
+BY10    1042
+BY11    2117
+BY12    2017
+BY2     3031
+BY2M5   3024
+BY3     3643
+BY7     1063
+CDSW    2522
+CHAIN   2057
+CHCODE  2061
+CHKCSW  3034
+COR70   4640
+CORDSW  3023
+CORE    4607
+CORELP  4623
+CORLOC  4657
+CORMOV  3600
+CORMSG  3344
+CORTN   4655
+CRLF    0521
+CRLFF   0441
+CTST    3226
+CURBLK  2746
+CVLOVL  1727
+CVRT    1651
+CVRTMP  1726
+CZFLG   0032
+DATCHG  6600
+DECO    2612
+DEVERR  3107
+DO8S    4400
+DOCORE  4000
+DOMAP   0452
+DPFLG   0040
+DUNLVL  4127
+DUNMN   4027
+DUNMP   1467
+DVTBL   7647
+EEEEEE  2163
+ENDLB   3744
+ENDSYM  1315
+ENTERR  1553
+ENTM2   3472
+ENTMN   3474
+ENTMN2  3476
+ENTMSG  0306
+EOLVL   1046
+EOPAS0  3200
+EPT2    0043
+EPTR    0042
+ERORR   3063
+ESDPG   7400
+ESDSCN  3320
+ETYP    0044
+F1FLG   0033
+F8SECT  4426
+FATAL   0054
+FCNWD   0726
+FILELP  2671
+FINLIN  2716
+FIT     4451
+FIT8S   4421
+FTMP0   0051
+GETCDF  0740
+GETCTL  2516
+GETDAT  6636
+GETEXT  4562
+GETLEN  4545
+GETTXT  3141
+GETTYP  1324
+GOTBLK  2657
+GPTR    0026
+GTYP    0041
+HAF     0431
+HAFWD   1531
+HLINE   2117
+HNDERR  0743
+HOOKIN  1264
+INIBFS  3450
+INQIRE  0745
+IOENT   0735
+IOFLG   0022
+IOH     0671
+IOHAN   0600
+IOMSG   0275
+ISCOM   3270
+ISCOM3  3265
+JARGER  0204
+JBAK    0210
+JDATE   0203
+JDEF    0213
+JDISMS  0412
+JENDF   0211
+JEOFSW  0016
+JEXIT   0223
+JHANG   0524
+JIDLE   0227
+JINT    0403
+JOUSYM  1526
+JRDAO   0217
+JREADO  0221
+JRENDO  0206
+JRETRN  0235
+JREW    0212
+JRSVO   0207
+JRUO    0215
+JSWAP   0222
+JT812   0225
+JUERR   0204
+JWDAO   0216
+JWRITO  0220
+JWUO    0214
+LB0BUF  4600
+LBARG   3727
+LBCNT   0061
+LBFLD   3651
+LBPTR   0027
+LBREC   3731
+LDATE   2075
+LDBUFS  7247
+LDCLEN  2046
+LDRBLK  4262
+LDRIO   0203
+LDRIOA  0240
+LDRIOB  0241
+LDRIOC  0237
+LDRIOR  0243
+LDRLEN  4263
+LDRNAM  0501
+LEVLUP  4507
+LEVRND  1074
+LEVSYM  2050
+LHDR    7200
+LIBRAR  2733
+LIBRSW  3716
+LIBRY   3334
+LIMGU   2144
+LIMSG   3351
+LNONUM  0060
+LOOK    1200
+LOP0    3265
+LOP10   1450
+LOP11   2233
+LOP12   2103
+LOP3    4017
+LOP4    3621
+LOP5    1211
+LOP6    4073
+LOP7    1655
+LP1     4132
+LS16K   3330
+LSTBLK  3753
+LVLCNT  0022
+LVPTR   2151
+LXX     2073 unreferenced
+M4      3436
+M7      3437
+MAKSXB  2524
+MAXBLK  2703
+MAXCOM  4525
+MAXOVL  3061
+MAXRLF  3055
+MBGCNT  0074
+MCNT    0073
+MCTTBL  6000
+MERGE   2471
+MESADR  0444
+MIERR   3101
+MLEFT   3754
+MNCZ    3532
+MNF1    3530
+MNMSG   3356
+MNS8    3534
+MNSEC5  3542
+MNSECN  3535
+MODCNT  0021
+MODTBL  6172
+MONTHS  6656
+MPBLK   1412
+MSMSG   3337
+MTBL    1150
+MTMCNT  3275
+MULENT  3260
+MXFLD   0025
+MXLERR  3132
+MXOERR  3142
+MXRERR  3120
+MYSTIC  3276
+NDX0    0010
+NDX1    0011
+NDX2    0012
+NDX3    0013
+NDX4    0014
+NDX5    0015
+NDX6    0016
+NDX7    0017
+NEWBB   2600
+NEWBB4  2610
+NEWBLK  0071
+NEWBUF  2666
+NEWLEN  0072
+NEWORG  2303
+NLVL    4126
+NMCTS   0020
+NODATE  2511
+NOLIB   3242
+NOMAP   1524
+NOMAT   3425
+NOMSCT  4216
+NORTS   2070
+NOTREL  2453
+NUMENT  3756
+NUMMOD  0254
+NXTENT  3631
+NXTESD  1000
+NXTOVR  1115
+OLDCNT  3757
+OLINE   1340
+OLINLP  1342
+ONEOR2  1615
+ORGFLG  0024
+ORGMSG  0260
+OS8DCB  7760
+OS8ER   0527
+OS8SWS  7643
+OSDATE  7666
+OSJSWD  7746
+OTLINE  2131
+OUFILP  1505
+OUTFLD  2721
+OUTINH  0067
+OUTSYM  1672
+OVLTBL  5435
+OVRCNT  0023
+OVRFLO  0035
+OVRSIZ  2147
+OVTLEN  0343
+P2FLG   0031
+P6201   0762
+P6203   0716
+P7604   2661
+PACK    1600
+PASS0   2443
+PASS2   2000
+PATCH   0301
+PCRLF   1744
+PLB     3234
+POUND   2172
+PPACK   0021
+PR15    1752
+PRGSCN  3443
+PRMAIN  1466
+PROVLP  2406
+PROVLY  2400
+PTRIO   0016
+PTRULS  0024
+PUTBIN  2704
+PUTSYM  3201
+QDPFLG  7206
+QHGHAD  7203
+QRTSWP  7201
+QUIKIE  2664
+QUSRLV  7207
+QVERNO  7205
+R       3647
+RALFBF  7000
+RALFLP  2600
+RBLK    0053
+RDLBR   3720
+RDLIBH  3226
+RDRLES  2421
+RDTCDF  3156
+REFPTR  0047
+RELC    3106
+RELC2   3110
+RELC6   3114
+RELMSG  2455
+REORG   3124
+REP     3400
+RESFLG  3755
+RFPTR1  0025
+RLARG   2430
+RLEN    0050
+ROL     1627
+RTNIO   0733
+RTNOS8  0446
+RTSMSG  2465
+RTSNAM  2073
+S8FLG   0034
+SAMOV4  1107
+SAMOVR  1103
+SASYM   2062
+SBPTR   1645
+SETBGX  0245
+SETBPT  0252
+SETCNT  1133
+SETEPT  1316
+SETREF  2077
+SETSBN  0705
+SETSLP  4325
+SETTRP  3014
+SETTYP  1235
+SHFT3   3246
+SIXTO8  1543
+SKPCLA  3010
+SM      2641
+SM1     2624
+SM2     2665
+SM600   1501
+SMAPU   2141
+SMPCLN  1522
+START   4600
+STBPTR  3454
+STCNT   3717
+STLINE  2104
+STPAS1  3600
+STYPE   4450
+SVMAIN  0037
+SWITZ   0036
+SWPSYM  2055
+SYLST   1646
+SYMMAP  1400
+SYMMSG  0270
+SYMTBL  2442
+SYMTM3  0023
+SYMX    2152
+SYSERR  0535
+T2J     3234
+TLINE   2067
+TMP0    0000
+TMP1    0001
+TMP2    0002
+TMP3    0003
+TMP4    0075
+TMP5    0076
+TO8K    3515
+TOCDF   3620
+TOOBIG  4446
+TRAPV   0063
+TRPCNT  0030
+TRPSYM  2043
+TRYFLD  4661
+TSTTRP  3061
+TTYCDF  0414
+TTYHAN  0400
+TTYLP   0416
+TTYO    0513
+TXTBLK  3151
+TXTSCN  3000
+TXTWDS  3163
+TYTBL   0544
+ULSADR  0736
+UNITSV  0737
+UPDMOD  3000
+USR     0020
+VERNUM  0024
+VIRGIN  2636
+WRALL   2435
+WRBUF   1640
+XSTRT   4606
+YECCH   1260
+YRTEMP  2544
+YUCCH   1223

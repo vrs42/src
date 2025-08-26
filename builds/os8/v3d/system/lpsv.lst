@@ -1,0 +1,261 @@
+   1               /5 LP08/LS8E/LA180/LV8E HANDLER
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975,1977 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45                      LPVERSION="C&77
+  46               
+  47                       *0
+  48               
+  49 000000  7777          -1
+  50 000001  1420          DEVICE LPSV;DEVICE LPT;1040;LPT&177;ZBLOCK 2
+     000002  2326  
+     000003  1420  
+     000004  2400  
+     000005  1040  
+     000006  0005  
+     000007  0000  
+     000010  0000  
+  51               
+  52               /LPT HANDLER FOR EITHER LP08 OR LS8E LINE PRINTER.
+  53               /HANDLES TABS, PASSES EVERYTHING ELSE ON TO THE HARDWARE.
+  54               
+  55                       LSF=6661        /SKIP ON FLAG
+  56                       LSR=6663        /SKIP ON ERROR
+  57                       LLS=6666        /LOAD LPT BUFFER
+  58               
+  59                       DBST=   6570    /SKIP IF DEMAND SET AND CLEAR IT
+  60                       DBTD=   6574    /LOAD COMPLEMENT OF AC0-11 TO TRANSMIT BUFFER
+  61                       DBSE=   6575    /SET INTERRUPT ENABLE
+  62                       DBCE=   6575    /CLEAR INTERRUPT ENABLE
+  63               
+  64                       LA180=0         /SET TO 1 TO USE LA180
+  65               
+  66               /V3D CHANGES:
+  67               
+  68               /ADDED IN LA180 SUPPORT
+  69                      *200
+  70               
+  71 000200  7573  LPWDTH, -205            /-(WIDTH+1)    [USE -121 FOR 80 COLUMNS]
+  72 000201  0014  LTERMC, 14              /4 FOR LV8
+  73 000202  7740  LVCCNV, -40             /0 IF PRINTER PRINTS LC
+  74 000203  7770  LP7770, 7770
+  75 000204  0007  LP0007, 0007
+  76 000205  0003  LPT,    LPVERSION       /NORMAL ENTRY POINT
+  77 000206  7330          CLA STL RAR
+  78 000207  1605          TAD I   LPT     / R/W BIT TO LINK               L
+  79 000210  0321          AND     LP7700  /                               I
+  80 000211  7040          CMA             /TREAT 0 PG CNT AS 0 WD CNT     N
+  81 000212  3267          DCA     LPTWC   /SAVE -(DBLWD COUNT+1)          K
+  82 000213  6214  LPT214, RDF             /
+  83 000214  1342          TAD     LPTCIF  /                               M
+  84 000215  3244          DCA     LPTXIT  /SAVE CIF CDF RETRN FIELD       U
+  85 000216  1605          TAD I   LPT     /                               S
+  86 000217  0377          AND     (70     /                               T
+  87 000220  1376          TAD     (CDF 0  /
+  88 000221  3230          DCA     LPTCDF  /                               N
+  89 000222  2205          ISZ     LPT     /PT TO BUFFER                   O
+  90 000223  1605          TAD I   LPT     /GET BUFFER ADDRESS             T
+  91 000224  3270          DCA     LPTCA   /SAVE BUFFER PTR
+  92 000225  2205          ISZ     LPT     /PT TO BLOCK #                  C
+  93 000226  1605          TAD I   LPT     /GET IT                         H
+  94 000227  2205          ISZ     LPT     /POINT TO ERROR RETURN          G
+  95 000230  7402  LPTCDF, HLT             /                               !
+  96 000231  7420          SNL
+  97 000232  5265          JMP     LPTERR  /CAN'T READ FROM LPT
+  98 000233  7650          SNA CLA
+  99 000234  1213          TAD     LPT214  /OUTPUT FORM FEED IF BLOCK 0
+ 100 000235  4271  LPTELP, JMS     LPTPCH  /PRINT 3RD CHAR OF DOUBLEWORD
+ 101 000236  2267          ISZ     LPTWC
+ 102 000237  5246          JMP     LPTLP   /GET 3 MORE CHARS
+ 103 000240  7410          SKP
+ 104 000241  1201  LPTCTZ, TAD     LTERMC
+ 105 000242  4271          JMS     LPTPCH  /OUTPUT FORM FEED IF ^Z SEEN (EOT OF LV8)
+ 106 000243  2205          ISZ     LPT     /BUMP TO NORMAL RETURN
+ 107 000244  7402  LPTXIT, HLT             /RESTORE FIELDS
+ 108 000245  5605          JMP I   LPT     /EXIT
+ 109               /UNPACKING LOOP - USES A SHIFT REGISTER METHOD TO GET THE
+ 110               /THIRD CHARACTER IN EACH DOUBLEWORD.
+ 111               
+ 112 000246  7120  LPTLP,  STL             /GUARD BIT OF SHIFT REGISTER
+ 113 000247  7006  LPROTL, RTL
+ 114 000250  7006          RTL
+ 115 000251  7510          SPA             /DO WE HAVE 8 BITS SHIFTED IN?
+ 116 000252  5235          JMP     LPTELP
+ 117 000253  3230          DCA     LPTCDF  /SAVE SHIFT REGISTER
+ 118 000254  1670          TAD I   LPTCA
+ 119 000255  4271          JMS     LPTPCH  /PRINT A CHAR
+ 120 000256  1670          TAD I   LPTCA
+ 121 000257  2270          ISZ     LPTCA   /BUMP INPUT POINTER
+ 122 000260  7400  LP7400, 7400            /PROTECT ISZ
+ 123 000261  0260          AND     LP7400
+ 124 000262  7104          CLL RAL
+ 125 000263  1230          TAD     LPTCDF  /SHIFT HIGH 4 BITS INTO
+ 126 000264  5247          JMP     LPROTL  /SHIFT REGISTER
+ 127               
+ 128 000265  7330  LPTERR, STL CLA RAR     /PUT 4000 IN AC
+ 129 000266  5244          JMP     LPTXIT  /AND TAKE ERROR RETURN
+ 130               
+ 131 000267  0000  LPTWC,  0
+ 132 000270  0000  LPTCA,  0
+ 133               /CHAR PRINT ROUTINE
+ 134               
+ 135 000271  0000  LPTPCH, 0
+ 136 000272  0375          AND     (177
+ 137 000273  1374          TAD     (-175
+ 138 000274  7500          SMA
+ 139 000275  5321          JMP     LPFLSH  /FLUSH CODES 175-177
+ 140 000276  1373          TAD     (175-140
+ 141 000277  7500          SMA
+ 142 000300  1202          TAD     LVCCNV  /CONVERT LC TO UC IF DESIRED
+ 143 000301  1372          TAD     (140-33
+ 144 000302  7450          SNA
+ 145 000303  1371          TAD     (11     /CHANGE ALTMODE TO $
+ 146 000304  7001          IAC
+ 147 000305  7450          SNA
+ 148 000306  5241          JMP     LPTCTZ  /^Z - END OF FILE
+ 149 000307  1370          TAD     (32-11
+ 150 000310  7450          SNA
+ 151 000311  5354          JMP     LPTTAB  /TABS MUST BE SIMULATED
+ 152 000312  1371  LPLFHK, TAD     (11     /RESTORE CHAR
+ 153 000313  7440          SZA             /FLUSH NULLS
+ 154 000314  4323          JMS     LPCHAR  /
+ 155 000315  1365          TAD     LPLPTR  /IF COL. CTR GT 0
+ 156 000316  7500          SMA             /WE HIT A CONTROL CHAR
+ 157 000317  1200          TAD     LPWDTH  /OR EOL- SET TO FULL
+ 158 000320  3365          DCA     LPLPTR  /WIDTH (NOTE LPLPTR=1 !)
+ 159               LP7700,
+ 160 000321  7700  LPFLSH, SMA CLA         /NEVER SKIPS
+ 161 000322  5671          JMP I   LPTPCH  /RETURN
+ 162               
+ 163 000323  0000  LPCHAR, 0               /LOW LEVEL PRINT ROUTINE
+ 164                       IFZERO LA180 <
+ 165 000324  7000          NOP             /NOP'S NEEDED FOR SET
+ 166 000325  6666          LLS             /PUT CHAR IN LPT BUFFER
+ 167 000326  7000          NOP
+ 168                       >
+ 169                       IFNZRO LA180 <
+ 170                       CMA
+ 171                       DBTD            /PUT CHAR IN LP BUFFER
+ 172                       CMA
+ 173                       >
+ 174 000327  0203          AND     LP7770  /KLUDGE - CLEARS COLUMN CTR
+ 175 000330  1203          TAD     LP7770  /ON CR, LF, VT, FF BUT ALSO
+ 176 000331  7650          SNA CLA         /ON ^H,^N, AND ^O.  BIG DEAL
+ 177 000332  3365          DCA     LPLPTR  /?SR RICHIE SAID 'LPCRFG'
+ 178 000333  7600  LP7600, 7600            /CLEAR AC
+ 179 000334  1333  LPCTCL, TAD     LP7600
+ 180 000335  6034          KRS
+ 181 000336  1367          TAD     (-7603  /CHECK FOR ^C FROM CONSOLE
+ 182 000337  7650          SNA CLA
+ 183 000340  6031          KSF             /WITH FLAG UP
+ 184 000341  5344          JMP     .+3
+ 185 000342  6203  LPTCIF, CDF CIF 0       /YES, RETURN TO OS/8
+ 186 000343  5733          JMP I   LP7600
+ 187                       IFNZRO  LA180   <DBST>  /NO     MUST BE HERE
+ 188 000344  6661          IFZERO  LA180   <LSF>   /NO     FOR SET
+ 189 000345  5334          JMP     LPCTCL  /WAIT FOR FLAG
+ 190 000346  2365          ISZ     LPLPTR  /CHECK LINE OVERFLOW
+ 191 000347  5723          JMP I   LPCHAR
+ 192 000350  1366          TAD     (15
+ 193 000351  4323          JMS     LPCHAR
+ 194 000352  7201          CLA IAC
+ 195 000353  5312          JMP     LPLFHK
+ 196 000354  1362  LPTTAB,        TAD     LPBLNK  /GET PSEUDO BLANK
+ 197 000355  4323          JMS     LPCHAR  /PRINT IT
+ 198 000356  1200          TAD     LPWDTH
+ 199 000357  7040          CMA
+ 200 000360  1365          TAD     LPLPTR  /GET # CHARS IN LINE
+ 201 000361  0204          AND     LP0007
+ 202 000362  7640  LPBLNK, SZA CLA         /LOOP 'TILL MULTIPLE OF 8
+ 203 000363  5354          JMP     LPTTAB
+ 204 000364  5671          JMP I   LPTPCH
+ 205               
+ 206 000365  0000  LPLPTR, 0
+ 207 000366  0015          $
+     000367  0175  
+     000370  0021  
+     000371  0011  
+     000372  0105  
+     000373  0035  
+     000374  7603  
+     000375  0177  
+     000376  6201  
+     000377  0070  
+
+DBCE    6575 unreferenced
+DBSE    6575 unreferenced
+DBST    6570 unreferenced
+DBTD    6574 unreferenced
+LA180   0000
+LLS     6666
+LP0007  0204
+LP7400  0260
+LP7600  0333
+LP7700  0321
+LP7770  0203
+LPBLNK  0362
+LPCHAR  0323
+LPCTCL  0334
+LPFLSH  0321
+LPLFHK  0312
+LPLPTR  0365
+LPROTL  0247
+LPT     0205
+LPT214  0213
+LPTCA   0270
+LPTCDF  0230
+LPTCIF  0342
+LPTCTZ  0241
+LPTELP  0235
+LPTERR  0265
+LPTLP   0246
+LPTPCH  0271
+LPTTAB  0354
+LPTWC   0267
+LPTXIT  0244
+LPVERS  0003
+LPWDTH  0200
+LSF     6661
+LSR     6663 unreferenced
+LTERMC  0201
+LVCCNV  0202

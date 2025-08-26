@@ -1,0 +1,333 @@
+   1               /10 OS/8 RK8 SYSTEM HANDLER             V3D
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975,1977 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               /SYSTEM HANDLER ALSO HAS RESIDENT THE NONSYSTEM HANDLER RKA1:
+  46               
+  47               /       SOFSET=7747
+  48               
+  49                       RKVERSION="D&77
+  50               
+  51                       DLDA=6731       /LOAD DISK ADDRESS (MAINT ONLY)
+  52                       DLDC=6732       /LOAD COMMAND REGISTER
+  53                                       /0: ENABLE CHANGE IN INTERRUPT STATUS
+  54                                       /1: ENABLE PROGRAM INTERRUPT ON TRANSFER DONE
+  55                                       /2: ENABLE INTERRUPT ON ERROR
+  56                                       /3: UNUSED
+  57                                       /4: SEEK TRACK AND SURFACE ONLY
+  58                                       /5: ENABLE READ/WRITE OF 2 HEADER WORDS
+  59                                       /6-8: EXTENDED MEMORY ADDRESS
+  60                                       /9-10: DISK FILE NUMBER
+  61                                       /11: UNUSED
+  62                       DLDR=6733       /LOAD DISK ADDRESS AND READ, THEN CLEAR AC
+  63                                       /0-7: TRACK ADDRESS
+  64                                       /8: SURFACE BIT
+  65                                       /9-11: SECTOR ADDRESS
+  66                       DRDA=6734       /READ DISK ADDRESS
+  67                       DLDW=6735       /LOAD DISK ADDRESS AND WRITE, THEN CLEAR AC
+  68                       DRDC=6736       /READ DISK COMMAND REGISTER
+  69                       DCHP=6737       /LOAD DISK ADDRESS AND CHECK PARITY
+  70                       DRDS=6741       /READ DISK STATUS REGISTER
+  71                                       /0: ERROR
+  72                                       /1: TRANSFER DONE
+  73                                       /2: CONTROL BUSY ERROR
+  74                                       /3: TIME OUT ERROR
+  75                                       /4: PARITY OR TIMING ERROR
+  76                                       /5: DATA RATE ERROR
+  77                                       /6: TRACK ADDRESS ERROR
+  78                                       /7: SECTOR NO GOOD ERROR
+  79                                       /8: WRITE LOCK ERROR
+  80                                       /9: TRACK CAPACITY EXCEEDED ERROR
+  81                                       /10: SELECT ERROR
+  82                                       /11: BUSY
+  83                       DCLS=6742       /CLEAR STATUS REGISTER
+  84                       DMNT=6743       /LOAD MAINTENANCE REGISTER
+  85                                       /SEE PAGE 7-145 IN 1972 SMALL COMPUTER HANDBOOK
+  86                       DSKD=6745       /SKIP ON DISK DONE
+  87                       DSKE=6747       /SKIP ON DISK ERROR
+  88                       DCLA=6751       /CLEAR ALL
+  89                       DRWC=6752       /READ WORD COUNT REGISTER
+  90                       DLWC=6753       /LOAD WORD COUNT REGISTER
+  91                       DLCA=6755       /LOAD CURRENT ADDRESS REGISTER
+  92                       DRCA=6757       /READ CURRENT ADDRESS REGISTER
+  93                      *0
+  94               
+  95 000000  7775          -3
+  96 000001  2213          DEVICE RK8;DEVICE SYS;4051;2007;0;6260
+     000002  7000  
+     000003  2331  
+     000004  2300  
+     000005  4051  
+     000006  2007  
+     000007  0000  
+     000010  6260  
+  97 000011  2213          DEVICE RK8;DEVICE RKA0;4051;1007;0;6260
+     000012  7000  
+     000013  2213  
+     000014  0160  
+     000015  4051  
+     000016  1007  
+     000017  0000  
+     000020  6260  
+  98 000021  2213          DEVICE RK8;DEVICE RKA1;4051;RKA1&177+1000;0;6260
+     000022  7000  
+     000023  2213  
+     000024  0161  
+     000025  4051  
+     000026  1021  
+     000027  0000  
+     000030  6260  
+  99               
+ 100               /V3D CHANGES:
+ 101               
+ 102               /FIXED BUG CONCERNING RETRY COUNT IF LINK SET ON CALL
+ 103               /REMOVED 'SOFSET'
+ 104 000031  7746         BOOT-ENDB-1
+ 105               
+ 106                       NOPUNC
+ 107                       *1
+ 108                       ENPUNC
+ 109               
+ 110 000001  1413  BOOT,   TAD I BOOTX1
+ 111 000002  3414          DCA I BOOTX2
+ 112 000003  1415          TAD I BOOTX3
+ 113 000004  6211          CDF 10
+ 114 000005  3416          DCA I BOOTX4
+ 115 000006  6201          CDF 0
+ 116 000007  1014          TAD BOOTX2
+ 117 000010  7640          SZA CLA
+ 118 000011  5001          JMP BOOT
+ 119 000012  5017          JMP BGETUT
+ 120 000013  0200  BOOTX1, 200
+ 121 000014  7577  BOOTX2, 7577
+ 122 000015  0047  BOOTX3, 47
+ 123 000016  7646  BOOTX4, 7646
+ 124 000017  6736  BGETUT, DRDC
+ 125 000020  7010          RAR
+ 126 000021  0024          AND BOOT3
+ 127 000022  3425          DCA I BOOTUT
+ 128 000023  5427          JMP I B7605
+ 129 000024  0003  BOOT3,  3
+ 130 000025  7613  BOOTUT, DEFUNIT
+ 131 000026  0000          ZBLOCK  27-.
+ 132 000027  7605  B7605,  7605
+ 133 000030  6745          DSKD            /MUST LOAD OVER LOC. 30
+ 134 000031  5030          JMP .-1         /MUST LOAD OVER 31
+ 135 000032  5001  ENDB,   JMP BOOT
+ 136                      /THE BOOTSTRAP FOR THE RK8 IS AS FOLLOWS: (UNIT 0)
+ 137               
+ 138                       /       LOCATION        CONTENTS
+ 139                       /       30              6733
+ 140                       /       31              5031
+ 141               
+ 142                       /LOAD ADDRESS 30 AND START
+ 143               
+ 144               /THE BOOTSTRAP FOR OTHER UNITS IS AS FOLLOWS:
+ 145               
+ 146               /       26      7604
+ 147               /       27      6732
+ 148               /       30      6733
+ 149               /       31      5031
+ 150               
+ 151               /LOAD ADDRESS 26, PUT UNIT NUMBER IN SWITCH REGISTER BITS 9-10,
+ 152               /CLEAR, CONTINUE
+ 153                      *200
+ 154               
+ 155                       NOPUNCH;*7600;ENPUNCH
+ 156               
+ 157 007600  0000          ZBLOCK 7
+     007601  0000  
+     007602  0000  
+     007603  0000  
+     007604  0000  
+     007605  0000  
+     007606  0000  
+ 158 007607  0004  RK8,    RKVERSION
+ 159 007610  7200          CLA
+ 160 007611  1213          TAD DEFUNIT     /USE DEFAULT UNIT FOR SYSTEM HANDLER
+ 161 007612  5226          JMP COMN
+ 162 007613  0000  DEFUNIT,0
+ 163 007614  7330  RKBAD,  STL CLA RAR     /4000
+ 164 007615  7410          SKP
+ 165 007616  2207  RKOVER, ISZ RK8         /POINT TO GOOD RETURN
+ 166 007617  7402  SFIELD, HLT             /CONTAINS CIF CDF TO USER'S FIELD
+ 167 007620  5607          JMP I RK8       /RETURN
+ 168                       IFNZRO .&177-21 <BADLOC,XXXX>
+ 169 007621  0004  RKA1,   RKVERSION
+ 170 007622  7200          CLA
+ 171 007623  1221          TAD RKA1
+ 172 007624  3207          DCA RK8
+ 173 007625  7201          CLA IAC
+ 174 007626  3336  COMN,   DCA RKANO
+ 175 007627  7346          CLL STA RTL     /V3D
+ 176 007630  3335          DCA RKCNT       /SET # OF RETRIES ON AN ERROR TO 3
+ 177 007631  6214          RDF
+ 178 007632  1332          TAD LCIFCDF     /CALLING FIELD FOR RETURN
+ 179 007633  3217          DCA SFIELD
+ 180 007634  1607  RKRETRY,TAD I RK8       /GET FN WORD
+ 181 007635  0274          AND L70         /ISOLATE FIELD OF BUFFER
+ 182 007636  1336          TAD RKANO
+ 183 007637  1336          TAD RKANO       /INCLUDE UNIT # (TIMES 2)
+ 184 007640  6732          DLDC            /SET FIELD
+ 185 007641  1607          TAD I RK8       /GET FN WORD BACK
+ 186 007642  7004          RAL             /MOVE R/W BIT TO LINK
+ 187 007643  0276          AND L7600       /ISOLATE # OF WORDS TO READ
+ 188 007644  7440          SZA
+ 189 007645  7041          CIA             /NEGATE
+ 190 007646  6753          DLWC            /LOAD WORD COUNT THEN CLEAR AC
+ 191 007647  7006          RTL             /MOVE R/W BIT TO AC 10
+ 192 007650  1333          TAD LDLDR
+ 193 007651  3265          DCA RKINST      /CREATE READ (6733) OR WRITE (6735)
+ 194 007652  2207          ISZ RK8         /POINT TO BUFFER ADDRESS
+ 195 007653  7240          STA
+ 196 007654  1607          TAD I RK8       /GET CURRENT ADDRESS-1
+ 197 007655  6755          DLCA            /LOAD CURENT ADDRESS AND CLEAR AC
+ 198 007656  2207          ISZ RK8         /POINT TO BLOCK #
+ 199 007657  6742          DCLS            /CLEAR STATUS REGISTER
+ 200 007660  6747          DSKE            /CHECK FOR NON-EXISTENT DISK ERROR
+ 201 007661  7760  L7760,  SMA SZA SNL CLA /OK, BUT SKIP ALWAYS
+ 202 007662  5214          JMP RKBAD       /IT'S BAD
+ 203               /V3D    TAD RKANO       /! CAN'T HAVE OFFSETS ON OTHER UNITS THAN 0
+ 204               /V3D    SNA CLA
+ 205               /V3D    TAD SOFSET
+ 206 007663  1607          TAD I RK8       /GET BACK #
+ 207 007664  2207          ISZ RK8         /POINT TO ERROR RETURN
+ 208 007665  7402  RKINST, HLT             /GO (EITHER 6733 OR 6735)
+ 209 007666  7640          SZA CLA         /CHECK FOR NO DISK AT ALL
+ 210 007667  5214          JMP RKBAD       /IOT DIDN'T CLEAR AC
+ 211               /THE ABOVE TWO LINES ARE USELESS. HOW DID HE BOOTSTRAP IF DISK WASN'T THERE?
+ 212 007670  6745          DSKD            /WAIT FOR DONE
+ 213 007671  5270          JMP .-1
+ 214 007672  6747          DSKE
+ 215 007673  5216          JMP RKOVER      /NO ERROR
+ 216 007674  0070  L70,    70
+ 217 007675  0020  L20,    20
+ 218 007676  7600  L7600,  7600
+ 219 007677  0004  L4,     4
+ 220 007700  7610          SKP CLA
+ 221                       IFNZRO .-7701   <NZERR,XXX>
+ 222 007701  7402          HLT             /SAFETY HALT AT 7701
+ 223 007702  6741          DRDS            /READ STATUS REGISTER
+ 224 007703  0277          AND L4          /CHECK FOR TRACK OVERFLOW
+ 225 007704  7640          SZA CLA
+ 226 007705  5325          JMP RKTKOV
+ 227 007706  2335          ISZ RKCNT       /SOME OTHER ERROR - BADNESS [SIC]
+ 228 007707  5311          JMP RKOK        /TRY AGAIN
+ 229 007710  5214          JMP RKBAD       /3 TRIES IS ENOUGH
+ 230 007711  6741  RKOK,   DRDS            /READ STATUS REGISTER
+ 231 007712  0334          AND L40         /TRACK SEEK ERROR?
+ 232 007713  6742          DCLS            /CLEAR STATUS REGISTER
+ 233 007714  7650          SNA CLA
+ 234 007715  5321          JMP RKBACK
+ 235 007716  6751          DCLA            /YES - RECALIBRATE
+ 236 007717  6745          DSKD            /WAIT 'TILL DONE
+ 237 007720  5317          JMP .-1
+ 238 007721  7346  RKBACK, CLL STA RTL     /-3
+ 239 007722  1207          TAD RK8
+ 240 007723  3207          DCA RK8         /POINT BACK TO FUNCTION WORD
+ 241 007724  5234          JMP RKRETRY     /GO TRY AGAIN
+ 242               
+ 243 007725  6742  RKTKOV, DCLS            /CLEAR STATUS REGISTER
+ 244 007726  6734          DRDA            /READ TRACK ADDRESS STUFF
+ 245 007727  0261          AND L7760       /ISOLATE JUST TRACK (NEEDED ??)
+ 246 007730  1275          TAD L20         /BUMP TRACK NUMBER BY 1
+ 247 007731  5265          JMP RKINST      /GO BACK AND CONTINUE TRANSFER
+ 248 007732  6203  LCIFCDF,CIF CDF 0
+ 249 007733  6733  LDLDR,  DLDR
+ 250 007734  0040  L40,    40
+ 251 007735  0000  RKCNT,  0
+ 252 007736  0000  RKANO,  0
+ 253               /       MUST NOT GO INTO LOCATION 7744
+ 254                       IFZERO .&177-145&4000   <TOOBIG,XXXX>
+ 255                       $
+
+B7605   0027
+BGETUT  0017
+BOOT    0001
+BOOT3   0024
+BOOTUT  0025
+BOOTX1  0013
+BOOTX2  0014
+BOOTX3  0015
+BOOTX4  0016
+COMN    7626
+DCHP    6737 unreferenced
+DCLA    6751
+DCLS    6742
+DEFUNI  7613
+DLCA    6755
+DLDA    6731 unreferenced
+DLDC    6732
+DLDR    6733
+DLDW    6735 unreferenced
+DLWC    6753
+DMNT    6743 unreferenced
+DRCA    6757 unreferenced
+DRDA    6734
+DRDC    6736
+DRDS    6741
+DRWC    6752 unreferenced
+DSKD    6745
+DSKE    6747
+ENDB    0032
+L20     7675
+L4      7677
+L40     7734
+L70     7674
+L7600   7676
+L7760   7661
+LCIFCD  7732
+LDLDR   7733
+RK8     7607
+RKA1    7621
+RKANO   7736
+RKBACK  7721
+RKBAD   7614
+RKCNT   7735
+RKINST  7665
+RKOK    7711
+RKOVER  7616
+RKRETR  7634
+RKTKOV  7725
+RKVERS  0004
+SFIELD  7617

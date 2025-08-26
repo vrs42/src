@@ -1,0 +1,2112 @@
+   1               /TC08 DECTAPE FORMATTER, V4
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               //
+   9               /
+  10               /
+  11               /
+  12               /
+  13               /COPYRIGHT (C) 1975
+  14               /DIGITAL EQUIPMENT CORPORATION, MAYNARD, MASS.
+  15               /
+  16               /
+  17               /
+  18               /THIS SOFTWARE IS FURNISHED UNDER A LICENSE FOR USE ONLY ON A
+  19               /SINGLE COMPUTER SYSTEM AND MAY BE COPIED ONLY WITH THE INCLU-
+  20               /SION OF THE ABOVE COPYRIGHT NOTICE.  THIS SOFTWARE, OR ANT OTHER
+  21               /COPIES THEREOF, MAY NOT BR PROVIDED OR OTHERWISE MADE AVAILABLE
+  22               /TO ANY OTHER PERSON EXCEPT FOR USE ON SUCH SYSTEM AND TO ONE WHO
+  23               /AGREES TO THESE LICENSE TERMS.  TITLE TO AND OWNERSHIP OF THE
+  24               /SOFTWARE SHALL AT ALL TIMES REMAIN IN DEC.
+  25               /
+  26               /
+  27               /THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT
+  28               /NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL
+  29               /EQUIPMRNT COROPATION.
+  30               /
+  31               /DEC ASSUMES NO RESPONSIBILITY FOR THE USE OR RELIABILITY OF ITS
+  32               /SOFTWARE ON EQUIPMENT WHICH IS NOT SUPPLIED BY DEC.
+  33               /
+  34               /
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /COPYRIGHT 1970 DIGITAL EQUIPMENT CORP.
+  40               /MAYNARD, MASS.
+  41               /REVISED APRIL 1970
+  42               
+  43               /   TOG-8       TO MARK AND CHECK PDP-8 DECTAPE
+  44               /THIS PROGRAM WRITES TIMING AND MARK TRACKS ON
+  45               /DECTAPE MOUNTED ON THE TCO1-TU55 TAPE CONTROL UNIT.
+  46               
+  47               
+  48               
+  49               
+  50               
+  51                       X1=10
+  52                       X2=11
+  53               
+  54               /SYMBOL TABLE AUGMENTATION
+  55               
+  56                       DTRA=6761
+  57                       DTCA=6762
+  58                       DTXA=6764
+  59                       DTSF=6771
+  60                       DTRB=6772
+  61                       DTLB=6774
+  62                       DTCX=6766
+  63               
+  64               /SET 0 FOR THE LOGIN FEATURE
+  65               
+  66                       *0
+  67 000000  0000          0
+  68 000001  5402          JMP I .+1
+  69 000002  0543          CONC    /CONTROL "C" AND LOGIN
+  70               
+  71               /WORKING LOCATIONS
+  72               
+  73                       *20
+  74               
+  75 000020  0000  W1,     0000
+  76 000021  0000  W2,     0000
+  77 000022  0000  W3,     0000
+  78 000023  0000  W4,     0000
+  79 000024  0000  W5,     0000
+  80 000025  0000  W6,     0000
+  81 000026  0000  BLOCKS, 0000
+  82 000027  0000  BLOCKA, 0000
+  83 000030  0000  DTA,    0000
+  84 000031  0000  ERX,    0000
+  85 000032  0000  PHASE,  0000
+  86 000033  0000  TOTAL,  0000
+  87 000034  0000  VAR1,   0000
+  88 000035  0000  VAR2,   0000
+  89               /CONSTANTS
+  90               
+  91 000036  0001  C1,     0001
+  92 000037  0002  C2,     0002
+  93 000040  0003  C3,     0003
+  94 000041  0004  C4,     0004
+  95 000042  0017  C0017,  0017
+  96 000043  0070  C0070,  0070
+  97 000044  0077  C0077,  0077
+  98 000045  0007  C0007,  0007
+  99 000046  0030  C0030,  0030
+ 100 000047  0400  C0400,  0400
+ 101 000050  0700  C0700,  0700
+ 102 000051  0203  C203,   0203
+ 103 000052  0201  C201,   0201
+ 104 000053  0210  C210,   0210
+ 105 000054  0260  C260,   0260
+ 106 000055  0261  C261,   0261
+ 107 000056  0267  C267,   0267
+ 108 000057  0270  C270,   0270
+ 109 000060  0271  C271,   0271
+ 110 000061  0277  C277,   0277
+ 111 000062  1000  C1000,  1000
+ 112 000063  1620  C1620,  1620
+ 113 000064  7000  C7000,  7000
+ 114 000065  7700  C7700,  7700
+ 115 000066  7714  C7714,  7714
+ 116 000067  7761  C7761,  7761
+ 117 000070  7772  C7772,  7772
+ 118 000071  7775  C7775,  7775
+ 119 000072  0215  CRCOD,  0215
+ 120 000073  0313  LETK,   0313
+ 121 000074  0212  LFCOD,  0212
+ 122 000075  7776  M2,     -2
+ 123 000076  7775  M3,     -3
+ 124 000077  7774  M4,     -4
+ 125 000100  7772  M6,     -6
+ 126 000101  7771  M7,     -7
+ 127 000102  7764  M14,    -14
+ 128 000103  7634  M144,   -144
+ 129 000104  7500  M300,   -300
+ 130 000105  0240  SPCOD,  0240
+ 131               /INTERPAGE LINKS
+ 132               
+ 133 000106  0020  ADW2,   W2-1
+ 134 000107  0021  ADW3,   W3-1
+ 135 000110  2452  BADD,   BUFFER-1
+ 136 000111  2453  BFR,    BUFFER
+ 137 000112  7755  CA,     7755
+ 138 000113  0324  COMPAR, COMPRE
+ 139 000114  0000  FCON,   0000
+ 140 000115  1067  IT,     INIT1
+ 141 000116  0526  FORMA,  FORM-1
+ 142 000117  0527  FORMB,  FORM
+ 143 000120  0400  QU1,    Q1
+ 144 000121  0410  QU2,    Q2
+ 145 000122  0422  QU3,    Q3
+ 146 000123  0434  QU4,    Q4
+ 147 000124  0454  MESS,   MES
+ 148 000125  1012  STX,    START
+ 149 000126  0625  TURN,   TRN
+ 150 000127  2103  TYOCT,  TYCT
+ 151 000130  0200  TYPE,   MESAGE
+ 152 000131  0256  TYPIN,  TYPN
+ 153 000132  0612  WAIT,   STALL
+ 154 000133  7754  WC,     7754
+ 155 000134  0000  DBUFPT, 0       /POINTER TO CURRENT POSITION IN DTA LIST
+ 156               
+ 157               
+ 158               
+ 159               
+ 160               
+ 161               /TYPE THE CHARACTER IN THE AC ON THE KEYBOARD PRINTER
+ 162               
+ 163 000135  0000  RSEND,  0000
+ 164 000136  6046          TLS             /LOAD AND PRINT, CLEAR FLAG
+ 165 000137  6041          TSF             /WAIT FOR CONFIRMATION
+ 166 000140  5137          JMP   .-1       /ENDLESSLY
+ 167 000141  6042          TCF             /CLEAR THE FLAG ANYWAY
+ 168 000142  5535          JMP I RSEND
+ 169               
+ 170               
+ 171               /PRINT A "?" ON THE KEYBOARD TYPER
+ 172               
+ 173 000143  0144  QU,     .+1
+ 174 000144  6002          IOF             /KILL LOG AND CONTROL C FCTN
+ 175 000145  7300          CLA   CLL       /C(AC)+C(L)=0
+ 176 000146  1061          TAD   C277      /"?"
+ 177 000147  4135          JMS   RSEND     /TYPE THE CHARACTER
+ 178 000150  5551          JMP I .+1       /RESTART
+ 179 000151  1073          INIT
+ 180               
+ 181               /DECTAPE CONTROL WORDS
+ 182               
+ 183 000152  0030  DT0030, 0030
+ 184 000153  0060  DT0060, 0060
+ 185 000154  0070  DT0070, 0070
+ 186 000155  0100  DT0100, 0100
+ 187 000156  0130  DT0130, 0130
+ 188 000157  0140  DT0140, 0140
+ 189 000160  0200  DT0200, 0200
+ 190 000161  0210  DT0210, 0210
+ 191 000162  0360  DT0360, 0360
+ 192 000163  0510  DT0510, 0510
+ 193 000164  0600  DT0600, 0600
+ 194 000165  0610  DT0610, 0610
+ 195               
+ 196               /SOME SPECIAL LINKS
+ 197               
+ 198 000166  2475  ADBA,   2475
+ 199 000167  2476  ADWA,   2476
+ 200 000170  2477  ADWAB,  2477
+ 201               
+ 202               /CONSTANTS FOR FORMULA TRANSLATION SECTION
+ 203               
+ 204 000171  0172  BINCON, .+1
+ 205 000172  0001          0001
+ 206 000173  0012          0012
+ 207 000174  0144          0144
+ 208 000175  1750          1750
+ 209                      *200    /PAGE 1
+ 210               /TYPE CANNED MESSAGES.....
+ 211               /THANKS TO DIGITAL 8-18-U
+ 212               
+ 213 000200  0000  MESAGE, 0
+ 214 000201  6002          IOF             /KILL LOG AND CONTROL FUNCTION
+ 215 000202  7240          CLA   CMA       /SET C(AC)=-1
+ 216 000203  1200          TAD   MESAGE    /ADD LOCATION
+ 217 000204  3010          DCA   10        /AUTO INDEX REGISTER
+ 218 000205  1410          TAD I 10        /FETCH FIRST WORD
+ 219 000206  3217          DCA   MSRGHT    /SAVE IT
+ 220 000207  1217          TAD   MSRGHT
+ 221 000210  7012          RTR
+ 222 000211  7012          RTR             /ROTATE 6 BITS TO THE RIGHT
+ 223 000212  7012          RTR
+ 224 000213  4220          JMS   TYPECH    /TYPE IT
+ 225 000214  1217          TAD   MSRGHT    /GET DATA AGAIN
+ 226 000215  4220          JMS   TYPECH    /TYPE RIGHT HALF
+ 227 000216  5205          JMP   MESAGE+5  /CONTINUE
+ 228 000217  0000  MSRGHT, 0               /TEMPORARY STORAGE
+ 229 000220  0000  TYPECH, 0               /TYPE CHARACTER IN C(AC)6-11
+ 230 000221  0044          AND   C0077
+ 231 000222  7450          SNA             /IS IT END OF MESSAGE?
+ 232 000223  5410          JMP I 10        /YES: EXIT
+ 233 000224  1251          TAD   M40       /SUBTRACT 40
+ 234 000225  7500          SMA             /<40?
+ 235 000226  5231          JMP   .+3       /NO
+ 236 000227  1252          TAD   C340      /YES: ADD 300
+ 237 000230  5244          JMP   MTP       /TO CODES <40
+ 238 000231  1076          TAD   M3        /SUBTRACT 3
+ 239 000232  7440          SZA             /IS IT ZERO?
+ 240 000233  5236          JMP   .+3       /NO
+ 241 000234  1253          TAD   C212      /YES: CODE 43 IS
+ 242 000235  5244          JMP   MTP       /LINE-FEED (212)
+ 243 000236  1075          TAD   M2        /SUBTRACT 2
+ 244 000237  7440          SZA             /IS IT ZERO?
+ 245 000240  5243          JMP   .+3       /NO
+ 246 000241  1254          TAD   C215      /YES: CODE 45 IS
+ 247 000242  5244          JMP   MTP       /CARRIAGE RETURN (215)
+ 248 000243  1255          TAD   C245      /ADD 200 TO OTHERS >40
+ 249 000244  6046  MTP,    TLS             /TRANSMIT CHARACTER
+ 250 000245  6041          TSF             /WAIT FOR THE FLAG
+ 251 000246  5245          JMP   .-1       /NOT SET YET
+ 252 000247  7200          CLA             /SET: CLEAR C(AC)
+ 253 000250  5620          JMP I TYPECH    /RETURN
+ 254               
+ 255               /CONSTANTS
+ 256               
+ 257 000251  7740  M40,    -40
+ 258 000252  0340  C340,   340
+ 259 000253  0212  C212,   212
+ 260 000254  0215  C215,   215
+ 261 000255  0245  C245,   245
+ 262               /ROUTINE WAITS UNTILL A COMPLETE MESSAGE HAS BEEN ENTERED
+ 263               /SIGNIFIED BY A CR.
+ 264               
+ 265 000256  0000  TYPN,   0
+ 266 000257  6002          IOF             /KILL THE LOG AND CONTROL C FUNCTION
+ 267 000260  6032          KCC             /CLEAR AC, KEYBOARD FLAG
+ 268 000261  1110          TAD   BADD      /GET BUFFER ADDRESS
+ 269 000262  3020          DCA   W1        /STORE FOR THE CHARACTER STRING
+ 270               
+ 271               /READ AND RESPOND WITH THE CHARACTER
+ 272               
+ 273 000263  2020  NTYRTN, ISZ   W1        /NORMAL RETURN. INCREMENT BUFFER
+ 274 000264  6031          KSF             /WAIT FOR KEYBOARD
+ 275 000265  5264          JMP   .-1       /FLAG TO RAISE
+ 276 000266  6036          KRB             /GOT FLAG, RESET IT, GET CHARACTER
+ 277 000267  4135          JMS   RSEND     /SEND CHARACTER BACK
+ 278 000270  0377          AND     (177    /TAKE CARE OF PARITY
+ 279 000271  1376          TAD     (200
+ 280 000272  3420          DCA I W1        /LOAD CHARACTER INTO BUFFER AREA
+ 281 000273  1420          TAD I   W1      /CHECK FOR CTRL C
+ 282 000274  7041          CIA
+ 283 000275  1051          TAD     C203
+ 284 000276  7640          SZA     CLA
+ 285 000277  5305          JMP     CHKSP   /NO- CHECK FOR SPACE
+ 286 000300  6007          6007            /CTRL C -CLEAR ALL FLAGS
+ 287 000301  7000          NOP             /FOR OLD MACHINES
+ 288 000302  7200          CLA             /JUST IN CASE
+ 289 000303  6774          DTLB            /CLEAR STATUS REGISTER B
+ 290 000304  5775          JMP I   (7605
+ 291               
+ 292               /IF CHARACTER IS A SPACE, IGNORE IT
+ 293               
+ 294 000305  1420  CHKSP,  TAD I W1        /CHARACTER INTO THE AC
+ 295 000306  7041          CIA             /SUBTRACT FROM SPACE CODE (240)
+ 296 000307  1105          TAD   SPCOD     /COMPLETE COMPARISON
+ 297 000310  7650          SNA   CLA       /WAS IT A SPACE?
+ 298 000311  5264          JMP   NTYRTN+1  /YES: DO NOT INCREMENT BUFFER
+ 299               
+ 300               /IF CHARACTER IS A CR, EXIT FROM ROUTINE
+ 301               
+ 302 000312  1420          TAD I W1        /CHARACTER TO AC
+ 303 000313  7041          CIA             /SET AC TO SUBTRACT CR (215)
+ 304 000314  1072          TAD   CRCOD     /COMPLETE COMPARISON
+ 305 000315  7640          SZA   CLA       /WAS IT CR?
+ 306 000316  5263          JMP   NTYRTN    /NO: INCREMENT BUFFER + WAIT
+ 307               
+ 308               /CARRIAGE RETURN FOUND, EXIT FROM ROUTINE
+ 309               
+ 310 000317  1074          TAD   LFCOD     /GIVE KEYBOARD LINE FEED
+ 311 000320  4135          JMS   RSEND     /EXECUTE LINE FEED
+ 312 000321  7300          CLA   CLL       /EXIT WITH C(ACC) + AND C(L)=0
+ 313 000322  6001          ION             /RESET LOG AND CONTROL C FUNCTION
+ 314 000323  5656          JMP I TYPN      /RETURN TO CALL
+ 315               /COMPARE A STRING OF CHARACTERS IN "BUFFER"
+ 316               /TO A CHARACTER STRING AFTER A JMS IN ASCII
+ 317               
+ 318 000324  0000  COMPRE, 0
+ 319 000325  7240          CLA   CMA       /C(AC)=7777
+ 320 000326  1324          TAD   COMPRE    /SUBTRACT 1 FOR INDEX REG 1
+ 321 000327  3010          DCA   10        /AUTO INDEX 1 SET TO CHA STRING
+ 322 000330  1110          TAD   BADD      /AUTO INDEX 2 SET TO BUFFER-1
+ 323 000331  3011          DCA   11        /LOAD X2
+ 324               
+ 325               /COMPARE CHARACTERS TILL ONE DOESN'T COMPARE OR TILL
+ 326               /A 0 IS FOUND IN X1. IF OK, RETURN TO TWO PLUS THE
+ 327               /ZERO, IF BAD ONE PLUS
+ 328               
+ 329 000332  1410          TAD I X1        /CHARACTER FROM PROGRAM
+ 330 000333  7041          CIA             /TO SUBTRACT FROM
+ 331 000334  1411          TAD I X2        /CHARACTER IN BUFFER
+ 332 000335  7640          SZA   CLA       /COMPARE?
+ 333 000336  5344          JMP   CERR      /NO:RESYNC FOR NON COMPARE EXIT
+ 334 000337  1410          TAD I X1        /YES: CHECK FOR GOOD EXIT
+ 335 000340  7440          SZA             /IF 0, EXIT GOOD
+ 336 000341  5333          JMP   .-6       /NO: TEST NEXT CHAACTER
+ 337 000342  2010          ISZ   X1        /+1 TO X1(TOTAL 2 FROM THE 0)
+ 338 000343  5410          JMP I X1        /+1 TO X1, EXIT
+ 339               
+ 340               /ERROR FOUND. RESYNC AND EXIT NO COMPARE
+ 341               
+ 342 000344  1410  CERR,   TAD I X1        /CHARACTER FROM PROGRAM
+ 343 000345  7640          SZA   CLA       /IS THIS EXIT KEY? (0000)
+ 344 000346  5344          JMP   .-2       /NO: GET NEXT
+ 345 000347  5410          JMP I X1        /YES: EXIT, NOT COMPARE
+ 346 000375  7605        *400
+     000376  0200  
+     000377  0177  
+ 347               /VARIOUS ERROR MESSAGES
+ 348               /"NOT DECIMAL"
+ 349               
+ 350 000400  4530  Q1,     JMS I TYPE
+ 351 000401  1617          1617  /NO
+ 352 000402  2440          2440  /T
+ 353 000403  0405          0405  /DE
+ 354 000404  0311          0311  /CI
+ 355 000405  1501          1501  /MA
+ 356 000406  1400          1400  /L
+ 357 000407  5247          JMP   QUX
+ 358               
+ 359               /"TO MANY WORDS"
+ 360               
+ 361 000410  4530  Q2,     JMS I TYPE
+ 362 000411  2417          2417  /TO
+ 363 000412  1740          1740    /O 
+ 364 000413  1501          1501    /MA
+ 365 000414  1631          1631    /NY
+ 366 000415  4027          4027    / W
+ 367 000416  1722          1722    /OR
+ 368 000417  0423          0423    /DS
+ 369 000420  0000          0000    /00
+ 370 000421  5247          JMP   QUX
+ 371               
+ 372               /"TO MANY BLOCKS"
+ 373               
+ 374 000422  4530  Q3,     JMS I TYPE
+ 375 000423  2417          2417  /TO
+ 376 000424  1740          1740    /O 
+ 377 000425  1501          1501    /MA
+ 378 000426  1631          1631    /NY
+ 379 000427  4002          4002    / B
+ 380 000430  1417          1417    /LO
+ 381 000431  0313          0313    /CK
+ 382 000432  2300          2300    /S0
+ 383 000433  5247          JMP   QUX
+ 384               
+ 385               /"NOT DIVISIBLE BY 3"
+ 386 000434  4530  Q4,     JMS I TYPE
+ 387 000435  1617          1617  /NO
+ 388 000436  2440          2440  /T
+ 389 000437  0411          0411  /DI
+ 390 000440  2611          2611  /VI
+ 391 000441  2311          2311  /SI
+ 392 000442  0214          0214  /BL
+ 393 000443  0540          0540  /E
+ 394 000444  0231          0231  /BY
+ 395 000445  4063          4063  / 3
+ 396 000446  0000          0000  /00
+ 397 000447  4530  QUX,    JMS I TYPE
+ 398 000450  4345          4345  /CR+LF
+ 399 000451  0000          0000  /END
+ 400 000452  5653          JMP I .+1
+ 401 000453  1073          INIT
+ 402               /THE CODING BELOW CREATES THE BLOCK NUMBER
+ 403               /CONVERSION PRIOR TO THE TAPE WRITE.
+ 404               
+ 405 000454  0000  MES,    0
+ 406 000455  3023          DCA   W4        /BLOCK NUMBER GIVEN IN AC
+ 407 000456  1023          TAD   W4        /RESTORE TO AC AGAIN
+ 408 000457  7040          CMA             /COMPLEMENTED
+ 409 000460  7006          RTL
+ 410 000461  7004          RAL             /LEFT 3
+ 411 000462  3024          DCA   W5        /TEMP SAVE
+ 412 000463  1024          TAD   W5        /TO AC AGAIN
+ 413 000464  0064          AND   C7000     /ISOLATE HIGH CHA
+ 414 000465  3334          DCA   V2        /FORWARD BLOCK NUMBER
+ 415 000466  1024          TAD   W5        /SHIFTED VALUE
+ 416 000467  0043          AND   C0070     /ISOLATE 6,7,8
+ 417 000470  3333          DCA   V1        /FORWARD BLOCK NUMBER
+ 418 000471  1023          TAD   W4        /ORIGIONAL SET
+ 419 000472  7040          CMA             /UPSIDE DOWN
+ 420 000473  7012          RTR
+ 421 000474  7010          RAR             /RIGHT 3
+ 422 000475  3024          DCA   W5        /TEMP SAVE
+ 423 000476  1024          TAD   W5        /TO AC AGAIN
+ 424 000477  0050          AND   C0700     /ISOLATE 3,4,5
+ 425 000500  1334          TAD   V2        /COMBINE FORWARD BLOCK NUMBER
+ 426 000501  1044          TAD     C0077
+ 427 000502  3334          DCA   V2        /1/2 COMPLETE
+ 428 000503  1024          TAD   W5        /SHIFTED VALUE
+ 429 000504  0045          AND   C0007     /ISOLATE 9, 10,11
+ 430 000505  1333          TAD   V1        /COMBINE WITH BN
+ 431 000506  3333          DCA   V1        /FORWARD BLOCK NUMBER COMPLETE
+ 432               
+ 433               /CONVERT REVERSE BLOCK NUMBER
+ 434               
+ 435 000507  7040          CMA             /-1 TO GIVEN BLOCK #
+ 436 000510  1023          TAD   W4        /ORIGIONAL BLOCK #
+ 437 000511  3024          DCA   W5        /TEMP SAVE
+ 438 000512  1024          TAD   W5        /TO AC AGAIN
+ 439 000513  7012          RTR
+ 440 000514  7012          RTR             /6 RIGHT
+ 441 000515  7012          RTR
+ 442 000516  0044          AND   C0077     /ISOLATE LOW
+ 443 000517  3340          DCA   V3        /HIGH REVERSE
+ 444 000520  1024          TAD   W5        /COMPLEMENT ORIGIONAL -1
+ 445 000521  7006          RTL
+ 446 000522  7006          RTL             /6 LEFT
+ 447 000523  7006          RTL
+ 448 000524  0065          AND   C7700     /ISOLATE HIGH
+ 449 000525  3341          DCA   V4        /REVERSE COMPLETED
+ 450 000526  5654          JMP I MES
+ 451               /FORM USED TO WRITE 12 DATA WORDS FOR BLOCK NUMBERING
+ 452               
+ 453 000527  0000  FORM,   0000
+ 454 000530  0000          0000
+ 455 000531  0000          0000
+ 456 000532  0000          0000
+ 457 000533  0000  V1,     0000
+ 458 000534  0000  V2,     0000
+ 459 000535  7777          7777
+ 460 000536  7700          7700
+ 461 000537  0000          0000
+ 462 000540  0000  V3,     0000
+ 463 000541  0000  V4,     0000
+ 464 000542  0000          0000
+ 465               //THIS ROUTINE ALLOWS KEYBOARD INTERRUPTION
+ 466               /FOR LOGGING ON THE KEYBOARD, OR FOR A MAJOR
+ 467               /CLEAR IN THE PROGRAM. BY HITTING "CONTROL C"
+ 468               /A SYSTEM RESTART WILL OCCUR.
+ 469               
+ 470 000543  6041  CONC,   TSF             /IS THE PRINTER FLAG ON?
+ 471 000544  5351          JMP   .+5       /NO, CHECK READER
+ 472 000545  6042          TCF             /YES: RESET IT
+ 473 000546  6031          KSF             /IS THE READER FLAG ON?
+ 474 000547  5367          JMP     RTNS    /NO: RETURN TO SEQUENCE
+ 475 000550  5353          JMP     .+3
+ 476 000551  6031          KSF
+ 477 000552  7402          HLT
+ 478               
+ 479               /OK. CHECK FOR EITHER LOG OR CONTROL C.
+ 480               
+ 481 000553  3254          DCA   MES       /SAVE C(AC)
+ 482 000554  7004          RAL             /SAVE THE LINK
+ 483 000555  3777          DCA   RSYC+6    /FOR LOGGING
+ 484 000556  6036          KRB             /GET CHARACTER FROM KEYBOARD
+ 485 000557  6046          TLS             /RETURN CHARACTER
+ 486 000560  7041          CIA             /TO SEE IF
+ 487 000561  1051          TAD   C203      /"CONTROL C"
+ 488 000562  7650          SNA   CLA       /IS IT?
+ 489 000563  5776          JMP   RSYC      /YES: RESYNC THE PROGRAM
+ 490 000564  1777          TAD   RSYC+6    /RESTORE THE LINK
+ 491 000565  7010          RAR             /FOR EXIT.
+ 492 000566  1254          TAD   MES       /THE AC TOO
+ 493 000567  6001  RTNS,   ION             /INTERRUPT ON 
+ 494 000570  5400          JMP I 0         /RETURN
+ 495               
+ 496 000576  0600  *600
+     000577  0606  
+ 497               /RESYNC THE SYSTEM TO START
+ 498               
+ 499 000600  6041  RSYC,   TSF             /WAIT FOR FLAG
+ 500 000601  5200          JMP   .-1       /ON LAST SENDOFF
+ 501 000602  4530          JMS I TYPE
+ 502 000603  2205          2205  /RE
+ 503 000604  2331          2331  /SY
+ 504 000605  1603          1603  /NC
+ 505 000606  0000          0000  /END
+ 506 000607  1030          TAD   DTA       /TO KILL EXISTING TAPE MOTION
+ 507 000610  6766          DTCX            /NOW
+ 508 000611  5525          JMP I STX       /RETURN TO START
+ 509               /WAIT FOR THE DECTAPE FLAG TO RISE
+ 510               
+ 511 000612  0000  STALL,  0
+ 512 000613  7200          CLA
+ 513 000614  6772          DTRB            /READ TCU "B" REGISTER
+ 514 000615  7510          SPA             /ERROR?
+ 515 000616  5245          JMP   ERROR     /YES, DECIDE WHAT TO DO
+ 516 000617  7010          RAR             /DECTAPE FLAG TO LINK
+ 517 000620  7620          SNL   CLA       /FLAG?
+ 518 000621  5214          JMP   .-5       /NO: CONTINUE WATCH
+ 519 000622  6764  RERR,   DTXA            /RESET THE DECTAPE FLAG
+ 520 000623  3031          DCA   ERX       /CLEAR THE END TAPE FLAG
+ 521 000624  5612          JMP I STALL     /GOT FLAG, EXIT
+ 522               
+ 523               /DRIVE TAPE INTO THE END ZONE, AND TURN IT 
+ 524               /AROUND.
+ 525               /IF C(AC)=0400, TAPE INTO REVERSE END ZONE
+ 526               /IF C(AC)=0000, TAPE INTO FORWARD END ZONE
+ 527               
+ 528 000625  0000  TRN,    0
+ 529 000626  2031          ISZ   ERX       /END ZONE IS LEGAL
+ 530 000627  3023          DCA   W4        /SAVE DIRECTION
+ 531 000630  1160          TAD   DT0200    /MOVE FUNCTION,GO
+ 532 000631  1023          TAD   W4        /DIRECTION TO MOVE
+ 533 000632  1030          TAD   DTA       /DRIVE TO MOVE
+ 534 000633  6766          DTCX            /CLEAR AND RESET "A"
+ 535 000634  4532          JMS I WAIT      /FOR END ZONE FLAG
+ 536 000635  1165          TAD   DT0610    /SEARCH, GO
+ 537 000636  1023          TAD   W4        /DIRECTION TO SEARCH
+ 538 000637  0244          AND   C0777     /DELETE OVERFLOW BIT
+ 539 000640  1030          TAD   DTA       /SET THE DECTAPE
+ 540 000641  6766          DTCX            /RESET STATUS "A"
+ 541 000642  3031          DCA   ERX       /END ZONE NOT LEGAL NOW
+ 542 000643  5625          JMP I TRN       /RETURN TO SEQUENCE
+ 543 000644  0777  C0777,  0777
+ 544               
+ 545               /AN ERROR FLAG HAS BEEN SET. IN SOME CASES
+ 546               /END ZONE IS LEGAL, OTHERWISE, A RESTART ATTEMPT
+ 547               /MAY BE INITIATED.
+ 548               
+ 549               /DETERMINE WHICH FLAG SET THE DECTAPE FLAG
+ 550               
+ 551 000645  3024  ERROR,  DCA   W5        /SAVE "B" REGISTER
+ 552 000646  1030          TAD   DTA       /GOING TO KILL
+ 553 000647  6766          DTCX            /TAPE MOTION
+ 554 000650  1024          TAD   W5        /RESTORE "B" REGISTER
+ 555 000651  7006          RTL             /POSITION BITS 1+2
+ 556 000652  7510          SPA             /END OF TAPE FLAG?
+ 557 000653  5264          JMP   ZEOT      /YES: GO TO ROUTINE
+ 558 000654  7430          SZL             /MARK TRACK ERROR?
+ 559 000655  5277          JMP   ZMKTK     /YES: GO TO ROUTINE
+ 560 000656  7006          RTL             /POSITION BITS 2+3
+ 561 000657  7510          SPA             /PARITY ERROR?
+ 562 000660  5307          JMP   ZPAR      /YES: GO TO PARITY ERROR ROUTINE
+ 563 000661  7630          SZL   CLA       /SELECT ERROR?
+ 564 000662  5315          JMP   ZSEL      /YES: GO TO ROUTINE
+ 565 000663  5323          JMP   ZTIM      /MUST BE TIMING ERROR
+ 566               
+ 567               /END OF TAPE FLAG FOUND, SEE IF IT'S LEGAL
+ 568               
+ 569 000664  7300  ZEOT,   CLA   CLL       /CLEAR REMAINS
+ 570 000665  1031          TAD   ERX       /SWITCH
+ 571 000666  7640          SZA   CLA       /ERROR?
+ 572 000667  5222          JMP   RERR      /OK, IT'S LEGAL
+ 573               
+ 574               /NOT LEGAL END ZONE FLAG
+ 575               
+ 576 000670  4530          JMS I TYPE
+ 577 000671  0516          0516   /EN
+ 578 000672  0440          0440   /D 
+ 579 000673  2401          2401   /TA
+ 580 000674  2005          2005   /PE
+ 581 000675  4000          4000   / 0
+ 582 000676  5330          JMP   ZCOM
+ 583               
+ 584               /MARK TRACK ERROR
+ 585               
+ 586 000677  4530  ZMKTK,  JMS I TYPE
+ 587 000700  1501          1501   /MA
+ 588 000701  2213          2213   /RK
+ 589 000702  4024          4024   / T
+ 590 000703  2201          2201   /RA
+ 591 000704  0313          0313   /CK
+ 592 000705  4000          4000   / 0
+ 593 000706  5330          JMP   ZCOM
+ 594               /PARITY ERROR
+ 595               
+ 596 000707  4530  ZPAR,   JMS I TYPE
+ 597 000710  2001          2001   /PA
+ 598 000711  2211          2211   /RI
+ 599 000712  2431          2431   /TY
+ 600 000713  4000          4000   / 0
+ 601 000714  5330          JMP   ZCOM
+ 602               
+ 603               /SELECT ERROR
+ 604               
+ 605 000715  4530  ZSEL,   JMS I TYPE
+ 606 000716  2305          2305   /SE
+ 607 000717  1405          1405   /LE
+ 608 000720  0324          0324   /CT
+ 609 000721  4000          4000   / 0
+ 610 000722  5330          JMP   ZCOM
+ 611               
+ 612               /TIMING ERROR
+ 613               
+ 614 000723  4530  ZTIM,   JMS I TYPE
+ 615 000724  2411          2411   /TI
+ 616 000725  1511          1511   /MI
+ 617 000726  1607          1607   /NG
+ 618 000727  4000          4000   / 0
+ 619               
+ 620               /TYPE "ERROR PHASE X"
+ 621               
+ 622 000730  1032  ZCOM,   TAD   PHASE     /WHAT PHASE OF OPERATION
+ 623 000731  1376          TAD   PFORM     /WAS THE MACHINE IN
+ 624 000732  3342          DCA   TFORM     /WHEN ERROR OCCURED
+ 625 000733  4530          JMS I TYPE
+ 626 000734  0522          0522   /ER
+ 627 000735  2217          2217   /RO
+ 628 000736  2240          2240   /R 
+ 629 000737  2010          2010   /PH
+ 630 000740  0123          0123   /AS
+ 631 000741  0540          0540   /E
+ 632 000742  4060  TFORM,  4060   / X
+ 633 000743  4345          4345   /CR+LF
+ 634 000744  0000          0000   /END
+ 635 000745  4531          JMS I TYPIN
+ 636               
+ 637               /HE CAN RESTART IF HE TYPES "RETRY"
+ 638               
+ 639 000746  4513          JMS I COMPAR
+ 640 000747  0322          0322  /R
+ 641 000750  0305          0305  /E
+ 642 000751  0324          0324  /T
+ 643 000752  0322          0322  /R
+ 644 000753  0331          0331  /Y
+ 645 000754  0000          0000  /0
+ 646 000755  5515          JMP I IT        /GUESS HE DOESN'T WISH TO TRY AGAIN
+ 647               /ATTEMPT RESTART. NOTE, "ATTEMPT"
+ 648               
+ 649 000756  1032          TAD   PHASE     /RESTART ACCORDING TO 
+ 650 000757  1362          TAD   ZFORM     /WHICH PHASE WAS HE IN
+ 651 000760  3363          DCA   .+3
+ 652 000761  5763          JMP I .+2
+ 653 000762  0764  ZFORM,  .+2
+ 654 000763  0000          0000
+ 655 000764  5771          JMP I .+5       /PHASE 0
+ 656 000765  5772          JMP I .+5       /PHASE 1
+ 657 000766  5773          JMP I .+5       /PHASE 2
+ 658 000767  5774          JMP I .+5       /PHASE 3
+ 659 000770  5775          JMP I .+5       /PHASE 4
+ 660 000771  1012          START
+ 661 000772  1622          PSER
+ 662 000773  2000          DOBLK
+ 663 000774  2200          DBN
+ 664 000775  7000          NOP
+ 665 000776  4060  PFORM,  4060
+ 666               
+ 667               
+ 668               
+ 669               /HERE STARTS THIS PROGRAM. IT WILL ASK THE
+ 670               /OPERATOR FOR  DRIVE NUMBERS, THEN ASK HIM FOR
+ 671               /A DIRECTION ON WHAT TO DO WITH THE DRIVES.
+ 672               
+ 673               /THE SEQUENCE FOR MARKING A TAPE WOULD APPEAR AS:
+ 674               
+ 675               
+ 676               /DTA? (3 OR 1 2 3 OR 2 4 7)
+ 677               /DIRECT? (MARK 1215)
+ 678               /2277 WORDS, 0256 BLOCKS.OK? YES OR NO
+ 679               /(YES)
+ 680               
+ 681               
+ 682               /THAT DATA IN PARENTHESIS IS TYPED BY THE OPERATOR
+ 683               /(HE DOESN'T TYPE THE PARENTHESIS)
+ 684               /IF HE HAD ANSWERED NO, "DIRECT?" WOULD BE TYPED OUT.
+ 685               /IF THE DRIVE WAS WRONG, HE WOULD TYPE RESTART.
+ 686               /IF HE HAD TYPED "MARK" IN RESPONSE TO "DIRECT?" THE
+ 687               /TAPE WOULD BE MARKED WITH THE STANDARD PDP-8 CONFIGURATION.
+ 688               /IF HE HAD TYPED "MARK 384" THE TAPE WOULD
+ 689               /BE MARKED WITH THE STANDARD PDP-10 CONFIGURATION
+ 690               /NOTE: THE WORD AND BLOCK NUMBERS ARE TYPED IN OCTAL
+ 691               /IF A MISTAKE OCCURS ON THE OPERATORS PART (WITH REFERANCE
+ 692               /TO BLOCK + WORD SIZE) HE WILL BE TOLD ABOUT IT
+ 693               
+ 694               
+ 695               
+ 696               
+ 697               
+ 698                      *1000
+ 699               
+ 700               /MAKE A CALL FOR THE DECTAPE NUMBERS TO BE
+ 701               /WORKED.
+ 702               
+ 703               
+ 704 001000  4530  START0, JMS I   TYPE    /PRINT TITLE
+ 705 001001  4543          4543
+ 706 001002  4300          4300
+ 707 001003  4530          JMS I   TYPE
+ 708 001004  0424          TEXT    /DTFRMT V4A/
+     001005  0622  
+     001006  1524  
+     001007  4026  
+     001010  6401  
+     001011  0000  
+ 709               
+ 710               
+ 711 001012  4530  START,  JMS I TYPE      /SET UP TYPER
+ 712 001013  4543          4543  /CR+LF
+ 713 001014  4300          4300  /LF+END
+ 714 001015  4530  TYQU,   JMS I TYPE      /"DTA?"
+ 715 001016  0424          0424  /DT
+ 716 001017  0177          0177  /A?
+ 717 001020  4000          4000  / END
+ 718               
+ 719               /WAIT FOR A REPLY
+ 720               
+ 721 001021  4531          JMS I TYPIN     /GET NUMBERS
+ 722 001022  1110          TAD     BADD    /INITIALIZE POINTER (BFR)
+ 723 001023  7001          IAC             /(BADD=BUFFER-1, SO BUMP THE AC)
+ 724 001024  3111          DCA     BFR     /TO START OF INPUT BUFFER
+ 725 001025  3777          DCA     DCTR    /INITIALIZE DTA COUNTER TO 0
+ 726 001026  3360          DCA     CRFLAG  /CLEAR FLAG SO CR NOT ACCEPTIBLE
+ 727 001027  1072  CRCHK,  TAD     CRCOD   /GET CODE FOR CAR. RETN
+ 728 001030  7041          CIA             /NEGATE IT
+ 729 001031  1511          TAD I   BFR     /SEE IF NEXT CHAR. IN
+ 730 001032  7450          SNA             /BUFFER IS CAR. RETN.
+ 731 001033  5256          JMP     OKCR    /YES: SEE IF C.R. LEGAL HERE
+ 732 001034  3360          DCA     CRFLAG  /NO: SO C.R. IS LEGAL NOW
+ 733 001035  1055  VALCHK, TAD     C261    /SEE IF # IS LESS THAN
+ 734 001036  7041          CIA             /ASCII 1 (261)
+ 735 001037  1511          TAD I BFR       /SUBTRACT BUFFER DATA
+ 736 001040  7710          SPA   CLA       /IS IT LESS THAN ASII 0?
+ 737 001041  5215          JMP   TYQU      /YES: TELL OUTSIDE WORLD
+ 738 001042  1057          TAD   C270      /NO: SEE IF GREATER THAN
+ 739 001043  7040          CMA             /ASC II 8 (270)
+ 740 001044  1511          TAD I BFR       /SUBTRACT BUFFER DATA
+ 741 001045  7700          SMA   CLA       /GREATER THAN ASCII 7?
+ 742 001046  5215          JMP   TYQU      /YES: TELL OUTSIDE WORLD
+ 743 001047  1511          TAD I BFR       /NO: ACCEPT BUFFER 
+ 744 001050  7012          RTR
+ 745 001051  7012          RTR             /4 BITS RIGHT
+ 746 001052  0064          AND   C7000     /ISOLATE DTA
+ 747 001053  4776          JMS     REPEAT  /GO CHECK FOR REPEATED DTA AND STORE #
+ 748 001054  2111          ISZ     BFR     /INCREMENT INPUT BUF. PTR.
+ 749 001055  5227          JMP     CRCHK   /GO LOOK AT NEXT CHAR.
+ 750               
+ 751               /THIS SECTION CHECKS TO SEE IF THERE HAS BEEN ANY
+ 752               /VALID INPUT ONCE A CARRIAGE RETURN IS SEEN
+ 753 001056  7200  OKCR,   CLA             /CLEAR AC
+ 754 001057  1360          TAD     CRFLAG  /LOAD CR FLAG; 0 MEANS NO GOOD
+ 755 001060  7650          SNA     CLA
+ 756 001061  5212          JMP     START   /0: NO VALID INPUT; RESTART
+ 757 001062  1777          TAD     DCTR    /NOT 0: SO HAVE VALID INPUT
+ 758 001063  1775          TAD     DBUFAD  /CALCULATE END OF DTA LIST +1
+ 759 001064  3134          DCA     DBUFPT  /STORE IT IN BUFFER POINTER, THEN
+ 760 001065  7040          CMA             /COMPLEMENT THE AC AND
+ 761 001066  3534          DCA I   DBUFPT  /TERMINATE DTA LIST WITH 7777
+ 762 001067  7200  INIT1,  CLA             /CLEAR AC IF COME THRU LOC IT
+ 763 001070  1775          TAD     DBUFAD  /AND RESET LIST POINTER
+ 764 001071  3134          DCA     DBUFPT  /TO START OF LIST
+ 765 001072  4757          JMS I   GETDTA  /GO GET A DTA NUMBER
+ 766               
+ 767               /INFORM THE OPERATOR THAT THE PROGRAM IS SET TO START
+ 768               /TYPE "DIRECT" AND WAIT FOR THE REPLY
+ 769               
+ 770 001073  4530  INIT,   JMS I TYPE      /MESSAGE OUT
+ 771 001074  0411          0411  /DI
+ 772 001075  2205          2205  /RE
+ 773 001076  0324          0324  /CT
+ 774 001077  7740          7740  /?
+ 775 001100  0000          0000  /END
+ 776 001101  4531          JMS I TYPIN     /WAIT FOR A REPLY
+ 777 001102  4513          JMS I COMPAR    /DID HE TYPE "MARK"?
+ 778 001103  0315          0315  /M
+ 779 001104  0301          0301  /A
+ 780 001105  0322          0322  /R
+ 781 001106  0313          0313  /K
+ 782 001107  0000          0000  /END
+ 783 001110  5313          JMP   .+3
+ 784 001111  5712          JMP I .+1
+ 785 001112  1200          MARK            /TO MARK A TAPE
+ 786               /SEE IF HE TYPED "RDR" (READ AND TYPE FIRST 12
+ 787               /BLOCK NUMBERS IN REVERSE).
+ 788               
+ 789 001113  4513          JMS I COMPAR
+ 790 001114  0322          0322  /R
+ 791 001115  0304          0304  /D
+ 792 001116  0322          0322  /R
+ 793 001117  0000          0000  /0
+ 794 001120  5323          JMP   .+3
+ 795 001121  5722          JMP I .+1
+ 796 001122  2450          RDR             /TYPE BLOCKS 
+ 797               
+ 798               /SEE IF HE TYPED "RDF" (READ AND TYPE FIRST 12
+ 799               /BLOCK NUMBERS FORWARD).
+ 800               
+ 801 001123  4513          JMS I COMPAR
+ 802 001124  0322          0322  /R
+ 803 001125  0304          0304  /D
+ 804 001126  0306          0306  /F
+ 805 001127  0000          0000  /0
+ 806 001130  5333          JMP   .+3
+ 807 001131  5732          JMP I .+1
+ 808 001132  2400          RDFA            /TYPE BLOCKS
+ 809               
+ 810               /SEE IF HE TYPED "SAME" (MEANING MARK A TAPE
+ 811               /USING THE SAME CONSTANTS AS BEFORE).
+ 812               
+ 813 001133  4513          JMS I COMPAR
+ 814 001134  0323          0323  /S
+ 815 001135  0301          0301  /A
+ 816 001136  0315          0315  /M
+ 817 001137  0305          0305  /E
+ 818 001140  0000          0000  /0
+ 819 001141  5344          JMP   .+3
+ 820 001142  5743          JMP I .+1
+ 821 001143  1353          RSTSM           /TO MARK AS BEFORE
+ 822               
+ 823               /SEE IF HE TYPED "RESTART"
+ 824               
+ 825 001144  4513          JMS I COMPAR
+ 826 001145  0322          0322  /R
+ 827 001146  0305          0305  /E
+ 828 001147  0323          0323  /S
+ 829 001150  0324          0324  /T
+ 830 001151  0301          0301  /A
+ 831 001152  0322          0322  /R
+ 832 001153  0324          0324  /T
+ 833 001154  0000          0000  /0
+ 834 001155  4143          JMS   QU        /MUST BE NONSENSE
+ 835 001156  5212          JMP     START   /START ALL OVER
+ 836 001157  1710  GETDTA, NUDTA           /POINTER TO ROUTINE TO SWITCH UNITS
+ 837 001160  0000  CRFLAG, 0               /=0, CR NO GOOD; NOT 0, CR IS OK
+ 838               /
+ 839 001175  1763         *1200
+     001176  1735  
+     001177  1762  
+ 840               /MARK WAS TYPED IN, IF W1-1 IS NOT A "K",ASSUME THAT
+ 841               /A NUMBER WAS TYPED IN, AND VERIFY THIS. IF W1-1 IS
+ 842               /A "K", ASSUME STANDARD FORMAT.(W1=LAST ENTRY INTO THE BUFFER)
+ 843               
+ 844 001200  1171  MARK,   TAD   BINCON    /ADDRESS OF FIRST BINARY
+ 845 001201  3024          DCA   W5        /CONSTANT FOR DEC TO BIN
+ 846 001202  3033          DCA   TOTAL     /WILL BE BINARY EQUIVILANT
+ 847               
+ 848               /SAVE C(X1) FOR DECREMENT THROUGH BUFFER
+ 849               
+ 850 001203  7240  DNC,    CLA   CMA       /DECREMENT BUFFER ADDRESS
+ 851 001204  1020          TAD   W1        /ADDRESS BY 1
+ 852 001205  3020          DCA   W1        /W1=SWEEP ADDRESS
+ 853               
+ 854               /LOOK FOR END OF PROCESSING BY LOOKING FOR A "K" IN BUFFER
+ 855               
+ 856 001206  1073          TAD   LETK      /LETTER ASCII "K"
+ 857 001207  7041          CIA             /SUBTRACT FROM CHARACTER
+ 858 001210  1420          TAD I W1        /IN BUFFER
+ 859 001211  7650          SNA   CLA       /EQUAL?
+ 860 001212  5244          JMP   DIV3      /YES: SEE IF DIVISIBLE BY 3
+ 861               
+ 862               /VERIFY THIS CHARACTER AS BEING OF DECIMAL ORIGIN
+ 863               
+ 864 001213  1054          TAD   C260      /ASCII FOR 0
+ 865 001214  7041          CIA             /TO SEE IF CHARACTER
+ 866 001215  1420          TAD I W1        /IS LESS THAN 260
+ 867 001216  7710          SPA   CLA       /IS IT?
+ 868 001217  5520          JMP I QU1       /YES: NOT DECIMAL CHARACTER
+ 869 001220  1060          TAD   C271      /ASCII FOR 9
+ 870 001221  7040          CMA             /TO SEE IF GREATER THAN
+ 871 001222  1420          TAD I W1        /9
+ 872 001223  7700          SMA   CLA       /IS IT?
+ 873 001224  5520          JMP I QU1       /NOT A DECIMAL CHARACTER
+ 874               /CHARACTER IS DECIMAL. NOW CONVERT IT TO BINARY
+ 875               /REMEMBER POSITION OF CHARACTER IN BUFFER MAY BE
+ 876               /10,100,1000.
+ 877               
+ 878 001225  1420          TAD I W1        /ISOLATE THE NUMBER
+ 879 001226  0042          AND   C0017     /FOR PROPER CONVERSION
+ 880 001227  7450          SNA             /IF 0, NO BINARY CONVERSION NEEDED
+ 881 001230  5242          JMP   IBS       /YES: 0: INCREMENT BINARY CONVERSION
+ 882               
+ 883               /NOT 0, SET UP CONVERSION LOOP
+ 884               
+ 885 001231  7141          CLL   CIA       /NUMBER OF ADDITIONS
+ 886 001232  3023          DCA   W4        /TO NEGATIVE FOR ISZ
+ 887 001233  1424          TAD I W5        /BINARY POSITION TO C(ACC)
+ 888 001234  1033          TAD   TOTAL     /ADD TO PRESENT TOTAL
+ 889 001235  7430          SZL             /CHECK ON TO MANY WORDS
+ 890 001236  5521          JMP I QU2       /TO MANY WORDS CALLED FOR
+ 891 001237  3033          DCA   TOTAL     /KEEP RUNNING SUM
+ 892 001240  2023          ISZ   W4        /LAST ADDITION?
+ 893 001241  5233          JMP   .-6       /NO: ADD AGAIN
+ 894               
+ 895               /FINAL ADDITION FOR THIS POSITION COMPLETED
+ 896               
+ 897 001242  2024  IBS,    ISZ   W5        /NEXT POSITION
+ 898 001243  5203          JMP   DNC       /DO NEXT CHARACTER
+ 899               
+ 900               /LAST CHARACTER COMPLETED. SEE IF DIVISIBLE BY 3
+ 901               /IF NOT A NORMAL INPUT
+ 902               
+ 903 001244  1033  DIV3,   TAD   TOTAL     /GET TOTAL WORDS
+ 904 001245  7450          SNA             /IF TOTAL 0, NORMAL INPUT
+ 905 001246  1052          TAD   C201      /129 OCT. THIS TEST REDUNDANT
+ 906 001247  1042          TAD   C0017     /ADD CONSTANT 15 TO TOTAL
+ 907 001250  3033          DCA   TOTAL     /FOR FUTURE CONSIDERATIONS
+ 908 001251  3034          DCA   VAR1      /# OF WORDS/3 FOR MARK TRACK WRITING
+ 909 001252  1033          TAD   TOTAL     /RESTORE IN THE ACC
+ 910 001253  7100          CLL             /TO DIVIDE BY 3, LINK KEEPS OVERFLOW
+ 911 001254  1076          TAD   M3        /SUBTRACT 3
+ 912 001255  2034          ISZ   VAR1      /ON EACH DIVISION, KEEP RUNNING SUM
+ 913 001256  7440          SZA             /IF AC = 0,NO REMAINDER
+ 914 001257  7420          SNL             /WHEN LINC GOES TO 0, DIVISION ENDED
+ 915 001260  7410          SKP             /NOW SEE IF IT DIVIDED EVENLY
+ 916 001261  5253          JMP   .-6       /SUBTRACT 3 MORE
+ 917 001262  7640          SZA   CLA       /IF 0,OK. OTHERWISE ERROR
+ 918 001263  5523          JMP I QU4       /NOT DIVISIBLE BY 3
+ 919               
+ 920               /CORRECT "VAR1" ( THE NUMBER OF WORDS/3) FOR THE +15
+ 921               /ADDED JUST ABOVE AND AN INHERANT +2 DUE TO MARK TRACK
+ 922               /CONFIGURATION TO BE WRITTEN.
+ 923               
+ 924 001264  1101          TAD   M7        /SUBTRACT 7 FROM PHONY SETUP
+ 925 001265  1034          TAD   VAR1      /GIVING THE NUMBER OF TIMES
+ 926 001266  7041          CIA             /TO BE USED LATER IN A ISZ
+ 927 001267  3034          DCA   VAR1      /DATA MARK WILL BE WRITTEN
+ 928               
+ 929               /COMPUTE A VALUE FOR TOTAL NUMBER OF BLOCKS
+ 930               /RECORD SIZE + 15 INTO 636160 OCT.
+ 931               
+ 932 001270  1066          TAD   C7714     /EXTENDED 64 VALUE. SETS AC#2
+ 933 001271  3020          DCA   W1        /SET FOR 640000
+ 934 001272  4775          JMS I FORM10    /PATCH TO CHECK FOR STD.10 FORMAT
+ 935 001273  1063          TAD   C1620     /VERNIER ADJUSTMENT FOR FORMULA
+ 936 001274  7100          CLL             /ACC#2 CARRY FUNCTION
+ 937 001275  1033          TAD   TOTAL     /WORD COUNT
+ 938 001276  2026          ISZ   BLOCKS    /+1 TO BLOCK COUNT
+ 939 001277  7410          SKP
+ 940 001300  5522          JMP I QU3       /TO MANY BLOCKS CALLED FOR
+ 941 001301  7420          SNL             /CARRY INTO ACC#2?
+ 942 001302  5275          JMP   .-5       /NO: CONTINUE COUNT
+ 943 001303  2020          ISZ   W1        /YES: FULLY DIVIDED?
+ 944 001304  5274          JMP   .-10      /NO: CONTINUE PROCESS
+ 945 001305  7300          CLA   CLL       /C(ACC)+ C(L)=0
+ 946 001306  1026  F10RTN, TAD   BLOCKS    /FOR MARK TRACK (COME HERE FR F10PAT IF 10 FRMT)
+ 947 001307  7040          CMA             /WRITING
+ 948 001310  3035          DCA   VAR2      /SEE MARK WRITE
+ 949               
+ 950               /VALUES FOR BLOCK AND RECORD SIZE HAVE BEEN
+ 951               /COMPUTED. TELL OUTSIDE WORLD AND GET THE OK.
+ 952               
+ 953 001311  1033          TAD   TOTAL     /SUBTRACT 15 FROM TOTAL
+ 954 001312  1067          TAD   C7761     /WORDS FOOLING OPERATOR
+ 955 001313  3033          DCA   TOTAL     /CORRECTED FOR TAPE WRITING
+ 956 001314  1033          TAD   TOTAL     /FOR OCTAL TYPEOUT
+ 957 001315  4527          JMS I TYOCT     /TYPE OCTAL WORDS
+ 958 001316  4530          JMS I TYPE      /TYPE MESSAGE
+ 959 001317  4027          4027  / W
+ 960 001320  1722          1722  /OR
+ 961 001321  0423          0423  /DS
+ 962 001322  5400          5400  /, END
+ 963 001323  1026          TAD   BLOCKS    /TYPE OUT BLOCK #S
+ 964 001324  7001          IAC             /TO FOOL THE OPERATOR
+ 965 001325  4527          JMS I TYOCT     /IN OCTAL
+ 966 001326  4530          JMS I TYPE      /TYPE MESSAGES
+ 967 001327  4002          4002  / B
+ 968 001330  1417          1417  /LO
+ 969 001331  0313          0313  /CK
+ 970 001332  2356          2356  /S.
+ 971 001333  1713          1713  /OK
+ 972 001334  7733          7733  /?(
+ 973 001335  3105          3105  /YE
+ 974 001336  2340          2340  /S
+ 975 001337  1722          1722  /OR
+ 976 001340  4016          4016  / N
+ 977 001341  1735          1735  /O)
+ 978 001342  4543          4543  /CR+LF
+ 979 001343  0000          0000  /END
+ 980 001344  4531          JMS I TYPIN     /WAIT FOR REPLY
+ 981               /SEE IF A YES OR NO ANSWER WAS GIVEN
+ 982               
+ 983 001345  4513          JMS I COMPAR
+ 984 001346  0331          0331   /Y
+ 985 001347  0305          0305   /E
+ 986 001350  0323          0323   /S
+ 987 001351  0000          0000   /END
+ 988 001352  5515          JMP I IT
+ 989               
+ 990               /SEE IF THE DRIVE IS OK
+ 991               
+ 992 001353  1153  RSTSM,  TAD   DT0060    /GIVE WRTM, NO GO
+ 993 001354  1030          TAD   DTA       /AND DTA #
+ 994 001355  6766          DTCX            /ORDER EXECUTE
+ 995 001356  3020          DCA   W1        /STALL FUNCTION
+ 996 001357  6772  CDTRD,  DTRB            /READ STATUS "B"
+ 997 001360  7700          SMA   CLA       /ERROR?
+ 998 001361  5371          JMP   CIZ       /NO: TIME OUT STALL
+ 999 001362  4530          JMS I TYPE      /YES: INCORRECT SETUP
+1000 001363  2305          2305  /SE
+1001 001364  2425          2425  /TU
+1002 001365  2077          2077  /P
+1003 001366  0000          0000  /END
+1004 001367  5770          JMP I .+1
+1005 001370  1012          START
+1006               
+1007               /STALL FOR A WHILE FOR THE INTERRUPT
+1008               
+1009 001371  2020  CIZ,    ISZ   W1        /ONE ROUND'S WORTH
+1010 001372  5357          JMP   CDTRD     /OF ISZ
+1011 001373  5774          JMP I .+1
+1012 001374  1400          STMK            /OK, GO DO THE MARK TRACK
+1013 001375  1560  FORM10, F10PAT
+1014               
+1015                      *1400
+1016               /SET THE TAPE INTO MOTION. ALL VARIABLES ARE
+1017               /SET. FROM THIS POINT ON, CONTROL IS EXECUTED
+1018               /VIA THE WCO INTERRUPT
+1019               
+1020               /CLEAR OUT STATUS "A" AND RELOAD IT WITH CONTINUOUS
+1021               /WRITE TIMING AND MARK TRACK COMMAND
+1022               
+1023 001400  1162  STMK,   TAD   DT0360    /FWD, CONT, T+M,GO,INT
+1024 001401  1030          TAD   DTA       /ADD IN THE DTA
+1025 001402  6766          DTCX            /CLEAR FLAGS START MOTION
+1026 001403  3032          DCA   PHASE     /FOR ERROR ROUTINE
+1027 001404  1035          TAD   VAR2      /TO MAKE A RESTART FOR THE "SAME"
+1028 001405  3025          DCA   W6        /OPTION  POSSIBLE
+1029               
+1030               /WRITE END ZONE. WRITE ABOUT 10' OF THIS
+1031               /CONFIGURATION. 4044
+1032               /               0440   ON TAPE AS
+1033               /               4404   (5555) OCTAL.
+1034               
+1035 001406  3020          DCA   W1        /CLEAR COUNTER, 7777= ABOUT 10'
+1036 001407  1312  CEZ,    TAD   REZ       /LOAD ADDRESS OF DATA
+1037 001410  3512          DCA I CA        /TO BE WRITTEN INTO THE CA
+1038 001411  1076          TAD   M3        /LOAD # WORDS TO BE WRITTEN INTO
+1039 001412  3533          DCA I WC        /WC LOCATION
+1040               
+1041               /WAIT FOR INTERRUPT, TEST FOR END OF
+1042               /END ZONE WRITING.
+1043               
+1044 001413  4532          JMS I WAIT      /FOR INTERRUPT
+1045 001414  2020          ISZ   W1        /END OF FOOTAGE?
+1046 001415  5207          JMP   CEZ       /NOT END FOOTAGE, CONTINUE 
+1047                                       /OK, WRITE INTERBLOCK SYNC
+1048               
+1049               /WRITE INTERBLOCK SYNC. SINCE THIS CONFIGURATION
+1050               /ACT AS A NOP TO THE TCU, AT THE BEGINING OF
+1051               /TAPE, MORE LENGTH OF THIS IS NEEDED FOR TURN AROUND
+1052               /TIME TO GUARANTEE BLOCK 0000 TO THE LIBRARY SYSTEM
+1053               /THEREFORE AT THE BEGINING OF TAPE ONLY, WRITE SEVERAL
+1054               /INTERBLOCK ZONES
+1055               
+1056 001416  1103          TAD   M144      /NUMBER OF TIMES TO
+1057 001417  3020          DCA   W1        /WRITE INTERBLOCK SYNC
+1058 001420  4224          JMS   INBLSY    /WRITE 1 INTERBLOCK SYNC
+1059 001421  2020          ISZ   W1        /CONFIGURATION, TEST END
+1060 001422  5220          JMP   .-2       /NOT TOTAL FOOTAGE. WRITE AGAIN
+1061 001423  5235          JMP   WDZ       /COMPLETED, GO ON
+1062               /AT NORMAL RETURN, WRITE ONLY ONE INTERBLOCK SYNC 
+1063               /CONFIGURATION. APPEARS AS      0404
+1064               /                               0404   ON TAPE AS
+1065               /                               0404   2525 OCTAL
+1066               
+1067 001424  0000  INBLSY, 0
+1068 001425  1316          TAD   IBZ       /COUNTER AND WORD
+1069 001426  3512          DCA I CA        /COUNT WITH KEYS
+1070 001427  1076          TAD   M3        /FOR CONTROL
+1071 001430  3533          DCA I WC        
+1072 001431  1034          TAD   VAR1      /RESET THE WORDS
+1073 001432  3024          DCA   W5        /PER BLOCK COUNTER
+1074               
+1075               /WAIT FOR INTERRUPT, RETURN TO SEQUENCE
+1076               
+1077 001433  4532          JMS I WAIT      /FOR INTERRUPT
+1078 001434  5624          JMP I INBLSY
+1079               
+1080               
+1081               /WRITE FORWARD BLOCK MARK AND REVERSE GUARD
+1082               /THREE WORDS    0404
+1083               /               4004   ON TAPE AS
+1084               /               4040   2632 OCTAL
+1085               
+1086 001435  1322  WDZ,    TAD   FBM       /ADDRESS OF PATTERN
+1087 001436  3512          DCA I CA        /TO CURRENT ADDRESS
+1088 001437  1076          TAD   M3        /NUMBER OF WORDS
+1089 001440  3533          DCA I WC        /TO WORD COUNTER
+1090 001441  4532          JMS I WAIT      /DROP THROUGH AFTER WRITE
+1091               
+1092               
+1093               /WRITE LOCK MARK, REVERSE CKSUM, REVERSE FINAL,REV PREFINAL
+1094               /SIX WORDS      1. 0040   4. 0040
+1095               /               2. 0000   5. 0000   ON TAPE OCTAL
+1096               /               3. 4000   6. 4000   10101010
+1097               
+1098 001442  1326          TAD   WLMRF     /ADDRESS OF PATTERN
+1099 001443  3512          DCA I CA        /TO CURRENT ADDRESS
+1100 001444  1100          TAD   M6        /NUMBER OF WORDS
+1101 001445  3533          DCA I WC        /TO WORD COUNTER
+1102 001446  4532          JMS I WAIT      /DROP THROUGH AFTER WRITE
+1103               
+1104               
+1105               /   WRITE THE DATA TRACK. SINCE THE LENGTH OF EACH
+1106               /RECORD IS A VARIABLE, "VAR1" KEEPS TRACK OF THE
+1107               /NUMBER OF TIMES THIS CONFIGURATION WILL BE WRITTEN
+1108               /"VAR1" WAS DECIDED FROM ABOVE IN THE FORMULA
+1109               /TRANSLATION SECTION
+1110               /THREE WORDS    4440
+1111               /               0044   ON TAPE AS
+1112               /               4000   7070 OCTAL
+1113 001447  1335  DTRK,   TAD   DZ        /LOAD ADDRESS OF THE DATA
+1114 001450  3512          DCA I CA        /CONFIGURATION INTO CA
+1115 001451  1076          TAD   M3        /LOAD # WORDS
+1116 001452  3533          DCA I WC        /INTO WORD COUNT
+1117               /WRITE ONE SET TEST "VAR1" FOR LAST SET
+1118               
+1119 001453  4532          JMS I WAIT      /ONE CONFIGURATION
+1120 001454  2024          ISZ   W5        /LAST?
+1121 001455  5247          JMP   DTRK      /NOW WRITE DATA MARK TRACK AGAIN
+1122               
+1123               /   MARK TRACK CODE FOR DATA IS COMPLETE. NOW WRITE
+1124               /PREFINAL, FINAL, CHECKSUM AND REVERSE CHECKSUM.
+1125               /SIX WORDS      1 4440   4 4440
+1126               /               2 4444   5 4444   ON TAPE AS
+1127               /               3 4044   6 4044   73737373 OCTAL
+1128               
+1129 001456  1341          TAD   FEZ       /LOAD ADDRESS OF
+1130 001457  3512          DCA I CA        /DATA CONFIGURATION INTO CA
+1131 001460  1100          TAD   M6        /LOAD # WORDS
+1132 001461  3533          DCA I WC        /INTO WORD COUNT
+1133 001462  4532          JMS I WAIT      /TILL COMPLETED WRITE
+1134               
+1135               
+1136               
+1137               /WRITE GUARD, REVERSE BLOCK
+1138               /THREE WORDS    4040
+1139               /               0440   ON TAPE AS
+1140               /               0404   5145 OCTAL
+1141               
+1142 001463  1350          TAD   GRZ       /DATA ADDRESS TO
+1143 001464  3512          DCA I CA        /THE CA
+1144 001465  1076          TAD   M3        /NUMBER OF WORDS
+1145 001466  3533          DCA I WC        /TO WORD COUNT
+1146 001467  4532          JMS I WAIT      /TILL COMPLETE
+1147               
+1148               
+1149               
+1150               /THIS COMPLETE SET OF DATA TRANSFERES
+1151               /COMPLETES ONE BLOCK ON TAPE. SINCE THE 
+1152               /NUMBER OF BLOCKS IS VARIABLE, "VAR2" IS
+1153               /USED TO RECYCLE. "VAR2" WAS SET UP ABOVE IN
+1154               /THE FORMULA TRANSLATION SECTION
+1155               
+1156 001470  4224          JMS   INBLSY    /WRITE INTERBLOCK SYNC
+1157 001471  2025          ISZ   W6        /TOTAL NUMBER OF BLOCKS
+1158 001472  5235          JMP   WDZ       /WRITTEN? NO:
+1159               
+1160               
+1161               /ALL DATA BLOCKS HAVE BEEN WRITTEN.
+1162               /NOW PROVIDE A BUFFER ZONE OF INTERBLOCK SYNC AT THE END
+1163               /OF TAPE AS AT THE START OF TAPE
+1164               
+1165 001473  1103          TAD   M144      /ABOUT TWO BLOCKS(STANDARD) WORTH
+1166 001474  3020          DCA   W1        /ABOUT 100 TIMES
+1167 001475  4224          JMS   INBLSY    /WRITE ONE PATTERN
+1168 001476  2020          ISZ   W1        /AT END YET?
+1169 001477  5275          JMP   .-2       /NO CONTINUE WRITING INTERBLOCK SYNC
+1170               
+1171               /COMPLETED BLOCK WRITING
+1172               /WRITE ANOTHER 10' OF END ZONE (FORWARD)
+1173               /BEFORE LOADING BLOCK NUMBERS.
+1174               /THREE WORDS    0400
+1175               /               4004   ON TAPE AS
+1176               /               0040   2222 OCTAL
+1177               
+1178 001500  3020          DCA   W1        /ISZ=10 FEET
+1179 001501  1354  WEZF,   TAD   EZM       /LOAD ADDRESS OF DATA
+1180 001502  3512          DCA I CA        /INTO CA
+1181 001503  1076          TAD   M3        /NUMBER OF WORDS
+1182 001504  3533          DCA I WC        /WORD COUNT
+1183               
+1184               /WRITE 1 SET, CHECK END OF 10'.
+1185               
+1186 001505  4532          JMS I WAIT      /TILL COMPLETE
+1187 001506  2020          ISZ   W1        /END OF FOOTAGE?
+1188 001507  5301          JMP   WEZF      /NO, CONTINUE WITH END ZONE
+1189 001510  5711          JMP I .+1       /GO AND START BLOCK NUMBER 
+1190 001511  1600          MWTM            /SEQUENCING
+1191               /THESE ARE THE DATA CONFIGURATIONS FOR THE MARK TRACK
+1192               
+1193               
+1194               /REVERSE END ZONE
+1195               
+1196 001512  1512  REZ,    .
+1197 001513  4044          4044    /ON TAPE AS 5555 (OCT)
+1198 001514  0440          0440
+1199 001515  4404          4404
+1200               
+1201               /INTERBLOCK SYNC
+1202               
+1203 001516  1516  IBZ,    .
+1204 001517  0404          0404    /ON TAPE AS 2525 (OCT)
+1205 001520  0404          0404
+1206 001521  0404          0404
+1207               
+1208               /FORWARD BLOCK MARK AND REVERSE GUARD
+1209               
+1210 001522  1522  FBM,    .
+1211 001523  0404          0404    /ON TAPE AS 2632 (OCT)
+1212 001524  4004          4004
+1213 001525  4040          4040
+1214               
+1215               /LOCK MARK, REVERSE CHECKSUM, REVERSE FINAL
+1216               /AND REVERSE PREFINAL
+1217               
+1218 001526  1526  WLMRF,  .
+1219 001527  0040          0040    /ON TAPE AS 10101010 (OCT)
+1220 001530  0000          0000
+1221 001531  4000          4000
+1222 001532  0040          0040
+1223 001533  0000          0000
+1224 001534  4000          4000
+1225               
+1226               /DATA MARK
+1227               
+1228 001535  1535  DZ,     .
+1229 001536  4440          4440    /ON TAPE AS 7070 (OCT)
+1230 001537  0044          0044
+1231 001540  4000          4000
+1232               
+1233               /PREFINAL, FINAL, FWD CHECKSUM, AND REVERSE LOCK
+1234               
+1235 001541  1541  FEZ,    .
+1236 001542  4440          4440    /ON TAPE AS 73737373 (OCT)
+1237 001543  4444          4444
+1238 001544  4044          4044
+1239 001545  4440          4440
+1240 001546  4444          4444
+1241 001547  4044          4044
+1242               /FORWARD GUARD AND REVERSE BLOCK NUMBER
+1243               
+1244 001550  1550  GRZ,    .
+1245 001551  4040          4040    /ON TAPE AS 5145 (OCT)
+1246 001552  0440          0440
+1247 001553  0404          0404
+1248               
+1249               /FORWARD END ZONE
+1250               
+1251 001554  1554  EZM,    .
+1252 001555  0400          0400    /ON TAPE AS 2222 (OCT)
+1253 001556  4004          4004
+1254 001557  0040          0040
+1255               /SUBROUTINE TO SEE IF USER TYPED MARK 384
+1256               /TO SPECIFY STANDARD PDP-10 FORMAT
+1257 001560  0000  F10PAT, 0
+1258 001561  3026          DCA     BLOCKS  /CLEAR LOC. BLOCKS IN CASE NOT 10-FORMAT
+1259 001562  1033          TAD     TOTAL   /AND GET NUMBER TYPED BY USER
+1260 001563  1373          TAD     M617    /WAS IT 384?
+1261 001564  7640          SZA     CLA
+1262 001565  5760          JMP I   F10PAT  /NO-RETURN
+1263 001566  3020          DCA     W1      /YES-CLEAR W1 FOR WAIT LOOP
+1264 001567  1374          TAD     C1101   /AND ADJUST BLOCK TOTAL FOR
+1265 001570  3026          DCA     BLOCKS  /1102(OCTAL) BLOCKS.
+1266 001571  5772          JMP I   .+1
+1267 001572  1306  F10BAK, F10RTN
+1268 001573  7161  M617,   -617
+1269 001574  1101  C1101,  1101
+1270               
+1271                       *1600
+1272               /THE MARK TRACK HAS BEEN WRITTEN, AND TAPE IS
+1273               /MOVING FORWARD IN THE FORWARD END ZONE. STOP
+1274               /THE TAPE AND SEE IF THERE ARE ANY TAPES LEFT TO
+1275               /MARK--IF SO GO DO THEM, ELSE TELL OPERATOR TO THROW THE
+1276               /"NORMAL/WRTM/RDTM" SWITCH TO "NORMAL"
+1277               /HE WILL THEN CONTINUE AFTER THIS ACTION
+1278               
+1279               /KILL WRITE, STOP TAPE
+1280               
+1281 001600  1154  MWTM,   TAD   DT0070    /STOP TAPE WITH SELECT ERROR
+1282 001601  1030          TAD   DTA       /LOAD DTA INTO ORDER
+1283 001602  6766          DTCX            /EXECUTE THE ABOVE
+1284 001603  4310          JMS     NUDTA   /ANY MORE DTAS TO MARK?
+1285 001604  5707          JMP I   DOMARK  /YES: GO MARK THEM
+1286               
+1287               /MESSAGE TO OPERATOR
+1288               
+1289 001605  4530          JMS I TYPE      /NO: BACK TO FIRST DTA AND CONTINUE
+1290 001606  2305          2305  /SE
+1291 001607  2440          2440  /T
+1292 001610  2327          2327  /SW
+1293 001611  1124          1124  /IT
+1294 001612  0310          0310  /CH
+1295 001613  4024          4024  / T
+1296 001614  1740          1740  /O 
+1297 001615  1617          1617  /NO
+1298 001616  2215          2215  /RM
+1299 001617  0114          0114  /AL
+1300 001620  0000          0000  /END
+1301 001621  4531          JMS I TYPIN     /WAIT FOR CR
+1302               
+1303               /REVERSE TAPE FOR A FEW SECONDS TO GUARANTEE
+1304               /BLOCK MARK SECT WILL BE UNDER THE HEAD
+1305               
+1306 001622  1164  PSER,   TAD   DT0600    /REVERSE, MOVE, GO
+1307 001623  1030          TAD   DTA       /ADD DTA TO ORDER
+1308 001624  6766          DTCX            /CLEAR TCU,GET MOVING IN REVERSE
+1309               
+1310               /STALL A FEW SECONDS
+1311               
+1312 001625  1104          TAD   M300      /AROUND 2 SECONDS
+1313 001626  3021          DCA   W2        /MAJOR STALL
+1314 001627  2020  MSTALL, ISZ   W1        /MINOR STALL
+1315 001630  5227          JMP   .-1       /LOOP MINOR
+1316 001631  6771          DTSF
+1317 001632  7410          SKP
+1318 001633  5222          JMP     PSER
+1319 001634  2021          ISZ   W2        /MAJOR STALL
+1320 001635  5227          JMP   MSTALL    /LOOP MAJOR
+1321               /TAPE OUT ON MARK TRACK NOW, TURN AND GET IT
+1322               /MOVING FORWARD. AT THIS POINT, THE LAST REVERSE
+1323               /BLOCK NUMBER WILL BE WRITTEN UNTILL END ZONE IS
+1324               /REACHED. THEREFORE, WHEN THE BOUNCE OUT OF THE END
+1325               /ZONE TAKES PLACE, THE SYSTEM WILL BE ABLE TO SYNC ON
+1326               /THE REVERSE BLOCK NUMBER TO WRITE THE REST OF
+1327               /THE BLOCK NUMBERS AND KNOWN GOOD DATA IN REVERSE.
+1328               /THIS PROCESS WILL ELIMINATE A NEEDLESS REWIND AND
+1329               /KEEP THE ENTIRE PROCESS TO TWO COMPLETE PASSES
+1330               
+1331               /WRITE LAST REVERSE BLOCK NUMBER  GOING FORWARD
+1332               
+1333 001636  1333          TAD     RZ
+1334 001637  3512          DCA I   CA
+1335 001640  1161          TAD   DT0210    /FORWARD, SEARCH, GO
+1336 001641  1030          TAD   DTA       /ADD IN THE DTA
+1337 001642  6766          DTCX            /CLEAR STATUS "A" AND RELOAD IT
+1338 001643  1036          TAD   C1        /PHASE 1 ERROR
+1339 001644  3032          DCA   PHASE     /FOR ERROR ROUTINE
+1340               
+1341               /WAIT HERE FOR DECTAPE FLAG. CHECK ALSO FOR ERRORS
+1342               /SET BLOCK NUMBER (REVERSE) INTO FORM
+1343               
+1344 001645  1026          TAD   BLOCKS    /INTO AC WITH LAST BLOCK NUMBER
+1345 001646  4524          JMS I MESS      /CONVERT BLOCK NUMBER FOR TAPE
+1346               
+1347               /INTERRUPTED? ERROR?
+1348               
+1349 001647  6772          DTRB            /READ STATUS "B"
+1350 001650  7010          RAR             /DECTAPE FLAG TO LINK
+1351 001651  7620          SNL   CLA       /FLAG SET?
+1352 001652  5247          JMP   .-3       /NO: CONTINUE WAIT
+1353               
+1354               /BLOCK FOUND. SWITCH TO READ DATA WITH WC ONE LESS THAN
+1355               /NUMBER OF WORDS TO BE READ. READ TILL WC=0
+1356               
+1357 001653  1156          TAD   DT0130    /TO SET STATUS "A" INTO
+1358 001654  6764  RCYBR,  DTXA            /THE READ DATA MODE
+1359 001655  7240          CLA   CMA       /SUBTRACT 1 FROM TOTAL
+1360 001656  1033          TAD   TOTAL     /GIVING TOTAL-1 (HO HO)
+1361 001657  7040          CMA             /INVERT FOR ISZ
+1362 001660  3533          DCA I WC        /SET WC
+1363 001661  1041          TAD   C4        /NOP
+1364 001662  3512          DCA I CA        /JIMMIED TO DO NOTHING
+1365 001663  6772          DTRB            /READ "B" REGISTER
+1366 001664  0062          AND   C1000     /ISOLATE END ZONE BIT
+1367 001665  7640          SZA   CLA       /END ZONE?
+1368 001666  5706          JMP I GDBLK     /YES: GO AND WRITE THE BLOCK NUMBERS
+1369 001667  1533          TAD I WC        /WAIT TILL WORD COUNT ZERO
+1370 001670  7640          SZA   CLA       /EQUAL TO ZERO?
+1371 001671  5261          JMP   .-10      /NO: LOOP AGAIN
+1372               /END OF BLOCK FOUND. WRITE JUNK AND REVERSE BLOCK NUMBER
+1373               
+1374 001672  1102          TAD   M14       /12 WORDS TO BE WRITTEN
+1375 001673  3533          DCA I WC        /TO WORD COUNT REG.
+1376 001674  1117          TAD   FORMB     /FORM TO CA
+1377 001675  3512          DCA I CA        /OF NUMBERING FORM
+1378 001676  1154          TAD   DT0070    /SWITCH TO WRITE ALL
+1379 001677  6764          DTXA            /MODE.
+1380               
+1381               /LOOK FOR THE DECTAPE FLAG INDICATING ANOTHER RECYCLE
+1382               
+1383 001700  6772          DTRB            /NO: GET "B" AGAIN
+1384 001701  7010          RAR             /FLAG TO LINK
+1385 001702  7620          SNL   CLA       /FLAG SET?
+1386 001703  5300          JMP   .-3       /NO: BE PATIENT. HAST NOT.
+1387 001704  1154          TAD   DT0070    /TO SWITCH TO READ DATA
+1388 001705  5254          JMP   RCYBR
+1389 001706  2000  GDBLK,  DOBLK
+1390 001707  1400  DOMARK, STMK    /POINTER TO START OF MARK ROUTINE
+1391               
+1392               /SUBROUTINE TO GET NEXT DTA UNIT # FROM INPUT LIST OR
+1393               /RECYCLE TO FIRST UNIT IF ALL HAVE BEEN PROCESSED UP TO
+1394               /THIS POINT--CALL SEQUENCE
+1395               /       JMS NUDTA       /CALL THE ROUTINE
+1396               /       (RETN1)         /RETURNS HERE IF MORE DTAS TO PROCESS
+1397               /       (RETN2)         /RETURNS HERE IF END OF LIST
+1398               /END OF LIST MEANS RESET TO FIRST AND RETURN TO (RETN2)
+1399               /RETURN IS  WITH DTA SET TO NEW VALUE AND AC=0
+1400               
+1401 001710  0000  NUDTA,  0
+1402 001711  1731          TAD I   LSTPT   /GET CURRENT VALUE OF DTA LIST PTR
+1403 001712  3330          DCA     TBUFPT  /STORE IT AS TEM. BUF. PTR.
+1404 001713  1730          TAD I   TBUFPT  /GET A DTA # FROM THE LIST
+1405 001714  0045          AND     C0007   /ISOLATE LOW ORDER DIGIT
+1406 001715  7640          SZA     CLA     /IS IT 7777?
+1407 001716  5323          JMP     LSTEND  /YES: END OF LIST
+1408 001717  1730          TAD I   TBUFPT  /NO: GET IT BACK
+1409 001720  3030          DCA     DTA     /AND STORE AS NEW DTA #
+1410 001721  2731          ISZ I   LSTPT   /INCREMENT LIST POINTER
+1411 001722  5710          JMP I   NUDTA   /RETURN
+1412               /COMES HERE AT END OF LIST TO RESET PTRS AND RETN TO CALL+2
+1413 001723  2310  LSTEND, ISZ     NUDTA   /INCREMENT RETURN POINTER
+1414 001724  1727          TAD I   STRTPT  /GET ADR. OF START OF LIST
+1415 001725  3731          DCA I   LSTPT   /STORE TO RE-INITIALIZE LIST PTR.
+1416 001726  5311          JMP     NUDTA+1 /GO GET FIRST DTA # AND RETURN
+1417               
+1418 001727  1763  STRTPT, DBUFAD  /POINTER TO START OF DTA LIST
+1419 001730  0000  TBUFPT, 0       /TEM. STORAGE FOR BUF. PTR.
+1420 001731  0134  LSTPT,  DBUFPT  /POINTER TO CURRENT VALUE OF DTA LIST PTR
+1421 001732  0000  DTABUF, 0       /START OF DTA # LIST - MAX. 9 WORDS
+1422 001733  1734  RZ,     .+1
+1423 001734  0000          0
+1424               /SUBROUTINE TO CHECK FOR REPEATED DTA NUMBERS
+1425               /DTA # TO COMPARE TO LIST IS IN AC ON ENTRY--THIS
+1426               /ROUTINE STORES THE DTA # IF IT IS NEW AND IGNORES IT
+1427               /IF IT IS NOT-CALL BY JMS REPEAT WITH DTA # IN AC
+1428 001735  0000  REPEAT, 0
+1429 001736  3364          DCA     DNUM    /TEM STORAGE FOR NEW DTA #
+1430 001737  1363          TAD     DBUFAD  /INITIALIZE POINTER (DBUFPT)
+1431 001740  3134          DCA     DBUFPT  /TO START OF DTA LIST
+1432 001741  1362          TAD     DCTR    /LOAD NUM. OF DTAS STORED
+1433 001742  7040          CMA             /COMPLEMENT IT
+1434 001743  3361          DCA     COMCTR  /STORE IN COMPARE COUNTER
+1435 001744  2361  COMCHK, ISZ     COMCTR  /DONE WITH ALL COMPARES?
+1436 001745  5352          JMP     DOCOMP  /NO: GO DO COMPARE
+1437 001746  1364          TAD     DNUM    /YES: STORE NEW DTA#
+1438 001747  3534          DCA I   DBUFPT  /AT END OF LIST
+1439 001750  2362          ISZ     DCTR    /INCR. # OF DTAS STORED
+1440 001751  5735          JMP I   REPEAT  /RETURN
+1441               
+1442               /THIS SECTION DOES THE ACTUAL COMPARISON BETWEEN
+1443               /THE DTA# PASSED TO THE ROUTINE AND A NUMBER ON THE LIST
+1444               
+1445 001752  1534  DOCOMP, TAD I   DBUFPT  /GET NEXT DTA NUMBER FROM LIST
+1446 001753  7041          CIA             /NEGATE IT
+1447 001754  1364          TAD     DNUM    /ADD IN DTA NUMBER PASSED
+1448 001755  7650          SNA     CLA     /ARE THEY THE SAME?
+1449 001756  5735          JMP I   REPEAT  /YES: RETURN
+1450 001757  2134          ISZ     DBUFPT  /NO: INCREMENT LIST POINTER
+1451 001760  5344          JMP     COMCHK  /SEE IF DONE ALL COMPARES
+1452               /
+1453               /
+1454 001761  0000  COMCTR, 0       /COUNTER FOR # OF LIST COMPARISONS TO BE DONE
+1455 001762  0000  DCTR,   0       /COUNTER FOR # OF DTAS IN LIST
+1456 001763  1732  DBUFAD, DTABUF  /START OF DTA NUM. LIST
+1457 001764  0000  DNUM,   0       /TEM STORAGE FOR DTA #
+1458               /
+1459                      *2000
+1460               /GO INTO SEARCH IN REVERSE MODE LOOKING FOR
+1461               /THE LAST BLOCK NUMBER. WHEN FOUND, SYNC THE SYSTEM
+1462               /AND WRITE ALL DATA AND BLOCK NUMBERS
+1463               
+1464 002000  4526  DOBLK,  JMS I TURN      /INTO REVERSE AND SEARCH MODE
+1465 002001  1026          TAD   BLOCKS    /TO SET UP
+1466 002002  3027          DCA   BLOCKA    /FOR BLOCK DECREMENTING
+1467 002003  1037          TAD   C2        /PHASE 2 ERROR
+1468 002004  3032          DCA   PHASE     /FOR ERROR ROUTINE
+1469               
+1470               /LOOK FOR INTERRUPT INDICATING BLOCK NUMBER
+1471               
+1472 002005  4532          JMS I WAIT      /FOR DECTAPE FLAG
+1473               
+1474               /SWITCH TO WRITE ALL. SYSTEM NOW IN SYNC
+1475               
+1476 002006  1157          TAD   DT0140    /SWITCH TO WRITE ALL
+1477 002007  6764          DTXA            /EXECUTE ORDER
+1478 002010  1265  NEXTBN, TAD   ADF3      /ADDRESS OF FIRST 3 WORDS INCLUDING
+1479 002011  3512          DCA I CA        /THE FORWARD CHECKSUM TO BE WRITTEN
+1480 002012  1076          TAD   M3        /NUMBER OF WORDS TO BE WRITTEN
+1481 002013  3533          DCA I WC        /TO WORD COUNT
+1482 002014  4234          JMS   CEZN      /CHECK FOR END ZONE
+1483 002015  1533          TAD I WC        /CHECK FOR WC=0
+1484 002016  7640          SZA   CLA       /=0?
+1485 002017  5214          JMP   .-3       /NOPE: TRY AGAIN
+1486 002020  6764          DTXA            /YUP: CLEAR THE FLAG
+1487               
+1488               /WRITE DATA TRACK. REMEMBER CORRECT DATA IS BEING WRITTEN
+1489               
+1490 002021  1033          TAD   TOTAL     /ONE FROM TOTAL NUMBER
+1491 002022  7041          CIA             /OF WORDS FOR COUNTING
+1492 002023  3533          DCA I WC        /DATA WORDS WRITTEN
+1493 002024  1271          TAD   AD7777    /ADDRESS OF SEVENS
+1494 002025  3512          DCA I CA        /DATA TO BE WRITTEN
+1495               
+1496               /MONITOR WORD COUNT FOR A ZERO READING
+1497               /SOME OF THIS TIME IS USED TO SET THE NEXT
+1498               /BLOCK NUMBER INTO THE FORM.
+1499               
+1500 002026  1027          TAD   BLOCKA    /CURRENT BLOCK NUMBER
+1501 002027  4524          JMS I MESS      /CONVERT INTO FORM
+1502 002030  7240          CLA   CMA       /TO DECREMENT
+1503 002031  1027          TAD   BLOCKA    /THE BLOCK COUNT
+1504 002032  3027          DCA   BLOCKA    /DOWN TO ZERO
+1505 002033  5242          JMP   CEZB      /BYPASS FOLLOWING ROUTINE
+1506               
+1507               /CHECK FOR END ZONE
+1508 002034  0000  CEZN,   0
+1509 002035  6772          DTRB            /READ STATUS "B"
+1510 002036  0062          AND   C1000     /ISOLATE END ZONE
+1511 002037  7650          SNA   CLA       /HAVE IT?
+1512 002040  5634          JMP I CEZN      /NOT EZ, RETURN
+1513 002041  5664          JMP I GDBN      /COMPLETED
+1514               /CHECK HERE ALSO TO SEE IF END ZONE, INDICATING
+1515               /THAT THE LAST BLOCK HAS BEEN WRITTEN
+1516               
+1517 002042  4234  CEZB,   JMS   CEZN      /END ZONE?
+1518               
+1519               /LOOK FOR WORD COUNT AS BEING EQUAL TO ZERO
+1520               
+1521 002043  1533          TAD I WC        /WC TO C(AC)
+1522 002044  7650          SNA   CLA       /END OF DATA WRITE?
+1523 002045  5251          JMP   WBN       /YES: GO TO WRITE BLOCK NUMBER
+1524 002046  1271          TAD   AD7777    /RESET CURRENT ADDRESS COUNT
+1525 002047  3512          DCA I CA        /DON'T LET THE CA ADVANCE TO
+1526 002050  5242          JMP   CEZB      /MUCH
+1527               
+1528               /DATA HAS BEEN WRITTEN. NOW WRITE REVERSE
+1529               /BLOCK NUMBER, FORWARD BLOCK NUMBER, AND REVERSE
+1530               /CHECKSUM. (12 WORDS)
+1531               
+1532 002051  6764  WBN,    DTXA            /CLEAR OUT DECTAPE FLAG
+1533 002052  1102          TAD   M14       /WILL WRITE 12 WORDS
+1534 002053  3533          DCA I WC        /FOR THIS BIT
+1535 002054  1116          TAD   FORMA     /FROM A FORM CONTAINING
+1536 002055  3512          DCA I CA        /BLOCK NUMBERS
+1537               
+1538               /WAIT FOR END
+1539               
+1540 002056  4234          JMS   CEZN      /END ZONE?
+1541 002057  1533          TAD I WC        /NO: SEE IF DONE THE WRITE
+1542 002060  7640          SZA   CLA       /DONE YET ?
+1543 002061  5256          JMP   .-3       /NO: PATIENCE IS A VIRTUE????
+1544 002062  6764          DTXA            /RESET THE CURRENT FLAG
+1545 002063  5210          JMP   NEXTBN    /YES: GO RECYCLE COMPLETLY
+1546 002064  2200  GDBN,   DBN
+1547               
+1548               / FIRST 3 WORDS TO BE WRITTEN
+1549               
+1550 002065  2065  ADF3,   .
+1551 002066  0000          0000
+1552 002067  0000          0000
+1553 002070  0077          0077
+1554               
+1555               /DATA TO BE WRITTEN ON TAPE (REVERSE)
+1556               
+1557 002071  2071  AD7777, .
+1558 002072  7777          7777
+1559 002073  7777          7777
+1560 002074  7777          7777
+1561 002075  7777          7777
+1562               /CHECK IF ALL DTAS ARE DONE BEFORE RESTARTING
+1563               
+1564 002076  4701  SETDTA, JMS I   GDTA    /ALL DTAS DONE?
+1565 002077  5702          JMP I   CONTNU  /NO: BACK TO WRITE BLOCK #S ON NEXT
+1566 002100  5515          JMP I   IT      /YES: GO ASK "DIRECT?"
+1567 002101  1710  GDTA,   NUDTA   /POINTER TO SUBR FOR GETTING NEXT UNIT #
+1568 002102  1622  CONTNU, PSER    /POINTER TO START OF BLOCK # WRITE ROUTINE
+1569               
+1570               
+1571               /TYPE ONE FOUR CHARACTER OCTAL WORD GIVEN TO THE 
+1572               /ROUTINE VIA C(ACC). C(ACC)=0 ON EXIT
+1573               
+1574 002103  0000  TYCT,   0
+1575 002104  3343          DCA   TW1       /STORE WORD GIVEN
+1576 002105  1343          TAD   TW1       /TO C(ACC) AGAIN
+1577 002106  7012          RTR
+1578 002107  7012          RTR             /6 BITS GIGHT
+1579 002110  7012          RTR
+1580 002111  3340          DCA   TYCT1+2   /SAVE ROTATED VALUE, 1ST TWO
+1581 002112  1340          TAD   TYCT1+2   /TO C(ACC) AGAIN
+1582 002113  0045          AND   C0007     /ISOLATE SECOND CHARACTER
+1583 002114  1344          TAD   C6060     /CONVERT TO ASCII
+1584 002115  3337          DCA   TYCT1+1   /STORE AS FIRST PARTIAL 2
+1585 002116  1340          TAD   TYCT1+2   /ROTATED VALUE STORED ABOVE
+1586 002117  7006          RTL
+1587 002120  7004          RAL             /3 BITS LEFT
+1588 002121  0050          AND   C0700     /ISOLATE FIRST CHARACTER
+1589 002122  1337          TAD   TYCT1+1   /CONVERT 1ST TO ASCII
+1590 002123  3337          DCA   TYCT1+1   /1ST AND 2ND CHARACTERS READY
+1591 002124  1343          TAD   TW1       /ORIGIONAL WORD
+1592 002125  0045          AND   C0007     /ISOLATE 4TH CHARACTER
+1593 002126  1344          TAD   C6060     /CONVERT 4 TH TO ASCII
+1594 002127  3340          DCA   TYCT1+2   /STORE 4TH FOR A MOMENT
+1595 002130  1343          TAD   TW1       /ORIGIONAL WORD
+1596 002131  7006          RTL
+1597 002132  7004          RAL             /POSITION IT 3RD CHARACTER
+1598 002133  0050          AND   C0700     /ISOLATE 3RD CHARACTER
+1599 002134  1340          TAD   TYCT1+2   /CONVERT TO ASCII
+1600 002135  3340          DCA   TYCT1+2   /CONVERSION COMPLETE
+1601 002136  4530  TYCT1,  JMS I TYPE      /TYPE THE FOUR CHARACTERS
+1602 002137  0000          0               /FIRST 2
+1603 002140  0000          0               /SECOND 2
+1604 002141  0000          0               /KILL KEY
+1605 002142  5703          JMP I TYCT      /EXIT FROM ROUTINE
+1606               
+1607               /SOME CONSTANTS FOR THE ROUTINE
+1608               
+1609 002143  0000  TW1,    0000
+1610 002144  6060  C6060,  6060
+1611                      *2200
+1612               /VERIFY THE TAPE AS BEING WRITTEN CORRECTLY
+1613               /WITH DATA AND BLOCK NUMBERS. THE INFORMATION WRITTEN
+1614               /WAS WRITTEN IN SUCH A WAY AS TO BE CORRECT 
+1615               /UPON READING IT BACK
+1616               
+1617               
+1618               /TURN TAPE AND HAVE IT GOING FORWARD
+1619               
+1620 002200  1310  DBN,    TAD   ISZV      /RESET INCREMENT
+1621 002201  3250          DCA   VISZ      /BLOCK NUMBERS FORWARD
+1622 002202  3114          DCA   FCON      /WILL BE ZEROS FORWARD
+1623 002203  3020          DCA   W1        /FIRST BLOCK NUMBER FORWARD
+1624 002204  1047          TAD   C0400     /TURN TO GO FORWARD
+1625 002205  4526  DBNAUX, JMS I TURN      
+1626 002206  1040          TAD   C3        /ERROR IN PHASE 3
+1627 002207  3032          DCA   PHASE     /FOR ERROR ROUTINE
+1628               
+1629               /SET SOME OF THE CONTROL REGS
+1630               
+1631 002210  3533  DAB,    DCA I WC        /WORD COUNT DON'T CARE
+1632 002211  1166          TAD   ADBA      /SOME WHERE UP ABOVE
+1633 002212  3512          DCA I CA        /TO GET BLOCK NUMBERS
+1634               
+1635               /WAIT FOR INTERRUPT
+1636               
+1637 002213  4532          JMS I WAIT      /INTERRUPT
+1638 002214  1020          TAD   W1        /FIRST OR NEXT BLOCK NUMBER
+1639 002215  7041          CIA             /TO COMPARE
+1640 002216  1566          TAD I ADBA      /GET THE BLOCK NUMBER
+1641 002217  7640          SZA   CLA       /COMPARE OK?
+1642 002220  5312          JMP   BLKERZ    /BLOCK ERROR FOUND
+1643               
+1644               /BLOCK COMPARES, NOW CHECK DATA
+1645               
+1646 002221  1152          TAD   DT0030    /TO SWITCH INTO READ
+1647 002222  6764          DTXA            /DATA MODE
+1648 002223  3533          DCA I WC        /DON'T CARE ABOUT THE WC
+1649 002224  1167  CTST,   TAD   ADWA      /FOR COMPARING
+1650 002225  3512          DCA I CA        /FROM TAPE
+1651               
+1652               /EVERY TIME THE WORD COUNT MOVES
+1653               /A DATA TRANSFERE HAS BEEN COMPLETED.
+1654               /MAKE SURE THAT THE INFORMATION IS OK
+1655               
+1656 002226  1533          TAD I WC        /GET WORD COUNT
+1657 002227  7650          SNA   CLA       /STILL AT ZERO?
+1658 002230  5237          JMP   CEFR      /YES: SEE IF AT END
+1659 002231  1114          TAD   FCON      /NO: SEE IF DATA
+1660 002232  7041          CIA             /IS SAME AS WRITTEN
+1661 002233  1570          TAD I ADWAB     /RECEIVED DATA
+1662 002234  7640          SZA   CLA       /SAME?
+1663 002235  5342          JMP DTAR        /DATA ERROR FOUND
+1664 002236  3533          DCA I WC        /YES: RESET WORD COUNT
+1665               /CHECK FOR DECTAPE FLAG INDICATING END OF
+1666               /BLOCK OR ERROR
+1667               
+1668 002237  6772  CEFR,   DTRB            /READ "B" REGISTER
+1669 002240  7510          SPA             /ERROR?
+1670 002241  5361          JMP   PARIR     /PARITY ERROR, I GUESS
+1671               
+1672               /NO ERROR, END OF BLOCK?
+1673               
+1674 002242  7010          RAR             /FLAG TO THE LINK
+1675 002243  7620          SNL   CLA       /END?
+1676 002244  5224          JMP   CTST      /NO: CONTINUE CHECKING
+1677 002245  1152          TAD   DT0030    /CLEAR DECTAPE FLAG
+1678 002246  6764          DTXA            /AND RETURN TO SEARCH
+1679               
+1680               /END OF BLOCK. SEE IF END OF TAPE
+1681               
+1682 002247  1020          TAD   W1        /BLOCK NUMBER JUST TESTED
+1683 002250  2020  VISZ,   ISZ   W1        /+1 OR -1 TO BLOCK COUNT
+1684 002251  7410          SKP
+1685 002252  7402          HLT             /ABSOLUTE PANIC
+1686 002253  7041          CIA             /TO BE COMPARED WITH
+1687 002254  1026          TAD   BLOCKS    /TOTAL BLOCKS
+1688 002255  7640          SZA   CLA       /LAST?
+1689 002256  5210          JMP   DAB       /NO, DO ANOTHER BLOCK
+1690               
+1691               
+1692               /HERE PUT IN THE REVERSE CHECK
+1693               
+1694 002257  6771  DDSF,   DTSF            /WAIT FOR ANY FLAG TO APPEAR
+1695 002260  5257          JMP   .-1       /NOT YET
+1696 002261  7300          CLA   CLL       /RID  AC OF GARBAGE
+1697 002262  6772          DTRB            /READ THE "B" REGISTER
+1698 002263  0062          AND   C1000     /BETTER BE END ZONE
+1699 002264  7650          SNA   CLA       /IS IT?
+1700 002265  5363          JMP   LNE       /LAST INTERRUPT NOT END ZONE
+1701 002266  6766          DTCX            /YUP: A OK
+1702               /BLOCK NUMBERS AND DATA HAVE  BEEN CHECKED FORWARD
+1703               /AND ARE OK. USING THE ABOVE ROUTINE FOR CHECKING
+1704               /RESET A FEW THINGS AND CHECK IN REVERSE
+1705               
+1706               /WAS COMPLETION FOUND FORWARD? IF SO GO CHECK
+1707               /IN REVERSE; IF NOT GO SEE IF ALL TAPES HAVE BEEN CHECKED.
+1708               
+1709               
+1710 002267  1114          TAD   FCON      /IF 0'S, IT WAS FWD
+1711 002270  7640          SZA   CLA       /FWD?
+1712 002271  5711          JMP I   FINCHK  /N0: REVERSE-SEE IF ALL DTAS DONE
+1713               
+1714               /RESET THE ABOVE ROUTINE TO READ IN REVERSE
+1715               
+1716 002272  7040          CMA             /DATA WILL BE AS WRITTEN
+1717 002273  3114          DCA   FCON      /I.E., 7777'S
+1718 002274  1301          TAD   SJMP      /INSTEAD OF INCREMENTING
+1719 002275  3250          DCA   VISZ      /WE WILL DECREMENT BLOCK NUMBERS
+1720 002276  1026          TAD   BLOCKS    /STARTING WITH THE HIGHEST
+1721 002277  3020          DCA   W1        /AND WILL WORK TO ZERO
+1722 002300  5205          JMP   DBNAUX    /ALL SET, TRAVEL ONWARD
+1723               
+1724               /RETURN HERE AFTER EACH BLOCK FOR CHECKING WHEN LAST BLOCK
+1725               /HAS BEN PROCESSED????????????
+1726               
+1727 002301  5302  SJMP,   JMP   .+1
+1728 002302  7450          SNA             /IF AC = 0, WE ARE DONE
+1729 002303  5257          JMP   DDSF      /AND NEXT FLAG SHOULD BE END ZONE
+1730 002304  7041          CIA             /OTHERWISE, SUBTRACT ONE FROM
+1731 002305  7040          CMA             /BLOCKS GIVING BLOCKS-1......?
+1732 002306  3020          DCA   W1        /NOT DONE
+1733 002307  5210          JMP   DAB       /GO DO ANOTHER BLOCK
+1734               
+1735 002310  2020  ISZV,   ISZ   W1        /VARIABLE TAG
+1736 002311  2076  FINCHK, SETDTA
+1737               /BLOCK ERROR FOUND
+1738               
+1739 002312  1030  BLKERZ, TAD   DTA       /TO RESET TAPE 
+1740 002313  6766          DTCX            /MOTION
+1741 002314  1566          TAD I ADBA      /GET BAD BLOCK NUMBER
+1742 002315  4527          JMS I TYOCT     /AND TYPE IT OUT
+1743 002316  4331          JMS   TYSB      /TYPE "SHOULD BE"
+1744 002317  1020          TAD   W1        /GOOD BLOCK NUMBER
+1745 002320  4527          JMS I TYOCT     /TYPE IT OUT
+1746 002321  4530          JMS I TYPE
+1747 002322  4002          4002  / B
+1748 002323  1413          1413  /LK
+1749 002324  4005          4005  / E
+1750 002325  2243          2243  /R CR
+1751 002326  4500          4500  /LF+END
+1752 002327  5730  DBERZ,  JMP I .+1
+1753 002330  0730          ZCOM
+1754               
+1755               /COMMON ROUTINE
+1756               
+1757 002331  0000  TYSB,   0
+1758 002332  4530          JMS I TYPE
+1759 002333  4023          4023  / S
+1760 002334  1017          1017  /HO
+1761 002335  2514          2514  /UL
+1762 002336  0440          0440  /D 
+1763 002337  0205          0205  /BE
+1764 002340  4000          4000  / 0
+1765 002341  5731          JMP I TYSB
+1766               
+1767               /DATA ERROR
+1768               
+1769 002342  1030  DTAR,   TAD   DTA       /TO STOP TAPE
+1770 002343  6766          DTCX            /MOTION
+1771 002344  1567          TAD I ADWA      /GET THE BAD WORD
+1772 002345  4527          JMS I TYOCT
+1773 002346  4331          JMS TYSB        /TYPE "SHOULD BE"
+1774 002347  1114          TAD   FCON      /GOOD WORD
+1775 002350  4527          JMS I TYOCT     /TYPE IT OUT
+1776 002351  4530          JMS I TYPE
+1777 002352  4004          4004  /D
+1778 002353  0124          0124  /AT
+1779 002354  0140          0140  /A
+1780 002355  0522          0522  /ER
+1781 002356  4543          4543  /CR+LF
+1782 002357  0000          0000  /END
+1783 002360  5327          JMP   DBERZ
+1784               /PARITY ERROR FOUND
+1785               
+1786 002361  5762  PARIR,  JMP I .+1
+1787 002362  0645          ERROR           /MAIN ERROR ROUTINE
+1788               
+1789               /LAST INTERRUPT WAS NOT END ZONE
+1790               
+1791 002363  4530  LNE,    JMS I TYPE
+1792 002364  1401          1401  /LA
+1793 002365  2324          2324  /ST
+1794 002366  4011          4011  / I
+1795 002367  1624          1624  /NT
+1796 002370  4016          4016  / N
+1797 002371  1724          1724  /OT
+1798 002372  4005          4005  / E
+1799 002373  1724          1724  /OT
+1800 002374  4345          4345  /LF+CR
+1801 002375  0000          0000  /END
+1802 002376  5327          JMP   DBERZ
+1803                      *2400
+1804               / TYPE OUT THE DTA UNIT NUMBER AND THE FIRST 12 BLOCK
+1805               /NUMBERS IN EITHER DIRECTION. IF RDR, IN REVERSE
+1806               /IF RDF, TYPE THEM OUT GOING IN THE FORWARD
+1807               /DIRECTION FROM THE BEGINING OF TAPE
+1808               
+1809 002400  1047  RDFA,   TAD     C0400   /DIRECTION FOR TURNING
+1810 002401  3251          DCA     SAVEIT  /STORE DIRECTION FOR NEXT DTA UNIT
+1811 002402  1251          TAD     SAVEIT  /GET DIRECTION FOR TURNING
+1812 002403  4526          JMS I TURN      /AROUND
+1813 002404  1102          TAD   M14       /READ 12 BLOCK
+1814 002405  3022          DCA   W3        /COUNTER
+1815 002406  1110          TAD   BADD      /ADDRESS OF BUFFER
+1816 002407  3011          DCA   X2        /TO AUTO INDEX 2
+1817 002410  1107          TAD   ADW3      /ADDRESS OF W2
+1818 002411  3512          DCA I CA        /FOR DATA XFER
+1819 002412  4532          JMS I WAIT      /FOR BLOCK INTERRUPT
+1820 002413  1021          TAD   W2        /BLOCK NUMBER
+1821 002414  3411          DCA I X2        /STORE BLOCK NUMBER
+1822 002415  2022          ISZ   W3        /TOTAL = 12?
+1823 002416  5212          JMP   .-4       /NO: GRAB NEXT
+1824 002417  1030          TAD   DTA       /KILL TAPE MOTION
+1825 002420  6766          DTCX            /HERE
+1826               
+1827               /TYPE OUT BLOCK NUMBERS AND DTA UNIT #
+1828               
+1829 002421  4530          JMS I   TYPE    /TYPE "DTA"
+1830 002422  0424          0424    /DT
+1831 002423  0140          0140    /A
+1832 002424  0000          0000    /END
+1833 002425  1030          TAD     DTA     /GET UNIT #
+1834 002426  4527          JMS I   TYOCT   /AND TYPE IT OUT
+1835 002427  4530          JMS I   TYPE
+1836 002430  4345          4345    /CR&LF
+1837 002431  0000          0000    /END
+1838 002432  1102          TAD   M14       /WILL TYPE ALL
+1839 002433  3020          DCA   W1        /TWELVE WORDS
+1840 002434  1110          TAD   BADD      /ADDRESS OF BLOCK
+1841 002435  3011          DCA   X2        /NUMBERS TO INDEX 2
+1842 002436  1411          TAD I X2        /FIRST OR NEXT BLOCK
+1843 002437  4527          JMS I TYOCT     /TYPE IT OUT
+1844 002440  4530          JMS I TYPE      /CR AND LINE FEED
+1845 002441  4345          4345  /CR+LF
+1846 002442  0000          0000
+1847 002443  2020          ISZ     W1      /COMPLETE?
+1848 002444  5236          JMP   .-6       /NO
+1849 002445  4652          JMS I   NEWDTA  /YES: ANY MORE DTAS?
+1850 002446  5202          JMP     RDFA+2  /YES: GO GET BLOCK #S
+1851 002447  5515          JMP I   IT      /NO: GO ASK FOR "DIRECT?"
+1852 002450  5201  RDR,    JMP   RDFA+1    /OTHER DIRECTION
+1853               
+1854 002451  0000  SAVEIT, 0       /TEM. STORAGE FOR DIRECTION
+1855 002452  1710  NEWDTA, NUDTA   /POINTER TO SUBR. TO GET A NEW DTA UNIT #
+1856               
+1857               /INPUT BUFFER FOR THE TELETYPE.
+1858               /NOTE ,,,,,,,THIS MUST BE AT THE END OF THE PROGRAM
+1859               
+1860 002453  0000  BUFFER, 0000
+1861               
+1862               $
+
+AD7777  2071
+ADBA    0166
+ADF3    2065
+ADW2    0106 unreferenced
+ADW3    0107
+ADWA    0167
+ADWAB   0170
+BADD    0110
+BFR     0111
+BINCON  0171
+BLKERZ  2312
+BLOCKA  0027
+BLOCKS  0026
+BUFFER  2453
+C0007   0045
+C0017   0042
+C0030   0046 unreferenced
+C0070   0043
+C0077   0044
+C0400   0047
+C0700   0050
+C0777   0644
+C1      0036
+C1000   0062
+C1101   1574
+C1620   0063
+C2      0037
+C201    0052
+C203    0051
+C210    0053 unreferenced
+C212    0253
+C215    0254
+C245    0255
+C260    0054
+C261    0055
+C267    0056 unreferenced
+C270    0057
+C271    0060
+C277    0061
+C3      0040
+C340    0252
+C4      0041
+C6060   2144
+C7000   0064
+C7700   0065
+C7714   0066
+C7761   0067
+C7772   0070 unreferenced
+C7775   0071 unreferenced
+CA      0112
+CDTRD   1357
+CEFR    2237
+CERR    0344
+CEZ     1407
+CEZB    2042
+CEZN    2034
+CHKSP   0305
+CIZ     1371
+COMCHK  1744
+COMCTR  1761
+COMPAR  0113
+COMPRE  0324
+CONC    0543
+CONTNU  2102
+CRCHK   1027
+CRCOD   0072
+CRFLAG  1160
+CTST    2224
+DAB     2210
+DBERZ   2327
+DBN     2200
+DBNAUX  2205
+DBUFAD  1763
+DBUFPT  0134
+DCTR    1762
+DDSF    2257
+DIV3    1244
+DNC     1203
+DNUM    1764
+DOBLK   2000
+DOCOMP  1752
+DOMARK  1707
+DT0030  0152
+DT0060  0153
+DT0070  0154
+DT0100  0155 unreferenced
+DT0130  0156
+DT0140  0157
+DT0200  0160
+DT0210  0161
+DT0360  0162
+DT0510  0163 unreferenced
+DT0600  0164
+DT0610  0165
+DTA     0030
+DTABUF  1732
+DTAR    2342
+DTCA    6762 unreferenced
+DTCX    6766
+DTLB    6774
+DTRA    6761 unreferenced
+DTRB    6772
+DTRK    1447
+DTSF    6771
+DTXA    6764
+DZ      1535
+ERROR   0645
+ERX     0031
+EZM     1554
+F10BAK  1572 unreferenced
+F10PAT  1560
+F10RTN  1306
+FBM     1522
+FCON    0114
+FEZ     1541
+FINCHK  2311
+FORM    0527
+FORM10  1375
+FORMA   0116
+FORMB   0117
+GDBLK   1706
+GDBN    2064
+GDTA    2101
+GETDTA  1157
+GRZ     1550
+IBS     1242
+IBZ     1516
+INBLSY  1424
+INIT    1073
+INIT1   1067
+ISZV    2310
+IT      0115
+LETK    0073
+LFCOD   0074
+LNE     2363
+LSTEND  1723
+LSTPT   1731
+M14     0102
+M144    0103
+M2      0075
+M3      0076
+M300    0104
+M4      0077 unreferenced
+M40     0251
+M6      0100
+M617    1573
+M7      0101
+MARK    1200
+MES     0454
+MESAGE  0200
+MESS    0124
+MSRGHT  0217
+MSTALL  1627
+MTP     0244
+MWTM    1600
+NEWDTA  2452
+NEXTBN  2010
+NTYRTN  0263
+NUDTA   1710
+OKCR    1056
+PARIR   2361
+PFORM   0776
+PHASE   0032
+PSER    1622
+Q1      0400
+Q2      0410
+Q3      0422
+Q4      0434
+QU      0143
+QU1     0120
+QU2     0121
+QU3     0122
+QU4     0123
+QUX     0447
+RCYBR   1654
+RDFA    2400
+RDR     2450
+REPEAT  1735
+RERR    0622
+REZ     1512
+RSEND   0135
+RSTSM   1353
+RSYC    0600
+RTNS    0567
+RZ      1733
+SAVEIT  2451
+SETDTA  2076
+SJMP    2301
+SPCOD   0105
+STALL   0612
+START   1012
+START0  1000 unreferenced
+STMK    1400
+STRTPT  1727
+STX     0125
+TBUFPT  1730
+TFORM   0742
+TOTAL   0033
+TRN     0625
+TURN    0126
+TW1     2143
+TYCT    2103
+TYCT1   2136
+TYOCT   0127
+TYPE    0130
+TYPECH  0220
+TYPIN   0131
+TYPN    0256
+TYQU    1015
+TYSB    2331
+V1      0533
+V2      0534
+V3      0540
+V4      0541
+VALCHK  1035 unreferenced
+VAR1    0034
+VAR2    0035
+VISZ    2250
+W1      0020
+W2      0021
+W3      0022
+W4      0023
+W5      0024
+W6      0025
+WAIT    0132
+WBN     2051
+WC      0133
+WDZ     1435
+WEZF    1501
+WLMRF   1526
+X1      0010
+X2      0011
+ZCOM    0730
+ZEOT    0664
+ZFORM   0762
+ZMKTK   0677
+ZPAR    0707
+ZSEL    0715
+ZTIM    0723

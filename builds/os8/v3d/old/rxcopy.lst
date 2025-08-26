@@ -1,0 +1,1387 @@
+   1               / RXCOPY FOR OS/8 V3D AND OS/78 V1A
+   2               /
+   3               / THIS SOFTWARE IS FURNISHED UNDER A LICENSE FOR USE ONLY ON A
+   4               / SINGLE COMPUTER SYSTEM AND MAY BE COPIED ONLY WITH THE INCLUSION
+   5               / OF THE ABOVE SOPYRIGHT NOTICE.  THIS SOFTWARE, OR ANY THEREOF,
+   6               / MAY NOT BE PROVIDED OR OTHERWISE MADE AVAILABLE TO ANY OTHER
+   7               / PERSON EXCEPT FOR USE ON SUCH SYSTEM AND TO ONE WHO AGREES TO
+   8               / THESE LICENSE TERMS. TITLE TO AND OWNERSHIP OF THE SOFTWARE
+   9               / SHALL AT ALL TIMES REMAIN IN DEC.
+  10               /
+  11               / THE INFORMATION IN THIS SOFTWARE IS SUBJECT TO CHANGE WITHOUT
+  12               / NOTICE AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL
+  13               / EQUIPMENT CORPORATION.
+  14               /
+  15               / DEC ASSUMES NO RESPONSIBILITY FOR THE USE OR RELIABILITY OF ITS
+  16               / SOFTWARE ON EQUIPMENT WHICH IS NOT SUPPLIED BY DEC.
+  17               /
+  18               
+  19               /
+  20               / VERSION V4A   M.H.    MAY 20, 1977
+  21               /               S.R.    MAY 20, 1977
+  22               /
+  23               / START ADDRESS 16000;  JSW 7403
+  24               /
+  25               / THIS PROGRAM PERFORMS COPY, READ, AND COMPARE OPERATIONS ON
+  26               / RX FLOPPY DISKS ON A TRACK BY TRACK BASIS.  THE COMMAND FORMAT
+  27               / IS:   DEV:<DEV:/OPTION   WHERE OPTIONS ARE P, N, M, R, OR V.
+  28               /P      PAUSE BEFORE AND AFTER ACCESSING DISK
+  29               /M      MATCH WITH NO IMPLIED COPY
+  30               /N      COPY WITH NO IMPLIED MATCH
+  31               /R      READ OUTPUT DEVICE WITH NO IMPLIED MATCH OR COPY
+  32               /V      PRINT VERSION NUMBER
+  33               /C      (NOT DOCUMENTED) COPY
+  34               / IF NO OPTIONS ARE EXPLICITYLY DECLARED, COPY AND MATCH ARE ASSUMED.
+  35               / IF THE R OPTION IS THE ONLY DISK ACCESSING OPTION SELECTED, THE
+  36               / FOLLOWING FORMATS WORK: DEV:/R  DEV:</R   <DEV:/R.
+  37               / 
+  38               
+  39               MAGIC=7623              /LOCATION IN RX SYSTEM HANDLER WITH A 7004 IF
+  40                                       /UNIT 0 OR A 7024 IF UNIT 1.  THIS IS ONLY
+  41                                       /ACCESSED IF THE USER USES SYS: IN THE COMMAND
+  42                                       /STRING AND SYS: IS KNOWN TO BE AN RX!!
+  43               OPT1=7643               /1ST COMMAND DECODER OPTION WORD
+  44               OPT2=7644               /2ND COMMAND DECODER OPTION WORD
+  45               BUFF=2000               /INPUT BUFFER FOR TTY MSGS
+  46               DEVTYP=25               /DEVICE CODE FOR FLOPPY DISKS
+  47               BSIZE=6400              /BUFFER SIZE IN OCTAL WORDS
+  48               BSTART=20               /BUFFER START
+  49               BHALF=BSIZE%2           /HALF OF BSIZE
+  50               USR=200                 /ENTRY POINT OF USR
+  51               NOMAT=2000              /NO MATCH OPTION MASK
+  52               COPY=1000               /COPY OPTION MASK
+  53               MMATCH=3777             /CMA OF MATCH OPTION MASK
+  54               MCOPY=6777              /CMA OF COPY OPTION MASK
+  55               MATCH=4000              /MATCH OPTION MASK
+  56               READ=0100               /READ OPTION MASK
+  57               VERSION=0004            /VERSION OPTION MASK
+  58               PAUS=0400               /PAUSE OPTION MASK
+  59               
+  60               /       RXCOPY  READ-WRITE SUBROUTINE
+  61               /
+  62                       *6420
+  63               /
+  64               /  READ-WRITE SUBROUTINE TO HANDLE FLOPPY DISK IN 8-BIT MODE
+  65               /  ROUTINE LIVES IN FIELD 0 TO BE CALLED FROM FIELD 10
+  66               /
+  67               /  CALLING SEQUENCE
+  68               /
+  69               /       CIF 0           /ASSUMED CDF 10, CALLED FROM FIELD 10
+  70               /       TAD     TRACK   /TRACK # INTO AC
+  71               /       JMS I   (RW
+  72               /       BITS            /4000 IF FIELD 10 BUFFER, 2 IF READ, 20 IF UNIT 1
+  73               /       OK RETURN       /CDF AND CIF TO 10
+  74               /       ERROR           /SECTOR # IN AC
+  75               /
+  76               /  READS OR WRITES A TRACK AT A TIME. TWO BUFFERS LIVE IN 20-6417
+  77               /  EACH OF FIELD 0 AND 10
+  78               /
+  79               / USES AUTO-INCREMENT REGISTER 10 OF FIELD 0
+  80               X10=10
+  81               /
+  82               /  AN ALTERNATE ENTRY OF CONTIN (JMP NOT JMS) CAUSES THE
+  83               /  SUBROUTINE TO CONTINUE WORKING ON THE SAME TRACK ON WHICH THE
+  84               /  ERROR OCCURRED.
+  85               /
+  86               /  THREE RETRIES ARE DONE ON A SECTOR BEFORE AN ERROR IS DECLARED.
+  87               /
+  88               SDN=6755
+  89               LCD=6751
+  90               STR=6753
+  91               XDR=6752
+  92               SER=6754
+  93               FLINIT=6757
+  94               /
+  95               /
+  96               /  USE PART OF PAGE AT 6400 TO SPREAD OUT WRITE LOOP
+  97               /  FOR A LITTLE EXTRA SAFETY ON MAKING INTERLEAVE TIMING
+  98               /
+  99 006420  1377  WRIT1,  TAD     (-10    /8 TIMES THRU 16 BYTE > 128
+ 100 006421  3345          DCA     WRTCNT
+ 101 006422  1410  ST4,    TAD I   X10     /FETCH A BYTE
+ 102 006423  6753          STR             /SKIP IF READY TO TRANSFER
+ 103 006424  5223          JMP     .-1     /NO (SHOULDN'T HIT THIS ON VT78)
+ 104 006425  6752          XDR             /MOVE BYTE TO SILO
+ 105 006426  7200          CLA             /CLEAR THE MUMBLE AC
+ 106 006427  1410          TAD I   X10
+ 107 006430  6753          STR
+ 108 006431  5230          JMP     .-1
+ 109 006432  6752          XDR
+ 110 006433  7200          CLA
+ 111 006434  1410          TAD I   X10
+ 112 006435  6753          STR
+ 113 006436  5235          JMP     .-1
+ 114 006437  6752          XDR
+ 115 006440  7200          CLA
+ 116 006441  1410          TAD I   X10
+ 117 006442  6753          STR
+ 118 006443  5242          JMP     .-1
+ 119 006444  6752          XDR
+ 120 006445  7200          CLA
+ 121 006446  1410          TAD I   X10
+ 122 006447  6753          STR
+ 123 006450  5247          JMP     .-1
+ 124 006451  6752          XDR
+ 125 006452  7200          CLA
+ 126 006453  1410          TAD I   X10
+ 127 006454  6753          STR
+ 128 006455  5254          JMP     .-1
+ 129 006456  6752          XDR
+ 130 006457  7200          CLA
+ 131 006460  1410          TAD I   X10
+ 132 006461  6753          STR
+ 133 006462  5261          JMP     .-1
+ 134 006463  6752          XDR
+ 135 006464  7200          CLA
+ 136 006465  1410          TAD I   X10
+ 137 006466  6753          STR
+ 138 006467  5266          JMP     .-1
+ 139 006470  6752          XDR
+ 140 006471  7200          CLA
+ 141 006472  1410          TAD I   X10
+ 142 006473  6753          STR
+ 143 006474  5273          JMP     .-1
+ 144 006475  6752          XDR
+ 145 006476  7200          CLA
+ 146 006477  1410          TAD I   X10
+ 147 006500  6753          STR
+ 148 006501  5300          JMP     .-1
+ 149 006502  6752          XDR
+ 150 006503  7200          CLA
+ 151 006504  1410          TAD I   X10
+ 152 006505  6753          STR
+ 153 006506  5305          JMP     .-1
+ 154 006507  6752          XDR
+ 155 006510  7200          CLA
+ 156 006511  1410          TAD I   X10
+ 157 006512  6753          STR
+ 158 006513  5312          JMP     .-1
+ 159 006514  6752          XDR
+ 160 006515  7200          CLA
+ 161 006516  1410          TAD I   X10
+ 162 006517  6753          STR
+ 163 006520  5317          JMP     .-1
+ 164 006521  6752          XDR
+ 165 006522  7200          CLA
+ 166 006523  1410          TAD I   X10
+ 167 006524  6753          STR
+ 168 006525  5324          JMP     .-1
+ 169 006526  6752          XDR
+ 170 006527  7200          CLA
+ 171 006530  1410          TAD I   X10
+ 172 006531  6753          STR
+ 173 006532  5331          JMP     .-1
+ 174 006533  6752          XDR
+ 175 006534  7200          CLA
+ 176 006535  1410          TAD I   X10
+ 177 006536  6753          STR
+ 178 006537  5336          JMP     .-1
+ 179 006540  6752          XDR
+ 180 006541  7200          CLA
+ 181 006542  2345          ISZ     WRTCNT  /THRU WITH SILO?
+ 182 006543  5222          JMP     ST4     /NO
+ 183 006544  5776          JMP     WRIT2   /REST OF LOOP ON OTHER PAGE
+ 184               /
+ 185 006545  0000  WRTCNT, 0               /CONTROL COUNT FOR FILL SILO LOOP
+ 186               /
+ 187 006576  6625          PAGE
+     006577  7770  
+ 188               /
+ 189               /
+ 190               /  READ-WRITE ENTRY POINT
+ 191               /
+ 192               /
+ 193 006600  0000  RW,     0
+ 194 006601  3354          DCA     TRCKNO  /ARRIVES WITH TRACK # IN AC
+ 195 006602  1600          TAD I   RW      /DATA FIELD 10, FETCH CONTROL BITS
+ 196 006603  1345          TAD     L7100   /FLOPPY CONTROLLER IGNORES TOP 4 BITS; 100
+ 197               /                       /BIT IS 8 BIT MODE; CONTROL FOR UNIT, R/W, IN PLACE
+ 198 006604  3356          DCA     FN      /BUFFER BIT (COMPLEMENTED) ALSO STORED IN FN
+ 199 006605  1377          TAD     (17     /SET UP AUTO-INCR REG.
+ 200 006606  3010          DCA     X10
+ 201 006607  1376          TAD     (-32    /26 DECIMAL SECTORS PER TRACK
+ 202 006610  3355          DCA     SECTOR
+ 203 006611  2200          ISZ     RW      /POINT TO OK EXIT
+ 204 006612  1356          TAD     FN      /IF FIELD ZERO BUFFER, NEED TO CDF
+ 205 006613  7510          SPA             /SKIP ON FIELD 10 BUFFER, ALREADY SET!
+ 206 006614  6201          CDF 0
+ 207 006615  7012          RTR             /READ/WRITE BIT TO LINK
+ 208 006616  7630          SZL CLA         /SKIP IF WRITE
+ 209 006617  5232          JMP     READLP  /GO TO READ
+ 210               /
+ 211               /  WRITE LOOP
+ 212               /
+ 213 006620  7346  WRITLP, CLL CLA CMA RTL /LITERAL -3 FOR RETRY COUNT
+ 214 006621  3357          DCA     RETRY
+ 215 006622  1356  WRTRY,  TAD     FN      /RETRY ERROR HERE THREE TIMES
+ 216 006623  4307          JMS     LDCMD
+ 217 006624  5775          JMP     WRIT1   /OTHER PAGE TO MOVE DATA TO SILO
+ 218 006625  4266  WRIT2,  JMS     DOIO    /RETURN FROM OTHER PAGE TO ACCESS I/O
+ 219 006626  2355          ISZ     SECTOR
+ 220 006627  5220          JMP     WRITLP
+ 221 006630  6213  XT1,    CDF CIF 10
+ 222 006631  5600          JMP I   RW
+ 223               /
+ 224               /  READ LOOP
+ 225               /
+ 226 006632  7346  READLP, CLL CLA CMA RTL /LITERAL -3 FOR RETRY COUNT
+ 227 006633  3357          DCA     RETRY
+ 228 006634  4266  RDTRY,  JMS     DOIO    /COME HERE TO RETRY I/O
+ 229 006635  1356          TAD     FN
+ 230 006636  4307          JMS     LDCMD
+ 231 006637  1374          TAD     (-40    /32 PASSES THRU 4 BYTES MOVED
+ 232 006640  3307          DCA     FLEA
+ 233 006641  6753  ST5,    STR
+ 234 006642  5241          JMP     .-1
+ 235 006643  6752          XDR
+ 236 006644  3410          DCA I   X10
+ 237 006645  6753          STR
+ 238 006646  5245          JMP     .-1
+ 239 006647  6752          XDR
+ 240 006650  3410          DCA I   X10
+ 241 006651  6753          STR
+ 242 006652  5251          JMP     .-1
+ 243 006653  6752          XDR
+ 244 006654  3410          DCA I   X10
+ 245 006655  6753          STR
+ 246 006656  5255          JMP     .-1
+ 247 006657  6752          XDR
+ 248 006660  3410          DCA I   X10
+ 249 006661  2307          ISZ     FLEA
+ 250 006662  5241          JMP     ST5
+ 251 006663  2355          ISZ     SECTOR
+ 252 006664  5232          JMP     READLP
+ 253 006665  5230          JMP     XT1
+ 254               /
+ 255               /  DO READ OR WRITE I/O FUNCTION
+ 256               /
+ 257 006666  0000  DOIO,   0
+ 258 006667  1356          TAD     FN      /SILO FUNCTION, CONVERTED TO READ-WRITE
+ 259 006670  1353          TAD     L7004   /BY LITERAL 4 (TOP FOUR BITS IRREL)
+ 260 006671  4307          JMS     LDCMD
+ 261 006672  4342          JMS     GETSEC  /FETCH SECTOR TO AC
+ 262 006673  6753          STR
+ 263 006674  5273          JMP     .-1
+ 264 006675  6752          XDR
+ 265 006676  7200          CLA
+ 266 006677  1354          TAD     TRCKNO
+ 267 006700  6753          STR
+ 268 006701  5300          JMP     .-1
+ 269 006702  6752          XDR
+ 270 006703  7200          CLA
+ 271 006704  1346          TAD     L7530   /UNIT 1, 8-BIT NO-OP (TOP 4 BITS IGNORED)
+ 272 006705  4307          JMS     LDCMD
+ 273 006706  5666          JMP I   DOIO
+ 274               /
+ 275               /  LOAD COMMAND REGISTER
+ 276               /
+ 277               FLEA=.
+ 278 006707  0000  LDCMD,  0
+ 279 006710  6755          SDN             /SKIP ON DONE
+ 280 006711  5310          JMP     .-1
+ 281 006712  6751          LCD             /LOAD COMMAND
+ 282 006713  6754          SER             /SKIP ON ERROR
+ 283 006714  5707          JMP I   LDCMD
+ 284 006715  2357          ISZ     RETRY   /TRIED THREE TIMES YET
+ 285 006716  5331          JMP     KEEPON  /NO, KEEP ON TRYING
+ 286 006717  4342          JMS     GETSEC  /RETURN SECTOR IN AC
+ 287 006720  2200          ISZ     RW      /ON ERROR, RETURN ONE FURTHER DOWN
+ 288 006721  5230          JMP     XT1     /EXIT TO CALLER WITH SECTOR # IN AC
+ 289               /
+ 290               /  ENTRY TO CONTINUE AFTER ERROR
+ 291               /
+ 292 006722  7240  CONTIN, STA             /BACK UP EXIT TO GOOD EXIT
+ 293 006723  1200          TAD     RW
+ 294 006724  3200          DCA     RW
+ 295 006725  1356          TAD     FN      /SET DATA FIELD TO 0 IF NECESSARY
+ 296 006726  7710          SPA CLA         /ALREADY CDF TO 10, SKIP IF OK
+ 297 006727  6201          CDF 0           /NO, SO SET TO 0
+ 298 006730  5707          JMP I   LDCMD   /PRETEND OPERATION OK, SO RETURN THRU LDCMD!
+ 299               /
+ 300 006731  6757  KEEPON, FLINIT          /DO A RECAL TO SHAKE IT UP
+ 301 006732  1356          TAD     FN      /RETRYING READ OR WRITE
+ 302 006733  7012          RTR             /R/W BIT TO LINK
+ 303 006734  7630          SZL CLA         /SKIP ON WRITE
+ 304 006735  5234          JMP     RDTRY   /RETRY A READ
+ 305 006736  1373          TAD     (-200   /BACK UP AUTO INCR TO REFILL SILO FOR WRITE
+ 306 006737  1010          TAD     X10     /SINCE THE FLINIT CLEARED SILO
+ 307 006740  3010          DCA     X10
+ 308 006741  5222          JMP     WRTRY   /SO GO RETRY WRITE
+ 309               /
+ 310               /  CONVERT COUNT TO SECTOR
+ 311               /
+ 312 006742  0000  GETSEC, 0
+ 313 006743  1355          TAD     SECTOR  /CONVERT -32 TO -1 TO INTERLEAVED SECTOR
+ 314 006744  1372          TAD     (15
+ 315 006745  7100  L7100,  CLL             /100 BIT SETS 8-BIT MODE, AS LITERAL
+ 316 006746  7530  L7530,  SPA SZL         /SZL JUST TO MAKE CORRECT LITERAL, NO-OP WAIT
+ 317 006747  1372          TAD     (15
+ 318 006750  7024          CML RAL
+ 319 006751  7001          IAC
+ 320 006752  5742          JMP I   GETSEC
+ 321 006753  7004  L7004,  7004
+ 322               /
+ 323               /
+ 324               /
+ 325 006754  0000  TRCKNO, 0               /TRACK NUMBER, INVARIANT THRU CALL
+ 326 006755  0000  SECTOR, 0               /COUNTS -32 UP TO 0; 26 DECIMAL SECTORS PER TRACK
+ 327 006756  0000  FN,     0               /FUNCTION BITS: ALWAYS 100 FOR 8BIT MODE
+ 328               /                       /20 IF UNIT 1
+ 329               /                       /2 IF READ OPERATION (2 IS SILO FETCH; 0 SILO FILL)
+ 330               /                       /MINUS WORD IF BUFFER IN FIELD 0, PLUS IF FIELD 10
+ 331               /                       /CONTROLLER IGNORES TOP 4 BITS OF WORD
+ 332 006757  0000  RETRY,  0               /RETRY COUNTER -3 TO 0
+ 333 006772  0015         FIELD   1
+     006773  7600  
+     006774  7740  
+     006775  6420  
+     006776  7746  
+     006777  0017  
+ 334                       *6000
+ 335               /
+ 336               / ***** BEGIN ONCE ONLY CODE *****
+ 337               /
+ 338               /
+ 339               / ENTER HERE AND GET USER INPUTS
+ 340               /
+ 341 016000  7610  START,  CLA!SKP                 /NORMAL ENTRY (MUST CALL DECODER)
+ 342 016001  5206  CHAIN,  JMP     NODEC           /CHAIN ENTRY
+ 343 016002  4777          JMS I   (USR            /CALL IT
+ 344 016003  0005          5
+ 345 016004  5200          5200                    /DEFAULT INPUT EXT.(SPECIAL MODE)
+ 346 016005  0000          0                       /PRESERVE TENTATIVE FILES
+ 347               /
+ 348               / LOAD CONSOLE TTY HANDLER
+ 349               /
+ 350 016006  4777  NODEC,  JMS I   (USR            /LOAD THE KL8E HANDLER
+ 351 016007  0001          1
+ 352 016010  2424          DEVICE  TTY
+     016011  3100  
+ 353 016012  7201  TTYEP,  7201
+ 354 016013  5310          JMP     ERRUSR          /PRINT USER ERROR
+ 355 016014  1212          TAD     TTYEP           /MOVE ENTRY POINT FROM THIS PAGE
+ 356 016015  3776          DCA     TTYENT
+ 357               /
+ 358               / LOAD OUTPUT DEVICE IF SPECIFIED
+ 359               /
+ 360 016016  4775          JMS     CTRLC           /CHECK FOR CONTROL C TYPE-IN
+ 361 016017  1774          TAD I   (7600           /GET OUTPUT DEV
+ 362 016020  0373          AND     (17
+ 363 016021  3301          DCA     OUTDEV
+ 364 016022  1772          TAD I   (7605           /GET INPUT DEVICE
+ 365 016023  0373          AND     (17
+ 366 016024  3302          DCA     INDEV
+ 367 016025  1301          TAD     OUTDEV          /IF NO OUTPUT DEVICE
+ 368 016026  7440          SZA                     /IS NAMED MOVE INPUT
+ 369 016027  5233          JMP     LOC10           /TO OUTPUT DEVICE
+ 370 016030  1302          TAD     INDEV           /MOVE IT!
+ 371 016031  3301          DCA     OUTDEV
+ 372 016032  3302          DCA     INDEV           /ZERO INPUT DEVICE
+ 373               /
+ 374               / VALIDATE OUTPUT DEVICES AND FILES
+ 375               /
+ 376 016033  4775  LOC10,  JMS     CTRLC           /CHECK FOR CONTROL C
+ 377 016034  1371          TAD     (7601           /MAKE SURE THAT THERE ARE NO OUTPUT FILES
+ 378 016035  3303          DCA     TMP1            /OR OTHER OUTPUT DEVICES
+ 379 016036  1370          TAD     (-4
+ 380 016037  3304          DCA     TMP2
+ 381 016040  1703  LOC1,   TAD I   TMP1            /GET DECODER ENTRY 
+ 382 016041  7640          SZA!CLA                 /IS IT ZERO?
+ 383 016042  5305          JMP     ERR2            /NO -- ERROR
+ 384 016043  2303          ISZ     TMP1            /INCREMENT POINTER
+ 385 016044  2304          ISZ     TMP2            /YES -- DONE WITH OUTPUT ENTRIES?
+ 386 016045  5240          JMP     LOC1            /NO -- PROCEED
+ 387                                               /YES --
+ 388               /
+ 389 016046  4775          JMS     CTRLC           /CHECK FOR CONTROL C
+ 390 016047  1772          TAD I   (7605           /WAS THERE ANY INPUT SPECIFICATION?
+ 391 016050  7450          SNA
+ 392 016051  5264          JMP     LOC3A           /NO
+ 393 016052  1367          TAD     (7606           /YES -- MAKE SURE THAT THERE ARE NO INPUT FILES
+ 394 016053  3303          DCA     TMP1            /OR OTHER INPUT DEVICES
+ 395 016054  1366          TAD     (-5
+ 396 016055  3304          DCA     TMP2
+ 397 016056  1703  LOC2,   TAD I   TMP1            /GET DECODER ENTRY
+ 398 016057  7640          SZA!CLA                 /IS IT ZERO?
+ 399 016060  5305          JMP     ERR2            /NO -- ERROR
+ 400 016061  2303          ISZ     TMP1            /INCREMENT POINTER
+ 401 016062  2304          ISZ     TMP2            /YES -- DONE WITH INPUT ENTRIES?
+ 402 016063  5256          JMP     LOC2            /NO -- PROCEED
+ 403                                               /YES --
+ 404               /
+ 405 016064  4777  LOC3A,  JMS I   (USR            /LOAD RXA0 AND RXA1 SO UNIT NUMBERS CAN
+ 406 016065  0001          1                       /BE FOUND.
+ 407 016066  2230          DEVICE  RXA0
+     016067  0160  
+ 408 016070  0200  RX0EP,  200
+ 409 016071  7000          NOP
+ 410 016072  4777          JMS I   (USR
+ 411 016073  0001          1
+ 412 016074  2230          DEVICE  RXA1
+     016075  0161  
+ 413 016076  0200  RX1EP,  200
+ 414 016077  7000          NOP
+ 415 016100  5765          JMP     LOC3            /GO TO NEXT PAGE
+ 416               /
+ 417 016101  0000  OUTDEV, 0                       /OUTPUT DEVICE NUMBER
+ 418 016102  0000  INDEV,  0                       /INPUT DEVICE NUMBER
+ 419 016103  0000  TMP1,   0                       /TEMP STORE
+ 420 016104  0000  TMP2,   0                       /TEMP STORE
+ 421               /
+ 422 016105  1364  ERR2,   TAD     (MSG2           /ILLEGAL SPECIFICATION
+ 423 016106  4763  PERR,   JMS     TYPE            /PRINT ERROR MESSAGE
+ 424 016107  5762          JMP     EXIT            /LEAVE
+ 425               /
+ 426 016110  4777  ERRUSR, JMS I   (USR            /PRINT USER ERROR
+ 427 016111  0007          7
+ 428 016112  0002          2
+ 429 016113  5762          JMP     EXIT
+ 430               /
+ 431               / SUBROUTINE UNIT -- FIND OUT WHAT THE UNIT NUMBER IS
+ 432               /                       ON ENTRY AC HAS DEVICE NUMBER
+ 433               /                       ON EXIT AC HAS 0 IFF UNIT 0 OR 0020 IFF UNIT 1
+ 434               /
+ 435 016114  0000  UNIT,   0
+ 436 016115  3303          DCA     TMP1            /SAVE DEVICE NUMBER
+ 437 016116  7240          CLA!CMA
+ 438 016117  1303          TAD     TMP1            /IS DEVICE SYS:?(I.E. IS DEV NUM=1?)
+ 439 016120  7640          SZA!CLA
+ 440 016121  5327          JMP     UNITNS          /NO
+ 441 016122  6201  UNITSY, CDF     0               /YES -- FIND OUT WHICH UNIT IS SYS:
+ 442 016123  1761          TAD I   (MAGIC          /GUT HOOK RX SYSTEM HANDLER********
+ 443 016124  6211          CDF     10
+ 444 016125  0360          AND     (0020           /IF AC IS 0 ITS UNIT 0
+ 445 016126  5714          JMP I   UNIT
+ 446 016127  1303  UNITNS, TAD     TMP1            /GET INFO ON DEVICE NUMBER
+ 447 016130  4777          JMS I   (USR
+ 448 016131  0012          12
+ 449 016132  0000  UNITIN, 0
+ 450 016133  5757          JMP     ERR3            /SAY DEVICE IS NOT RX IF ERROR HERE
+ 451 016134  1332          TAD     UNITIN          /IS DEV SYS: IN DISGUISE?
+ 452 016135  7004          RAL
+ 453 016136  7630          SZL!CLA
+ 454 016137  5322          JMP     UNITSY          /YES -- GO DIG OUT THE UNIT NUM.
+ 455 016140  1332          TAD     UNITIN          /NO -- DOES EP MATCH RXA0'S
+ 456 016141  7041          CMA!IAC
+ 457 016142  1270          TAD     RX0EP
+ 458 016143  7650          SNA!CLA
+ 459 016144  5714          JMP I   UNIT            /YES
+ 460 016145  1332          TAD     UNITIN          /NO -- CHECK RXA1
+ 461 016146  7041          CMA!IAC
+ 462 016147  1276          TAD     RX1EP
+ 463 016150  7640          SZA!CLA
+ 464 016151  5757          JMP     ERR3            /NO -- ERROR
+ 465 016152  1360          TAD     (20             /YES
+ 466 016153  5714          JMP I   UNIT
+ 467               
+ 468               /
+ 469 016157  6332          PAGE
+     016160  0020  
+     016161  7623  
+     016162  6535  
+     016163  6737  
+     016164  7064  
+     016165  6200  
+     016166  7773  
+     016167  7606  
+     016170  7774  
+     016171  7601  
+     016172  7605  
+     016173  0017  
+     016174  7600  
+     016175  6523  
+     016176  6761  
+     016177  0200  
+ 470               /
+ 471               
+ 472               /
+ 473               / CHECK THAT REQ'D DEVICES WERE SPECIFIED FOR OPTIONS SELECTED
+ 474               /
+ 475 016200  4322  LOC3,   JMS     OUTD            /CHECK THAT OUTPUT DEVICE  WAS GIVEN
+ 476 016201  1777          TAD I   (OPT2           /IF COPY OR MATCH, CHECK FOR INPUT DEV
+ 477 016202  0376          AND     (NOMAT!MATCH
+ 478 016203  7640          SZA!CLA
+ 479 016204  4315          JMS     IND
+ 480 016205  1777          TAD I   (OPT2           /IF NOT READ OPTION, CHECK FOR INPUT DEV
+ 481 016206  0375          AND     (READ
+ 482 016207  7650          SNA!CLA
+ 483 016210  4315          JMS     IND
+ 484               /
+ 485               / PRINT VERSION IF SELECTED
+ 486               /
+ 487 016211  4774  VERS,   JMS     CTRLC           /CHECK FOR CONTROL C
+ 488 016212  1777          TAD I   (OPT2           /SHOULD VERSION NUMBER BE PRINTED?
+ 489 016213  0373          AND     (VERSION
+ 490 016214  7650          SNA!CLA
+ 491 016215  5220          JMP     TRANS           /NO -- GO CHECK THAT DEVS ARE RXS
+ 492 016216  1372          TAD     (VERBUF         /YES -- PRINT MESSAGE
+ 493 016217  4771          JMS     TYPE
+ 494               /
+ 495               / PREPARE FOR DATA TRANSFER
+ 496               /
+ 497 016220  1777  TRANS,  TAD I   (OPT2           /SET C SWITCH IF COPY REQ'D
+ 498 016221  0370          AND     (MATCH!READ
+ 499 016222  7650          SNA!CLA
+ 500 016223  5230          JMP     TRANSB
+ 501 016224  1777          TAD I   (OPT2
+ 502 016225  0367          AND     (NOMAT
+ 503 016226  7650          SNA!CLA
+ 504 016227  5234          JMP     TRANSA          /DON'T SET C SWITCH
+ 505 016230  1766  TRANSB, TAD I   (OPT1           /SET IT
+ 506 016231  0365          AND     (MCOPY
+ 507 016232  1364          TAD     (COPY
+ 508 016233  3766          DCA I   (OPT1
+ 509 016234  1777  TRANSA, TAD I   (OPT2           /SET M SWITCH IF MATCH REQ'D
+ 510 016235  0363          AND     (NOMAT!READ
+ 511 016236  7640          SZA!CLA
+ 512 016237  5244          JMP     TRANS1
+ 513 016240  1777          TAD I   (OPT2
+ 514 016241  0362          AND     (MMATCH
+ 515 016242  1361          TAD     (MATCH
+ 516 016243  3777          DCA I   (OPT2
+ 517 016244  1760  TRANS1, TAD     OUTDEV          /NO -- CHECK THAT OUTPUT DEV IS RX
+ 518 016245  1357          TAD     (7757           /PREPARE TO GET DEV TYPE FROM TABLE
+ 519 016246  3330          DCA     TMP3
+ 520 016247  1730          TAD I   TMP3
+ 521 016250  0356          AND     (0770
+ 522 016251  7112          RTR!CLL
+ 523 016252  7010          RAR
+ 524 016253  1355          TAD     (-DEVTYP        /WAS DEVICE AN RX?
+ 525 016254  7640          SZA!CLA                 /DOES IT MATCH?
+ 526 016255  5332          JMP     ERR3            /NO -- OUTDEV IS NOT AN RX!!
+ 527 016256  1760          TAD     OUTDEV          /SETUP UNIT NUMBERS
+ 528 016257  4754          JMS     UNIT            /FOR OUPUT DEVICE
+ 529 016260  3753          DCA     WO1
+ 530 016261  1753          TAD     WO1
+ 531 016262  1352          TAD     (4002
+ 532 016263  3751          DCA     RO1
+ 533               /
+ 534 016264  1766  OUTOK,  TAD I   (OPT1           /IF MATCH OR COPY GET INFO ON INDEV
+ 535 016265  0364          AND     (COPY
+ 536 016266  7640          SZA!CLA
+ 537 016267  5274          JMP     OUTOK1
+ 538 016270  1777          TAD I   (OPT2
+ 539 016271  0361          AND     (MATCH
+ 540 016272  7650          SNA!CLA                 /WAS MATCH OR COPY SELECTED?
+ 541 016273  5312          JMP     DORDY           /NO -- OK
+ 542 016274  1750  OUTOK1, TAD     INDEV           /MAKE SURE INPUT DEVICE IS AN RX
+ 543 016275  1357          TAD     (7757           /PREPARE TO ACCESS TABLE
+ 544 016276  3330          DCA     TMP3
+ 545 016277  1730          TAD I   TMP3
+ 546 016300  0356          AND     (0770
+ 547 016301  7112          RTR!CLL
+ 548 016302  7010          RAR
+ 549 016303  1355          TAD     (-DEVTYP
+ 550 016304  7640          SZA!CLA                 /DOES IT MATCH?
+ 551 016305  5332          JMP     ERR3            /NO -- ERROR
+ 552 016306  1750          TAD     INDEV           /SETUP UNIT NUMBERS
+ 553 016307  4754          JMS     UNIT            /FOR INPUT DEVICE
+ 554 016310  1347          TAD     (2
+ 555 016311  3746          DCA     RI1
+ 556 016312  4745  DORDY,  JMS     QUEST           /PAUSE IF SPECIFIED
+ 557 016313  7363          MSG12
+ 558 016314  5744          JMP     DO              /PROCESS DISKS
+ 559               
+ 560               /
+ 561               / SUBROUTINE IND -- RETURN IF INPUT DEVICE NUMBER IS NON-ZERO
+ 562               /
+ 563 016315  0000  IND,    0
+ 564 016316  1750          TAD     INDEV           /IF INPUT DEV WAS SPEC'D RETURN
+ 565 016317  7650          SNA!CLA                 /IF NOT DECLARE ERROR
+ 566 016320  5334          JMP     ERR5
+ 567 016321  5715          JMP I   IND
+ 568               /
+ 569               / SUBROUTINE OUTD -- RETURN IF OUTPUT DEVICE NUMBER IS NON-ZERO
+ 570               /
+ 571 016322  0000  OUTD,   0
+ 572 016323  7200          CLA
+ 573 016324  1760          TAD     OUTDEV          /IF OUTPUT DEV WAS SPEC'D RETURN
+ 574 016325  7650          SNA!CLA                 /IF NOT DECLARE ERROR
+ 575 016326  5336          JMP     ERR6
+ 576 016327  5722          JMP I   OUTD
+ 577               /
+ 578 016330  0000  TMP3,   0                       /TEMP STORE
+ 579 016331  0000  TMP4,   0                       /TEMP STORE
+ 580               /
+ 581 016332  1343  ERR3,   TAD     (MSG3
+ 582 016333  5742          JMP     PERR
+ 583 016334  1341  ERR5,   TAD     (MSG5
+ 584 016335  5742          JMP     PERR
+ 585 016336  1340  ERR6,   TAD     (MSG6
+ 586 016337  5742          JMP     PERR
+ 587               
+ 588               /
+ 589 016340  7161          PAGE
+     016341  7137  
+     016342  6106  
+     016343  7114  
+     016344  6400  
+     016345  6503  
+     016346  6605  
+     016347  0002  
+     016350  6102  
+     016351  6620  
+     016352  4002  
+     016353  6633  
+     016354  6114  
+     016355  7753  
+     016356  0770  
+     016357  7757  
+     016360  6101  
+     016361  4000  
+     016362  3777  
+     016363  2100  
+     016364  1000  
+     016365  6777  
+     016366  7643  
+     016367  2000  
+     016370  4100  
+     016371  6737  
+     016372  7046  
+     016373  0004  
+     016374  6523  
+     016375  0100  
+     016376  6000  
+     016377  7644  
+ 590               /
+ 591               
+ 592 016400  4777  DO,     JMS I   (USR            /UNLOCK USR FROM CORE
+ 593 016401  0011          11
+ 594 016402  1376          TAD     (-115           /INIT COUNTER TO -77 DECIMAL
+ 595 016403  3277          DCA     CNT
+ 596 016404  3300          DCA     TRACK           /INIT TRACK NUMBER TO 0
+ 597 016405  5220          JMP     DO1
+ 598               /
+ 599               / ****** END OF ONCE ONLY CODE ******
+ 600               /
+ 601                       *6420
+ 602               /
+ 603               / WAS COPY SELECTED?
+ 604               /
+ 605 016420  1775  DO1,    TAD I   (OPT1           /SHOULD WE COPY?
+ 606 016421  0374          AND     (COPY
+ 607 016422  7650          SNA!CLA
+ 608 016423  5226          JMP     DO2             /NO
+ 609 016424  4773          JMS     RI              /YES -- READ INPUT DEVICE INTO FIELD 0
+ 610 016425  4772          JMS     WO              /WRITE OUTPUT DEVICE FROM FIELD 0
+ 611               /
+ 612               / WAS READ SELECTED?
+ 613               /
+ 614 016426  1771  DO2,    TAD I   (OPT2           /SHOULD WE READ?
+ 615 016427  0370          AND     (READ
+ 616 016430  7650          SNA!CLA
+ 617 016431  5234          JMP     DO3             /NO -- CHECK MATCH
+ 618 016432  7001          IAC                     /YES -- READ OUTPUT DEVICE INTO FIELD 1
+ 619 016433  4767          JMS     RO
+ 620               /
+ 621               / WAS MATCH SELECTED?
+ 622               /
+ 623 016434  1771  DO3,    TAD I   (OPT2           /SHOULD WE MATCH?
+ 624 016435  0366          AND     (MATCH
+ 625 016436  7650          SNA!CLA
+ 626 016437  5272          JMP     DO5             /NO
+ 627 016440  1775          TAD I   (OPT1           /YES -- WAS THERE A COPY?
+ 628 016441  0374          AND     (COPY
+ 629 016442  7650          SNA!CLA
+ 630 016443  4773          JMS     RI              /NO -- READ INPUT DEVICE INTO FILED 0
+ 631 016444  1771          TAD I   (OPT2           /YES -- WAS THERE A READ?
+ 632 016445  0370          AND     (READ
+ 633 016446  7640          SZA!CLA
+ 634 016447  5252          JMP     DO4             /YES
+ 635 016450  7001          IAC                     /NO -- READ OUTDEV TO FIELD 1
+ 636 016451  4767          JMS     RO
+ 637               /
+ 638               / COMPARE BUFFERS
+ 639               /
+ 640 016452  1365  DO4,    TAD     (BSTART
+ 641 016453  3301          DCA     PTR             /INIT BUFFER POINTER
+ 642 016454  1364          TAD     (-BSIZE         /SETUP WD IN BUFFER COUNTER
+ 643 016455  3302          DCA     WDCNT
+ 644 016456  1701  DO4A,   TAD I   PTR             /GET A WD FROM FIELD 1
+ 645 016457  3276          DCA     TMP5            /SAVE
+ 646 016460  6201          CDF     0               /GET A WD FROM FIELD 0
+ 647 016461  1701          TAD I   PTR
+ 648 016462  6211          CDF     10
+ 649 016463  7041          CMA!IAC                 /NEGATE
+ 650 016464  1276          TAD     TMP5            /DID WDS MATCH?
+ 651 016465  7640          SZA!CLA                 /SKIP IF SO
+ 652 016466  4763          JMS     ERR7            /NO -- ERROR (BUT NOT FATAL)
+ 653 016467  2301          ISZ     PTR             /YES -- INCREMENT POINTER
+ 654 016470  2302          ISZ     WDCNT           /DONE WITH BUFFER?
+ 655 016471  5256          JMP     DO4A            /NO -- PROCEED
+ 656                                               /YES --
+ 657               /
+ 658               / TEST FOR END OF DISK
+ 659               /
+ 660 016472  2300  DO5,    ISZ     TRACK           /INCREMENT TRACK
+ 661 016473  2277          ISZ     CNT             /DONE?
+ 662 016474  5220          JMP     DO1             /NO
+ 663 016475  5333          JMP     EXITOK          /YES
+ 664 016476  0000  TMP5,   0                       /TEMP STORE
+ 665 016477  0000  CNT,    0                       /ISZ COUNTER OF TRACKS
+ 666 016500  0000  TRACK,  0                       /TRACK NUMBER
+ 667 016501  0000  PTR,    0                       /WORD IN BUFFER POINTER
+ 668 016502  0000  WDCNT,  0                       /BUFFER WORD COUNTER
+ 669               /
+ 670               / SUBROUTINE QUEST -- PRINT MSG AND ASK QUESTION
+ 671               /                       ASK IT ONLY IF /P WAS SPECIFIED
+ 672               /                       JMS+1 HAS MSG TO ASK
+ 673               /                       RETURN ONLY WHEN ANSWER IS YES
+ 674               /
+ 675 016503  0000  QUEST,  0
+ 676 016504  1771          TAD I   (OPT2           /WAS /P SPECIFIED?
+ 677 016505  0362          AND     (PAUS
+ 678 016506  7650          SNA!CLA
+ 679 016507  5321          JMP     Q2              /NO -- RETURN
+ 680 016510  1703  Q1,     TAD I   QUEST           /YES -- GET MESG ADDR
+ 681 016511  4761          JMS     TYPE            /PRINT IT
+ 682 016512  1360          TAD     (BUFF           /SELECT INPUT BUFFER
+ 683 016513  4757          JMS     RDANS           /READ ANSWER
+ 684 016514  1760          TAD I   (BUFF           /WAS IT "Y"?
+ 685 016515  0356          AND     (77
+ 686 016516  1355          TAD     (-31
+ 687 016517  7640          SZA!CLA
+ 688 016520  5310          JMP     Q1              /NO -- ASK AGAIN
+ 689 016521  2303  Q2,     ISZ     QUEST           /YES -- RETURN AT JMS+2
+ 690 016522  5703          JMP I   QUEST
+ 691               /
+ 692               / SUBROUTINE CTRLC -- CHECK FOR CONTROL C
+ 693               /
+ 694 016523  0000  CTRLC,  0
+ 695 016524  6034          KRS
+ 696 016525  0354          AND     (177
+ 697 016526  1353          TAD     (-3
+ 698 016527  7650          SNA!CLA
+ 699 016530  6031          KSF
+ 700 016531  5723          JMP I   CTRLC
+ 701 016532  5335          JMP     EXIT
+ 702               /
+ 703               / EXIT PROGRAM
+ 704               /
+ 705 016533  4303  EXITOK, JMS     QUEST
+ 706 016534  7335          MSG11
+ 707 016535  6203  EXIT,   CIF!CDF 0
+ 708 016536  5752          JMP I   (7605
+ 709               
+ 710               /
+ 711 016552  7605          PAGE
+     016553  7775  
+     016554  0177  
+     016555  7747  
+     016556  0077  
+     016557  6750  
+     016560  2000  
+     016561  6737  
+     016562  0400  
+     016563  6641  
+     016564  1400  
+     016565  0020  
+     016566  4000  
+     016567  6613  
+     016570  0100  
+     016571  7644  
+     016572  6626  
+     016573  6600  
+     016574  1000  
+     016575  7643  
+     016576  7663  
+     016577  0200  
+ 712               /
+ 713               
+ 714               /
+ 715               / SUBROUTINE RI -- READ FROM INPUT DEVICE
+ 716               /
+ 717 016600  0000  RI,     0                       /READ FROM INPUT DEVICE
+ 718 016601  4777          JMS     CTRLC           /CHECK FOR CONTROL C
+ 719 016602  1776          TAD     TRACK           /GET TRACK NUMBER INTO AC
+ 720 016603  6202          CIF     0               /PREPARE TO ENTRY DRIVER
+ 721 016604  4775          JMS I   (RW             /CALL DRIVER
+ 722 016605  0000  RI1,    0                       /FUNCTION WORD
+ 723 016606  5600          JMP I   RI              /EXIT -- SUCCESSFUL
+ 724 016607  4311          JMS     ERR8            /ERROR
+ 725 016610  4777          JMS     CTRLC           /CHECK FOR CONTROL C
+ 726 016611  6202          CIF     0
+ 727 016612  5774          JMP I   (CONTIN         /PROCEED
+ 728               /
+ 729               / SUBROUTINE RO -- READ FROM OUTPUT DEVICE
+ 730               /
+ 731 016613  0000  RO,     0                       /READ FROM OUTDEV
+ 732 016614  4777          JMS     CTRLC           /CHECK FOR CONTROL C
+ 733 016615  1776          TAD     TRACK
+ 734 016616  6202          CIF     0
+ 735 016617  4775          JMS I   (RW
+ 736 016620  0000  RO1,    0
+ 737 016621  5613          JMP I   RO
+ 738 016622  4320          JMS     ERR9
+ 739 016623  4777          JMS     CTRLC
+ 740 016624  6202          CIF     0
+ 741 016625  5774          JMP I   (CONTIN
+ 742               
+ 743               /
+ 744               / SUBROUTINE WO -- WRITE OUTPUT DEVICE
+ 745               /
+ 746 016626  0000  WO,     0                       /WRITE TO OUTPUT DEVICE
+ 747 016627  4777          JMS     CTRLC
+ 748 016630  1776          TAD     TRACK
+ 749 016631  6202          CIF     0
+ 750 016632  4775          JMS I   (RW
+ 751 016633  0000  WO1,    0
+ 752 016634  5626          JMP I   WO
+ 753 016635  4327          JMS     ERR10
+ 754 016636  4777          JMS     CTRLC
+ 755 016637  6202          CIF     0
+ 756 016640  5774          JMP I   (CONTIN
+ 757               /
+ 758               / MISC ERROR ROUTINES
+ 759               /
+ 760 016641  0000  ERR7,   0
+ 761 016642  1373          TAD     (-BSTART        /SUBTRACK BUFFER START
+ 762 016643  1772          TAD     PTR             /FROM WORD IN BUFFER POINTER
+ 763 016644  1371          TAD     (-BHALF         /THEN SUBTRACT 1/2 OF BUFFER SIZE
+ 764 016645  7510          SPA                     /SKIP IF PTR IN 2ND HALF
+ 765 016646  5255          JMP     ERR7A           /PTR IN 1ST HALF
+ 766 016647  0370          AND     (7600           /DIVIDE BY 64 DECIMAL AND ADD 2
+ 767 016650  7112          CLL!RTR
+ 768 016651  7012          RTR
+ 769 016652  7012          RTR
+ 770 016653  7001          IAC
+ 771 016654  5262          JMP     ERR7W
+ 772 016655  1367  ERR7A,  TAD     (BHALF          /MAKE POSITIVE
+ 773 016656  0370          AND     (7600           /DIVIDE BY 64 AND ADD 1
+ 774 016657  7112          CLL!RTR
+ 775 016660  7012          RTR
+ 776 016661  7012          RTR
+ 777 016662  7001  ERR7W,  IAC
+ 778 016663  3336          DCA     ERRTMP          /SAVE SECTOR NUMBER
+ 779 016664  1776          TAD     TRACK           /WAS THERE ANOTHER MISMATCH ON THIS SECTOR?
+ 780 016665  1307          TAD     ERR7TR
+ 781 016666  7640          SZA!CLA
+ 782 016667  5274          JMP     ERR7P           /NO
+ 783 016670  1336          TAD     ERRTMP          /MAYBE
+ 784 016671  1310          TAD     ERR7SC
+ 785 016672  7650          SNA!CLA
+ 786 016673  5641          JMP I   ERR7            /YES
+ 787 016674  1366  ERR7P,  TAD     (MSG7
+ 788 016675  4337          JMS     TYPE
+ 789 016676  1336          TAD     ERRTMP
+ 790 016677  4765          JMS     ADPRNT
+ 791 016700  1776          TAD     TRACK           /SAVE TRACK AND SECTOR
+ 792 016701  7041          CMA!IAC                 /AS 2'S COMP FOR FUTURE COMPARISION
+ 793 016702  3307          DCA     ERR7TR
+ 794 016703  1336          TAD     ERRTMP
+ 795 016704  7041          CMA!IAC
+ 796 016705  3310          DCA     ERR7SC
+ 797 016706  5641          JMP I   ERR7
+ 798 016707  0400  ERR7TR, 400
+ 799 016710  0400  ERR7SC, 400
+ 800 016711  0000  ERR8,   0
+ 801 016712  3336          DCA     ERRTMP
+ 802 016713  1364          TAD     (MSG8
+ 803 016714  4337          JMS     TYPE
+ 804 016715  1336          TAD     ERRTMP
+ 805 016716  4765          JMS     ADPRNT
+ 806 016717  5711          JMP I   ERR8
+ 807 016720  0000  ERR9,   0
+ 808 016721  3336          DCA     ERRTMP
+ 809 016722  1363          TAD     (MSG9
+ 810 016723  4337          JMS     TYPE
+ 811 016724  1336          TAD     ERRTMP
+ 812 016725  4765          JMS     ADPRNT
+ 813 016726  5720          JMP I   ERR9
+ 814 016727  0000  ERR10,  0
+ 815 016730  3336          DCA     ERRTMP
+ 816 016731  1362          TAD     (MSG10
+ 817 016732  4337          JMS     TYPE
+ 818 016733  1336          TAD     ERRTMP
+ 819 016734  4765          JMS     ADPRNT
+ 820 016735  5727          JMP I   ERR10
+ 821               /
+ 822 016736  0000  ERRTMP, 0
+ 823               /
+ 824               
+ 825               /
+ 826               / SUBROUTINE TYPE -- PRINT MESSAGE
+ 827               /                       ON ENTRY AC HAS MESSAGE ADDRESS
+ 828               /
+ 829 016737  0000  TYPE,   0
+ 830 016740  3344          DCA     TYPAD           /SAVE ADDR
+ 831 016741  6202          CIF     0
+ 832 016742  4761          JMS I   TTYENT
+ 833 016743  4110          4110
+ 834 016744  0000  TYPAD,  0
+ 835 016745  0000          0
+ 836 016746  7000          NOP
+ 837 016747  5737          JMP I   TYPE
+ 838               /
+ 839               / SUBROUTINE RDANS -- READ ANSWER FROM TTY
+ 840               /                       ON ENTRY AC HAS BUFFER ADDR
+ 841               /
+ 842 016750  0000  RDANS,  0
+ 843 016751  3355          DCA     RDAD            /SAVE ADDR
+ 844 016752  6202          CIF     0
+ 845 016753  4761          JMS I   TTYENT
+ 846 016754  0110          0110
+ 847 016755  0000  RDAD,   0
+ 848 016756  0000          0
+ 849 016757  7000          NOP
+ 850 016760  5750          JMP I   RDANS
+ 851               /
+ 852 016761  0000  TTYENT, 0                       /ENTRY POINT TO TTY HANDLER
+ 853               /
+ 854               
+ 855               /
+ 856 016762  7303          PAGE
+     016763  7252  
+     016764  7222  
+     016765  7000  
+     016766  7204  
+     016767  3200  
+     016770  7600  
+     016771  4600  
+     016772  6501  
+     016773  7760  
+     016774  6722  
+     016775  6600  
+     016776  6500  
+     016777  6523  
+ 857               /
+ 858               /
+ 859               / SUBROUTINE APRNT -- PRINT TRACK AND SECTOR
+ 860               /                       ENTER WITH SECTOR IN AC
+ 861               /
+ 862 017000  0000  ADPRNT, 0
+ 863 017001  4214          JMS     SETIN
+ 864 017002  7412          MSG13B-1
+ 865 017003  1612          TAD I   TRACKN
+ 866 017004  4214          JMS     SETIN
+ 867 017005  7400          MSG13A-1
+ 868 017006  1213          TAD     MSG
+ 869 017007  4611          JMS I   TYPEIT
+ 870 017010  5600          JMP I   ADPRNT
+ 871 017011  6737  TYPEIT, TYPE
+ 872 017012  6500  TRACKN, TRACK
+ 873 017013  7372  MSG,    MSG13
+ 874               
+ 875               /
+ 876               / SUBROUTINE SETIN -- ENTER NUMBER INTO A MESSAGE
+ 877               /
+ 878               /       ON ENTRY AC HAS NUMBER AND JMS+1 HAS POINTER TO MESSAGE
+ 879               /       HOLE MINUS 1. (2 DECIMAL DIGIT NUMBERS ARE ASSUMED)
+ 880               /
+ 881 017014  0000  SETIN,  0
+ 882 017015  3241          DCA     SETIN1          /SAVE NUMBER
+ 883 017016  3242          DCA     SETCNT          /ZERO 10'S COUNTER
+ 884 017017  1614          TAD I   SETIN           /GET MSG ADDR
+ 885 017020  3010          DCA     10              /ENTER INTO AUTOINC POINTER
+ 886 017021  2214          ISZ     SETIN           /BUMP RETURN ADDR
+ 887 017022  1241  SETINB, TAD     SETIN1          /GET NUMBER
+ 888 017023  1243          TAD     M12             /SUBTRACT 10 DECIMAL
+ 889 017024  7500          SMA                     /DONE DIVIDING?
+ 890 017025  5236          JMP     SETINA          /NO
+ 891 017026  7200          CLA                     /YES
+ 892 017027  1242          TAD     SETCNT          /GET 10'S
+ 893 017030  1245          TAD     P260            /MAKE IT ASCII
+ 894 017031  3410          DCA I   10              /STORE IN MESSAGE
+ 895 017032  1241          TAD     SETIN1          /GET REMAINDER
+ 896 017033  1245          TAD     P260            /MAKE IT ASCII
+ 897 017034  3410          DCA I   10              /STORE IN MESSAGE
+ 898 017035  5614          JMP I   SETIN
+ 899 017036  3241  SETINA, DCA     SETIN1          /SAVE RESULT
+ 900 017037  2242          ISZ     SETCNT          /INCREMENT 10'S COUNT
+ 901 017040  5222          JMP     SETINB          /CONTINUE
+ 902               /
+ 903 017041  0000  SETIN1, 0                       /NUMBER STORAGE
+ 904 017042  0000  SETCNT, 0                       /10'S COUNTER
+ 905 017043  7766  M12,    -12                     /MINUS 10 DECIMAL
+ 906 017044  0007  P7,     7                       /LITERAL
+ 907 017045  0260  P260,   260                     /LITERAL
+ 908               
+ 909               / 
+ 910               / ERROR MESSAGES
+ 911               /
+ 912 017046  0322  VERBUF, "R; "X; "C; "O; "P; "Y; 240; "V; "4; "A; 240; 215; 212; 232
+     017047  0330  
+     017050  0303  
+     017051  0317  
+     017052  0320  
+     017053  0331  
+     017054  0240  
+     017055  0326  
+     017056  0264  
+     017057  0301  
+     017060  0240  
+     017061  0215  
+     017062  0212  
+     017063  0232  
+ 913 017064  0311  MSG2,   "I; "L; "L; "E; "G; "A; "L; 240; "S; "P; "E; "C; "I; "F; "I
+     017065  0314  
+     017066  0314  
+     017067  0305  
+     017070  0307  
+     017071  0301  
+     017072  0314  
+     017073  0240  
+     017074  0323  
+     017075  0320  
+     017076  0305  
+     017077  0303  
+     017100  0311  
+     017101  0306  
+     017102  0311  
+ 914 017103  0303          "C; "A; "T; "I; "O; "N; 215; 212; 232
+     017104  0301  
+     017105  0324  
+     017106  0311  
+     017107  0317  
+     017110  0316  
+     017111  0215  
+     017112  0212  
+     017113  0232  
+ 915 017114  0304  MSG3,   "D; "E; "V; "I; "C; "E; 240; "I; "S; 240; "N; "O; "T; 240
+     017115  0305  
+     017116  0326  
+     017117  0311  
+     017120  0303  
+     017121  0305  
+     017122  0240  
+     017123  0311  
+     017124  0323  
+     017125  0240  
+     017126  0316  
+     017127  0317  
+     017130  0324  
+     017131  0240  
+ 916 017132  0322          "R; "X; 215; 212; 232
+     017133  0330  
+     017134  0215  
+     017135  0212  
+     017136  0232  
+ 917 017137  0316  MSG5,   "N; "O; 240; "I; "N; "P; "U; "T; 240; "D; "E; "V; "I; "C;
+     017140  0317  
+     017141  0240  
+     017142  0311  
+     017143  0316  
+     017144  0320  
+     017145  0325  
+     017146  0324  
+     017147  0240  
+     017150  0304  
+     017151  0305  
+     017152  0326  
+     017153  0311  
+     017154  0303  
+ 918 017155  0305          "E; 215; 212; 232
+     017156  0215  
+     017157  0212  
+     017160  0232  
+ 919 017161  0316  MSG6,   "N; "O; 240; "O; "U; "T; "P; "U; "T; 240
+     017162  0317  
+     017163  0240  
+     017164  0317  
+     017165  0325  
+     017166  0324  
+     017167  0320  
+     017170  0325  
+     017171  0324  
+     017172  0240  
+ 920 017173  0304          "D; "E; "V; "I; "C; "E; 215; 212; 232
+     017174  0305  
+     017175  0326  
+     017176  0311  
+     017177  0303  
+     017200  0305  
+     017201  0215  
+     017202  0212  
+     017203  0232  
+ 921 017204  0303  MSG7,   "C; "O; "M; "P; "A; "R; "E; 240
+     017205  0317  
+     017206  0315  
+     017207  0320  
+     017210  0301  
+     017211  0322  
+     017212  0305  
+     017213  0240  
+ 922 017214  0305          "E; "R; "R; "O; "R; 232
+     017215  0322  
+     017216  0322  
+     017217  0317  
+     017220  0322  
+     017221  0232  
+ 923 017222  0311  MSG8,   "I; "N; "P; "U; "T; 240; "D; "E; "V; "I; "C; "E; 240
+     017223  0316  
+     017224  0320  
+     017225  0325  
+     017226  0324  
+     017227  0240  
+     017230  0304  
+     017231  0305  
+     017232  0326  
+     017233  0311  
+     017234  0303  
+     017235  0305  
+     017236  0240  
+ 924 017237  0322          "R; "E; "A; "D; 240; "E; "R; "R; "O; "R; 232
+     017240  0305  
+     017241  0301  
+     017242  0304  
+     017243  0240  
+     017244  0305  
+     017245  0322  
+     017246  0322  
+     017247  0317  
+     017250  0322  
+     017251  0232  
+ 925 017252  0317  MSG9,   "O; "U; "T; "P; "U; "T; 240; "D; "E; "V; "I; "C; "E; 240
+     017253  0325  
+     017254  0324  
+     017255  0320  
+     017256  0325  
+     017257  0324  
+     017260  0240  
+     017261  0304  
+     017262  0305  
+     017263  0326  
+     017264  0311  
+     017265  0303  
+     017266  0305  
+     017267  0240  
+ 926 017270  0322          "R; "E; "A; "D; 240; "E; "R; "R; "O; "R; 232
+     017271  0305  
+     017272  0301  
+     017273  0304  
+     017274  0240  
+     017275  0305  
+     017276  0322  
+     017277  0322  
+     017300  0317  
+     017301  0322  
+     017302  0232  
+ 927 017303  0317  MSG10,  "O; "U; "T; "P; "U; "T; 240; "D; "E; "V; "I; "C; "E; 240
+     017304  0325  
+     017305  0324  
+     017306  0320  
+     017307  0325  
+     017310  0324  
+     017311  0240  
+     017312  0304  
+     017313  0305  
+     017314  0326  
+     017315  0311  
+     017316  0303  
+     017317  0305  
+     017320  0240  
+ 928 017321  0327          "W; "R; "I; "T; "E; 240; "E; "R; "R; "O; "R; 232
+     017322  0322  
+     017323  0311  
+     017324  0324  
+     017325  0305  
+     017326  0240  
+     017327  0305  
+     017330  0322  
+     017331  0322  
+     017332  0317  
+     017333  0322  
+     017334  0232  
+ 929 017335  0311  MSG11,  "I; "S; 240; "M; "O; "N; "I; "T; "O; "R; 240
+     017336  0323  
+     017337  0240  
+     017340  0315  
+     017341  0317  
+     017342  0316  
+     017343  0311  
+     017344  0324  
+     017345  0317  
+     017346  0322  
+     017347  0240  
+ 930 017350  0322          "R; "E; "M; "O; "U; "N; "T; "E; "D
+     017351  0305  
+     017352  0315  
+     017353  0317  
+     017354  0325  
+     017355  0316  
+     017356  0324  
+     017357  0305  
+     017360  0304  
+ 931 017361  0277          "?; 232
+     017362  0232  
+ 932 017363  0322  MSG12,  "R; "E; "A; "D; "Y; "?; 232
+     017364  0305  
+     017365  0301  
+     017366  0304  
+     017367  0331  
+     017370  0277  
+     017371  0232  
+ 933 017372  0240  MSG13,  240; "T; "R; "A; "C; "K; 240
+     017373  0324  
+     017374  0322  
+     017375  0301  
+     017376  0303  
+     017377  0313  
+     017400  0240  
+ 934 017401  0000  MSG13A, 0
+ 935 017402  0000          0
+ 936 017403  0254          ",; "S; "E; "C; "T; "O; "R; 240
+     017404  0323  
+     017405  0305  
+     017406  0303  
+     017407  0324  
+     017410  0317  
+     017411  0322  
+     017412  0240  
+ 937 017413  0000  MSG13B, 0
+ 938 017414  0000          0
+ 939 017415  0215          215; 212; 232
+     017416  0212  
+     017417  0232  
+ 940               $
+
+ADPRNT  7000
+BHALF   3200
+BSIZE   6400
+BSTART  0020
+BUFF    2000
+CHAIN   6001 unreferenced
+CNT     6477
+CONTIN  6722
+COPY    1000
+CTRLC   6523
+DEVTYP  0025
+DO      6400
+DO1     6420
+DO2     6426
+DO3     6434
+DO4     6452
+DO4A    6456
+DO5     6472
+DOIO    6666
+DORDY   6312
+ERR10   6727
+ERR2    6105
+ERR3    6332
+ERR5    6334
+ERR6    6336
+ERR7    6641
+ERR7A   6655
+ERR7P   6674
+ERR7SC  6710
+ERR7TR  6707
+ERR7W   6662
+ERR8    6711
+ERR9    6720
+ERRTMP  6736
+ERRUSR  6110
+EXIT    6535
+EXITOK  6533
+FLEA    6707
+FLINIT  6757
+FN      6756
+GETSEC  6742
+IND     6315
+INDEV   6102
+KEEPON  6731
+L7004   6753
+L7100   6745
+L7530   6746
+LCD     6751
+LDCMD   6707
+LOC1    6040
+LOC10   6033
+LOC2    6056
+LOC3    6200
+LOC3A   6064
+M12     7043
+MAGIC   7623
+MATCH   4000
+MCOPY   6777
+MMATCH  3777
+MSG     7013
+MSG10   7303
+MSG11   7335
+MSG12   7363
+MSG13   7372
+MSG13A  7401
+MSG13B  7413
+MSG2    7064
+MSG3    7114
+MSG5    7137
+MSG6    7161
+MSG7    7204
+MSG8    7222
+MSG9    7252
+NODEC   6006
+NOMAT   2000
+OPT1    7643
+OPT2    7644
+OUTD    6322
+OUTDEV  6101
+OUTOK   6264 unreferenced
+OUTOK1  6274
+P260    7045
+P7      7044 unreferenced
+PAUS    0400
+PERR    6106
+PTR     6501
+Q1      6510
+Q2      6521
+QUEST   6503
+RDAD    6755
+RDANS   6750
+RDTRY   6634
+READ    0100
+READLP  6632
+RETRY   6757
+RI      6600
+RI1     6605
+RO      6613
+RO1     6620
+RW      6600
+RX0EP   6070
+RX1EP   6076
+SDN     6755
+SECTOR  6755
+SER     6754
+SETCNT  7042
+SETIN   7014
+SETIN1  7041
+SETINA  7036
+SETINB  7022
+ST4     6422
+ST5     6641
+START   6000 unreferenced
+STR     6753
+TMP1    6103
+TMP2    6104
+TMP3    6330
+TMP4    6331 unreferenced
+TMP5    6476
+TRACK   6500
+TRACKN  7012
+TRANS   6220
+TRANS1  6244
+TRANSA  6234
+TRANSB  6230
+TRCKNO  6754
+TTYENT  6761
+TTYEP   6012
+TYPAD   6744
+TYPE    6737
+TYPEIT  7011
+UNIT    6114
+UNITIN  6132
+UNITNS  6127
+UNITSY  6122
+USR     0200
+VERBUF  7046
+VERS    6211 unreferenced
+VERSIO  0004
+WDCNT   6502
+WO      6626
+WO1     6633
+WRIT1   6420
+WRIT2   6625
+WRITLP  6620
+WRTCNT  6545
+WRTRY   6622
+X10     0010
+XDR     6752
+XT1     6630

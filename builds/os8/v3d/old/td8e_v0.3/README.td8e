@@ -1,0 +1,220 @@
+Welcome to the TD8E plugin for Douglas W. Jones's pdp8 emulator
+	Version 0.3
+
+	At first please read the original README file	
+	from Douglas W. Jones, the README.txt and the
+	os8_license.txt file from DEC.
+
+This TD8E plugin simulates up to four  TD8E simple DECtape
+controllers with up to four dual TU56 DECtape units.
+
+This simulation is NOT perfect and far away from being an
+emulation. But it is complete enough to boot OS/8 from a
+TD8E boot tape (tested with OS/8 V3B and V3D).
+
+This new version supports two different file formats:
+- DJG:	David Gesswein's high level format (HLS)
+	for using the OS/8 tape files (129 words per block)
+	of many internet sites.
+- PxG:	My low level format (LLS) which supports additional
+	simulation features like formating a tape in
+	different formats (only OS/8 format tested yet).
+	With this file format the simulator should even pass
+	some of the diagnostic routines. (Not tested yet. :-( )
+
+The different formats are distinguished by the presence of
+a four byte header "tu56". If it is there it is a PxG or
+LLS format tape. Otherwise it is asumed to be in DJG or
+HLS format.
+
+This distribution was built under RedHat Linux 7 on a 2.2.16-22
+Kernel (OK it's outdated but you can recompile it yourself)
+and tested under RedHat AS 2.1 with Kernel 2.4.20-20.7 too.
+
+Hope you enjoy it.
+
+	Gerold Pauler
+	http://pdp8.de
+
+If you have any questions or found any bugs please mail to
+
+	pxg@pdp8.de
+
+
+Modified files of Douglas Jones's emulator are:
+
+Makefile	TD8E added
+kk8e.c		stubs for TD8E and TU56 inserted
+ttyaccess.c	modified for Linux
+utility.c	fixed one minor bug (corefile shrinking 1 word)
+kc8e.c		fixed startup glitch
+
+New files added are:
+
+README.td8e	this file
+td8e.boot	core image of TD8E bootstrap  (start at 0 7300)
+warm		core image to warm start pdp8 (start at 0 7605)
+td8e.c		the TD8E / TU56 plugin
+tu56.c		the TD8E / TU56 GUI
+os8.djg		OS/8 bootable tape in David Gesswein's format
+os8.pxg		OS/8 bootable tape in Gerols Pauler's format
+empty.djg	an empty tape in David Gesswein's format
+empty.pxg	an empty tape in Gerold Pauler's format
+pdp8e		compiled emulator (set up to support both formats)
+
+
+========
+
+What new in version 0.3?
+
+	Support for Sun Solaris 9 on Ultra Sparc added.
+	(compiled and tested on an dual processor E250
+	 with Solaris 9 and GNU gcc)
+
+	Doesn't core dump anymore if DISPLAY environment
+	variable is not set.
+
+
+What new in version 0.2?
+
+	Support of more than one TD8E / TU56.
+
+	Support of read only files.
+
+	Support of a new low level format.
+
+	Support of WTM switch and formatting capabilities.
+
+	Buffered I/O (for better performance ;-) )
+
+	Graphical user interface to
+		show WTM switch status
+		(re)set the WTM switch
+		show command and data register
+
+		show selected unit
+		show WRITE LOCK status
+		(re)set the WRITE LOCK switch
+		show mounted tapes and tape position
+	
+========
+
+Little FAQ
+
+How to start OS/8 from tape file?
+
+	Start the pdp8 emulator with the bootstrap core image.
+	./pdp8 td8e.boot
+	Change core file to something else.
+	This prevents bootstrap core image to be modified when
+	exiting the emulator.
+	Change device to DTA0 and insert name of bootable
+	TD8E image file.
+	Set switch register to 7300, press Addr.Load, Clear and Cont.
+	Wait till OS/8 prompt "." appears.
+
+
+Is there an easier way to start OS/8?
+
+	Yes, start the pdp8 emulator with the warm start core image.
+        ./pdp8 warm
+	Device DTA0 is already mounted with os8.pxg.
+	Set switch register to 7605, press Addr.Load, Clear and Cont.
+	Wait till OS/8 promt "." appears.
+	Date and some other settings are already preset.
+
+
+Where to find more TD8E images?
+
+	Look at David Gessweins pdp8 homepage
+	http://www.pdp8.net
+
+
+Where to find more information about pdp8 emulators?
+
+	Look at Douglas Jones homepage
+	http://www.cs.uiowa.edu/~jones/pdp8
+
+
+How to create a new tape?
+
+	Create a DJG* new "DECtape" using
+	dd if=/dev/zero of=newtape bs=380292 count=1
+
+	or create a PxG** style new "DECtape" using
+	echo tu56 | dd of=a bs=4 count=1
+	dd if=/dev/zero of=b bs=528896 count=1
+	cat a b >newtape
+	rm a b
+
+	Now you can use and mount this tape on the emulator.
+	First thing you want to do with it is to write a new
+	(zero) directory on it. To do this use the OS/8 CCL
+	command ZERO or run PIP /Z.
+
+	Now you have an empty tape ready for use under OS/8.
+
+
+How to convert from DJG to PxG format?
+How to convert from PxG to DJG format?
+
+	Sorry you have to use the simulator and run TDCOPY.
+
+
+The simulator hangs after rewinding tapes in TDCOPY
+
+	No, the simulator does not hang. There are only
+	one or more tapes that couldn't be stopped in
+	time. So they spun after begin of tape.
+	You can stop TDCOPY with ^C.
+	And reset all tape positions by doing a reboot
+	from memory location 7605.
+	Don't forget to press the "clear" button before
+	you press continue. Because pressing "clear"
+	set tape position to defined starting point.
+
+
+The simulator hangs after I tried to DIR (or any other
+	tape operation on) a drive with no mounted tape
+
+	As above, the simulator does not hang but sets
+	the sel/timing error flag. This results in the
+	OS/8 driver waiting forever.
+
+	You should not invoke tape operations on drives
+	which have no file mounted!!!
+
+	As above you can do a "warm" reboot from location
+	7605.
+
+
+Typing ^C halts the simulator
+
+	This happens if the system tape (SYS:) is write locked.
+	Simply press continue on the pdp8 control panel.
+
+
+While simulator is running it is not possible to set
+	drive to write enable.
+
+	You don't have write permission to the file mounted
+	on that drive. You have to unmount the file, change
+	the permissions and remount the file.
+
+
+--------
+* DJG:	compatible with DECtape images (129 words/block)
+	from David Gessweins pdp8 page.
+** PxG:	more like the files of the other simulator devices,
+	but not in conformance with Douglas Jones's DECtape
+	format.
+	DWJ sets the mark track in the two most significant
+	bits of a byte. The remainig 6 bits are the corres-
+	ponding data bits of two line.
+	My format (PxG) keeps the mark track as the most
+	significant bit of a nibble. The three lower bits
+	are the corresponding data bits of this line.
+	Then two lines are packed into one byte.
+
+TM:	pdp8, OS/8, DEC, DECtape, TD8E and TU56 are registered
+	trademarks of digital equipment corporation.

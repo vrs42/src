@@ -1,0 +1,314 @@
+   1               /3 RK8E SYSTEM HANDLER FOR OS/8 BUILD
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45                      VERSION="C&77
+  46               
+  47                       *0
+  48               
+  49                       DECIMAL;RKLEN=3248;OCTAL
+  50               
+  51 000000  7775          -3
+  52 000001  2213          DEVICE RK8E;DEVICE SYS;4231;2007;0;RKLEN
+     000002  7005  
+     000003  2331  
+     000004  2300  
+     000005  4231  
+     000006  2007  
+     000007  0000  
+     000010  6260  
+  53 000011  2213          DEVICE RK8E;DEVICE RKA0;4231;1007;0;RKLEN
+     000012  7005  
+     000013  2213  
+     000014  0160  
+     000015  4231  
+     000016  1007  
+     000017  0000  
+     000020  6260  
+  54 000021  2213          DEVICE RK8E;DEVICE RKB0;4231;SHNDL1&177+1000;0;RKLEN
+     000022  7005  
+     000023  2213  
+     000024  0260  
+     000025  4231  
+     000026  1021  
+     000027  0000  
+     000030  6260  
+  55               /ONE RK8E IS TREATED AS TWO LOGICAL DISKS
+  56               /EACH OF 3248 OS/8 BLOCKS.
+  57               
+  58               /THIS HANDLER CONTAINS ENTRY POINTS FOR THE SYSTEM DEVICE
+  59               /AND RKA1.
+  60               /THIS HANDLER ALLOWS BOOTING OFF OF ANY UNIT
+  61               
+  62                       DCLR=6742
+  63                       DLAG=6743
+  64                       DLDC=6746
+  65                       DRST=6745
+  66                       DSKP=6741
+  67                       DLCA=6744
+  68                       DMAN=6747
+  69               
+  70                       RKEBLK=7750     /12 BITS OF BLOCK NUMBER
+  71                       SERRCT=7751     /HOLDS RETRY COUNT
+  72                       PAGCNT=7752     /PAGE COUNT
+  73                       RKECMD=7753     /BASE OF DLDC COMMAND
+  74                       CHKHED=7754     /CHECK HEADER FLAG
+  75               
+  76               /MAINTENANCE RELEASE CHANGES:
+  77               
+  78               /1.     FIXED BUG RE INTERACTION WITH NON-SYSTEM HANDLER
+  79               /       [APRIL DSN]
+  80 000031  7740         BOOT-BLAST
+  81               
+  82                       RELOC 0
+  83               
+  84 000000* 1412  BOOT,   TAD I BOOTX1
+  85 000001* 3413          DCA I BOOTX2
+  86 000002* 1414          TAD I BOOTX3
+  87 000003* 6211          CDF 10
+  88 000004* 3415          DCA I BOOTX4
+  89 000005* 6201          CDF 0
+  90 000006* 1013          TAD BOOTX2
+  91 000007* 7640          SZA CLA
+  92 000010* 5000          JMP BOOT
+  93 000011* 5437          JMP I B7605
+  94 000012* 0177  BOOTX1, 177
+  95 000013* 7577  BOOTX2, 7577
+  96 000014* 0046  BOOTX3, 46
+  97 000015* 7646  BOOTX4, 7646
+  98               
+  99 000016* 0000          ZBLOCK  30-.    /DSKP GOES OVER 30
+     000017* 0000  
+     000020* 0000  
+     000021* 0000  
+     000022* 0000  
+     000023* 0000  
+     000024* 0000  
+     000025* 0000  
+     000026* 0000  
+     000027* 0000  
+ 100               
+ 101 000030* 6741          DSKP
+ 102 000031* 5030          JMP .-1
+ 103 000032* 0035          AND RK6
+ 104 000033* 3436          DCA I RKUNIT
+ 105 000034* 5000          JMP BOOT
+ 106               
+ 107 000035* 0006  RK6,    6
+ 108 000036* 0342  RKUNIT, SYSUNT+400      /CHANGED BEFORE IT IS MOVED
+ 109 000037* 7605  B7605,  7605
+ 110               BLAST,  RELOC
+ 111                      /THE BOOTSTRAP IS RK8E ONLY
+ 112                       /30     6743
+ 113                       /31     5031
+ 114               
+ 115                       /LOAD ADDRESS 30 AND START
+ 116               
+ 117               /BOOTSTRAP FOR OTHER UNITS:
+ 118               
+ 119               /       25      7604
+ 120               /       26      6746
+ 121               /       27      6743
+ 122               /       30      7604
+ 123               /       31      5031
+ 124               
+ 125               /LOAD ADDRESS 25, PUT UNIT # IN BITS 9&10 OF SWITCH REGISTER,
+ 126               /CLEAR CONTINUE.
+ 127                      *200
+ 128               
+ 129                       RELOC 7600
+ 130               
+ 131 007600* 0000          ZBLOCK 7
+     007601* 0000  
+     007602* 0000  
+     007603* 0000  
+     007604* 0000  
+     007605* 0000  
+     007606* 0000  
+ 132 007607* 0003  SHNDLR, VERSION         /SYSTEM HANDLER ENTRY POINT
+ 133 007610* 7300          CLA CLL         /GUARD AGAINST RANDOM AC
+ 134 007611* 1207          TAD SHNDLR
+ 135 007612* 3221          DCA SHNDL1      /SETUP COMMON EXIT AND PARM ADDR'S
+ 136 007613* 5224          JMP SHNDC       /JUMP TO COMMON CODE
+ 137               
+ 138               /VARIOUS CONSTANTS TO PAD E.P. FOR RKA1 TO 7621
+ 139 007614* 6260  S6260,  6260            /SIZE OF ONE LOGICAL DISK
+ 140 007615* 4070  S4070,  4070            /USED TO GET READ/WRITE AND DF BITS
+ 141 007616* 3700  S3700,  3700            / " TO GET PAGE COUNT
+ 142 007617* 6202  SCIF,   CIF 0           / " TO RESTORE USERS FIELD
+ 143 007620* 0037  S37,    37              /USED TO CHECK FOR CYLINDER CHANGE
+ 144               
+ 145                       IFNZRO .-7621 <ERROR1,  BARF>
+ 146               
+ 147 007621* 0003  SHNDL1, VERSION         /2ND E.P. FOR RKB0 AND TEMPORARY
+ 148 007622* 7200          CLA             /GUARD AGAINST NON-ZERO AC
+ 149 007623* 1214          TAD S6260       /RKB1 IS SECOND HALF OF PACK
+ 150 007624* 3207  SHNDC,  DCA SHNDLR      /SET BLOCK DISPLACEMENT ACCORDING TO SYS OR RKB0
+ 151 007625* 7346          CLA CLL CMA RTL /AC=-3
+ 152 007626* 3351          DCA SERRCT      /RETRY COUNT
+ 153 007627* 6214          RDF
+ 154 007630* 1217          TAD SCIF
+ 155 007631* 3337          DCA SFIELD      /RESET USER INST FIELD FOR EXIT
+ 156 007632* 1221  RETRY,  TAD SHNDL1      /AC=-2 IF ERROR ENRTY
+ 157 007633* 3221          DCA SHNDL1
+ 158 007634* 1621          TAD I SHNDL1    /GET ARG1
+ 159 007635* 0215          AND S4070       /GET R/W AND DF BITS
+ 160 007636* 1342          TAD SYSUNT
+ 161 007637* 3353          DCA RKECMD      /BASE COMMAND TO RK8E(DLDC)
+ 162 007640* 1621          TAD I SHNDL1    /GET ARG1 AGAIN
+ 163 007641* 2221          ISZ SHNDL1      /POINT TO ARG2
+ 164 007642* 0216          AND S3700
+ 165 007643* 7450          SNA
+ 166 007644* 7330          STL CLA RAR     /4000
+ 167 007645* 3352          DCA PAGCNT      /SAVE PAGE COUNT
+ 168 007646* 1621          TAD I SHNDL1    /GET ARG2
+ 169 007647* 2221          ISZ SHNDL1      /POINT TO ARG3
+ 170 007650* 6744          DLCA            /LOAD CURRENT ADDRESS REGISTER
+ 171 007651* 1621          TAD I SHNDL1    /GET ARG3
+ 172 007652* 7100          CLL     
+ 173 007653* 1207          TAD SHNDLR      /SYS OR RKB0 DISPLACMENT
+ 174 007654* 3350          DCA RKEBLK      /LOW PART OF RK8E BLOCK NUMBER
+ 175 007655* 7430          SZL             /STILL OFF IF BELOW BLOCK 10000
+ 176 007656* 2353  OVRFLO, ISZ RKECMD      /TURN ON EXTENDED BIT IF OVERFLOWED
+ 177 007657* 3354  RELOOP, DCA CHKHED      /SET CHECK HEADER FLAG TO EITHER
+ 178                                       /0 OR 4000(WHICH GETS RTR'D BEFORE USED)
+ 179                                       /AND CAUSES EITHER A "DATA" OR "ALL"
+ 180                                       /TRANSFER
+ 181 007660* 1352          TAD PAGCNT      /TEST TO SEE IF ONLY 1 PAGE WANTED
+ 182 007661* 0335          AND S7600
+ 183 007662* 7650          SNA CLA
+ 184 007663* 1341          TAD S400        /100 WAS IN PAGCNT
+ 185 007664* 1354          TAD CHKHED      /ADD IN CHECK HEADER FLAG
+ 186 007665* 7112          CLL RTR         /SHIFT TO CORRECT BITS
+ 187 007666* 1353          TAD RKECMD      /ADD IN BASE COMMAND
+ 188 007667* 6746          DLDC            /LOAD COMMAND REGISTER
+ 189 007670* 1350          TAD RKEBLK
+ 190 007671* 6743          DLAG            /LOAD BLOCK REGISTER AND GO
+ 191 007672* 6741          DSKP            /WAIT ON FLAG
+ 192 007673* 5272          JMP .-1
+ 193 007674* 6745          DRST            /READ COMPLETION REGISTER
+ 194 007675* 7104          CLL RAL         /GET RID OF SUCCESS BIT
+ 195 007676* 7640          SZA CLA         /AND SEE IF ANYTHING LEFT
+ 196 007677* 5317          JMP SERROR      /AN ERROR
+ 197                       IFNZRO .-7700 <ERROR2,  DOUBLE BARF>
+ 198 007700* 7410          SKP             /PROTECTION AGAINST JMS I 7700 FIELD 0
+ 199 007701* 7402          HLT             /HE'S HAD IT
+ 200 007702* 1352          TAD PAGCNT
+ 201 007703* 1335          TAD S7600
+ 202 007704* 7550          SPA SNA
+ 203 007705* 5334          JMP RKDONE
+ 204 007706* 3352          DCA PAGCNT
+ 205 007707* 1350          TAD RKEBLK
+ 206 007710* 7040          CMA
+ 207 007711* 0220          AND S37         /IF BLOCK IS AT A 37 MAKE
+ 208                                       /NEXT OPERATION DO A CHECK HEADER
+ 209 007712* 7640          SZA CLA
+ 210 007713* 7130          STL RAR         /SET AC TO "ALL" FLAG
+ 211 007714* 2350          ISZ RKEBLK      /BUMP BLOCK NUMBER
+ 212 007715* 5257          JMP RELOOP      /TRANSFER SOME MORE
+ 213 007716* 5256          JMP OVRFLO      /PAST BLOCK 7777-SET EXTENDED BIT
+ 214                                      /RECALIBRATE ON ALL ERRORS
+ 215 007717* 6742  SERROR, DCLR            /CLEAR STATUS REGISTER
+ 216 007720* 7126          STL RTL         /AC=2
+ 217 007721* 6742          DCLR            /RECALIBRATE DRIVE
+ 218 007722* 6741          DSKP            /WAIT ON FLAG
+ 219 007723* 5322          JMP .-1
+ 220 007724* 6742          DCLR            /CLEAR STATUS REGISTER
+ 221 007725* 6745          DRST            /WAIT FOR STATUS TO CLEAR
+ 222 007726* 7640          SZA CLA
+ 223 007727* 5324          JMP .-3         /V3C STILL DOING RECALIBRATE
+ 224 007730* 7344          CLA CLL CMA RAL /AC=-2
+ 225 007731* 2351          ISZ SERRCT      /SKIP IF WE TRIED 3 TIMES
+ 226 007732* 5232          JMP RETRY       /TRY AGAIN
+ 227 007733* 5336          JMP .+3         /ERROR EXIT
+ 228 007734* 2221  RKDONE, ISZ SHNDL1      /NORMAL RETURN
+ 229 007735* 7600  S7600,  7600            /GROUP 2 CLA
+ 230 007736* 2221          ISZ SHNDL1      /IF JUMPED TO HERE- ERROR RETURN
+ 231 007737* 7402  SFIELD, HLT             /RESET USERS INST FIELD- WE NEVER TOUCHED DF
+ 232 007740* 5621          JMP I SHNDL1    /EXIT
+ 233               
+ 234 007741* 0400  S400,   400             / " FOR 128 WORD TRANSFER MODE(RTR'D IN CODE)
+ 235 007742* 0000  SYSUNT, 0               /SYSTEM DEV UNIT # (SET BY BOOTSTRAP)
+ 236                       RELOC
+ 237                       $
+
+B7605   0037
+BLAST   0040
+BOOT    0000
+BOOTX1  0012
+BOOTX2  0013
+BOOTX3  0014
+BOOTX4  0015
+CHKHED  7754
+DCLR    6742
+DLAG    6743
+DLCA    6744
+DLDC    6746
+DMAN    6747 unreferenced
+DRST    6745
+DSKP    6741
+OVRFLO  7656
+PAGCNT  7752
+RELOOP  7657
+RETRY   7632
+RK6     0035
+RKDONE  7734
+RKEBLK  7750
+RKECMD  7753
+RKLEN   6260
+RKUNIT  0036
+S37     7620
+S3700   7616
+S400    7741
+S4070   7615
+S6260   7614
+S7600   7735
+SCIF    7617
+SERRCT  7751
+SERROR  7717
+SFIELD  7737
+SHNDC   7624
+SHNDL1  7621
+SHNDLR  7607
+SYSUNT  7742
+VERSIO  0003

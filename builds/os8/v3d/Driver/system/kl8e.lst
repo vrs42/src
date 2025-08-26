@@ -1,0 +1,914 @@
+   1               /17 SUPER TTY HANDLER FOR OS/8
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975,1977 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               
+  46               /S.W.,S.R.,H.J.,R.L.,S.R.
+  47               
+  48                       *0
+  49               
+  50 000000  7777          -1
+  51 000001  1314          DEVICE KL8E;DEVICE TTY;0;TTY&177+4000;ZBLOCK 2
+     000002  7005  
+     000003  2424  
+     000004  3100  
+     000005  0000  
+     000006  4176  
+     000007  0000  
+     000010  0000  
+  52               
+  53               /TWO-PAGE TELETYPE HANDLER FOR OS/8 V3.
+  54               /ON INPUT, RECOGNIZES ^Z, ^C, ^U, RUBOUT
+  55               /^Z     MEANS END OF INPUT, INSERT ^Z IN BUFFER,
+  56               /       PAD WITH ZEROES, AND ECHO "^Z"
+  57               /^C     MEANS ABORT JOB, RETURN TO OS/8 VIA LOC 7600 TO SAVE CORE AND PRINT "^C"
+  58               /^U     MEANS DELETE THE LAST LINE, ALLOW OPERATOR TO RETYPE
+  59               /       (LINE STARTS AT BEGIN OF BUFFER AND IS TERMINATED BY A CR)
+  60               /       A CR GETS ENTERED INTO BUFFER, CAUSES A LF TO ALSO ECHO
+  61               /       AND GET ENTERED INTO BUFFER, BUFFER IS THEN PADDED WITH NULLS.
+  62               /       CONVERTS LC TO UC
+  63               
+  64               /ON OUTPUT RECOGNIZES ^C, ^O, ^S, ^Q FROM KEYBOARD
+  65               /^C     CAUSES JOB TO ABORT, RETURN TO OS/8 VIA LOCATION 7600
+  66               /       TO SAVE CORE AND PRINT "^C"
+  67               /^O     CAUSES ECHOING BY THE HANDLER TO CEASE
+  68               /       TYPING ANY OTHER CHARACTER RESUMES ECHOING.
+  69               /^S     CAUSES THE HANDLER TO STOP SENDING TO TERMINAL
+  70               /^Q     RESUMES HANDLER SENDING
+  71               /       ^S AND ^Q ARE IGNORED  IN OTHER CASES
+  72               
+  73               /WHENEVER PRINTING CHARACTERS (EITHER ON OUTPUT OR WHEN ECHOING),
+  74               /       IGNORES NULLS
+  75               /       FLAGS LC WITH AN APOSTROPHE
+  76               /       HANDLES TABS CORRECTLY (SEVERAL WAYS)
+  77               /       PRINTS ESCAPE AS $
+  78               /       DELAYS 16 MS AFTER LINEFEEDS
+  79               /       PRINTS CONTROL CHARACTERS AS "^K"
+  80               
+  81               /DOES AUTOMATIC CR/LF AT END OF LINE WIDTH.
+  82               
+  83               /MAINTENANCE RELEASE CHANGES:
+  84               
+  85               /1.     ADDED KCC FOR NON-CONSOLE TELETYPES
+  86               
+  87               /V3D CHANGES: (VERSION E)
+  88               
+  89               /1.     ADDED DELAY OPTION FOR VT78
+  90               /2.     ADDED SCOPE RUBOUTS
+  91               /3.     CHANGED VT78 DEFAULTS
+  92               /4.     REARRANGED CODE FOR SET TTY ESC AND ARROW
+  93                      INDVC=03
+  94                       OUTDVC=04
+  95               
+  96                       KSF=10^INDVC+6001
+  97                       KCC=10^INDVC+6002
+  98                       KRS=10^INDVC+6004
+  99                       KRB=KCC KRS
+ 100                       TSF=10^OUTDVC+6001
+ 101                       TCF=10^OUTDVC+6002
+ 102                       TPC=10^OUTDVC+6004
+ 103                       TLS=TCF TPC
+ 104               
+ 105                       TTYVERSION="E&77
+ 106               /BUILD YOUR OWN TELETYPE HANDLER:
+ 107               
+ 108               /THIS SOURCE HAS MUMBLE LOCATIONS LEFT.
+ 109               
+ 110               /THE FOLLOWING CONDITIONALS ALLOW YOU TO INCLUDE OPTIONAL FEATURES.
+ 111               /YOU MAY INCLUDE AS MANY OR AS FEW AS YOU DESIRE PROVIDED THERE
+ 112               /IS ROOM LEFT.
+ 113               
+ 114               /CONDITIONAL    LOCATIONS       LOCATIONS       INCLUDED
+ 115               /VARIABLE       PAGE 1          PAGE 2          FEATURES
+ 116               
+ 117               / DELAY          0               7              DELAY AFTER GIVEN CHAR
+ 118               / CTRL           0               3              PRINT CONTROL CHARS AS ^K
+ 119               / RUB            0               0              PRINT CHAR RUBBED OUT ON RUBOUTS
+ 120               / SIMTAB         0              10              SIMULATE TABS AS SPACES
+ 121               / SLOTAB         0               6              PUT OUT 2 RUBOUTS AFTER A TAB
+ 122               / ESC            0              10              PRINT ESCAPE AS $
+ 123               / FLAGLC         0              12              FLAG LOWER CASE CHARS ON OUTPUT
+ 124               / CNVLC          0               7              CONVERT LOWER CASE ON INPUT TO UPPER CASE
+ 125               / ALTMOD         0              11              CONVERT ALTMODES (175,176) TO ESCAPE (33)
+ 126               / PAUS           0              20              PAUSE BETWEEN PAGES
+ 127               / FREE LOCS:     2              33
+ 128               
+ 129                       VT78=1          /SET TO 0 TO ALLOW OTHER PARAMETERS
+ 130                                       /SET TO 1 TO FORCE OTHER PARAMETERS TO VT78 COMPATIBLE
+ 131               
+ 132                       DELAY=0         /SET NON-ZERO TO ALLOW DELAY AFTER ANY CHAR (12=CR)
+ 133                                       /TYPICALLY AFTER LF FOR HIGH SPEED VT05
+ 134                                       /SET VALUE OF DELAY = 7-BIT CHAR TO DELAY AFTER
+ 135               
+ 136                       CTRL=1          /SET TO 1 TO ECHO CONTROL CHARS AS ^K
+ 137                                       /SET TO 0 TO ACCEPT CONTROL CHARACTERS AND PUT
+ 138                                       /IN BUFFER, BUT NOT ECHO THEM (EXCEPT THE USUAL)
+ 139                       RUB=1           /SET TO 0 TO ECHO EACH RUBOUT BY TYPING A BACK SLASH
+ 140                                       /SET TO 1 TO ECHO CHARS RUBBED OUT UPON RUB-OUT
+ 141                                       /SET TO 4000 TO PERFORM SCOPE TYPE RUBOUTS
+ 142                       SIMTAB=1        /SET TO 1 TO SIMULATE TABS AS THE CORRECT NUMBER OF SPACES
+ 143                                       /SET TO 0 TO TYPE TABS AS TABS
+ 144                       SLOTAB=0        /SET TO 1 TO TYPE 2 RUBOUTS AFTER A TAB
+ 145                                       /ONLY IS APPLICABLE IF SIMTAB=0
+ 146                       ALTMOD=0        /SET TO 1 TO CONVERT 175,176 TO 33
+ 147                                       /(UPPER CASE TERMINALS ONLY)
+ 148                       ESC=1           /SET TO 1 TO ECHO ESCAPE AS $
+ 149                                       /SET TO 0 TO ECHO ESCAPE AS A CONTROL CHAR (^[)
+ 150                       FLAGLC=1        /SET TO 1 TO FLAG LOWER CASE CHARS ON OUTPUT
+ 151                                       /THIS IS FOR PEOPLE NOT PRIVELIDGED ENOUGH TO
+ 152                                       /OWN A LOWER CASE TERMINAL
+ 153                                       /SET TO 0 TO PRINT LOWER CASE CHARS AS IS
+ 154                       CNVLC=0         /SET TO 1 TO CONVERT LOWER CASE CHARS ON INPUT TO UPPER CASE
+ 155                                       /SET TO 0 TO ACCEPT INPUTTED LOWER CASE CHARS AS IS
+ 156                                       /THIS IS FOR PEOPLE WHO ARE HANDICAPPED BY A LOWER CASE
+ 157                                       /TERMINAL AND ONLY WANT UPPER CASE
+ 158                       PAUS=200        /NON-0 PAUSES BETWEEN SCOPE PAGES
+ 159                       HEIGHT=30       /NUMBER OF LINES PER SCREEN
+ 160               
+ 161               /SOME OF THE ABOVE OPTIONS SHOULD ACTUALLY BE IMPLEMENTED
+ 162               /IN SUCH A MANNER THAT THE USER CAN CHANGE THEM VIA AN ALTER
+ 163               /RATHER THAN HAVE TO REASSEMBLE.
+ 164               
+ 165                       IFNZRO VT78 <
+ 166                       DELAY=0
+ 167                       CTRL=1
+ 168                       RUB=4000
+ 169                       SIMTAB=0
+ 170                       SLOTAB=0
+ 171                       ALTMOD=0
+ 172                       ESC=1
+ 173                       FLAGLC=0
+ 174                       CNVLC=0
+ 175                       IFNZRO INDVC-3 <CTRL=0>
+ 176                       >
+ 177               /CROSS PAGE LINKAGE:
+ 178               
+ 179               /THIS CODE MUST BE ABLE TO LOAD INTO ANY TWO PAGES OF CORE
+ 180               /THE ENTRY POINT IS AT THE NEXT LOCATION TO THE END OF THE FIRST PAGE
+ 181               /AT THE END OF THE FIRST PAGE WE JMS TO PLINK,
+ 182               /THIS LEAVES THE ADDRESS OF THE FIRST LOCATION OF THE NEXT PAGE
+ 183               /IN LOCATION 'PLINK' .  THIS JUST HAPPENS TO BE THE ADDRESS
+ 184               /OF BOTH TTYPCH AND TTYGCH.
+ 185               
+ 186               /TTYPCH AND TTYGCH SHARE THE SAME ENTRY POINT.
+ 187               /IF IT IS CALLED WITH A 0 AC, IT IS A CALL TO TTYGCH,
+ 188               /IF IT IS CALLED WITH A NON-ZERO AC, IT IS A CALL TO TTYPCH.
+ 189               
+ 190               /RETURN 1 MEANS GOT RUBOUT
+ 191               /TTYGCH TAKES RETURN 2 IF IT GOT A ^Z.
+ 192               /OTHERWISE IT TAKES RETURN 3 WITH CHARACTER GOTTEN IN AC.
+ 193               
+ 194               /TTYPCH TAKES RETURN 1 IF IT WANTS THE HANDLER TO GO AWAY,
+ 195               /I.E IF IT SAW A ^Z.
+ 196               /AC IS NORMALLY NON-ZERO UPON RETURN
+ 197               /AC IS POSITIVE MEANS DO A CRLF
+ 198               
+ 199               /WHEN ECHOING WE WANT TO CALL TTYPRT
+ 200               /BUT OTHERWISE WE WANT TO CALL TTYPCH (WHICH DOES ADDITIONAL
+ 201               /STUFF LIKE CHECK ^O, ^Q, ETC.
+ 202               /WE TELL BY WHETHER OR NOT TTYGCH HAD BEEN PREVIOUSLY CALLED.
+ 203                      *200
+ 204               
+ 205 000200  0000  PLINK,  0               /GETS ADDRESS OF TTYPCH AND TTYGCH (START OF NEXT PAGE)
+ 206 000201  7330          STL CLA RAR     /4000
+ 207 000202  1776          TAD I TTY       /RETRIEVE FUNCTION WORD, BUT PUT R/W BIT IN LINK
+ 208 000203  0353          AND L3700       /EXTRACT NUMBER OF DOUBLE-WORDS TO TRANSFER
+ 209 000204  7040          CMA             /GET COUNT+1
+ 210 000205  3260          DCA BUFSIZ      /STORE AWAY
+ 211 000206  6214          RDF             /FIND OUT THE USER'S DATA FIELD
+ 212 000207  1354          TAD CIFCDF      /FORM OUR EXIT CIF CDF
+ 213 000210  3254          DCA TTYXIT      /STORE AWAY FOR EXIT ROUTINE
+ 214 000211  1262          TAD TTY70       /GET FUNCTION WORD
+ 215 000212  0776  L776,   AND I TTY       /ISOLATE FIELD OF BUFFER
+ 216 000213  1355          TAD TTYCDF      /FORM CDF TO FIELD OF BUFFER
+ 217 000214  3222          DCA TTCDBF      /STORE WHERE IT WILL BE USEFUL
+ 218                                       /AT SAME TIME, INITIALIZE TTYEOF
+ 219 000215  2376          ISZ TTY         /POINT TO BUFFER ADDRESS
+ 220 000216  1776          TAD I TTY       /AND GET IT
+ 221 000217  3261          DCA BUFSTRT     /AND SAVE IT
+ 222 000220  2376          ISZ TTY         /POINT TO BLOCK #
+ 223 000221  2376  TTY376, ISZ TTY         /POINT TO ERROR RETURN
+ 224               SHIFT,                  /OUTPUT SHIFT REGISTER
+ 225               TTYEOF,                 /0 IF SAW CR OR ^Z AND WISH TO PAD BUFFER WITH 0'S
+ 226 000222  7402  TTCDBF, HLT             /CDF BUFFER FIELD
+ 227 000223  5247          JMP TTYKLG
+ 228 000224  7620  TTYLP,  SNL CLA         /LINK=1 MEANS OUTPUT
+ 229 000225  5304          JMP TTYGET      /INPUT IS FROM TTY:
+ 230               /LINK MUST BE SET FIRST TIME THROUGH HERE.
+ 231               /IT ACTS AS A GUARD BIT IN THE SHIFT REGISTER
+ 232 000226  7006  ROTL,   RTL
+ 233 000227  7006          RTL
+ 234 000230  7510          SPA             /DO WE HAVE 8 BITS SHIFTED IN?
+ 235 000231  5245          JMP TELP
+ 236 000232  3222          DCA SHIFT       /SAVE SHIFT REGISTER
+ 237 000233  1661          TAD I BUFSTRT
+ 238 000234  7440          SZA
+ 239 000235  4263          JMS PUNCH       /PRINT A CHARACTER
+ 240 000236  1661          TAD I BUFSTRT
+ 241 000237  2261          ISZ BUFSTRT     /BUMP INPUT POINTER
+ 242 000240  7400  TT7400, 7400            /PROTECT ISZ
+ 243 000241  0240          AND TT7400
+ 244 000242  7104          CLL RAL
+ 245 000243  1222          TAD SHIFT       /SHIFT HIGH ORDER 4 BITS INTO
+ 246 000244  5226          JMP ROTL        /SHIFT REGISTER
+ 247 000245  4263  TELP,   JMS PUNCH       /PRINT 3RD CHARACTER OF DOUBLE-WORD
+ 248 000246  7120          STL             /***KLUDGE
+ 249 000247  2260  TTYKLG, ISZ BUFSIZ      /DONE?
+ 250 000250  5224          JMP TTYLP       /NOT YET
+ 251 000251  1222  TTYX,   TAD TTYEOF      /IF INPUT AND WE WERE PADDING WITH 0'S
+ 252 000252  7640          SZA CLA         /TAKE SOFT ERROR EXIT
+ 253 000253  2376  TTYRTN, ISZ TTY         /POINT TO NORMAL RETURN
+ 254                                       /CAN'T GET ERROR OR END-OF-FILE ON OUTPUT
+ 255 000254  7402  TTYXIT, HLT             /RETURN TO USER'S FIELD
+ 256 000255  5776          JMP I TTY       /RETURN TO USER
+ 257 000256  0000  TTYCA,  0
+ 258 000257  0000  TTYWC,  0
+ 259 000260  0000  BUFSIZ, 0
+ 260 000261  0000  BUFSTRT,0
+ 261 000262  0070  TTY70,  70
+ 262               
+ 263 000263  0000  PUNCH,  0               /NEVER CALL TTYPCH WITH ZERO AC
+ 264 000264  4600          JMS I PLINK     /CALL TTYPCH
+ 265 000265  5253          JMP TTYRTN      /GO AWAY, WE SAW A ^Z
+ 266 000266  7700  L7700,  SMA CLA         /DID WE REACH END OF TTY LINE?
+ 267 000267  4271          JMS CRLF        /YES, PERFORM CR/LF
+ 268 000270  5663          JMP I PUNCH     /RETURN
+ 269               
+ 270               TMP,
+ 271 000271  0000  CRLF,   0
+ 272 000272  1274          TAD L215
+ 273 000273  4600          JMS I PLINK     /CALL TTYPCH TO PRINT CR
+ 274 000274  0215  L215,   215             /CAN'T RETURN HERE
+ 275 000275  7200          CLA             /****
+ 276 000276  1300          TAD L212
+ 277 000277  4600          JMS I PLINK     /CALL TTYPCH TO PRINT LF
+ 278 000300  0212  L212,   212             /CAN'T RETURN HERE
+ 279 000301  7200          CLA             /****
+ 280 000302  5671          JMP I CRLF      /RETURN
+ 281 000303  4271  CTRLU, JMS CRLF        /PERFORM A CR/LF
+ 282 000304  1261  TTYGET, TAD BUFSTRT
+ 283 000305  3256          DCA TTYCA       /POINT TO START OF BUFFER
+ 284 000306  1260          TAD BUFSIZ
+ 285 000307  7104          CLL RAL         /CONVERT DOUBLE-WORDS TO WORDS
+ 286 000310  3257  DCAWC,  DCA TTYWC       /SET SIZE OF BUFFER
+ 287 000311  1222  TSTEND, TAD TTYEOF
+ 288 000312  7650          SNA CLA
+ 289 000313  5316          JMP ZERO
+ 290 000314  4600          JMS I PLINK     /CALL TTYGCH TO GET A CHARACTER
+ 291 000315  5356          JMP RUBOUT      /RETURN 1 MEANS SAW RUBOUT
+ 292 000316  3656  ZERO,   DCA I TTYCA     /RETURN 2 MEANS GOT CHARACTER
+ 293                                       /STORE AWAY TEMPORARILY
+ 294                                       /USING USER'S BUFFER AS A TEMP LOCATION
+ 295 000317  1656          TAD I TTYCA     /GET BACK CHARACTER
+ 296                       IFNZRO .-320 <_ERROR>
+ 297 000320  7440          SZA
+ 298 000321  4263          JMS PUNCH       /ECHO IT
+ 299 000322  1656          TAD I TTYCA     /GET IT AGAIN
+ 300 000323  1351          TAD M32         /-^Z
+ 301 000324  7450          SNA
+ 302 000325  5346          JMP CTRLZ
+ 303 000326  1352          TAD L5          /^Z-^U
+ 304 000327  7450          SNA             /IS IT ^U?
+ 305 000330  5303          JMP CTRLU       /YES
+ 306 000331  1334          TAD L7
+ 307 000332  3271  GRUDGE, DCA TMP
+ 308 000333  2256          ISZ TTYCA       /NO
+ 309 000334  0007  L7,     7
+ 310 000335  2257          ISZ TTYWC       /IS BUFFER FULL?
+ 311 000336  7410  TT10,   SKP
+ 312 000337  5251          JMP TTYX
+ 313 000340  2271          ISZ TMP         /WAS LAST CHAR A CR?
+ 314 000341  5311          JMP TSTEND      /NO
+ 315 000342  3222          DCA TTYEOF      /YES, SET "PAD WITH 0'S" FLAG
+ 316 000343  2376          ISZ TTY         /POINT TO NORMAL RETURN
+ 317                                       /CR IS NOT AN ERROR OR END-OF-FILE
+ 318 000344  1300          TAD L212        /IF LAST CHAR INPUT WAS CR, NOW PRETEND LF WAS INPUT
+ 319 000345  5316          JMP ZERO        /REJOIN PROCESSING
+ 320               
+ 321 000346  3222  CTRLZ,  DCA TTYEOF
+ 322 000347  4271          JMS CRLF
+ 323 000350  5332          JMP GRUDGE
+ 324               
+ 325 000351  7746  M32,    -32
+ 326 000352  0005  L5,     5
+ 327 000353  3700  L3700,  3700
+ 328 000354  6203  CIFCDF, CIF CDF 0
+ 329 000355  6201  TTYCDF, CDF 0
+ 330               
+ 331               /TTYEOF IS ZERO MEANS PAD BUFFER WITH ZEROES
+ 332               /DON'T DO YET:
+ 333               /RUBOUT,        AND TTYWC       /177 IN AC
+ 334               /       SNA CLA
+ 335               /       JMP CTRLU
+ 336               
+ 337 000356  6032  RUBOUT, KCC             /TTYGCH DOESN'T CLEAR RO FROM BUFFER
+ 338 000357  1256          TAD TTYCA
+ 339 000360  7041          CIA
+ 340 000361  1261          TAD BUFSTRT
+ 341 000362  7650          SNA CLA         /ARE WE AT BEGIN OF BUFFER?
+ 342 000363  5303          JMP CTRLU       /YES
+ 343 000364  7240          STA
+ 344 000365  1256          TAD TTYCA
+ 345 000366  3256          DCA TTYCA
+ 346                       IFZERO RUB <
+ 347               LSLASH, "\
+ 348                       TAD LSLASH              /PRINT A BACK SLASH FOR EACH RUBBED OUT CHAR
+ 349                       >
+ 350                       IFNZRO RUB&4000+RUB <TAD I TTYCA>       /PRINT CHAR JUST DELETED
+ 351 000367  1336          IFNZRO RUB&4000 <TAD TT10>      /BACKSPACE-SPACE-BACKSPACE
+ 352 000370  4263          JMS PUNCH
+ 353 000371  7240          STA
+ 354 000372  1257          TAD TTYWC
+ 355 000373  5310          JMP DCAWC       /BUMP BACK WC AND GET ANOTHER CHAR
+ 356               
+ 357 000374  0000          ZBLOCK 376-.
+     000375  0000  
+ 358 000376  0005  TTY,    TTYVERSION      /ENTRY POINT TO HANDLER
+ 359 000377  4200          JMS PLINK       /SET UP CROSS PAGE LINKAGE
+ 360                       IFNZRO TTY-376 <ENTERR,QQQQ>
+ 361               *.-1 // VRS
+ 362                       PAGE
+ 363               /INTERLUDE:
+ 364               
+ 365               /USA STANDARD CODE FOR INFORMATION INTERCHANGE:
+ 366               
+ 367               /       000     001     010     011     100     101     110     111
+ 368               /
+ 369               / 0000  NUL     DLE     SP      0       @       P       '       'P
+ 370               /
+ 371               / 0001  SOH     DC1     !       1       A       Q       'A      'Q
+ 372               /
+ 373               / 0010  STX     DC2     "       2       B       R       'B      'R
+ 374               /
+ 375               / 0011  ETX     DC3     #       3       C       S       'C      'S
+ 376               /
+ 377               / 0100  EOT     DC4     $       4       D       T       'D      'T
+ 378               /
+ 379               / 0101  ENQ     NAK     %       5       E       U       'E      'U
+ 380               /
+ 381               / 0110  ACK     SYN     &       6       F       V       'F      'V
+ 382               /
+ 383               / 0111  BEL     ETB     '       7       G       W       'G      'W
+ 384               /
+ 385               / 1000  BS      CAN     (       8       H       X       'H      'X
+ 386               /
+ 387               / 1001  HT      EM      )       9       I       Y       'I      'Y
+ 388               /
+ 389               / 1010  LF      SUB     *       :       J       Z       'J      'Z
+ 390               /
+ 391               / 1011  VT      ESC     +       ;       K       [       'K      '[
+ 392               /
+ 393               / 1100  FF      FS      ,       <       L       \       'L      '\
+ 394               /
+ 395               / 1101  CR      GS      -       =       M       ]       'M      ']
+ 396               /
+ 397               / 1110  SO      RS      .       >       N       ^       'N      '^
+ 398               /
+ 399               / 1111  SI      US      /       ?       O       _       'O      '_
+ 400               /
+ 401               /TTYGCH:       GETS A CHAR FROM KBD
+ 402               /       IF GOT ^Z, IT SETS TTYEOF FLAG
+ 403               /       LEAVES IT IN AC IN 7-BIT
+ 404               
+ 405               /TTYPRT:        PRINTS CHAR IN AC ON TTY
+ 406               /       IGNORES NULLS
+ 407               /       PRINTS ^X ON CONTROL CHARS (EXCEPT CR, LF, FF, VT, TAB)
+ 408               /       PRINTS 'X ON LOWER CASE
+ 409               
+ 410               /HANDLES TABS CORRECTLY
+ 411               /       AND AUTOMATICALLY PRINTS CR/LF AT EOL
+ 412               /       PRINTS ESCAPE AS $
+ 413               
+ 414               /TTYTLS:        USED TO ACTUALLY PRINT CHAR
+ 415               /               IT HANDLES TABS AUTOMATICALLY
+ 416               /               AND CR/LF'S AT END OF LINE
+ 417               
+ 418               /TTYPCH:        IT USES TTYPRT TO PRINT CHAR BUT ALSO RESPONDS TO
+ 419               /               ^C, ^O, ^S, ^Q.
+ 420               /               IF ^Z IS BEING PRINTED, IT THEN STOPS FURTHER PRINTING
+ 421               /MUST BE AT TOP OF PAGE
+ 422               TTYPCH,                 /ENTRY POINT TO TTY PUNCH ROUTINE
+ 423                                       /OR TTY PRINT ROUTINE
+ 424 000400  0000  TTYGCH, 0               /ENTRY POINT TO TTY GET CHAR ROUTINE
+ 425 000401  7450          SNA
+ 426 000402  4323          JMS TGCH        /ZERO AC-MEANT CALL TO TTYGCH
+ 427 000403  0377  PCH,    AND (177        /FORCE TO 7-BIT
+ 428 000404  3353          DCA TCHAR
+ 429 000405  1323          TAD TGCH
+ 430 000406  7640  M140,   SZA CLA         /ARE WE ECHOING?
+ 431 000407  5246          JMP ECHO        /YES, IGNORE ^S AND STUFF
+ 432 000410  0005  K5,     5               /MUST BE AT REL 10
+ 433 000411  1353          TAD TCHAR
+ 434 000412  1376          TAD (-32
+ 435                       IFZERO PAUS <
+ 436                       SNA CLA
+ 437                       JMP I TTYPCH
+ 438                       >
+ 439                       IFNZRO PAUS <
+ 440 000413  7450          SNA
+ 441 000414  5600          JMP I TTYPCH
+ 442 000415  1221          TAD L15         /32-15
+ 443 000416  7650          SNA CLA         /LOOK FOR CR
+ 444 000417  2351          ISZ LINCNT      /AT END OF PAGE?
+ 445 000420  5232          JMP NOPAUS      /NOT AT CR, OR AT CR BUT NOT AT END OF PAGE
+ 446 000421  0015  L15,    15              /MUST BE HERE FOR SET
+ 447 000422  1352          TAD PAUSN
+ 448 000423  3337          DCA TTYTLS      /SET COUNT FOR OUTER LOOP
+ 449 000424  2351          ISZ LINCNT
+ 450 000425  5224          JMP .-1
+ 451 000426  2337          ISZ TTYTLS
+ 452 000427  5224          JMP .-3
+ 453 000430  1350          TAD LINSYZ
+ 454 000431  3351          DCA LINCNT
+ 455                       >
+ 456 000432  4354  NOPAUS, JMS TTYTST
+ 457 000433  1375          TAD (203-217    /NO
+ 458 000434  7450          SNA             /^O?
+ 459 000435  3353          DCA TCHAR       /YES, SET TO NULL SO IT WILL BE IGNORED
+ 460 000436  1374          TAD (217-223    /NO
+ 461 000437  7640          SZA CLA         /^S?
+ 462 000440  5246          JMP ECHO        /NO, IGNORE CHAR
+ 463 000441  4354  TTCTLQ, JMS TTYTST
+ 464 000442  1373          TAD (203-221    /NO, NOTHING ELSE MATTERS UNTIL ^Q
+ 465 000443  7640          SZA CLA         /^Q?
+ 466 000444  5241          JMP TTCTLQ      /NO, SUSPEND OUTPUTTING
+ 467 000445  6032  TTY32,  KCC             /YES, REMOVE ^Q FROM BUFFER
+ 468               /HAD NO ROOM FOR:
+ 469               /       TAD LINSYZ
+ 470               /       DCA LINCNT
+ 471 000446  3323  ECHO,   DCA TGCH
+ 472 000447  2200          ISZ TTYPCH
+ 473                       IFNZRO ESC <
+ 474 000450  1353          TAD TCHAR
+ 475 000451  1372          TAD (-33
+ 476 000452  7640          SZA CLA
+ 477 000453  5256          JMP .+3
+ 478 000454  1256          TAD L44
+ 479 000455  3353          DCA TCHAR
+ 480 000456  0044  L44,    44
+ 481                       >
+ 482 000457  1353          TAD TCHAR
+ 483 000460  7450          SNA
+ 484 000461  5315          JMP TTYCTO      /IGNORE NULLS
+ 485                       IFNZRO RUB&4000 <
+ 486 000462  1371          TAD (-10
+ 487 000463  7450          SNA
+ 488 000464  5273          JMP RUBO
+ 489 000465  1370          TAD (10-16
+ 490                       >
+ 491                       IFZERO RUB&4000 <
+ 492                       TAD (-16
+ 493                       >
+ 494 000466  7100  TTY100, CLL
+ 495 000467  1210  TTY10,  TAD K5
+ 496 000470  7440  TTY240, SZA             /TAB?
+ 497 000471  5302          JMP NOTAB
+ 498                       IFNZRO SIMTAB <
+ 499               TTYTAB, TAD TTY240
+ 500                       JMS TTYTLS
+ 501               TTY7,   7               /HERE FOR NO SPECIAL REASON
+ 502                       TAD TABCTR
+ 503                       AND TTY7
+ 504                       SZA CLA
+ 505                       JMP TTYTAB
+ 506                       JMP TTYCTO
+ 507                       >
+ 508                       IFNZRO SLOTAB <
+ 509                       TAD TCHAR
+ 510                       JMS TTYTLS
+ 511                       TAD (177
+ 512                       JMS TTYTLS
+ 513                       TAD (177
+ 514                       JMP PRIN+1
+ 515                       >
+ 516 000472  5313          IFZERO SIMTAB+SLOTAB <JMP PRIN>
+ 517               
+ 518               /BUG: IF HARDWARE TABS, DON'T COUNT COLUMNS CORRECTLY
+ 519               
+ 520                       IFNZRO RUB&4000 <
+ 521 000473  1267  RUBO,   TAD TTY10       /OUTPUT BACKSPACE-RUBOUT-BACKSPACE
+ 522 000474  4337          JMS TTYTLS
+ 523 000475  1270          TAD TTY240
+ 524 000476  4337          JMS TTYTLS
+ 525 000477  1374          TAD (-4
+ 526 000500  1336          TAD TABCTR
+ 527 000501  5321          JMP PREPRN
+ 528                       >
+ 529 000502  7630  NOTAB, SZL CLA
+ 530 000503  5317          JMP SPCHR       /DON'T UPARROW CHARS LF,CR,TAB,VT,FF
+ 531                       IFNZRO FLAGLC <
+ 532                       TAD TCHAR
+ 533                       AND TTY140
+ 534                       TAD M140
+ 535                       SZA CLA         /IS IT LC?
+ 536                       JMP NOLC        /NO
+ 537               TTYQUO, "'
+ 538                       TAD TTYQUO      /YES
+ 539                       JMS TTYTLS      /PRINT QUOTE
+ 540                       TAD M40
+ 541                       JMP PRIN        /PRINT UPPER CASE OF CHAR
+ 542                       >
+ 543 000504  1353  NOLC,   TAD TCHAR       /NO, GET BACK CHAR
+ 544 000505  0317          AND TTY140      /HIGH ORDER BITS IRRELEVANT
+ 545                       IFNZRO CTRL <
+ 546 000506  7740  M40,    SMA SZA CLA     /CAN'T BE NEGATIVE
+ 547 000507  5313          JMP PRIN        /NOT A CONTROL CHARACTER
+ 548 000510  1344          TAD TTYUPA      /ECHO 201-237 AS ^X (EXCEPT 211-215)
+ 549 000511  4337          JMS TTYTLS
+ 550 000512  1266          TAD TTY100      /ADD X100 TO ^K TO GET K
+ 551                       >
+ 552                       IFZERO CTRL <
+ 553                       SNA CLA         /IS CHAR A CONTROL CHAR?
+ 554                       JMP TTYCTO      /YES, DON'T ECHO CONTROL CHARACTERS EXCEPT FOR 211-215
+ 555                       >
+ 556 000513  1353  PRIN,   TAD TCHAR
+ 557 000514  4337          JMS TTYTLS
+ 558 000515  1336  TTYCTO, TAD TABCTR      /RETURN TABCNT IN AC
+ 559 000516  5600          JMP I TTYPCH
+ 560               
+ 561                       IFZERO CTRL <
+ 562               M40,    -40
+ 563                       >
+ 564               
+ 565               TTY140,
+ 566 000517  7340  SPCHR,  STA CLL
+ 567 000520  1347          TAD LINSIZ
+ 568 000521  3336  PREPRN, DCA TABCTR      /THESE CHARS RESET COLUMN COUNTER
+ 569 000522  5313          JMP PRIN
+ 570 000523  0000  TGCH,  0               /NON-ZERO MEANS TTYGCH WAS CALLED
+ 571 000524  6031          KSF
+ 572 000525  5324          JMP .-1         /WAIT FOR CHAR TO BE TYPED
+ 573 000526  4354          JMS TTYTST
+ 574               /WILD: (DON'T PUT IN)   SZA CLA /FALL THRU AND RETURN R.O.
+ 575               /       ISZ TTYGCH
+ 576 000527  1367          TAD (203-377
+ 577 000530  7650          SNA CLA         /TAKE RETURN 1 ON RUB OUT
+ 578 000531  5600          JMP I TTYGCH    /"CLUMSY" - R.L. (9/18/73)
+ 579 000532  2200          ISZ TTYGCH
+ 580 000533  6036          KRB             /GET CHARACTER
+ 581 000534  0377  TTYAND, AND (177        /MUST RETURN CHAR IN 7-BIT
+ 582                       IFNZRO CNVLC <
+ 583                       DCA TCHAR
+ 584                       TAD TCHAR
+ 585                       AND TTY140
+ 586                       TAD M140
+ 587                       SNA CLA         /IS IT LC?
+ 588                       TAD M40         /YES
+ 589                       TAD TCHAR       /NO
+ 590                       >
+ 591                       IFNZRO ALTMOD <
+ 592                       TAD (-175       /IS IT 175 OR 176?
+ 593                       SMA
+ 594                       JMP CONV        /YES, CONVERT ALTMODE TO ESCAPE
+ 595                       TAD (175        /NO, RESTORE CHAR
+ 596                       >
+ 597 000535  5600          JMP I TTYGCH    /TAKE RETURN 3
+ 598               
+ 599               /SHOULDN'T TABCTR BE INITIALIZED TO C(LINSIZ) UPON ENTRY?
+ 600               
+ 601 000536  7670  TABCTR, -110
+ 602               
+ 603 000537  0000  TTYTLS, 0
+ 604 000540  6046          TLS
+ 605                       IFNZRO DELAY <
+ 606                       TAD (-DELAY
+ 607                       SZA CLA
+ 608                       STA
+ 609                       >
+ 610 000541  6041  TTYTSF, TSF
+ 611 000542  5341          JMP .-1
+ 612                       IFNZRO DELAY <
+ 613                       IAC
+ 614                       SZA             /19.66 MS IS G.T. 1/60 SEC
+ 615                       JMP TTYTSF
+ 616                       >
+ 617 000543  2336          ISZ TABCTR
+ 618 000544  0336  TTYUPA, "^
+ 619 000545  7600  TT7600, 7600
+ 620 000546  5737          JMP I TTYTLS
+ 621 000547  7670  LINSIZ, -110
+ 622               
+ 623                       IFNZRO PAUS <
+ 624 000550  7750  LINSYZ, -HEIGHT
+ 625 000551  7750  LINCNT, -HEIGHT
+ 626 000552  7600  PAUSN,  -PAUS
+ 627                       >
+ 628               
+ 629                       IFNZRO ALTMOD <
+ 630                               IFNZRO KCC-6032 <
+ 631               CONV,           CLA
+ 632                               TAD (33
+ 633                               JMP I TTYGCH
+ 634                               >
+ 635                       IFZERO KCC-6032 <
+ 636               CONV,           CLA IAC
+ 637                               TAD TTY32       /DEVICE DEPENDENT
+ 638                               JMP TTYAND
+ 639                               >
+ 640                       >
+ 641 000553  0000  TCHAR, 0
+ 642               
+ 643               /TTYTST:        READS KEYBOARD STATICALLY AND RESPONDS TO ^C
+ 644               /               OTHERWISE RETURNS CHAR (8-BIT) MINUS 203 IN AC.
+ 645               /               IF FLAG IS NOT UP, IT RETURNS A 1.
+ 646               
+ 647 000554  0000  TTYTST, 0
+ 648 000555  1345          TAD TT7600      /OR CHAR IN
+ 649 000556  6034          KRS
+ 650 000557  1366          TAD (-7603      /-7603=175
+ 651 000560  6031          KSF
+ 652 000561  7201          CLA IAC         /STUFF IN BUFFER IS UNRELIABLE IF FLAG ISN'T UP
+ 653 000562  7440          SZA
+ 654 000563  5754          JMP I TTYTST
+ 655                       IFNZRO INDVC-3 <KCC>
+ 656 000564  6203          CIF CDF 0       /BRANCH TO OS/8 MONITOR AT 07600
+ 657 000565  5745          JMP I TT7600    /IT WILL PRINT "^C" FOR CHAR IN BUFFER
+ 658 000566  0175          PAGE
+     000567  7604  
+     000570  7772  
+     000571  7770  
+     000572  7745  
+     000573  7762  
+     000574  7774  
+     000575  7764  
+     000576  7746  
+     000577  0177  
+ 659               /      DYNAMICALLY MODIFYING THE KL8E HANDLER
+ 660               
+ 661               /       *** I M P O R T A N T ***
+ 662               
+ 663               /       THIS HANDLER CAN BE DYNAMICALLY CHANGED VIA SET COMMANDS.
+ 664               /       CONSEQUENTLY, IT IS EXTREMELY IMPORTANT THAT PEOPLE
+ 665               /       WHO MODIFY THIS SOURCE DO NOT AFFECT THE ALGORITHMS
+ 666               /       NECESSARY TO PERFORM SUCH MODIFICATIONS.
+ 667               
+ 668               /       THIS ALGORITHM IS EXPLAINED BELOW.
+ 669               
+ 670               /       SET TTY WIDTH=N
+ 671               
+ 672               /       SEARCH LOCATIONS 200-377 FOR A 7600.  CALL ITS ADDRESS X.
+ 673               /       LET Y BE THE INSTRUCTION AT LOCATION X+1.
+ 674               /       FORM THE (RELATIVE) ADDRESS T=Y&177+200-1.
+ 675               /       THEN LOCATIONS T AND X+2 CONTAIN MINUS THE TTY WIDTH.
+ 676               /       THE WIDTH MUST BE A MULTIPLE OF 10 AND MUST NOT BE 200.
+ 677               /       (BECAUSE -200 IS THE MAGIC 7600)
+ 678               
+ 679               /       SET TTY CODE XX
+ 680               
+ 681               /       SEARCH ENTIRE HANDLER FOR INSTRUCTIONS OF THE FORM 6XXY
+ 682               /       WHERE XX IS NOT 20 OR 21,
+ 683               /       AND FURTHERMORE DON'T INCLUDE A 6031 IF 2 LOCATIONS
+ 684               /       FOLLOWING IS A 7650
+ 685               /       AND DON'T INCLUDE A 6034 IF 4 LOCATIONS FOLLOWING IS A 7650.
+ 686               
+ 687               
+ 688               /       SET TTY [NO] ECHO
+ 689               
+ 690               /       THE WORD INVOLVED IS AT (RELATIVE) LOCATION 120.
+ 691               /       SET TO 7440 TO ECHO.
+ 692               /       SET TO 7610 TO SUPPRESS ECHOING.
+ 693               
+ 694               
+ 695               /       SET TTY LC
+ 696               
+ 697               /       SEARCH LOCATIONS 200-377 FOR A 377.  CALL ITS ADDRESS X.
+ 698               /       LOOK AT LOCATION X+5.
+ 699               /       IF THIS LOCATION IS NOT A 7650, THEN LC TO UC CONVERSION
+ 700               /       WAS NOT ENABLED AT ASSEMBLY TIME.
+ 701               /       IF THE FEATURE IS ENABLED, CHANGE LOCATION X+5 TO A 7610
+ 702               /       TO PREVENT THE CONVERSION.  TO ALLOW CONVERSION, SET
+ 703               /       LOCATION X+5 BACK TO 7650.
+ 704               
+ 705               /       SET TTY PAGE
+ 706               
+ 707               /       SEARCH LOCATIONS 215-300 FOR A 7450. CALL ITS ADDRESS X.
+ 708               /       SET X+3 TO 7640 TO ENABLE ^S, ^Q.
+ 709               /       SET X+3 TO 7200 TO DISABLE ^S, ^Q.
+ 710               /      SET TTY TAB
+ 711               
+ 712               /       SEARCH LOCATIONS 200-300 FOR A 7.
+ 713               /       IF NOT FOUND, SIMULATED TABS WAS NOT ENABLED AT ASSEMBLY TIME.
+ 714               /       IF FOUND, CALL ITS ADDRESS X.
+ 715               /       TO PATCH OUT SIMULATED TABS:
+ 716               /               MOVE C(X-12) TO LOCATION X-2
+ 717               /               CHANGE LOCATION X+3 TO A 7610
+ 718               /       TO RESTORE SIMULATED TABS:
+ 719               /               SET LOCATION X-2 TO X-4&77+1200
+ 720               /               CHANGE LOCATION X+3 TO A 7640
+ 721               
+ 722               /       SET TTY FILL
+ 723               
+ 724               /       THE LITERAL 177 MUST REMAIN AT THE END OF PAGE 2
+ 725               /       SEARCH LOCATIONS 200-300 FOR A 1377.
+ 726               /       IF NOT FOUND, THEN FILL CHARACTERS WERE NOT ENABLED AT ASSEMBLY
+ 727               /       TIME.  IF FOUND, CALL ITS ADDRESS X.
+ 728               /       TO PATCH OUT FILL CHARACTERS, MOVE C(X+3) TO LOCATION X-1.
+ 729               /       TO RESTORE FILL CHARACTERS, MOVE C(X+1) TO LOCATION X-1.
+ 730               
+ 731               /       SET TTY FLAGLC
+ 732               
+ 733               /       SEARCH LOCATIONS 200-377 FOR A 247.
+ 734               /       IF NOT FOUND, LOWER CASE FLAGGING WAS NOT ENABLED AT ASSEMBLY TIME.
+ 735               /       IF FOUND, CALL ITS ADDRESS X.
+ 736               /       TO DISABLE FLAGGING, SET LOCATION X-2 TO A 7200.
+ 737               /       TO RE-ENABLE FLAGGING, SET LOCATION X-2 TO A 7640.
+ 738               
+ 739               /       SET TTY PAUSE [N]
+ 740               
+ 741               /       SEARCH LOCATIONS 200-300 FOR A 15.
+ 742               /       IF NOT FOUND, PAUSING WAS NOT ENABLED AT ASSEMBLY TIME.
+ 743               /       IF FOUND, CALL ITS ADDRESS X.
+ 744               /       TO DISABLE PAUSING AFTER A FULL SCREEN,
+ 745               /       SET LOCATION X-3 TO A 7610.
+ 746               /       TO RE-ENABLE PAUSING, SET LOCATION X-3 TO A 7650.
+ 747               /       TO SET PAUSE DURATION, SEARCH LOCATIONS 300-377 FOR A 7600,
+ 748               /       CALLING ITS ADDRESS X.  THEN (MINUS THE) PAUSE DURATION IS AT
+ 749               /       LOCATION X+5.
+ 750               
+ 751               /       SET TTY HEIGHT
+ 752               
+ 753               /       THIS IS ONLY APPLICABLE IF SET TTY PAUSE HAS BEEN ASSEMBLED IN
+ 754               /       (A 15 CAN BE FOUND ON SECOND PAGE).
+ 755               /       NEGATIVE OF HEIGHT MUST BE SET IN BOTH LOCATIONS X+3 AND X+4
+ 756               /       WHERE X IS THE ADDRESS OF A 7600 AS IN ABOVE.
+ 757               /      SET TTY ESCAPE
+ 758               
+ 759               /       SEARCH LOCATIONS 200-377 FOR A 44.
+ 760               /       IF NOT FOUND, THEN $ WAS NOT ASSEMBLED INTO TTY HANDLER.
+ 761               /       IF FOUND, CALL ITS ADDRESS X.
+ 762               /       TO DISABLE PRINTING ESCAPE AS $, SET LOCATION X-4 TO A 'CLA'.
+ 763               /       TO CAUSE ESCAPE TO PRINT AS AN ESCAPE, SET LOCATION X-4 TO SZA CLA.
+ 764               
+ 765               /       SET TTY ARROW
+ 766               
+ 767               /       SEARCH LOCATIONS 200-377 FOR 7740.
+ 768               
+ 769               /       IF NOT FOUND, USING OLD HANDLER.
+ 770               /       CALL ITS ADDRESS X.
+ 771               /       IF LOCATION X+1 IS MORE THAN 7000,
+ 772               /       THEN UPARROW MODE WAS NOT ASSEMBLED INTO KL8E.
+ 773               /       OTHERWISE, TO ALLOW ARROWS, SET LOCATION X+3 TO THE
+ 774               /       CONTENTS OF LOCATION X+6.
+ 775               /       TO CAUSE CONTROL CHARACTERS TO ECHO AS IS, SET
+ 776               /       LOCATION X+3 TO 'SKP CLA'.
+ 777               /       NOTE THAT THIS IS A DIFFERENT OPTION THAN ASSEMBLING CTRL=0.
+ 778                      IFDEF TEST <
+ 779                       *600
+ 780               
+ 781               /TEST ROUTINE FOR KL8E HANDLER
+ 782               
+ 783               GO,     JMS I (TTY      /CALL HANDLER
+ 784                       0600            /READ SIX PAGES
+ 785                       1000            /BUFFER AT 01000
+ 786                       0001            /BLOCK 1
+ 787                       HLT             /ERROR RETURN
+ 788                       JMS I (TTY      /CALL HANDLER AGAIN
+ 789                       4600            /OUTPUT SIX PAGES
+ 790                       1000
+ 791                       0001
+ 792                       HLT
+ 793                       CLA
+ 794                       JMP GO
+ 795                       >
+ 796                       $
+
+ALTMOD  0000
+BUFSIZ  0260
+BUFSTR  0261
+CIFCDF  0354
+CNVLC   0000
+CRLF    0271
+CTRL    0001
+CTRLU   0303
+CTRLZ   0346
+DCAWC   0310
+DELAY   0000
+ECHO    0446
+ESC     0001
+FLAGLC  0000
+GRUDGE  0332
+HEIGHT  0030
+INDVC   0003
+K5      0410
+KCC     6032
+KRB     6036
+KRS     6034
+KSF     6031
+L15     0421
+L212    0300
+L215    0274
+L3700   0353
+L44     0456
+L5      0352
+L7      0334
+L7700   0266 unreferenced
+L776    0212 unreferenced
+LINCNT  0551
+LINSIZ  0547
+LINSYZ  0550
+M140    0406 unreferenced
+M32     0351
+M40     0506 unreferenced
+NOLC    0504 unreferenced
+NOPAUS  0432
+NOTAB   0502
+OUTDVC  0004
+PAUS    0200
+PAUSN   0552
+PCH     0403 unreferenced
+PLINK   0200
+PREPRN  0521
+PRIN    0513
+PUNCH   0263
+ROTL    0226
+RUB     4000
+RUBO    0473
+RUBOUT  0356
+SHIFT   0222
+SIMTAB  0000
+SLOTAB  0000
+SPCHR   0517
+TABCTR  0536
+TCF     6042
+TCHAR   0553
+TELP    0245
+TGCH    0523
+TLS     6046
+TMP     0271
+TPC     6044
+TSF     6041
+TSTEND  0311
+TT10    0336
+TT7400  0240
+TT7600  0545
+TTCDBF  0222
+TTCTLQ  0441
+TTY     0376
+TTY10   0467
+TTY100  0466
+TTY140  0517
+TTY240  0470
+TTY32   0445 unreferenced
+TTY376  0221 unreferenced
+TTY70   0262
+TTYAND  0534 unreferenced
+TTYCA   0256
+TTYCDF  0355
+TTYCTO  0515
+TTYEOF  0222
+TTYGCH  0400
+TTYGET  0304
+TTYKLG  0247
+TTYLP   0224
+TTYPCH  0400
+TTYRTN  0253
+TTYTLS  0537
+TTYTSF  0541 unreferenced
+TTYTST  0554
+TTYUPA  0544
+TTYVER  0005
+TTYWC   0257
+TTYX    0251
+TTYXIT  0254
+VT78    0001
+ZERO    0316

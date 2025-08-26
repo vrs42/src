@@ -1,0 +1,345 @@
+   1               / LQP HANDLER FOR OS/8
+   2               /
+   3               /
+   4               / THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+   5               / AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+   6               / CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+   7               / FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+   8               /
+   9               / THE SOFTWARE DESCRIBED HEREIN IS FURNISHED TO THE PURCHASER
+  10               / UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  11               / (WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  12               / SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  13               / 
+  14               / DIGITAL EQUIPMENT ASSUMES NO RESPONSIBILITY FOR THE USE
+  15               / OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED
+  16               / BY DIGITAL.
+  17               /
+  18               / COPYRIGHT (C) 1977 BY DIGITAL EQUIPMENT CORPORATION
+  19               /
+  20               
+  21               PDMP=6502
+  22               PDMC=6503
+  23               PDPC=6504
+  24               PDRS=6505
+  25               PDWS=6506
+  26               PDRE=6507
+  27                
+  28               LPVERSION="A&77 /VERSION A (MH)
+  29               
+  30               *0              /ORIGIN FOR BUILD INFO
+  31               
+  32 000000  7777  -1              /ONE ENTRY POINT
+  33 000001  1421  DEVICE LQP      /GROUP NAME
+     000002  2000  
+  34 000003  1420  DEVICE LPT      /DEVICE NAME
+     000004  2400  
+  35 000005  1040  1040            /DEVICE TYPE
+  36 000006  4004  LQP&177+4000    /ENTRY POINT + TWO-PAGE FLAG
+  37 000007  0000  0               /REQUIRED ZEROES
+  38 000010  0000  0
+  39               
+  40               PAGE
+  41               
+  42               LQPORG=.
+  43 000200  0000  LQPCSV, 0
+  44 000201  0000  LQPBUF, 0
+  45 000202  0000  LQPDWC, 0
+  46 000203  0000  LQPDCY, 0
+  47               
+  48 000204  0001  LQP,    LPVERSION       /ENTRY POINT (MH)
+  49 000205  7326          CLA STL RTL                     /RAISE RIBBON
+  50 000206  6506          PDWS
+  51               
+  52 000207  6507          PDRE                    /INIT PRINTER
+  53 000210  3207          DCA .-1                 /---FIRST TIME ONLY---
+  54               
+  55 000211  4272          JMS LQPDCZ              /INIT SECOND PAGE LINK
+  56               
+  57 000212  6214          RDF     /GET RETURN CIF
+  58 000213  1377          TAD (CIF CDF)
+  59 000214  3245          DCA LQPRDF
+  60               
+  61 000215  1604          TAD I LQP       /GET FUNCTION WORD
+  62 000216  0376          AND (70)
+  63 000217  1375          TAD (CDF)
+  64 000220  3232          DCA LQPBDF      /SET BUFFER CDF
+  65               
+  66 000221  1604          TAD I LQP
+  67 000222  0374          AND (3700)
+  68 000223  7040          CMA
+  69 000224  3202          DCA LQPDWC      /SET DOUBLE-WORD COUNT +1
+  70               
+  71 000225  2204          ISZ LQP
+  72 000226  1604          TAD I LQP
+  73 000227  3201          DCA LQPBUF      /SET BUFFER PTR
+  74               
+  75 000230  2204          ISZ LQP
+  76 000231  1604          TAD I LQP
+  77 000232  0000  LQPBDF, 0               /CDF TO BUFFER
+  78 000233  7640          SZA CLA
+  79 000234  5241          JMP LQPGO
+  80 000235  1373          TAD (15);JMS LQPDOC     /NEW PAGE ON BLOCK 0
+     000236  4300  
+  81 000237  1372          TAD (14);JMS LQPDOC
+     000240  4300  
+  82 000241  2202  LQPGO,  ISZ LQPDWC
+  83 000242  5251          JMP LQPGO1              /LOOP IF MORE TO DO
+  84               LQPCZ,
+  85 000243  1371          TAD (13);JMS LQPDOC     /CLEAR SPACE ACCUMULATORS
+     000244  4300  
+  86 000245  0000  LQPRDF, 0                       /THEN RETURN TO CALLER
+  87 000246  2204          ISZ LQP
+  88 000247  2204          ISZ LQP
+  89 000250  5604          JMP I LQP
+  90               
+  91               LQPGO1,
+  92 000251  1601          TAD I LQPBUF    /GET NEXT WORD
+  93 000252  0370          AND (7400)
+  94 000253  7112          CLL RTR
+  95 000254  3200          DCA LQPCSV      /SAVE PART OF THIRD CHAR
+  96               
+  97 000255  1601          TAD I LQPBUF
+  98 000256  4300          JMS LQPDOC      /OUTPUT FIRST CHAR
+  99               
+ 100 000257  2201          ISZ LQPBUF
+ 101 000260  1601          TAD I LQPBUF
+ 102 000261  4300          JMS LQPDOC      /OUTPUT SECOND CHAR
+ 103               
+ 104 000262  1601          TAD I LQPBUF
+ 105 000263  0370          AND (7400)      /PUT THIRD CHAR TOGETHER
+ 106 000264  7002          BSW
+ 107 000265  1200          TAD LQPCSV
+ 108 000266  7112          CLL RTR
+ 109 000267  4300          JMS LQPDOC      /OUTPUT THIRD CHAR
+ 110               
+ 111 000270  2201          ISZ LQPBUF
+ 112 000271  5241          JMP LQPGO       /LOOP FOR DONE TEST
+ 113               
+ 114 000272  0000  LQPDCZ, 0
+ 115 000273  1272          TAD LQPDCZ
+ 116 000274  0367          AND (7600)
+ 117 000275  1366          TAD (LQPDCX-LQPORG)
+ 118 000276  3203          DCA LQPDCY
+ 119 000277  5672          JMP I LQPDCZ
+ 120               
+ 121 000300  0000  LQPDOC, 0
+ 122 000301  4603          JMS I LQPDCY
+ 123 000302  5243          JMP LQPCZ
+ 124               
+ 125 000303  6034          KRS                     /CHECK FOR CONTROL C AT CONSOLE
+ 126 000304  0365          AND (177)
+ 127 000305  1364          TAD (-3)
+ 128 000306  7640          SZA CLA                 /SKIP IF SO
+ 129 000307  5700          JMP I LQPDOC
+ 130               
+ 131 000310  6203          CIF CDF 0               /RETURN TO OS8
+ 132 000311  5767          JMP I (7600)
+ 133               
+ 134 000364  7775  PAGE
+     000365  0177  
+     000366  0203  
+     000367  7600  
+     000370  7400  
+     000371  0013  
+     000372  0014  
+     000373  0015  
+     000374  3700  
+     000375  6201  
+     000376  0070  
+     000377  6203  
+ 135 000400  0024  LQPTCH,        24      /2*NUMBER OF INCRS PER CHAR
+ 136 000401  0020  LQLINE, 20      /2*NUMBER OF INCRS PER LINE
+ 137 000402  7676  LQPAGE, -102    /-NUMBER OF LINES PER PAGE
+ 138               
+ 139 000403  0000  LQPDCX, 0               /OUTPUT ONE CHAR
+ 140 000404  0377          AND (177)
+ 141 000405  1376          TAD (-40)               /TEST FOR SPECIAL OR BLANK
+ 142 000406  7510          SPA
+ 143 000407  5304          JMP LQPSPC              /JUMP IF SPECIAL
+ 144 000410  7450          SNA
+ 145 000411  5301          JMP LQPIDX              /JUMP IF BLANK
+ 146               
+ 147 000412  1375          TAD (40)
+ 148 000413  3361  LQPDC1, DCA LQPCTM              /SAVE CHAR CODE
+ 149               
+ 150 000414  6505  LQPWLP, PDRS                    /LOOP TIL DEVICE READY
+ 151 000415  7002          BSW
+ 152 000416  7700          SMA CLA
+ 153 000417  5224          JMP .+5                 /JUMP IF NO CHECK FLAG
+ 154 000420  6507          PDRE                    /ELSE RESET DEVICE
+ 155 000421  3354          DCA LQPX                /AND HORIZONTAL POSITIONS
+ 156 000422  3355          DCA LQPDX
+ 157 000423  2357          ISZ LQPDY               /ADVANCE A LINE, FOR CLARITY
+ 158               
+ 159 000424  6505          PDRS
+ 160 000425  7120          STL
+ 161 000426  1374          TAD (400)
+ 162 000427  7630          SZL CLA
+ 163 000430  5214          JMP LQPWLP              /LOOP IF NOT READY
+ 164               
+ 165 000431  1357          TAD LQPDY               /DO Y MOTION, IF NEEDED
+ 166 000432  7450          SNA
+ 167 000433  5254          JMP LQPNDY              /JUMP IF NONE
+ 168 000434  7041          CIA
+ 169 000435  3360          DCA LQPMTM              /SAVE -NUMBER LINES TO DO
+ 170               
+ 171 000436  1201          TAD LQLINE              /SUM TOTAL INCRS TO DO
+ 172 000437  2360          ISZ LQPMTM
+ 173 000440  5236          JMP .-2
+ 174               
+ 175 000441  6502          PDMP            /MOVE PAPER
+ 176               
+ 177 000442  1356          TAD LQPY                /COMPUTE NEW POSITION
+ 178 000443  1357          TAD LQPDY
+ 179 000444  1202          TAD LQPAGE              /ON PAGE, PLEASE!!
+ 180 000445  7500          SMA
+ 181 000446  5244          JMP .-2
+ 182 000447  7041          CIA
+ 183 000450  1202          TAD LQPAGE
+ 184 000451  7041          CIA
+ 185 000452  3356          DCA LQPY
+ 186 000453  3357          DCA LQPDY
+ 187               
+ 188 000454  1355  LQPNDY, TAD LQPDX               /DO X MOTION, IF NEEDED
+ 189 000455  7450          SNA
+ 190 000456  5274          JMP LQPNDX              /JUMP IF NONE
+ 191               
+ 192 000457  7120          STL
+ 193 000460  7500          SMA
+ 194 000461  7141          CLL CIA                 /ADJUST FOR -X MOTION
+ 195 000462  3360          DCA LQPMTM
+ 196               
+ 197 000463  1200          TAD LQPTCH              /SUM TOTAL INCRS TO DO
+ 198 000464  2360          ISZ LQPMTM
+ 199 000465  5263          JMP .-2
+ 200               
+ 201 000466  7010          RAR             /GET DIRECTION INDICATOR BACK
+ 202 000467  6503          PDMC            /MOVE CARRIAGE
+ 203               
+ 204 000470  1354          TAD LQPX                /COMPUTE NEW POSITION
+ 205 000471  1355          TAD LQPDX
+ 206 000472  3354          DCA LQPX
+ 207 000473  3355          DCA LQPDX
+ 208               
+ 209 000474  1361  LQPNDX, TAD LQPCTM              /RETRIEVE SAVED CHAR
+ 210 000475  7450          SNA
+ 211 000476  5336          JMP LQPDCR              /JUMP IF NONE
+ 212 000477  7104          CLL RAL         /ADJUST FOR OFFSET
+ 213 000500  6504          PDPC                    /PRINT CHAR
+ 214               
+ 215 000501  2355  LQPIDX, ISZ LQPDX               /BUMP SPACE COUNTER
+ 216 000502  5336          JMP LQPDCR              /RETURN TO CALLER
+ 217 000503  5336          JMP LQPDCR              /...IN CASE ISZ SKIPPED...
+ 218               
+ 219               LQPSPC,                 /SPECIAL CHARACTER CHECKING
+ 220 000504  1373          TAD (40-32)     /CONTROL Z?
+ 221 000505  7450          SNA
+ 222 000506  5603          JMP I LQPDCX            /TAKE EOF RETURN IF SO
+ 223               
+ 224 000507  1372          TAD (32-15)             /CARRIAGE RETURN?
+ 225 000510  7450          SNA
+ 226 000511  5333          JMP LQPCR               /JUMP IF SO
+ 227               
+ 228 000512  7001          IAC                     /FORM FEED?
+ 229 000513  7450          SNA
+ 230 000514  5347          JMP LQPFF               /JUMP IF SO
+ 231               
+ 232 000515  7001          IAC                     /VERTICAL TAB?
+ 233 000516  7450          SNA
+ 234 000517  5213          JMP LQPDC1              /CLEAR ACCUMULATORS, IF SO
+ 235               
+ 236 000520  7001          IAC                     /LINE FEED?
+ 237 000521  7450          SNA
+ 238 000522  5340          JMP LQPLF               /BUMP LINE COUNTER IF SO
+ 239               
+ 240 000523  7001          IAC                     /TAB?
+ 241 000524  7650          SNA CLA
+ 242 000525  5336          JMP LQPDCR              /RETURN IF NOT RECOGNIZED
+ 243               
+ 244 000526  1354  LQPTB,  TAD LQPX                /DO TAB
+ 245 000527  1355          TAD LQPDX
+ 246 000530  1371          TAD (10)
+ 247 000531  0370          AND (7770)
+ 248 000532  7041          CIA
+ 249               
+ 250 000533  1354  LQPCR,  TAD LQPX
+ 251 000534  7041          CIA
+ 252 000535  3355          DCA LQPDX               /SAVE CR OR TAB MOTION
+ 253               
+ 254 000536  2203  LQPDCR, ISZ LQPDCX              /BUMP TO OK RETURN
+ 255 000537  5603          JMP I LQPDCX                    /AND TAKE IT
+ 256               
+ 257 000540  2357  LQPLF,  ISZ LQPDY               /BUMP LINE COUNTER
+ 258 000541  1356          TAD LQPY                /CHECK FOR NEXT PAGE
+ 259 000542  1357          TAD LQPDY
+ 260 000543  1202          TAD LQPAGE
+ 261 000544  7700          SMA CLA
+ 262 000545  5213          JMP LQPDC1              /JUMP IF SO
+ 263               
+ 264 000546  5336          JMP LQPDCR              /ELSE, JUST RETURN
+ 265               
+ 266 000547  1356  LQPFF,  TAD LQPY                /DO FORM FEED
+ 267 000550  1202          TAD LQPAGE
+ 268 000551  7041          CIA
+ 269 000552  3357          DCA LQPDY
+ 270 000553  5213          JMP LQPDC1              /DO PAGE EJECT NOW
+ 271               
+ 272 000554  0000  LQPX,   0
+ 273 000555  0000  LQPDX,  0
+ 274 000556  0000  LQPY,   0
+ 275 000557  0000  LQPDY,  0
+ 276 000560  0000  LQPMTM, 0
+ 277 000561  0000  LQPCTM, 0
+ 278               
+ 279 000570  7770  PAGE
+     000571  0010  
+     000572  0015  
+     000573  0006  
+     000574  0400  
+     000575  0040  
+     000576  7740  
+     000577  0177  
+ 280               $
+
+LPVERS  0001
+LQLINE  0401
+LQP     0204
+LQPAGE  0402
+LQPBDF  0232
+LQPBUF  0201
+LQPCR   0533
+LQPCSV  0200
+LQPCTM  0561
+LQPCZ   0243
+LQPDC1  0413
+LQPDCR  0536
+LQPDCX  0403
+LQPDCY  0203
+LQPDCZ  0272
+LQPDOC  0300
+LQPDWC  0202
+LQPDX   0555
+LQPDY   0557
+LQPFF   0547
+LQPGO   0241
+LQPGO1  0251
+LQPIDX  0501
+LQPLF   0540
+LQPMTM  0560
+LQPNDX  0474
+LQPNDY  0454
+LQPORG  0200
+LQPRDF  0245
+LQPSPC  0504
+LQPTB   0526 unreferenced
+LQPTCH  0400
+LQPWLP  0414
+LQPX    0554
+LQPY    0556
+PDMC    6503
+PDMP    6502
+PDPC    6504
+PDRE    6507
+PDRS    6505
+PDWS    6506

@@ -1,0 +1,288 @@
+   1               /2 ROM-TD8E HANDLER
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45                      ROMFLD=70
+  46                       VERSION="A&77
+  47               /THESE ARE ASSEMBLY REFERENCES TO LOCATIONS IN THE ROM:
+  48               
+  49                       RGO=7405
+  50                       F2SET=7552
+  51               /       TD8E MNEMONICS:
+  52                       SDSS=6771
+  53                       SDST=6772
+  54                       SDSQ=6773
+  55                       SDLC=6774
+  56                       SDLD=6775
+  57                       SDRC=6776
+  58                       SDRD=6777
+  59                       *0
+  60               
+  61 000000  7775          -3
+  62 000001  2217          DEVICE ROM;DEVICE SYS;4211;2007;0;1341
+     000002  1500  
+     000003  2331  
+     000004  2300  
+     000005  4211  
+     000006  2007  
+     000007  0000  
+     000010  1341  
+  63 000011  2217          DEVICE ROM;DEVICE DTA0;4211;1007;0;1341
+     000012  1500  
+     000013  0424  
+     000014  0160  
+     000015  4211  
+     000016  1007  
+     000017  0000  
+     000020  1341  
+  64 000021  2217          DEVICE ROM;DEVICE DTA1;4211;SDTA1&177+1000;0;1341
+     000022  1500  
+     000023  0424  
+     000024  0161  
+     000025  4211  
+     000026  1014  
+     000027  0000  
+     000030  1341  
+  65 000031  7737         STARTB-ROMCT-1
+  66               
+  67                       NOPUNCH
+  68                       *7360           /ROOM FOR DECTAPE HEADER WORDS
+  69                       ENPUNCH
+  70               
+  71 007360  0000  STARTB, ZBLOCK 20
+     007361  0000  
+     007362  0000  
+     007363  0000  
+     007364  0000  
+     007365  0000  
+     007366  0000  
+     007367  0000  
+     007370  0000  
+     007371  0000  
+     007372  0000  
+     007373  0000  
+     007374  0000  
+     007375  0000  
+     007376  0000  
+     007377  0000  
+  72 007400  6201          CDF 0           /BOOTSTRAP TO MOVE FIELD 1
+  73 007401  1616          TAD I ROM1      /CODE UP TO FIELD 1
+  74 007402  6211          CDF 10
+  75 007403  3617          DCA I ROM2
+  76 007404  2216          ISZ ROM1
+  77 007405  7000          NOP
+  78 007406  2217          ISZ ROM2
+  79 007407  7000          NOP
+  80 007410  2220          ISZ ROMCT
+  81 007411  5200          JMP 7400
+  82 007412  6203          CIF CDF 0       /DONE
+  83 007413  6774          SDLC            /STOP THE TAPE
+  84 007414  5615          JMP I .+1
+  85 007415  7605          7605            /START HER UP
+  86 007416  7427  ROM1,   7427            /FIELD 1 CODE GETS LOADED HERE
+  87 007417  7647  ROM2,   7647            /AND GOES UP HERE
+  88 007420  7650  ROMCT,  -130
+  89                      *200
+  90               
+  91                       NOPUNCH
+  92                       *7600
+  93                       ENPUNCH
+  94               
+  95 007600  0000          ZBLOCK 7
+     007601  0000  
+     007602  0000  
+     007603  0000  
+     007604  0000  
+     007605  0000  
+     007606  0000  
+  96 007607  0001  SHNDLR, VERSION         /UNIT 0 ENTRY
+  97 007610  7300          CLA CLL
+  98 007611  5220          JMP SHND2
+  99 007612  0070  S70,    70
+ 100 007613  6201  S6201,  6201
+ 101 007614  0001  SDTA1,  VERSION         /UNIT 1 ENTRY POINT
+ 102 007615  7320          CLA CLL CML
+ 103 007616  1214          TAD SDTA1       /GET ARGS AT SHNDLR
+ 104 007617  3207          DCA SHNDLR
+ 105 007620  7010  SHND2,  RAR             /UNIT BIT IS IN LINC
+ 106 007621  3335          DCA SUNIT
+ 107 007622  6214          RDF
+ 108 007623  1265          TAD S6203       /SETUP RETURN FIELD
+ 109 007624  3326          DCA EFLD
+ 110 007625  1607          TAD I SHNDLR
+ 111 007626  6775          SDLD            /STORE FUNCTION WORD IN DATA REG.
+ 112 007627  0212          AND S70         /SDLD DOESN'T CLEAR AC
+ 113 007630  1213          TAD S6201       /ISOLATE FIELD OF XFER
+ 114 007631  3250          DCA TFLD
+ 115 007632  1250          TAD TFLD
+ 116 007633  3255          DCA TFLD2
+ 117 007634  2207          ISZ SHNDLR
+ 118 007635  1607          TAD I SHNDLR    /BUFFER ADDRESS
+ 119 007636  3351          DCA BPTR
+ 120 007637  2207          ISZ SHNDLR
+ 121 007640  1607          TAD I SHNDLR    /PS/8 RECORD #
+ 122 007641  7104          CLL RAL         /TIMES 2 FOR ABSOLUTE BLOCK
+ 123 007642  3334          DCA BLOCK
+ 124 007643  2207          ISZ SHNDLR
+ 125 007644  6201          CDF 0
+ 126 007645  6272          CIF ROMFLD      /ROM IS IN FIELD 7
+ 127 007646  5670          JMP I XF2SET    /INITIALIZE.
+ 128 007647  0000  GET,   0
+ 129 007650  7402  TFLD,   HLT             /ROUTINE TO LOAD DATA FROM BUFFER
+ 130 007651  1753          TAD I XPTR
+ 131 007652  6272          CIF ROMFLD
+ 132 007653  5647          JMP I GET
+ 133               
+ 134 007654  0000  PUT,    0               /PUT DATA INTO BUFFER
+ 135 007655  7402  TFLD2,  HLT
+ 136 007656  3753          DCA I XPTR
+ 137 007657  6272          CIF ROMFLD
+ 138 007660  5654          JMP I PUT
+ 139               
+ 140 007661  7300  ERROR,  CLA CLL         /FORCE TURNAROUND AT RGO
+ 141 007662  6272          CIF ROMFLD
+ 142 007663  2330          ISZ TRYCNT      /TRIED 3 TIMES?
+ 143 007664  5667          JMP I XRGO
+ 144 007665  6203  S6203,  CIF CDF 0
+ 145 007666  5323          JMP SEREX       /YES..FATAL EXIT
+ 146               
+ 147 007667  7405  XRGO,   RGO
+ 148 007670  7552  XF2SET, F2SET
+ 149               /EQUIVALENCES FOR HANDLER
+ 150               
+ 151                       EQUTMP=7750
+ 152                       BPTR=7751
+ 153                       XPGCT=7752
+ 154                       XPTR=7753
+ 155                       XWCNT=7754
+ 156                       WRQ=7724
+ 157 007671  0000  WRQUAD, 0               /WRITE A 12 BIT TAPE WORD
+ 158 007672  6272          CIF ROMFLD
+ 159 007673  5324          JMP WRQ
+ 160 007674  6272  CIFR,   CIF ROMFLD
+ 161 007675  5671          JMP I WRQUAD
+ 162               
+ 163 007676  0000  RDQUAD, 0               /READ A 12 BIT DATA WORD
+ 164 007677  6773          SDSQ
+ 165 007700  5277          JMP .-1
+ 166 007701  6777          SDRD
+ 167 007702  6272          CIF ROMFLD
+ 168 007703  5676          JMP I RDQUAD
+ 169               
+ 170 007704  0000  EQUFUN, 0               /EQUIVALENCE CHECKSUM
+ 171 007705  7040          CMA
+ 172 007706  3350          DCA EQUTMP
+ 173 007707  1350          TAD EQUTMP
+ 174 007710  0333          AND SCKSUM
+ 175 007711  7041          CIA
+ 176 007712  7104          CLL RAL
+ 177 007713  1350          TAD EQUTMP
+ 178 007714  1333          TAD SCKSUM
+ 179 007715  3333          DCA SCKSUM
+ 180 007716  1350          TAD EQUTMP
+ 181 007717  7140          CLL CMA
+ 182 007720  6272          CIF ROMFLD
+ 183 007721  5704          JMP I EQUFUN
+ 184               
+ 185 007722  2207  SEXIT,  ISZ SHNDLR      /NORMAL EXIT
+ 186 007723  1335  SEREX,  TAD SUNIT       /STOP THE DRIVE
+ 187 007724  6774          SDLC
+ 188 007725  7230          CLA CML RAR     /EXIT CONDITION IN BIT 0
+ 189 007726  7402  EFLD,   HLT
+ 190 007727  5607          JMP I SHNDLR
+ 191               
+ 192 007730  0000  TRYCNT, 0
+ 193 007731  0000  SXUNIT, 0
+ 194 007732  0000  SXFUN,  0
+ 195 007733  0000  SCKSUM, 0
+ 196 007734  0000  BLOCK,  0
+ 197 007735  0000  SUNIT,  0
+ 198                       $
+
+BLOCK   7734
+BPTR    7751
+CIFR    7674 unreferenced
+EFLD    7726
+EQUFUN  7704
+EQUTMP  7750
+ERROR   7661 unreferenced
+F2SET   7552
+GET     7647
+PUT     7654
+RDQUAD  7676
+RGO     7405
+ROM1    7416
+ROM2    7417
+ROMCT   7420
+ROMFLD  0070
+S6201   7613
+S6203   7665
+S70     7612
+SCKSUM  7733
+SDLC    6774
+SDLD    6775
+SDRC    6776 unreferenced
+SDRD    6777
+SDSQ    6773
+SDSS    6771 unreferenced
+SDST    6772 unreferenced
+SDTA1   7614
+SEREX   7723
+SEXIT   7722 unreferenced
+SHND2   7620
+SHNDLR  7607
+STARTB  7360
+SUNIT   7735
+SXFUN   7732 unreferenced
+SXUNIT  7731 unreferenced
+TFLD    7650
+TFLD2   7655
+TRYCNT  7730
+VERSIO  0001
+WRQ     7724
+WRQUAD  7671
+XF2SET  7670
+XPGCT   7752 unreferenced
+XPTR    7753
+XRGO    7667
+XWCNT   7754 unreferenced

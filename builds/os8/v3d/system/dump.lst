@@ -1,0 +1,478 @@
+   1               /8      DUMP LPT HANDLER FOR OS/8
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1977 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               
+  46               /       DEC-S8-UCASA-A-LA
+  47               
+  48               /       COPYRIGHT 1972
+  49               
+  50               /       DIGITAL EQUIPMENT CORPORATION
+  51               
+  52               /       MAYNARD MASSACHUSETTS   01754
+  53               
+  54               /       MOUTH/DORP
+  55               
+  56                       IFNDEF CODE <CODE=0>
+  57               
+  58                       KCLR=CODE^10+6700       /CLEAR ALL
+  59                       KSDR=CODE^10+6701       /SKIP ON DATA FLAG
+  60                       KSEN=CODE^10+6702       /SKIP ON ERROR
+  61                       KSBF=CODE^10+6703       /SKIP ON READY FLAG
+  62                       KLSA=CODE^10+6704       /LOAD STATUS A
+  63                       KSAF=CODE^10+6705       /SKIP ON ANY FLAG OR ERROR
+  64                       KGOA=CODE^10+6706       /ASSERT CONTENTS OF STATUS A AND XFER
+  65                       KRSB=CODE^10+6707       /READ STATUS B
+  66               
+  67                       BSW=7002        /BYTE SWAP      [8/E,F ONLY]
+  68               
+  69               /REWIND=10
+  70               /BACKFIL=30
+  71               /WRGAP=40
+  72               /BACKBLOCK=50
+  73               /SKPFIL=70
+  74               
+  75               /SPECIAL CODES
+  76               
+  77               /       0       WRITE EOF
+  78               /       1       REWIND
+  79               /       2       BACKBLOCK
+  80               /       3       SKIPFILE/BACKFILE
+  81               
+  82               /       4-7     UNUSED (TAKES LOW ORDER 2 BITS ONLY CURRENTLY)
+  83               
+  84               /      EDIT HISTORY:
+  85               
+  86               /       1976            S.R.    ORIGINALLY WRITTEN
+  87               /       19-MAR-77       S.R.    FIXED BUG WITH BUFFER ENDING AT 7777
+  88               
+  89                       *0
+  90               
+  91 000000  7777          -1
+  92 000001  0425          DEVICE DUMP;DEVICE DUMP;1360;DUMP&177+4000;ZBLOCK 2
+     000002  1520  
+     000003  0425  
+     000004  1520  
+     000005  1360  
+     000006  4176  
+     000007  0000  
+     000010  0000  
+  93               
+  94                       DMPVER="C&77
+  95                      *200
+  96               
+  97 000200  0000  LINK,   0               /POINTS TO 'LINC' ON NEXT PAGE
+  98 000201  1776          TAD I DUMP      /GET FUNCTION CONTROL WORD
+  99 000202  3232          DCA FNWD
+ 100 000203  2376          ISZ DUMP        /POINT TO BUFFER STARTING ADDRESS
+ 101 000204  1776          TAD I DUMP      /GET BUFFER STARTING ADDRESS
+ 102 000205  3366          DCA BUFFER
+ 103 000206  2376          ISZ DUMP        /POINT TO STARTING BLOCK #
+ 104 000207  1776          TAD I DUMP      /GET STARTING BLOCK NUMBER
+ 105 000210  3371          DCA BLOCK       /SAVE IT IN 'BLOCK'
+ 106 000211  2376          ISZ DUMP        /POINT TO  USER'S ERROR RETURN
+ 107 000212  6214          RDF
+ 108 000213  1361          TAD KCIDF       /FOR 'CIF CDF' TO USER'S FIELD
+ 109 000214  3350          DCA DMPRET      /NEED IT TO RETURN TO HIM LATER
+ 110 000215  1232          TAD FNWD        /LOOK AT FUNCTION WORD
+ 111 000216  7500          SMA             /BIT 0 IS READ/WRITE BIT
+ 112 000217  5347          JMP ERRET       /TAKE FATAL ERROR IF GUY TRIED TO
+ 113                                       /READ FROM 'DUMP'
+ 114 000220  0365          AND L3700
+ 115 000221  7112          CLL RTR
+ 116 000222  7450          SNA
+ 117 000223  5342          JMP CLOSE       /0 PAGES MEANS PERFORM CLOSE
+ 118                                       /OPERATION, GO AWAY
+ 119 000224  7041          CIA             /STORE AWAY NEGATIVE OF
+ 120                                       /NUMBER OF LINES TO DUMP
+ 121 000225  3375          DCA KNT
+ 122 000226  1232          TAD FNWD        /LOOK SOME MORE AT ALL-IMPORTANT
+ 123                                       /FUNCTION WORD
+ 124 000227  0374  L374,   AND L70         /ISOLATE FIELD OF BUFFER
+ 125 000230  1362          TAD KCDF        /FORM 'CDF' TO FLD OF BUFFER
+ 126 000231  3232          DCA .+1         /STORE IT IN NEXT LOCATION
+ 127               FNWD,
+ 128 000232  7402  BPTR,   HLT             /CHANGE DATA FIELD TO FLD OF BUFFER
+ 129 000233  1346  B,      TAD M40
+ 130 000234  3367          DCA RKNT
+ 131 000235  4600          JMS I LINK
+ 132 000236  1317          TAD LOW-200
+ 133 000237  7141          CIA CLL
+ 134 000240  1371          TAD BLOCK
+ 135 000241  7630          SZL CLA
+ 136 000242  1372          TAD KLLS
+ 137 000243  4600          JMS I LINK
+ 138 000244  3244          DCA LPUT+1-200
+ 139 000245  1371          TAD BLOCK
+ 140 000246  4600          JMS I LINK
+ 141 000247  5354          JMP BLK-200
+ 142 000250  4600          JMS I LINK
+ 143 000251  5362          JMP CRLF-200
+ 144 000252  4352  A,      JMS INIT
+ 145 000253  1367          TAD RKNT
+ 146 000254  1364          TAD L40         /MUST BE REAL 40
+ 147 000255  4600          JMS I LINK
+ 148 000256  4323          JMS PRINT-200
+ 149 000257  1360          TAD KSLASH
+ 150 000260  4600          JMS I LINK
+ 151 000261  5351          JMP SPACE-200
+ 152 000262  1632  C,      TAD I BPTR      /GET WORD FROM BUFFER
+ 153 000263  4600          JMS I LINK
+ 154 000264  4323          JMS PRINT-200   /PRINT IT IN OCTAL ON LIST DEVICE
+ 155 000265  2232          ISZ BPTR        /POINT TO NEXT WORD IN BUFFER
+ 156 000266  7000          NOP             /V3D
+ 157 000267  2370          ISZ CKNT        /DONE WITH THIS ROW?
+ 158 000270  5262          JMP C           /NO, GO PRINT NEXT WORD
+ 159 000271  4600          JMS I LINK
+ 160 000272  5351          JMP SPACE-200
+ 161 000273  4352          JMS INIT
+ 162 000274  1632  D,      TAD I BPTR
+ 163 000275  7012          RTR
+ 164 000276  7012          RTR
+ 165 000277  7012          RTR
+ 166 000300  4600          JMS I LINK
+ 167 000301  5320          JMP PUT6-200
+ 168 000302  1632          TAD I BPTR
+ 169 000303  4600          JMS I LINK
+ 170 000304  5320          JMP PUT6-200
+ 171 000305  2232          ISZ BPTR        /POINT TO NEXT WORD IN BUFFER
+ 172 000306  7000          NOP             /V3D
+ 173 000307  2370          ISZ CKNT        /DONE WITH THIS ROW?
+ 174 000310  5274          JMP D           /NO, GO ON TO NEXT WORD
+ 175 000311  4600          JMS I LINK
+ 176 000312  5351          JMP SPACE-200
+ 177 000313  4352          JMS INIT
+ 178 000314  1766  E,      TAD I BUFFER    /GET WORD 1 OF PAIR
+ 179 000315  4600          JMS I LINK
+ 180 000316  5222          JMP PUTSAV-200  /PUT OUT THE CHAR AND SAVE THE WORD
+ 181 000317  2366          ISZ BUFFER      /POINT TO WORD 2 OF PAIR
+ 182 000320  1766          TAD I BUFFER    /GET WORD 2 OF PAIR
+ 183 000321  4600          JMS I LINK
+ 184 000322  5222          JMP PUTSAV-200
+ 185 000323  2366          ISZ BUFFER      /POINT TO BEGIN OF NEXT PAIR
+ 186 000324  4600          JMS I LINK
+ 187 000325  5217          JMP THIRD-200   /PRINT THIRD CHAR FROM
+ 188                                       /REMEMBRANCES OF LAST TWO
+ 189 000326  2370          ISZ CKNT
+ 190 000327  2370          ISZ CKNT        /DONE WITH THIS ROW?
+ 191 000330  5314          JMP E           /NO, GO ON TO NEXT PAIR
+ 192 000331  4600          JMS I LINK      /YES
+ 193 000332  5362          JMP CRLF-200    /PRINT CARRIAGE RETURN/LINE FEED
+ 194 000333  2375          ISZ KNT         /DONE WITH BUFFER YET?
+ 195 000334  7410          SKP             /NO
+ 196 000335  5345          JMP OKRET       /YES
+ 197 000336  2367          ISZ RKNT        /DONE WITH LAST ROW OF PAGE?
+ 198 000337  5252          JMP A           /NO, GO ON TO NEXT ROW IN SAME PAGE
+ 199 000340  2371          ISZ BLOCK       /BUMP BLOCK NUMBER BY 1
+ 200 000341  5233          JMP B           /GO DUMP THE NEXT PAGE
+ 201 000342  7240  CLOSE, STA             /-1 CHANGES CR TO FORM FEED
+ 202 000343  4600          JMS I LINK
+ 203 000344  5362          JMP CRLF-200
+ 204 000345  2376  OKRET,  ISZ DUMP        /POINT TO NORMAL RETURN
+ 205 000346  7740  M40,    SMA SZA CLA     /AC 0 SO ALWAYS SKIPS
+ 206 000347  7330  ERRET,  STL CLA RAR     /FATAL ERROR HAS AC NEGATIVE
+ 207 000350  7402  DMPRET, HLT             /PERFORM 'CIF CDF' TO USER'S FIELD
+ 208 000351  5776          JMP I DUMP      /RETURN
+ 209               
+ 210 000352  0000  INIT,   0
+ 211 000353  1363          TAD M10
+ 212 000354  3370          DCA CKNT
+ 213 000355  1366          TAD BUFFER
+ 214 000356  3232          DCA BPTR
+ 215 000357  5752          JMP I INIT
+ 216               
+ 217 000360  0017  KSLASH, 57-40
+ 218 000361  6203  KCIDF,  CIF CDF 0
+ 219 000362  6201  KCDF,   CDF 0
+ 220 000363  7770  M10,    -10
+ 221 000364  0040  L40,    40              /MUST BE REAL 40
+ 222 000365  3700  L3700,  3700
+ 223 000366  0000  BUFFER, 0
+ 224 000367  0000  RKNT,   0               /ROW COUNT
+ 225 000370  0000  CKNT,   0               /COLUMN COUNT
+ 226 000371  0000  BLOCK,  0               /CURRENT BLOCK NUMBER
+ 227 000372  6666  KLLS,   LLS
+ 228                       IFZERO .-375&4000 <ERROR>
+ 229                       *374
+ 230 000374  0070  L70,    70              /MUST BE AT REL LOC 174
+ 231 000375  0000  KNT,    0               /- NUMBER OF PAGES LEFT TO DUMP
+ 232                       IFNZRO L70-374 <ERROR>
+ 233 000376  0003  DUMP,   DMPVER
+ 234 000377  4200          JMS LINK        /GET ADDRESS OF NEXT PAGE INTO LINK
+ 235                       IFNZRO .-400 <ERROR>
+ 236                       PAGE
+ 237                      LSF=6661        /SLIP ON LPT FLAG
+ 238                       LLS=6666        /LOAD LPT BUFFER
+ 239               
+ 240                       IFDEF   DMPTTY  <
+ 241                       LSF=TSF
+ 242                       LLS=TLS
+ 243                       >
+ 244               
+ 245 000400  0000  LINC,   0
+ 246 000401  3350          DCA ARG
+ 247 000402  6214          RDF
+ 248 000403  1205          TAD HCDF
+ 249 000404  3212  TTY12,  DCA TEMP
+ 250 000405  6201  HCDF,   CDF 0
+ 251 000406  1600          TAD I LINC
+ 252 000407  3214          DCA DOIT
+ 253 000410  2200          ISZ LINC
+ 254 000411  0077  L77,    77
+ 255 000412  0000  TEMP,   0
+ 256 000413  1350          TAD ARG
+ 257               CNT,
+ 258 000414  7402  DOIT,   HLT
+ 259 000415  5600  POP,    JMP I LINC      /RETURN
+ 260 000416  0177  L177,   177
+ 261                       IFNZRO  POP&177-15 <ERROR> /MUST BE AT 15 IN PG
+ 262                       IFNZRO DOIT&177-14 <ERROR>
+ 263                       IFNZRO TEMP&177-12 <ERROR>
+ 264               
+ 265 000417  1347  THIRD,  TAD SAVE
+ 266 000420  3350          DCA ARG
+ 267 000421  1350          TAD ARG
+ 268 000422  0245  PUTSAV, AND L7600
+ 269 000423  7104          CLL RAL
+ 270 000424  1347          TAD SAVE
+ 271 000425  7006          RTL
+ 272 000426  7006          RTL
+ 273 000427  0216          AND L177
+ 274 000430  3347          DCA SAVE
+ 275 000431  1350          TAD ARG
+ 276 000432  0216          AND L177        /FORCE 7-BIT
+ 277 000433  1237          TAD M140        /DO RANGE CHECK
+ 278 000434  7100          CLL
+ 279 000435  1377          TAD (100        /FOR BETWEEN 40 AND 137
+ 280 000436  7420          SNL             /SKIP ON SUCCESS
+ 281               TTY40,
+ 282 000437  7640  M140,   SZA CLA         /NEVER SKIPS
+ 283 000440  1237  PUTSPC, TAD TTY40       /RESTORE CHAR OR BLANK
+ 284 000441  4243  PUTPOP, JMS LPUT
+ 285 000442  5215  TTY215, JMP POP
+ 286 000443  0000  LPUT,  0
+ 287 000444  7000          NOP             /THIS MAY BE AN 'LLS' OR 0
+ 288 000445  7600  L7600,  7600            /CLA
+ 289 000446  6031  KBD,    KSF
+ 290 000447  5313          JMP CHECKL
+ 291 000450  1245          TAD L7600
+ 292 000451  6034          KRS
+ 293 000452  1376          TAD (-7603
+ 294 000453  7650          SNA CLA
+ 295 000454  5300          JMP CTRLC
+ 296 000455  6036          KRB
+ 297 000456  6046          TLS
+ 298 000457  0216          AND L177
+ 299 000460  1375          TAD (-15
+ 300 000461  7450          SNA
+ 301 000462  5302          JMP CR
+ 302 000463  1374          TAD (15-70
+ 303 000464  7100          CLL
+ 304 000465  1373          TAD (10
+ 305 000466  3212          DCA TEMP
+ 306 000467  7420          SNL
+ 307 000470  5305          JMP NOT         /NOT A DIGIT
+ 308 000471  1316          TAD NUM
+ 309 000472  7104          CLL RAL
+ 310 000473  7104          CLL RAL
+ 311 000474  7104          CLL RAL
+ 312 000475  1212          TAD TEMP
+ 313 000476  3316          DCA NUM
+ 314 000477  5313          JMP CHECKL
+ 315 000500  6203  CTRLC,  CIF CDF 0
+ 316 000501  5645          JMP I L7600
+ 317 000502  1316  CR,     TAD NUM
+ 318 000503  3317          DCA LOW
+ 319 000504  1372          TAD (12-77
+ 320 000505  1211  NOT,    TAD L77
+ 321 000506  6041          TSF
+ 322 000507  5306          JMP .-1
+ 323 000510  6046  XTRA,   TLS
+ 324 000511  7200          CLA
+ 325 000512  3316          DCA NUM
+ 326 000513  6661  CHECKL, LSF
+ 327 000514  5246          JMP KBD
+ 328 000515  5643          JMP I LPUT      /YES, RETURN
+ 329 000516  0000  NUM,    0
+ 330 000517  0000  LOW,    0
+ 331 000520  1237  PUT6,  TAD TTY40
+ 332 000521  0211          AND L77
+ 333 000522  5240          JMP PUTSPC
+ 334               
+ 335 000523  0000  PRINT,  0
+ 336 000524  3350          DCA ARG
+ 337 000525  1237          TAD TTY40
+ 338 000526  4243          JMS LPUT
+ 339 000527  1371          TAD (-4
+ 340 000530  3214          DCA CNT
+ 341 000531  1350  PRLUP,  TAD ARG
+ 342 000532  0245          AND L7600
+ 343 000533  7106          CLL RTL
+ 344 000534  1346          TAD L214        /14 SHIFTS TO 60 
+ 345                                       /AND L214 HAS AC0 = 0
+ 346 000535  7006          RTL
+ 347 000536  4243          JMS LPUT
+ 348 000537  1350          TAD ARG
+ 349 000540  7006          RTL
+ 350 000541  7004          RAL
+ 351 000542  3350          DCA ARG
+ 352 000543  2214          ISZ CNT         /BUG IF TRY TO USE AS L214
+ 353 000544  5331          JMP PRLUP
+ 354 000545  5723          JMP I PRINT
+ 355 000546  0214  L214,   214             /COULD BE 'AND CNT'
+ 356               
+ 357 000547  0000  SAVE,   0               /MUST BE DEDICATED.  USED AS SHIFT
+ 358                                       /REG AND MUST BE ALMOST 0 ON ENTRY
+ 359 000550  0000  ARG,   0
+ 360               
+ 361 000551  1237  SPACE,  TAD TTY40
+ 362 000552  4243          JMS LPUT
+ 363 000553  5240          JMP PUTSPC
+ 364               
+ 365 000554  7650  BLK,    SNA CLA
+ 366 000555  3317          DCA LOW         /BLOCK 0 INITIALIZATION
+ 367 000556  1346          TAD L214        /FORM FEED
+ 368 000557  4243          JMS LPUT
+ 369 000560  1350          TAD ARG
+ 370 000561  4323          JMS PRINT
+ 371               /       TAD (-10
+ 372               /       DCA TEMP
+ 373               /       TAD TTY3
+ 374               /       JMS SPACE
+ 375               /LUP,   TAD TEMP
+ 376               /       TAD (10         /MUST BE REAL 10
+ 377               /       JMS PRINT
+ 378               /       ISZ TEMP
+ 379               /       JMP LUP
+ 380 000562  1242  CRLF,   TAD TTY215
+ 381 000563  4243          JMS LPUT
+ 382 000564  1204          TAD TTY12
+ 383 000565  5241          JMP PUTPOP
+ 384 000571  7774          PAGE
+     000572  7713  
+     000573  0010  
+     000574  7725  
+     000575  7763  
+     000576  0175  
+     000577  0100  
+ 385               
+ 386               $
+end of file     ^
+
+A       0252
+ARG     0550
+B       0233
+BLK     0554
+BLOCK   0371
+BPTR    0232
+BSW     7002 unreferenced
+BUFFER  0366
+C       0262
+CHECKL  0513
+CKNT    0370
+CLOSE   0342
+CNT     0414
+CODE    0000
+CR      0502
+CRLF    0562
+CTRLC   0500
+D       0274
+DMPRET  0350
+DMPVER  0003
+DOIT    0414
+DUMP    0376
+E       0314
+ERRET   0347
+FNWD    0232
+HCDF    0405
+INIT    0352
+KBD     0446
+KCDF    0362
+KCIDF   0361
+KCLR    6700 unreferenced
+KGOA    6706 unreferenced
+KLLS    0372
+KLSA    6704 unreferenced
+KNT     0375
+KRSB    6707 unreferenced
+KSAF    6705 unreferenced
+KSBF    6703 unreferenced
+KSDR    6701 unreferenced
+KSEN    6702 unreferenced
+KSLASH  0360
+L177    0416
+L214    0546
+L3700   0365
+L374    0227 unreferenced
+L40     0364
+L70     0374
+L7600   0445
+L77     0411
+LINC    0400
+LINK    0200
+LLS     6666
+LOW     0517
+LPUT    0443
+LSF     6661
+M10     0363
+M140    0437
+M40     0346
+NOT     0505
+NUM     0516
+OKRET   0345
+POP     0415
+PRINT   0523
+PRLUP   0531
+PUT6    0520
+PUTPOP  0441
+PUTSAV  0422
+PUTSPC  0440
+RKNT    0367
+SAVE    0547
+SPACE   0551
+TEMP    0412
+THIRD   0417
+TTY12   0404
+TTY215  0442
+TTY40   0437
+XTRA    0510 unreferenced

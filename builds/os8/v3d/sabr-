@@ -1,0 +1,365 @@
+#!/usr/bin/perl
+# 
+# Copyright © 2015-2022 by Vincent Slyngstad
+# 
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS LISTED ABOVE BE LIABLE
+# FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+# CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+# Except as contained in this notice, the names of the authors above
+# shall not be used in advertising or otherwise to promote the sale, use
+# or other dealings in this Software without prior written authorization
+# from those authors.
+
+#
+# The SABR assembler is a two pass assembler generating relocatable
+# PDP-8 code.
+#
+# In pass 1, the basic action is to initialize for a new page, then collect
+# lines until it thinks it has collected a page.  The page is then assembled.
+# Pass 1 is really sort of two passes, but restricted to trying to assemble
+# a single page.
+#
+# As each line is scanned as it is read and the page information is updated.
+# Labels readjust the page.  Some pseudo-ops will terminate the current page
+# early.
+#
+# Pass 2 is largely concerned with outputting the listing and the
+# relocatable, once all the hard desisions are made.
+#
+
+#
+# The output file format isn't well documented.
+#
+# Each relocatable should have leader (0200),
+# followed by a list of loader information blocks,
+# and ending in a checksum block.
+#
+# An information block is broken into two tape bytes.
+# The high 4 bits of the first byte contain the type of the block.
+# The low 4 bits are the upper nibble of a 12 bit word, when
+# taken together with the following byte as the low 8 bits.
+#
+# The OS/8 Language Reference Manual describes the format on
+# pages 6-38 through 6-41 of the SABR description.
+#
+# Relocation Codes:
+# 00 Absolute data
+# 01 Simple Relocation (pointer)
+# 03 External Symbol Definition
+#    (ASCII name follows for 6 bytes)
+# 04 Re-origin
+# 05 CDF (current)
+# 06 Subroutine linkage (CALL n,sym)
+# 10 Leader/Checksum
+# 12 High Common Size (must be first)
+# 17 Transfer Vector (external reference)
+#    (ASCII name follows for 6 bytes)
+#
+
+#
+# Pre-defined symbols
+#
+%funky = (
+  "ACH", 0020,
+  "ACL", 0022,
+  "ACM", 0021,
+  "I",   0400,
+);
+%pseudo = (
+  "IF",    *pif,
+  "ARG",   *parg,
+  "CALL",  *pcall,
+  "EAP",   *peap,
+  "END",   *pend,
+  "LAP",   *plap,
+  "PAGE",  *ppage,
+  "TEXT",  *ptext,
+  "ABSYM", *pabsym,
+  "BLOCK", *pblock,
+  "COMMN", *pcommn,
+  "CPAGE", *pcpage,
+  "DECIM", *pdecim,
+  "DUMMY", *pdummy,
+  "ENTRY", *pentry,
+  "FORTR", *pfortr,
+  "OCTAL", *poctal,
+  "OPDEF", *popdef,
+  "PAUSE", *ppause,
+  "REORG", *preorg,
+  "RETRN", *pretrn,
+  "SKPDF", *pskpdf,
+);
+
+# Flags for predefined symbols.
+$IOT    = 0000000;
+$GROUP1 = 0010000;
+$GROUP2 = 0020000;
+$MRI    = 0040000;
+$SKIP   = 0100000;
+%predef = (
+  "IOF", IOT|06002,
+  "ION", IOT|06001,
+  "KRB", IOT|06036,
+  "PLS", IOT|06026,
+  "RFC", IOT|06014,
+  "RRB", IOT|06016,
+  "TLS", IOT|06046,
+  "KSF", IOT|SKIP|06031,
+  "PSF", IOT|SKIP|06021,
+  "RSF", IOT|SKIP|06011,
+  "TSF", IOT|SKIP|06041,
+  "CLA", GROUP1|GROUP2|07200,
+  "CIA", GROUP1|07041,
+  "CLL", GROUP1|07100,
+  "CMA", GROUP1|07040,
+  "CML", GROUP1|07020,
+  "IAC", GROUP1|07001,
+  "NOP", GROUP1|07000,
+  "RAL", GROUP1|07004,
+  "RAR", GROUP1|07010,
+  "RTL", GROUP1|07006,
+  "RTR", GROUP1|07012,
+  "STA", GROUP1|07240,
+  "STL", GROUP1|07120,
+  "HLT", GROUP2|07402,
+  "OSR", GROUP2|07404,
+  "SKP", GROUP2|SKIP|07410,
+  "SMA", GROUP2|SKIP|07500,
+  "SNA", GROUP2|SKIP|07450,
+  "SNL", GROUP2|SKIP|07420,
+  "SPA", GROUP2|SKIP|07510,
+  "SPC", GROUP2|SKIP|07710,	# =SPA+CLA (used by compiler)
+  "SZA", GROUP2|SKIP|07440,
+  "SZL", GROUP2|SKIP|07430,
+  "AND", MRI|00000,
+  "DCA", MRI|03000,
+  "INC", MRI|02000,	# non-skip ISZ
+  "ISZ", MRI|02000,
+  "JMP", MRI|05000,
+  "JMS", MRI|04000,
+  "TAD", MRI|01000,
+);
+
+#
+# The user symbol table is an array indexed by identifier, and returning
+# and index into the types and values arrays.
+# Type bits:
+$ABSYM = 00000;
+$RELOC = 02000;
+$EXTRN = 01000;
+$DEFND = 00400;
+$ENTRY = 00200;
+$HASHD = 00100; # Someone used symbol#
+$COMMN = 00040;
+#
+$nsyms = 0;
+%symtab = ();
+@types = @values = ();
+#
+# Look up a symbol, warning depending on whether it was expected to be
+# found.  If wasn't expecting to find it, create the new symbol.
+#
+sub lookup {
+  local($name, $new) = @_;
+  local($i) = undef;
+  $i = $symbtab{$name} if defined $symbtab{$name};
+  warn "$name: redefined\n" if $new && defined($i);
+  if (!defined($i)) {
+    warn "$name: undefined\n" unless $new;
+    $symtab{$name} = $nsyms;
+    $types[$nsyms] = 0;
+    $values[$nsyms] = 0;
+    $nsyms++;
+  }
+  return $i;
+}
+
+sub pif {
+  die "unimplemented";
+}
+sub parg {
+  die "unimplemented";
+}
+sub pcall {
+  die "unimplemented";
+}
+sub peap {
+  die "unimplemented";
+}
+sub pend {
+  die "unimplemented";
+}
+sub plap {
+  die "unimplemented";
+}
+sub ppage {
+  die "unimplemented";
+}
+sub ptext {
+  die "unimplemented";
+}
+sub pabsym {
+  die "unimplemented";
+}
+sub pblock {
+  die "unimplemented";
+}
+sub pcommn {
+  die "unimplemented";
+}
+sub pcpage {
+  die "unimplemented";
+}
+sub pdecim {
+  die "unimplemented";
+}
+sub pdummy {
+  die "unimplemented";
+}
+sub pentry {
+  die "unimplemented";
+}
+sub pfortr {
+  die "unimplemented";
+}
+sub poctal {
+  die "unimplemented";
+}
+sub popdef {
+  die "unimplemented";
+}
+sub ppause {
+  die "unimplemented";
+}
+sub preorg {
+  die "unimplemented";
+}
+sub pretrn {
+  die "unimplemented";
+}
+sub pskpdf {
+  die "unimplemented";
+}
+
+#
+# Current page book-keeping.
+#
+
+#
+# An expression may be a constant, a literal, or a symbol reference.
+# Addition and subtraction of constants is not allowed.
+# Constants may be a (possibly signed) number or of the for "c.
+# Numbers may be prefixed with "D" for decimal or "K" for octal.
+#   Allow only in literals, to avoid confusion with symbols?
+# Literals are constants preceded by "(".
+# Symbol names are significant only to 6 characters.
+#   The characters "[\\]^" are considered alphabetic.
+# Attempting to redefine predefined symbols is not allowed.
+# Attempting to redefine user symbols is also not allowed.
+# A symbol may be followed by "#" to indicate "+1".
+#
+
+#
+# The output files have the name of the first input file, but different
+# extensions.
+#
+$of = $ARGV[0];
+$of =~ s/.sb$//;
+
+#
+# Open and process the input file(s).
+#
+foreach $if (@ARGV) {
+  open(INPUT, $if) || die "$if: $!";
+
+  while (($l = <INPUT>)) {
+    $l =~ s/\r//g;
+    $s = $l;
+    $group = $GROUP1|$GROUP2;
+    $isskip = 0;
+    $oword = 0;
+    while (1) {
+      # End of a statement?
+      if ($s =~ s/^\s*([;\n])//) {
+        $delim = $1;
+        # Output the assembled word.
+#todo
+        last if $delim eq "\n";
+        next;
+      }
+      # Begin by looking for blank statement.
+      next if $s =~ s/^\s*;//;
+      # Have we reduced to a comment?
+      next if $s =~ s:^/.*::;
+      # An identifier is required next.
+      if ($s =~ s/^\s*([A-Za-z\[\]\\\^][A-Za-z0-9\[\]\\\^]*)//) {
+        $id = $1;
+        $id =~ y/a-z/A-Z/; # monocase
+        # Either a comma, or it's an action.
+        if ($s =~ s/\s*,//) {
+          # The identifier is a label.  Define a symbol.
+          $i = &lookup($id, 1);
+          $types[$i] |= $DEFND|$RELOC;
+          $values[$i] = $loc;
+          next;
+        } else {
+          if (defined $predef{$id}) {
+            # The identifier is a predefined symbol.
+            $i = $predef{$id};
+            if ($i & $MRI) {
+              # An MRI may be indirect, so check for that.
+              # Emit a pile of code.
+#todo
+            } else {
+              if ($i & ($GROUP1|$GROUP2)) {
+                # GROUP1 and GROUP2, with the exception of CLA, are
+                # mutually exclusive.  AND with the statement group,
+                # and expect to get non-zero!
+                $group &= $i;
+                warn "$id: wrong group\n" unless $group;
+              } else {
+                # This is an IOT.  Clear $group so OPRs will signal an error.
+                $group = 0;
+              }
+              # OR the new opcode into the current output word.
+              $oword |= $i & 07777;
+              $isskip |= $i & $SKIP;
+#todo
+            }
+            
+#todo check flags and deal.
+          } elsif (defined $pseudo{$id}) {
+            # The identifier is a pseudo-op.  Call the handler.
+            *fun = $pseudo{$id};
+            &fun();
+#todo write the handlers!
+          } else {
+            # Seems to be an ordinary symbol reference.
+#todo check for #, emit appropriate reference.
+          }
+        }
+      } else {
+        warn "Syntax error: $s";
+        # Toss until ";", if any.
+        next if $s =~ s/[^;]*;//;
+        last;
+      }
+    }
+  }
+}

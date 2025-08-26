@@ -1,0 +1,276 @@
+   1               /2 TC08 SYSTEM HANDLER
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45                      VERSION="B&77
+  46                       *0
+  47 000000  7776          -2
+  48 000001  2403          DEVICE TC08;DEVICE SYS;4161;2007;0;1341
+     000002  6070  
+     000003  2331  
+     000004  2300  
+     000005  4161  
+     000006  2007  
+     000007  0000  
+     000010  1341  
+  49 000011  2403          DEVICE TC08;DEVICE DTA0;4161;1007;0;1341
+     000012  6070  
+     000013  0424  
+     000014  0160  
+     000015  4161  
+     000016  1007  
+     000017  0000  
+     000020  1341  
+  50 000021  7731         STARTB-ENDB-1           /NEGATIVE OF LENGTH OF BOOTSTRAP
+  51               
+  52                       NOPUNCH
+  53                       *7600
+  54                       ENPUNCH
+  55               
+  56 007600  1236  STARTB, TAD B600        /THIS CODE ONLY EXECUTED ON DMS-TYPE BOOTSTRAP
+  57 007601  6766          DTCA DTXA       /ALL IT DOES IS SIMULATE THE OTHER TYPE OF BOOTSTRAP
+  58 007602  6771          DTSF            /MORAL: DISK MONITOR SYSTEM SUCKS
+  59 007603  5202          JMP .-1
+  60 007604  3231          DCA BOOTX
+  61 007605  3232          DCA BOOTX+1     /FUDGE TO MAKE USE OF SOME COMMON CODE
+  62 007606  1237          TAD B620
+  63 007607  5224          JMP BOOT3       /START READING OVER OURSELVES WITH RECORD 0 AGAIN
+  64 007610  0000          ZBLOCK  7611-.
+  65 007611  0137  BM7642, -7641           /MUST BE BEFORE 7617
+  66 007612  1355  BOOT1,  TAD 7755
+  67 007613  1211          TAD BM7642
+  68 007614  7650          SNA CLA         /WATCH THE PROGRESS OF THE READ
+  69 007615  5220          JMP BOOT2       /WHEN IT GETS PAST 7643, SWITCH TO FIELD 1
+  70 007616  7000          NOP             /LOADS OVER DTSF IN 7616
+  71 007617  5212          JMP BOOT1       /LOADS OVER JMP .-1 IN 7617 - STARTS BOOTSTRAP
+  72 007620  1235  BOOT2,  TAD B10
+  73 007621  6774          DTLB            /ZAP A 10 INTO STATUS REG B TO LOAD INTO FIELD 1
+  74 007622  6771          DTSF            /FROM HERE ON - LOAD THE FIELD 1 RESIDENT INTO FIELD 1
+  75 007623  5222          JMP .-1
+  76 007624  6764  BOOT3,  DTXA            /CONTINUE READING NEXT RECORD(ALSO SEE CODE AT 7600)
+  77 007625  6774          DTLB            /INTO FIELD 0
+  78 007626  1234          TAD B7577
+  79 007627  3355          DCA 7755        /PAGE 7600
+  80 007630  3354          DCA 7754
+  81 007631  6213  BOOTX,  CDF CIF 10
+  82 007632  5242          JMP 7642        /JUMP INTO WAIT LOOP IN FIELD 1
+  83 007633  5212          JMP BOOT1       /DISK MONITOR FUDGE - JUMP INTO WAITING LOOP
+  84 007634  7577  B7577,  7577
+  85 007635  0010  B10,    10
+  86 007636  0600  B600,   600
+  87 007637  0620  B620,   620
+  88 007640  0000          ZBLOCK  7642-.
+     007641  0000  
+  89 007642  3344          DCA 7744
+  90 007643  6771          DTSF            /THIS IS LOADED INTO FIELD 1 WITH MONITOR RESIDENT
+  91 007644  5243          JMP .-1         /IT IS IN THE CD OUTPUT AREA AND SO WILL BE ZAPPED
+  92 007645  6203          CDF CIF 0       /BY THE KEYBOARD MONITOR
+  93 007646  5205  ENDB,   JMP 7605        /OK, FIELD 0 RESIDENT READ IN, START UP MONITOR
+  94               
+  95                       /BOOTSTRAP FOR DECTAPE MONITOR IS THE SAME AS FOR THE 
+  96                       /DEC LIBRARY SYSTEM, RL MONITOR AND POLY BASIC - OR JUST
+  97                       /READ RECORD 0 INTO 7600 AND TRANSFER TO 7600 A LA DISK
+  98                       /MONITOR SYSTEM ON DECTAPE
+  99                      DTRB=6772
+ 100                       DTLB=6774
+ 101                       DTXA=6764
+ 102                       DTCA=6762
+ 103                       DTRA=6761
+ 104                       DTSF=6771
+ 105               
+ 106                       *200
+ 107               
+ 108                       NOPUNCH
+ 109                       *7600
+ 110                       ENPUNCH
+ 111               
+ 112                       SBLOCK=7776     /RELIC FROM OS/8 ASSEMBLY
+ 113 007600  0000          ZBLOCK 7
+     007601  0000  
+     007602  0000  
+     007603  0000  
+     007604  0000  
+     007605  0000  
+     007606  0000  
+ 114 007607  0002  SHNDLR, VERSION
+ 115 007610  7346          CLA CLL CMA RTL
+ 116 007611  3350          DCA SYSCNT      /3 TRIES ON ERROR
+ 117 007612  6214          RDF
+ 118 007613  1335          TAD SCIF
+ 119 007614  3333          DCA SFIELD      /RETURN FIELD SETUP
+ 120 007615  1607          TAD I SHNDLR
+ 121 007616  3351          DCA SFUN
+ 122 007617  2207          ISZ SHNDLR
+ 123 007620  7240          CLA CMA
+ 124 007621  1607          TAD I SHNDLR
+ 125 007622  3352          DCA SLOC        /BUFFER ADDRESS-1
+ 126 007623  2207          ISZ SHNDLR
+ 127 007624  1340  STRY,   TAD S410        /SETUP DTA0 TO DO SEARCH REVERSE
+ 128 007625  6766          DTCA DTXA       /BUT MOTION BIT IS NOT ON
+ 129 007626  6774          DTLB
+ 130 007627  7344          CLA CMA CLL RAL
+ 131 007630  3355          DCA SCA         /7776=SBLOCK FROM OS/8 ASSEMBLY
+ 132 007631  1351          TAD SFUN
+ 133 007632  7012          RTR
+ 134 007633  7012          RTR
+ 135 007634  7006  SERR,   RTL
+ 136 007635  7004          RAL             /LAST 4 INST. PUT MOTION BIT IN LINK
+ 137                                       /IF THIS BIT WAS SET IN THE CALLING
+ 138                                       /SEQUENCE, SEARCH STARTS FORWARD.
+ 139 007636  7600  S7600,  7600
+ 140 007637  1337          TAD S200
+ 141 007640  7430  SC,     SZL
+ 142 007641  1336          TAD S400
+ 143 007642  6764          DTXA            /ZAP MOTION BIT ON
+ 144 007643  6773          DTSF DTRB
+ 145 007644  5243          JMP .-1
+ 146 007645  7510          SPA             /CHECK FOR ANY ERRORS
+ 147 007646  5234          JMP SERR
+ 148 007647  6761          DTRA            /NO ERRORS
+ 149 007650  7006          RTL
+ 150 007651  7046          CMA RTL         /COMPLEMENT OF DIRECTION TO LINK
+ 151                                       /IF LINK ON, SEARCHING FORWARD.
+ 152 007652  7620          SNL CLA
+ 153 007653  7026          CML RTL
+ 154 007654  1376          TAD SBLOCK      /SEARCH FOR ONE RECORD BEFORE THE
+ 155                                       /REQUIRED ONE. THEN REVERSE DIRECTION
+ 156 007655  7040          CMA
+ 157 007656  1607          TAD I SHNDLR
+ 158 007657  1607          TAD I SHNDLR    /X+X=2*X; RECORDS TO BLOCKS
+ 159 007660  7000          NOP
+ 160 007661  7000          NOP
+ 161 007662  7040          CMA
+ 162 007663  7640          SZA CLA         /IS IT PROPER RECORD?
+ 163 007664  5240          JMP SC
+ 164 007665  7420          SNL             /YES..IF LINK IS ON,WAS FWD SRCH
+ 165 007666  5241          JMP SC+1        /REVERSE..REVERSE TAPE MOTION
+ 166                                       /AND SEARCH FORWARD
+ 167 007667  1352          TAD SLOC
+ 168 007670  3355          DCA SCA
+ 169 007671  1351          TAD SFUN
+ 170 007672  6774          DTLB            /SET UP FIELD
+ 171 007673  1351          TAD SFUN
+ 172 007674  7104          CLL RAL
+ 173 007675  0236          AND S7600
+ 174 007676  3353          DCA SBLKCT      /BLOCK COUNT
+ 175 007677  7004          RAL             /FUNCTION TO BIT 11
+ 176                       IFNZRO .-7700   <NZERR>
+ 177 007700  7410          SKP
+ 178 007701  7402          HLT             /TO PROTECT AGAINST BAD PROGRAMMERS
+ 179 007702  7001          IAC
+ 180 007703  7126          CLL CML RTL
+ 181 007704  7006          RTL             /FORMS EITHER READ OR WRITE
+ 182 007705  6764  SL,     DTXA
+ 183 007706  1236          TAD S7600
+ 184 007707  3354          DCA SWC         /TRANSFER 200 (8)
+ 185 007710  6773          DTSF DTRB
+ 186 007711  5310          JMP .-1
+ 187 007712  7120          CLL CML         /IN CASE OF FATAL ERROR
+ 188 007713  7710          SPA CLA
+ 189 007714  5323          JMP SERR2
+ 190 007715  1353          TAD SBLKCT
+ 191 007716  1236          TAD S7600
+ 192 007717  7450          SNA             /ALL DONE?
+ 193 007720  5326          JMP SOVER       /YES
+ 194 007721  3353          DCA SBLKCT
+ 195 007722  5305          JMP SL
+ 196 007723  2350  SERR2,  ISZ SYSCNT      /TRY AGAIN?
+ 197 007724  5224          JMP STRY
+ 198 007725  7410          SKP             /DON'T BOTHER
+ 199 007726  2207  SOVER,  ISZ SHNDLR
+ 200 007727  2207          ISZ SHNDLR
+ 201 007730  1337          TAD S200        /STOP THE TAPE
+ 202 007731  6764          DTXA
+ 203 007732  7010          RAR             /GIVE FATAL RETURN
+ 204 007733  7402  SFIELD, HLT
+ 205 007734  5607          JMP I SHNDLR
+ 206 007735  6202  SCIF,  CIF 0
+ 207 007736  0400  S400,   400
+ 208 007737  0200  S200,   200
+ 209 007740  0410  S410,   410
+ 210                       SBLKCT=7753
+ 211                       SYSCNT=7750
+ 212                       SFUN=7751
+ 213                       SLOC=7752
+ 214                       SWC=7754
+ 215                       SCA=7755
+ 216                       $
+
+B10     7635
+B600    7636
+B620    7637
+B7577   7634
+BM7642  7611
+BOOT1   7612
+BOOT2   7620
+BOOT3   7624
+BOOTX   7631
+DTCA    6762
+DTLB    6774
+DTRA    6761
+DTRB    6772
+DTSF    6771
+DTXA    6764
+ENDB    7646
+S200    7737
+S400    7736
+S410    7740
+S7600   7636
+SBLKCT  7753
+SBLOCK  7776
+SC      7640
+SCA     7755
+SCIF    7735
+SERR    7634
+SERR2   7723
+SFIELD  7733
+SFUN    7751
+SHNDLR  7607
+SL      7705
+SLOC    7752
+SOVER   7726
+STARTB  7600
+STRY    7624
+SWC     7754
+SYSCNT  7750
+VERSIO  0002

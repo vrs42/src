@@ -1,0 +1,1988 @@
+   1               /3 OS/8 FORTRAN  (PASS THREE)
+   2               /
+   3               / VERSION 4A PT 16-MAY-77
+   4               /
+   5               /       OS/8 FORTRAN IV COMPILER-PASS 3
+   6               /
+   7               /       BY: HANK MAURER
+   8               /       UPDATED BY: R. LARY + M. HURLEY
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               VERSON=4
+  39               / PAGE ZERO STUFF
+  40                       OUDEVH=7000             /PUT OUDEVH AND OUBUF IN DIFFERENT
+  41                       INDEVH=6400
+  42                       INBUF=6000
+  43                       OUBUF=5400              /SEGMENTS, STAN KNOWS WHY
+  44                       X10=10
+  45                       X11=11
+  46                       X12=12
+  47                       NCHARS=20
+  48                       CHAR=21
+  49                       TEMP=22
+  50                       FILDEV=6
+  51                       FILBLK=7
+  52                       DEV1CE=173              /THROUGH 177
+  53                       DEVH=23
+  54                       LINENO=24
+  55                       SEVCHR=25               /THROUGH 33
+  56               
+  57               
+  58               /       OS/8 V3C MAINTENANCE RELEASE FIXES:
+  59               
+  60               /1.     EXTENDED RANGE OF PAGE NUMBERS TO 99
+  61               /2      INTERCHANGED CR/LF FOR HASSINGER
+  62               /3      CHANGED VERSION NO. TO 305
+  63               /5.     ADDED 'I' TO JMP (OFOO3
+  64               /
+  65               /
+  66               /       CHANGES FOR OS/8 V3D AND OS/78 BY P.T.
+  67               /       .CHANGED VERSION NUMBER TO 4A
+  68               /       .PUT IN NEW DATE ALGORITHM
+  69               /
+  70               /
+  71               /START OF PASS 3
+  72                       *400                    /DON'T LOAD INTO 0-377
+  73 000400  6211  SPASS3, CDF     10
+  74 000401  1777          TAD I   (7666           /GET DATE
+  75 000402  3022          DCA     TEMP
+  76 000403  1717          TAD I   LSTFIL          /COPY FILE NAME
+  77 000404  6201          CDF
+  78 000405  3720          DCA I   FILLST
+  79 000406  2317          ISZ     LSTFIL
+  80 000407  2320          ISZ     FILLST
+  81 000410  2321          ISZ     OFSIZE
+  82 000411  5200          JMP     SPASS3
+  83 000412  1173          TAD     DEV1CE          /FETCH HANDLER FOR OUTPUT FILE
+  84 000413  6212          CIF     10
+  85 000414  4776          JMS I   (200            /USR IS IN CORE
+  86 000415  0001          1
+  87 000416  7001  OH,     OUDEVH+1                /TWO PAGE HANDLER IS OK
+  88 000417  5775          JMP I   (OFOO3
+  89 000420  6212          CIF     10
+  90 000421  1173          TAD     DEV1CE          /OPEN THE LISTING FILE
+  91 000422  4776          JMS I   (200
+  92 000423  0003          3
+  93 000424  0174  OB,     DEV1CE+1
+  94 000425  0000  OS,     0
+  95 000426  5775          JMP I   (OFOO3
+  96 000427  1224          TAD     OB              /SAVE BLOCK NUMBER
+  97 000430  3774          DCA     OBLOCK
+  98 000431  1225          TAD     OS
+  99 000432  3773          DCA     OSIZE           /AND SIZE OF HOLE
+ 100 000433  1216          TAD     OH              /SAVE HANDLER ADDRESS
+ 101 000434  3023          DCA     DEVH
+ 102 000435  1372          TAD     (NUMS-1         /SET UP NUMBER POINTER
+ 103 000436  3771          DCA I   (NUM
+ 104 000437  1022          TAD     TEMP            /GET THE DATE--FOR YEAR ROUTINE
+ 105 000440  7450          SNA
+ 106 000441  5770          JMP I   (PAJE           /NO DATE
+ 107 000442  0367          AND     (7              /MASK OUT ALL BUT YEAR OFFSET BITS
+ 108 000443  3322          DCA     YRTEMP          /INCREMENT FROM THE BASE YEAR
+ 109 000444  3323          DCA     TEMP1           /HOLDS THE FIRST DIGIT OF THE YEAR
+ 110 000445  1766          TAD I   (7777           /GET THE DATE EXTENSION BITS
+ 111 000446  0370          AND     (600            /MASK TO GET THE EXTENSION BITS
+ 112 000447  7112          CLL RTR                 /ROTATE THEM INTO BIT
+ 113 000450  7012          RTR                     /POSITIONS 7 AND 8
+ 114 000451  1365          TAD     (106            /ADD IN 70---OLD BASE YEAR
+ 115 000452  1322          TAD     YRTEMP          /ADD IN THE YEAR OFFSET BITS
+ 116                                               /TO FIND THE NEW BASE YEAR
+ 117 000453  7100  CONVYR, CLL                     /FIND THE YEAR IN DECIMAL
+ 118 000454  1364          TAD     (-12            /KEEP SUBTRACTING 12
+ 119 000455  7420          SNL                     /ALMOST DONE
+ 120 000456  5261          JMP     SECDIG          /FIND THE SECOND DIGIT OF THE YEAR
+ 121 000457  2323          ISZ     TEMP1           /FIND THE FIRST DIGIT OF THE YEAR
+ 122 000460  5253          JMP     CONVYR          /TRY AGAIN
+ 123 000461  1363  SECDIG, TAD     (72             /GET THE SECOND DIGIT OF THE YEAR
+ 124 000462  7006          RTL                     /AND MAKE IT SIXBIT
+ 125 000463  7006          RTL
+ 126 000464  7006          RTL
+ 127 000465  3762          DCA I   (YEAR+1         /PUT IT IN THE PRINT LINE
+ 128 000466  1323          TAD     TEMP1           /GET THE FIRST DIGIT
+ 129 000467  1361          TAD     (5560           /MAKE IT SIXBIT
+ 130 000470  3760          DCA I   (YEAR           /PRINT IT
+ 131 000471  1022          TAD     TEMP            /GET THE DATE--NOW FIND THE MONTH/DAY
+ 132 000472  7112          CLL RTR
+ 133 000473  7010          RAR
+ 134 000474  0357          AND     (777
+ 135 000475  3022          DCA     TEMP
+ 136 000476  1022  SIMPLE, TAD     TEMP            /GET THE DAY
+ 137 000477  0356          AND     (37
+ 138 000500  1355          TAD     (DAYS-1         /THIS IS THE LAZY WAY
+ 139 000501  3020          DCA     NCHARS
+ 140 000502  1420          TAD I   NCHARS
+ 141 000503  3754          DCA I   (DAY
+ 142 000504  1022          TAD     TEMP            /GET THE MONTH
+ 143 000505  7112          CLL RTR
+ 144 000506  7012          RTR
+ 145 000507  0353          AND     (36
+ 146 000510  1352          TAD     (MONTHS-3
+ 147 000511  3010          DCA     X10
+ 148 000512  1410          TAD I   X10
+ 149 000513  3751          DCA I   (MONTH
+ 150 000514  1410          TAD I   X10
+ 151 000515  3750          DCA I   (MONTH+1
+ 152 000516  5770          JMP I   (PAJE           /WE GOT THE DATE
+ 153 000517  7605  LSTFIL, 7605
+ 154 000520  0173  FILLST, DEV1CE
+ 155 000521  7773  OFSIZE, -5
+ 156 000522  0000  YRTEMP, 0
+ 157 000523  0000  TEMP1,  0
+ 158 000550  0720         PAGE
+     000551  0717  
+     000552  1244  
+     000553  0036  
+     000554  0716  
+     000555  1207  
+     000556  0037  
+     000557  0777  
+     000560  0721  
+     000561  5560  
+     000562  0722  
+     000563  0072  
+     000564  7766  
+     000565  0106  
+     000566  7777  
+     000567  0007  
+     000570  0600  
+     000571  3706  
+     000572  1011  
+     000573  2077  
+     000574  2011  
+     000575  2203  
+     000576  0200  
+     000577  7666  
+ 159 000600  5777  PAJE,   JMP I   (PRHDR          /PRINT THE FIRST HEADING
+ 160 000601  7126          CLL CML RTL             /INITIALIZE LINE NUMBER
+ 161 000602  3024          DCA     LINENO
+ 162 000603  3277          DCA     TABCNT          /**
+ 163 000604  1376  RDLUPE, TAD     (SEVCHR-1       /SEVEN CHAR BUFFER
+ 164 000605  3010          DCA     X10
+ 165 000606  1375          TAD     (-6
+ 166 000607  3020          DCA     NCHARS
+ 167 000610  4774  RDLOOP, JMS I   (ICHAR
+ 168 000611  5345          JMP     RDACHO          /ECHO & IGNORE SHORT LINES
+ 169 000612  1373          TAD     (-211           /IS IT A TAB ?
+ 170 000613  7640          SZA CLA
+ 171 000614  5224          JMP     NOTAB           /NO
+ 172 000615  1372          TAD     (-2
+ 173 000616  3277          DCA     TABCNT          /SET POINTER TO DO EXTRA SPACES LATER**
+ 174 000617  1371          TAD     (240
+ 175 000620  3410          DCA I   X10             /DO A TAB
+ 176 000621  2020          ISZ     NCHARS
+ 177 000622  5217          JMP     .-3
+ 178 000623  5230          JMP     WHAT            /GO LOOK AT THE LINE
+ 179 000624  1021  NOTAB,  TAD     CHAR
+ 180 000625  3410          DCA I   X10             /SAVE THE CHAR
+ 181 000626  2020          ISZ     NCHARS
+ 182 000627  5210          JMP     RDLOOP
+ 183 000630  1025  WHAT,   TAD     SEVCHR          /IS IT A COMMNET
+ 184 000631  1370          TAD     (-303
+ 185 000632  7650          SNA CLA
+ 186 000633  5246          JMP     NOISN           /YES, NO INTERNAL STMT NUMBER
+ 187 000634  1032          TAD     SEVCHR+5        /IS IT A CONTINUATION ?
+ 188 000635  1367          TAD     (-240
+ 189 000636  7640          SZA CLA
+ 190 000637  5246          JMP     NOISN           /YES, NO ISN
+ 191 000640  1024          TAD     LINENO          /NEITHER OF THESE
+ 192 000641  4766          JMS I   (ONUMBR         /PRINT ISN
+ 193 000642  1024          TAD     LINENO          /2.01/ PUT LINE NUM
+ 194 000643  7421          7421                    /2.01/ INTO MQ
+ 195 000644  7200          CLA                     /2.01/ CLA IF NO EAE
+ 196 000645  2024          ISZ     LINENO          /BUMP LINE NUMBER
+ 197 000646  1365  NOISN,  TAD     (211            /TAB
+ 198 000647  4764          JMS I   (OCHAR
+ 199 000650  1376          TAD     (SEVCHR-1       /PRINT FIRST SEVEN
+ 200 000651  3010          DCA     X10
+ 201 000652  1375          TAD     (-6
+ 202 000653  3020          DCA     NCHARS
+ 203 000654  1410          TAD I   X10
+ 204 000655  4764          JMS I   (OCHAR
+ 205 000656  2020          ISZ     NCHARS
+ 206 000657  5254          JMP     .-3
+ 207 000660  1277          TAD     TABCNT          /SEE IF A TAB WAS 1ST
+ 208 000661  7700          SMA     CLA             /IF YES,NEED 2 MORE SPACES
+ 209 000662  5270          JMP     NOTTAB
+ 210 000663  3277          DCA     TABCNT          /WAS A TAB
+ 211 000664  1371          TAD     (240
+ 212 000665  4764          JMS I   (OCHAR
+ 213 000666  1371          TAD     (240
+ 214 000667  4764          JMS I   (OCHAR
+ 215 000670  4774  NOTTAB, JMS I   (ICHAR          /PRINT REST OF LINE
+ 216 000671  5274          JMP     ENDLIN
+ 217 000672  4764          JMS I   (OCHAR
+ 218 000673  5270          JMP     .-3
+ 219 000674  4763  ENDLIN, JMS I   (CRLF           /END LINE
+ 220 000675  4762          JMS I   (ERRCHK         /CHECK ERROR LIST
+ 221 000676  5204          JMP     RDLUPE          /DO NEXT LINE
+ 222 000677  0000  TABCNT, 0
+ 223               
+ 224 000700  4040  HEADER, TEXT    '        FORTRAN IV  4AAAA    '
+     000701  4040  
+     000702  4040  
+     000703  4040  
+     000704  0617  
+     000705  2224  
+     000706  2201  
+     000707  1640  
+     000710  1126  
+     000711  4040  
+     000712  6401  
+     000713  0101  
+     000714  0140  
+     000715  4040  
+     000716  4000  
+ 225                       *.-1
+ 226 000716  4040  DAY,    4040
+ 227 000717  4040  MONTH,  4040;4040
+     000720  4040  
+ 228 000721  4040  YEAR,   TEXT    '                PAGE  '
+     000722  4040  
+     000723  4040  
+     000724  4040  
+     000725  4040  
+     000726  4040  
+     000727  4040  
+     000730  4040  
+     000731  2001  
+     000732  0705  
+     000733  4040  
+     000734  0000  
+ 229                       *.-1
+ 230 000734  1716  PAGENO, TEXT    'ONE'
+     000735  0500  
+ 231 000736  0000          ZBLOCK 7        /V3C ROOM FOR LARGE PAGE NUMBERS
+     000737  0000  
+     000740  0000  
+     000741  0000  
+     000742  0000  
+     000743  0000  
+     000744  0000  
+ 232 000745  1365  RDACHO, TAD (211
+ 233 000746  4764          JMS I (OCHAR
+ 234 000747  5761          JMP I (RDECHO
+ 235 000761  1747          PAGE
+     000762  2101  
+     000763  1515  
+     000764  2022  
+     000765  0211  
+     000766  1463  
+     000767  7540  
+     000770  7475  
+     000771  0240  
+     000772  7776  
+     000773  7567  
+     000774  1600  
+     000775  7772  
+     000776  0024  
+     000777  1526  
+ 236 001000  4040         TEXT    "         "
+     001001  4040  
+     001002  4040  
+     001003  4040  
+     001004  4000  
+ 237 001005  1716  LOS,    TEXT    "ONE      "
+     001006  0540  
+     001007  4040  
+     001010  4040  
+     001011  4000  
+ 238               NUMS,/  2427;1740;4040
+ 239               /       2410;2205;0540
+ 240               /       0617;2522;4040
+ 241               /       0611;2605;4040
+ 242               /       2311;3040;4040
+ 243               /       2305;2605;1640
+ 244               /       0511;0710;2440
+ 245               /       1611;1605;4040
+ 246               /       2405;1640;4040
+ 247               /       0514;0526;0516
+ 248               /       2427;0514;2605
+ 249 001012  2427          TEXT    "TWO@@@@@"
+     001013  1700  
+     001014  0000  
+     001015  0000  
+     001016  0000  
+ 250 001017  2410          TEXT    "THREE@@@"
+     001020  2205  
+     001021  0500  
+     001022  0000  
+     001023  0000  
+ 251 001024  0617          TEXT    "FOUR@@@@"
+     001025  2522  
+     001026  0000  
+     001027  0000  
+     001030  0000  
+ 252 001031  0611          TEXT    "FIVE@@@@"
+     001032  2605  
+     001033  0000  
+     001034  0000  
+     001035  0000  
+ 253 001036  2311          TEXT    "SIX@@@@@"
+     001037  3000  
+     001040  0000  
+     001041  0000  
+     001042  0000  
+ 254 001043  2305          TEXT    "SEVEN@@@"
+     001044  2605  
+     001045  1600  
+     001046  0000  
+     001047  0000  
+ 255 001050  0511          TEXT    "EIGHT@@@"
+     001051  0710  
+     001052  2400  
+     001053  0000  
+     001054  0000  
+ 256 001055  1611          TEXT    "NINE@@@@"
+     001056  1605  
+     001057  0000  
+     001060  0000  
+     001061  0000  
+ 257 001062  2405          TEXT    "TEN@@@@@"
+     001063  1600  
+     001064  0000  
+     001065  0000  
+     001066  0000  
+ 258 001067  0514          TEXT    "ELEVEN@@"
+     001070  0526  
+     001071  0516  
+     001072  0000  
+     001073  0000  
+ 259 001074  2427          TEXT    "TWELVE@@"
+     001075  0514  
+     001076  2605  
+     001077  0000  
+     001100  0000  
+ 260 001101  2410          TEXT    "THIRTEEN"
+     001102  1122  
+     001103  2405  
+     001104  0516  
+     001105  0000  
+ 261 001106  0617          TEXT    "FOURTEEN"
+     001107  2522  
+     001110  2405  
+     001111  0516  
+     001112  0000  
+ 262 001113  0611          TEXT    "FIFTEEN@"
+     001114  0624  
+     001115  0505  
+     001116  1600  
+     001117  0000  
+ 263 001120  2311          TEXT    "SIXTEEN@"
+     001121  3024  
+     001122  0505  
+     001123  1600  
+     001124  0000  
+ 264 001125  2305          TEXT    "SEVENTEEN"
+     001126  2605  
+     001127  1624  
+     001130  0505  
+     001131  1600  
+ 265 001132  0511          TEXT    "EIGHTEEN"
+     001133  0710  
+     001134  2405  
+     001135  0516  
+     001136  0000  
+ 266 001137  1611          TEXT    "NINETEEN"
+     001140  1605  
+     001141  2405  
+     001142  0516  
+     001143  0000  
+ 267 001144  4024  HIS,    TEXT    " TWENTY "
+     001145  2705  
+     001146  1624  
+     001147  3140  
+     001150  0000  
+ 268                       *.-1
+ 269 001150  4024          TEXT    " THIRTY "
+     001151  1011  
+     001152  2224  
+     001153  3140  
+     001154  0000  
+ 270                       *.-1
+ 271 001154  4040          TEXT    "  FORTY "
+     001155  0617  
+     001156  2224  
+     001157  3140  
+     001160  0000  
+ 272                       *.-1
+ 273 001160  4040          TEXT    "  FIFTY "
+     001161  0611  
+     001162  0624  
+     001163  3140  
+     001164  0000  
+ 274                       *.-1
+ 275 001164  4040          TEXT    "  SIXTY "
+     001165  2311  
+     001166  3024  
+     001167  3140  
+     001170  0000  
+ 276                       *.-1
+ 277 001170  2305          TEXT    "SEVENTY "
+     001171  2605  
+     001172  1624  
+     001173  3140  
+     001174  0000  
+ 278                       *.-1
+ 279 001174  4005          TEXT    " EIGHTY "
+     001175  1107  
+     001176  1024  
+     001177  3140  
+     001200  0000  
+ 280                       *.-1
+ 281 001200  4016          TEXT    " NINETY "
+     001201  1116  
+     001202  0524  
+     001203  3140  
+     001204  0000  
+ 282                       *.-1
+ 283 001204  1025          TEXT    "HUNDRED "
+     001205  1604  
+     001206  2205  
+     001207  0440  
+     001210  0000  
+ 284                       *.-1
+ 285 001210  4061  DAYS,  4061;4062;4063;4064;4065;4066;4067;4070;4071
+     001211  4062  
+     001212  4063  
+     001213  4064  
+     001214  4065  
+     001215  4066  
+     001216  4067  
+     001217  4070  
+     001220  4071  
+ 286 001221  6160          6160;6161;6162;6163;6164;6165;6166;6167;6170;6171
+     001222  6161  
+     001223  6162  
+     001224  6163  
+     001225  6164  
+     001226  6165  
+     001227  6166  
+     001230  6167  
+     001231  6170  
+     001232  6171  
+ 287 001233  6260          6260;6261;6262;6263;6264;6265;6266;6267;6270;6271
+     001234  6261  
+     001235  6262  
+     001236  6263  
+     001237  6264  
+     001240  6265  
+     001241  6266  
+     001242  6267  
+     001243  6270  
+     001244  6271  
+ 288 001245  6360          6360;6361
+     001246  6361  
+ 289 001247  5512  MONTHS, 5512;0116               /-JAN
+     001250  0116  
+ 290 001251  5506          5506;0502               /-FEB
+     001252  0502  
+ 291 001253  5515          5515;0122               /-MAR
+     001254  0122  
+ 292 001255  5501          5501;2022               /-APR
+     001256  2022  
+ 293 001257  5515          5515;0131               /-MAY
+     001260  0131  
+ 294 001261  5512          5512;2516               /-JUN
+     001262  2516  
+ 295 001263  5512          5512;2514               /-JUL
+     001264  2514  
+ 296 001265  5501          5501;2507               /-AUG
+     001266  2507  
+ 297 001267  5523          5523;0520               /-SEP
+     001270  0520  
+ 298 001271  5517          5517;0324               /-OCT
+     001272  0324  
+ 299 001273  5516          5516;1726               /-NOV
+     001274  1726  
+ 300 001275  5504          5504;0503               /-DEC
+     001276  0503  
+ 301                       IFZERO .&100    <PAGE>
+ 302 001400  1377  ENDX,  TAD     (-601           /2.02/ CLEAR END OF BUFFER
+ 303 001401  3024          DCA     LINENO          /2.01/ FOR TV: REASONS
+ 304 001402  1261          TAD     X232            /2.01/ OUTPUT ^Z
+ 305 001403  4776          JMS I   (OCHAR          /2.01/
+ 306 001404  2024          ISZ     LINENO          /2.01/
+ 307 001405  5202          JMP     .-3             /2.01/
+ 308 001406  6212          CIF     10              /CLOSE THE OUTPUT FILE
+ 309 001407  1173          TAD     DEV1CE
+ 310 001410  4775          JMS I   (200
+ 311 001411  0004          4
+ 312 001412  0174          DEV1CE+1
+ 313 001413  0000  FILSIZ, 0
+ 314 001414  5374          JMP     (OFOO3
+ 315 001415  6211          CDF     10              /LOOK AT OPTIONS
+ 316 001416  1652          TAD I   X7643
+ 317 001417  6201          CDF
+ 318 001420  7710  M70,    SPA CLA
+ 319 001421  5773          JMP I   (7605           //A MEANS DON'T CHAIN TO RALF
+ 320 001422  6213          CIF CDF 10
+ 321 001423  1006          TAD     FILDEV          /SET UP RALF INPUT LIST
+ 322 001424  3772          DCA I   (7617           /FILE SIZE AND DEVICE CODE
+ 323 001425  2372          ISZ     (7617
+ 324 001426  1007          TAD     FILBLK          /FILE START
+ 325 001427  3772          DCA I   (7617
+ 326 001430  2372          ISZ     (7617           /ZERO END OF LIST
+ 327 001431  3772          DCA I   (7617
+ 328 001432  1652          TAD I   X7643           /IS IT /F (FULL LIST) ?
+ 329 001433  0371          AND     (100
+ 330 001434  6202          CIF     0
+ 331 001435  7640          SZA CLA                 /**
+ 332 001436  5244          JMP     LISTIT
+ 333 001437  6212          CIF     10
+ 334 001440  1770          TAD I   (7644
+ 335 001441  0367          AND     (20             /LET /T SWITCH THRU ALSO
+ 336 001442  7650          SNA CLA
+ 337 001443  3773          DCA I   (7605           /NO, INHIBIT RALF LISTING
+ 338 001444  6212  LISTIT, CIF     10
+ 339 001445  7201          CLA IAC
+ 340 001446  6201          CDF
+ 341 001447  4775          JMS I   (200            /LOOKUP RALF.SV
+ 342 001450  0002          2
+ 343 001451  2157          RALFNM
+ 344 001452  7643  X7643,  7643
+ 345 001453  5374          JMP     (OFOO3
+ 346 001454  1251          TAD     .-3
+ 347 001455  3261          DCA     .+4
+ 348 001456  6212          CIF     10              /CHAIN TO RALF
+ 349 001457  4775          JMS I   (200
+ 350 001460  0006          6
+ 351 001461  0232  X232,   232
+ 352 001462  0000  NCNT,   0
+ 353 001463  0000  ONUMBR, 0
+ 354 001464  3022          DCA     TEMP            /OUTPUT ISN IN OCTAL
+ 355 001465  1366          TAD     (-4
+ 356 001466  3262          DCA     NCNT
+ 357 001467  1022  OLOOP,  TAD     TEMP
+ 358 001470  7106          CLL RTL                 /ANYONE WHO CAN'T FOLLOW THIS
+ 359 001471  7004          RAL                     /SHOULDN'T BE A PROGRAMMER
+ 360 001472  3022          DCA     TEMP
+ 361 001473  1022          TAD     TEMP
+ 362 001474  7004          RAL
+ 363 001475  0365          AND     (7
+ 364 001476  1364          TAD     (260
+ 365 001477  4776          JMS I   (OCHAR
+ 366 001500  2262          ISZ     NCNT
+ 367 001501  5267          JMP     OLOOP
+ 368 001502  5663          JMP I   ONUMBR
+ 369 001503  0000  CONVRT, 0                       /CONVERT TO ASCII AND PRINT
+ 370 001504  0363          AND     (77
+ 371 001505  7440          SZA
+ 372 001506  1362          TAD     (-40
+ 373 001507  7510          SPA
+ 374 001510  1371          TAD     (100
+ 375 001511  1361          TAD     (240
+ 376 001512  4776          JMS I   (OCHAR
+ 377 001513  5703          JMP I   CONVRT
+ 378 001514  7777  LINECT, -1                      /EJECT FIRST TIME
+ 379 001515  0601  CRLF,   PAJE+1
+ 380 001516  1360          TAD     (215            /CR LF
+ 381 001517  4776          JMS I   (OCHAR
+ 382 001520  1357          TAD     (212
+ 383 001521  4776          JMS I   (OCHAR
+ 384 001522  2314          ISZ     LINECT
+ 385 001523  5715          JMP I   CRLF
+ 386 001524  1356          TAD     (214
+ 387 001525  4776          JMS I   (OCHAR
+ 388 001526  1220  PRHDR,  TAD     M70             /RESET COUNT
+ 389 001527  3314          DCA     LINECT
+ 390 001530  1355          TAD     (HEADER         /COPY HEADER OUT
+ 391 001531  3022          DCA     TEMP
+ 392 001532  1422  OHDR,   TAD I   TEMP
+ 393 001533  7112          CLL RTR
+ 394 001534  7112          CLL RTR
+ 395 001535  7112          CLL RTR
+ 396 001536  4303          JMS     CONVRT
+ 397 001537  1422          TAD I   TEMP
+ 398 001540  4303          JMS     CONVRT
+ 399 001541  1422          TAD I   TEMP            /END YET ?
+ 400 001542  2022          ISZ     TEMP
+ 401 001543  0363          AND     (77
+ 402 001544  7640          SZA CLA
+ 403 001545  5332          JMP     OHDR
+ 404 001546  1360          TAD     (215            /V3C SKIP EXTRA LINE AFTER TITLE
+ 405 001547  4776          JMS I   (OCHAR
+ 406 001550  1357          TAD     (212            /V3C
+ 407 001551  4776          JMS I   (OCHAR          /FOR CENTRONICS
+ 408 001552  5754          JMP     PUTNUM          /GET NEW PAGE NUMBER
+ 409               / OS/8 FILE INPUT ROUTINES
+ 410 001554  3677          PAGE
+     001555  0700  
+     001556  0214  
+     001557  0212  
+     001560  0215  
+     001561  0240  
+     001562  7740  
+     001563  0077  
+     001564  0260  
+     001565  0007  
+     001566  7774  
+     001567  0020  
+     001570  7644  
+     001571  0100  
+     001572  7617  
+     001573  7605  
+     001574  2203  
+     001575  0200  
+     001576  2022  
+     001577  7177  
+ 411 001600  0000  ICHAR,  0                       /READ CHAR FROM INPUT FILE
+ 412 001601  2240          ISZ     INJMP           /BUMP THREE WAY UNPACK SWITCH
+ 413 001602  2310          ISZ     INCHCT
+ 414 001603  5240  INJMPP, JMP     INJMP
+ 415 001604  1307          TAD     INEOF           /DID LAST READ YEILD END OF FILE ?
+ 416 001605  7650          SNA CLA
+ 417 001606  5211          JMP     INGBUF          /NO, DO ANOTHER READ
+ 418 001607  4310  GETNEW, JMS     INNEWF          /OPEN A NEW INPUT FILE
+ 419 001610  5777          JMP I   (ENDX           /NO FILE TO OPEN
+ 420 001611  1345  INGBUF, TAD     INCTR           /BUMP RECORD COUNTER
+ 421 001612  7101          CLL IAC
+ 422 001613  7420          SNL
+ 423 001614  3345          DCA     INCTR           /RESTORE IF IT HASN'T OVERFLOWED
+ 424 001615  7430          SZL
+ 425 001616  2307          ISZ     INEOF           /SET END OF FILE SWITCH
+ 426 001617  4723          JMS I   INHNDL          /DO THE READ
+ 427 001620  0200  INCALL, 200
+ 428 001621  6000  INBUFP, INBUF
+ 429 001622  0000  INREC,  0
+ 430 001623  5234          JMP     INERR           /HANDLER ERROR
+ 431 001624  2222  INBREC, ISZ     INREC           /BUMP RECORD NUMBER
+ 432 001625  1376          TAD     (-601           /SET CHAR COUNT
+ 433 001626  3310          DCA     INCHCT
+ 434 001627  1203          TAD     INJMPP          /RESET THREE WAY JUMP SWITCH
+ 435 001630  3240          DCA     INJMP
+ 436 001631  1221          TAD     INBUFP          /RESET BUFFER POINTER
+ 437 001632  3346          DCA     INPTR
+ 438 001633  5201          JMP     ICHAR+1         /GO AGAIN
+ 439 001634  2307  INERR,  ISZ     INEOF           /EITHER EOF OR BADDIE
+ 440 001635  7700          SMA CLA
+ 441 001636  5224          JMP     INBREC          /END OF FILE, DO NEXT FILE
+ 442 001637  5775          JMP     OFOO3
+ 443 001640  7402  INJMP,  HLT                     /3 WAY CHARACTER UUPACK SWITCH
+ 444 001641  5262          JMP     ICHAR1
+ 445 001642  5256          JMP     ICHAR2
+ 446 001643  1203  ICHAR3, TAD     INJMPP          /RESET JUMP SWITCH
+ 447 001644  3240          DCA     INJMP
+ 448 001645  1746          TAD I   INPTR
+ 449 001646  0374          AND     (7400           /COMBINE THE HIGH ORDER BITS
+ 450 001647  7112          CLL RTR                 /OF THE TWO WORDS
+ 451 001650  7012          RTR
+ 452 001651  1305          TAD     INTMP           /TO FORM THE THIRD CHAR
+ 453 001652  7012          RTR
+ 454 001653  7012          RTR
+ 455 001654  2346          ISZ     INPTR           /BUMP WORD POINTER
+ 456 001655  5263          JMP     ICHAR1+1        /DO SOME COMMON STUFF
+ 457 001656  1746  ICHAR2, TAD I   INPTR           /SAVE THE HIGH ORDER BITS
+ 458 001657  0374          AND     (7400
+ 459 001660  3305          DCA     INTMP           /FOR THE THIRD CHAR
+ 460 001661  2346          ISZ     INPTR           /GO TO THE SECOND WORD
+ 461 001662  1746  ICHAR1, TAD I   INPTR           /GET THE LOW 8 BITS
+ 462 001663  0373          AND     (377            /AND I MEAN ONLY 8 !!
+ 463 001664  3021          DCA     CHAR
+ 464 001665  1021          TAD     CHAR
+ 465 001666  1372          TAD     (-232           /IS IT ^Z (END OF FILE)
+ 466 001667  7450          SNA
+ 467 001670  5207          JMP     GETNEW          /YES, LOOK FOR THE NEXT FILE
+ 468 001671  1371          TAD     (232-212
+ 469 001672  7450          SNA
+ 470 001673  5201          JMP     ICHAR+1         /IGNORE LINE FEEDS
+ 471 001674  1370          TAD     (212-215
+ 472 001675  7450          SNA
+ 473 001676  5600          JMP I   ICHAR           /RETURN ON CARRIAGE RETURN
+ 474 001677  7001          IAC
+ 475 001700  7650          SNA CLA
+ 476 001701  5201          JMP     ICHAR+1         /IGNORE FORM FEEDS
+ 477 001702  1021          TAD     CHAR
+ 478 001703  2200          ISZ     ICHAR
+ 479 001704  5600          JMP I   ICHAR           /RETURN TO THE CALLING WORLD
+ 480 001705  0000  INTMP,  0
+ 481 001706  7617  INFPTR, 7617                    /POINTER TO INPUT FILE LIST
+ 482 001707  0001  INEOF,  1
+ 483               INCHCT,
+ 484 001710  7777  INNEWF, -1                      /FETCH HANDLER FOR NEXT FILE
+ 485 001711  1367          TAD     (INDEVH+1       /THIS IS WHERE IT GOES
+ 486 001712  3323          DCA     INHNDL
+ 487 001713  6211          CDF     10
+ 488 001714  1706          TAD I   INFPTR          /GET NEXT INPUT FILE INFO
+ 489 001715  6201          CDF
+ 490 001716  7450          SNA
+ 491 001717  5710          JMP I   INNEWF          /NO MORE FILES
+ 492 001720  6212          CIF     10
+ 493 001721  4620          JMS I   INCALL          /CALL MONITOR
+ 494 001722  0001          1                       /FETCH HANDLER
+ 495 001723  0000  INHNDL, 0                       /ENTRY ADDR GOES HERE
+ 496 001724  5775          JMP     OFOO3
+ 497 001725  6211          CDF     10
+ 498 001726  1706          TAD I   INFPTR          /GET LENGTH
+ 499 001727  0366          AND     (7760
+ 500 001730  7440          SZA                     /A ZERO HERE MEANS >=256 BLOCKS
+ 501 001731  1365          TAD     (17             /PUT IN SOME MORE BITS
+ 502 001732  7132          CLL CML RTR
+ 503 001733  7012          RTR
+ 504 001734  3345          DCA     INCTR           /STORE LENGTH OF FILE
+ 505 001735  2306          ISZ     INFPTR
+ 506 001736  1706          TAD I   INFPTR          /GET STARTING RECORD NUMBER
+ 507 001737  3222          DCA     INREC
+ 508 001740  2306          ISZ     INFPTR
+ 509 001741  3307          DCA     INEOF           /CLEAR EOF FLAG
+ 510 001742  2310          ISZ     INNEWF
+ 511 001743  6201          CDF
+ 512 001744  5710          JMP I   INNEWF
+ 513 001745  0000  INCTR,  0
+ 514 001746  0000  INPTR,  0
+ 515               /PUTNUM,        TAD     (PAGENO-1       /COPY THE NEW NUMBER
+ 516               /       DCA     X10
+ 517               /       TAD I   NUM
+ 518               /       ISZ     NUM
+ 519               /       DCA I   X10
+ 520               /       TAD I   NUM
+ 521               /       ISZ     NUM
+ 522               /       DCA I   X10
+ 523               /       TAD I   NUM
+ 524               /       ISZ     NUM
+ 525               /       DCA I   X10
+ 526               /       JMP     CRLF+1
+ 527               RDECHO,                 /KEEP LINES WITH L.T. 6 CHARS OUT OF ISN COLUMN
+ 528 001747  1364          TAD     (SEVCHR-1
+ 529 001750  3012          DCA     X12
+ 530 001751  1012  RDECLP, TAD     X12
+ 531 001752  7041          CIA
+ 532 001753  1010          TAD     X10
+ 533 001754  7650          SNA CLA
+ 534 001755  5763          JMP     ENDLIN  /ONLY ECHO WHAT YOU READ
+ 535 001756  1412          TAD I   X12
+ 536 001757  4762          JMS I   (OCHAR
+ 537 001760  5351          JMP     RDECLP
+ 538 001762  2022         PAGE
+     001763  0674  
+     001764  0024  
+     001765  0017  
+     001766  7760  
+     001767  6401  
+     001770  7775  
+     001771  0020  
+     001772  7546  
+     001773  0377  
+     001774  7400  
+     001775  2203  
+     001776  7177  
+     001777  1400  
+ 539 002000  0000  OUDUMP, 0                       /BUMP THE DUFFER
+ 540 002001  1277          TAD     OSIZE           /ANY ROOM LEFT ?
+ 541 002002  7001          IAC
+ 542 002003  7450          SNA
+ 543 002004  5777          JMP     OFOO3
+ 544 002005  3277          DCA     OSIZE           /YES, ITS OK
+ 545 002006  4423          JMS I   DEVH            /WRITE
+ 546 002007  4200          4200                    /CONTROL WORD
+ 547 002010  5400          OUBUF                   /BUFFER POINTER
+ 548 002011  0000  OBLOCK, 0                       /BLOCK NUMBER
+ 549 002012  5777          JMP     OFOO3
+ 550 002013  2211          ISZ     OBLOCK          /INCREMENT BLOCK NUMBER
+ 551 002014  2776          ISZ     FILSIZ          /AND FILE SIZE
+ 552 002015  1210          TAD     OBLOCK-1        /SET BUFFER POINTER
+ 553 002016  3274          DCA     OUPTR
+ 554 002017  1375          TAD     (-200           /SET DOUBLE WORD COUNT
+ 555 002020  3276          DCA     OUWDCT
+ 556 002021  5600          JMP I   OUDUMP
+ 557 002022  0000  OCHAR,  0                       /OUTPUT A CHAR TO THE RALF INPUT FILE
+ 558 002023  0374          AND     (377
+ 559 002024  3272          DCA     OUTEMP          /SAVE CHAR
+ 560 002025  6031          KSF                     /^C TEST
+ 561 002026  5234          JMP     NOSTOP
+ 562 002027  6036          KRB
+ 563 002030  0373          AND     (177
+ 564 002031  1372          TAD     (-3
+ 565 002032  7650          SNA CLA
+ 566 002033  5771          JMP I   (7605           /YES
+ 567 002034  2235  NOSTOP, ISZ     OUJUMP          /BUMP 3 WAY SWITCH
+ 568 002035  5235  OUJUMP, JMP     .
+ 569 002036  5267          JMP     CHAR1
+ 570 002037  5264          JMP     CHAR2
+ 571 002040  1272          TAD     OUTEMP          /HIGH FOUR BITS GO INTO
+ 572 002041  7106          CLL RTL                 /THE HIGH ORDER BITS OF THE
+ 573 002042  7006          RTL                     /FIRST WORD OF THE TWO WORD PAIR
+ 574 002043  0370          AND     (7400           /SEE NOTE * BELOW
+ 575 002044  1673          TAD I   OUPOLD          /COMBINE WITH OTHER BITS
+ 576 002045  3673          DCA I   OUPOLD
+ 577 002046  1272          TAD     OUTEMP          /THE OTHER FOUR BITS OF THIS CHAR
+ 578 002047  7112          CLL RTR                 /GO INTO THE HIGH ORDER FOUR
+ 579 002050  7012          RTR                     /BITS OF THE SECOND WORD OF THE PAIR
+ 580 002051  7010          RAR
+ 581 002052  0370          AND     (7400
+ 582 002053  1674          TAD I   OUPTR
+ 583 002054  3674          DCA I   OUPTR
+ 584 002055  1275          TAD     OUJMP           /RESET 3 WAY BRANCH
+ 585 002056  3235          DCA     OUJUMP
+ 586 002057  2274          ISZ     OUPTR           /BUMP BUFFER POINTER
+ 587 002060  2276          ISZ     OUWDCT          /AND DOUBLE WORD COUNTER
+ 588 002061  5622          JMP I   OCHAR           /BUFFER NOT FULL
+ 589 002062  4200          JMS     OUDUMP          /DUMP IT
+ 590 002063  5622          JMP I   OCHAR
+ 591 002064  1274  CHAR2,  TAD     OUPTR           /SAVE FIRST WORD POINTER
+ 592 002065  3273          DCA     OUPOLD
+ 593 002066  2274          ISZ     OUPTR           /GO TO SECOND WORD
+ 594 002067  1272  CHAR1,  TAD     OUTEMP          /STORE CHAR 1 OR 2
+ 595 002070  3674          DCA I   OUPTR
+ 596 002071  5622          JMP I   OCHAR
+ 597 002072  0000  OUTEMP, 0
+ 598 002073  0000  OUPOLD, 0
+ 599 002074  5400  OUPTR,  OUBUF
+ 600 002075  5235  OUJMP,  JMP     OUJUMP
+ 601 002076  7600  OUWDCT, -200
+ 602 002077  0000  OSIZE,  0
+ 603 002100  5000  ERRPTR, 5000
+ 604 002101  0000  ERRCHK, 0
+ 605 002102  6211          CDF     10
+ 606 002103  1700          TAD I   ERRPTR          /ANY ERRORS FOR THIS LINE
+ 607 002104  6201          CDF
+ 608 002105  7040          CMA
+ 609 002106  1024          TAD     LINENO
+ 610 002107  7640          SZA CLA
+ 611 002110  5701          JMP I   ERRCHK          /NO
+ 612 002111  7144          CLL CMA RAL             /BACK UP POINTER
+ 613 002112  1300          TAD     ERRPTR
+ 614 002113  3300          DCA     ERRPTR
+ 615 002114  1300          TAD     ERRPTR
+ 616 002115  7001          IAC
+ 617 002116  3022          DCA     TEMP
+ 618 002117  6211          CDF     10
+ 619 002120  1422          TAD I   TEMP            /GET CODE
+ 620 002121  6201          CDF
+ 621 002122  7041          CIA
+ 622 002123  3022          DCA     TEMP            /SAVE NEGATIVE
+ 623 002124  1367          TAD     (ERRLST-1
+ 624 002125  3010          DCA     X10
+ 625 002126  1410  FIND,   TAD I   X10             /LOOK FOR ERROR MESSAGE
+ 626 002127  7440          SZA
+ 627 002130  1022          TAD     TEMP
+ 628 002131  7650          SNA CLA
+ 629 002132  5335          JMP     .+3
+ 630 002133  2010          ISZ     X10
+ 631 002134  5326          JMP     FIND            /SKIP POINTER WORD
+ 632 002135  7240          CLA CMA
+ 633 002136  1410          TAD I   X10
+ 634 002137  3010          DCA     X10             /POINTER TO MESSAGE
+ 635 002140  1410  PMLOOP, TAD I   X10             /GET TWO CHARS
+ 636 002141  3022          DCA     TEMP
+ 637 002142  1022          TAD     TEMP
+ 638 002143  7012          RTR
+ 639 002144  7012          RTR
+ 640 002145  7012          RTR
+ 641 002146  4766          JMS     CONVRT          /PRINT FIRST
+ 642 002147  1022          TAD     TEMP
+ 643 002150  4766          JMS     CONVRT          /PRINT SECOND
+ 644 002151  1022          TAD     TEMP
+ 645 002152  0365          AND     (77             /END OF MESSAGE ?
+ 646 002153  7640          SZA CLA
+ 647 002154  5340          JMP     PMLOOP          /NO, LOOP
+ 648 002155  4764          JMS I   (CRLF
+ 649 002156  5302          JMP     ERRCHK+1        /SEE IF ANY MORE FOR THIS LINE
+ 650 002157  2201  RALFNM, FILENAME RALF.SV
+     002160  1406  
+     002161  0000  
+     002162  2326  
+ 651 002164  1515         PAGE
+     002165  0077  
+     002166  1503  
+     002167  2215  
+     002170  7400  
+     002171  7605  
+     002172  7775  
+     002173  0177  
+     002174  0377  
+     002175  7600  
+     002176  1413  
+     002177  2203  
+ 652 002200  0304  X304,   304
+ 653 002201  0305  X305,   305
+ 654 002202  7605  X7605,  7605
+ 655 002203  1200  OFOO3,  TAD     X304            /FATAL ERROR IN PASS 3
+ 656 002204  4210          JMS     TTY
+ 657 002205  1201          TAD     X305
+ 658 002206  4210          JMS     TTY
+ 659 002207  5602          JMP I   X7605
+ 660 002210  0000  TTY,    0                       /PRINT ON TTY
+ 661 002211  6046          TLS
+ 662 002212  6041          TSF
+ 663 002213  5212          JMP     .-1
+ 664 002214  7200          CLA
+ 665 002215  5610          JMP I   TTY
+ 666               /ERROR MESSAGES
+ 667 002216  0724  ERRLST, 0724;GT
+     002217  2367  
+ 668 002220  1124          1124;IT
+     002221  2451  
+ 669 002222  0504          0504;ED
+     002223  2701  
+ 670 002224  2227          2227;RW
+     002225  2401  
+ 671 002226  0317          0317;CO
+     002227  2417  
+ 672 002230  0530          0530;EX
+     002231  2463  
+ 673 002232  2123          2123;QS
+     002233  2474  
+ 674 002234  2114          2114;QL
+     002235  2512  
+ 675 002236  1106          1106;IF
+     002237  2536  
+ 676 002240  0417          0417;DO
+     002241  2567  
+ 677 002242  2316          2316;SN
+     002243  2607  
+ 678 002244  2404          2404;TD
+     002245  2626  
+ 679 002246  0204          0204;BD
+     002247  2646  
+ 680 002250  2224          2224;RT
+     002251  2721  
+ 681 002252  2204          2204;RD
+     002253  2740  
+ 682 002254  2324          2324;ST
+     002255  2762  
+ 683 002256  0314          0314;CL
+     002257  3004  
+ 684 002260  1517          1517;MO
+     002261  3021  
+ 685 002262  1017          1017;HO
+     002263  3041  
+ 686 002264  1515          1515;MM
+     002265  3066  
+ 687 002266  2323          2323;SS
+     002267  3102  
+ 688 002270  1720          1720;OP
+     002271  3123  
+ 689 002272  0123          0123;AS
+     002273  3134  
+ 690 002274  0401          0401;DA
+     002275  3142  
+ 691 002276  0410          0410;DH
+     002277  3153  
+ 692 002300  1514          1514;ML
+     002301  3204  
+ 693 002302  0405          0405;DE
+     002303  3226  
+ 694 002304  0223          0223;BS
+     002305  3244  
+ 695 002306  1424          1424;LT
+     002307  3257  
+ 696 002310  1105          1105;IE
+     002311  3266  
+ 697 002312  2010          2010;PH
+     002313  3313  
+ 698 002314  1513          1513;MK
+     002315  3346  
+ 699 002316  1724          1724;OT
+     002317  3362  
+ 700 002320  2004          2004;PD
+     002321  3406  
+ 701 002322  1524          1524;MT
+     002323  3430  
+ 702 002324  0726          0726;GV
+     002325  3447  
+ 703 002326  1411          1411;LI
+     002327  3506  
+ 704 002330  0420          0420;DP
+     002331  3535  
+ 705 002332  0414          0414;DL
+     002333  3560  
+ 706 002334  0101          0101;AA
+     002335  3613  
+ 707 002336  2306          2306;SF
+     002337  3652  
+ 708 002340  0406          0406;DF
+     002341  3666  
+ 709 002342  1111          1111;II
+     002343  2356  
+ 710 002344  0000          0;SYSERR
+     002345  2346  
+ 711 002346  2516  SYSERR, TEXT    'UNDEFINED ERROR'
+     002347  0405  
+     002350  0611  
+     002351  1605  
+     002352  0440  
+     002353  0522  
+     002354  2217  
+     002355  2200  
+ 712 002356  1114  II,     TEXT    'ILLEGAL USE OF IF'
+     002357  1405  
+     002360  0701  
+     002361  1440  
+     002362  2523  
+     002363  0540  
+     002364  1706  
+     002365  4011  
+     002366  0600  
+ 713 002367  0201  GT,     TEXT    'BAD GOTO STATEMENT'
+     002370  0440  
+     002371  0717  
+     002372  2417  
+     002373  4023  
+     002374  2401  
+     002375  2405  
+     002376  1505  
+     002377  1624  
+     002400  0000  
+ 714 002401  0201  RW,     TEXT    'BAD READ OR WRITE STATEMENT'
+     002402  0440  
+     002403  2205  
+     002404  0104  
+     002405  4017  
+     002406  2240  
+     002407  2722  
+     002410  1124  
+     002411  0540  
+     002412  2324  
+     002413  0124  
+     002414  0515  
+     002415  0516  
+     002416  2400  
+ 715 002417  0122  CO,     TEXT    'ARGS IN COMMON OR VAR IN TWO COMMONS OR SYNTAX BAD'
+     002420  0723  
+     002421  4011  
+     002422  1640  
+     002423  0317  
+     002424  1515  
+     002425  1716  
+     002426  4017  
+     002427  2240  
+     002430  2601  
+     002431  2240  
+     002432  1116  
+     002433  4024  
+     002434  2717  
+     002435  4003  
+     002436  1715  
+     002437  1517  
+     002440  1623  
+     002441  4017  
+     002442  2240  
+     002443  2331  
+     002444  1624  
+     002445  0130  
+     002446  4002  
+     002447  0104  
+     002450  0000  
+ 716 002451  0201  IT,     TEXT    'BAD IO LIST ELEMENT'
+     002452  0440  
+     002453  1117  
+     002454  4014  
+     002455  1123  
+     002456  2440  
+     002457  0514  
+     002460  0515  
+     002461  0516  
+     002462  2400  
+ 717 002463  0201  EX,     TEXT    'BAD EXTERNAL STMT'
+     002464  0440  
+     002465  0530  
+     002466  2405  
+     002467  2216  
+     002470  0114  
+     002471  4023  
+     002472  2415  
+     002473  2400  
+ 718 002474  2331  QS,     TEXT    'SYNTAX ERROR IN EQUIVALENCE'
+     002475  1624  
+     002476  0130  
+     002477  4005  
+     002500  2222  
+     002501  1722  
+     002502  4011  
+     002503  1640  
+     002504  0521  
+     002505  2511  
+     002506  2601  
+     002507  1405  
+     002510  1603  
+     002511  0500  
+ 719 002512  2601  QL,     TEXT    'VARIABLE IS EQUIVALENCED MORE THAN ONCE'
+     002513  2211  
+     002514  0102  
+     002515  1405  
+     002516  4011  
+     002517  2340  
+     002520  0521  
+     002521  2511  
+     002522  2601  
+     002523  1405  
+     002524  1603  
+     002525  0504  
+     002526  4015  
+     002527  1722  
+     002530  0540  
+     002531  2410  
+     002532  0116  
+     002533  4017  
+     002534  1603  
+     002535  0500  
+ 720 002536  2410  IF,     TEXT    'THIS KIND OF STATEMENT NOT LEGAL AFTER LOGICAL IF'
+     002537  1123  
+     002540  4013  
+     002541  1116  
+     002542  0440  
+     002543  1706  
+     002544  4023  
+     002545  2401  
+     002546  2405  
+     002547  1505  
+     002550  1624  
+     002551  4016  
+     002552  1724  
+     002553  4014  
+     002554  0507  
+     002555  0114  
+     002556  4001  
+     002557  0624  
+     002560  0522  
+     002561  4014  
+     002562  1707  
+     002563  1103  
+     002564  0114  
+     002565  4011  
+     002566  0600  
+ 721 002567  0201  DO,     TEXT    'BAD SYNTAX IN DO OR IMPLIED DO'
+     002570  0440  
+     002571  2331  
+     002572  1624  
+     002573  0130  
+     002574  4011  
+     002575  1640  
+     002576  0417  
+     002577  4017  
+     002600  2240  
+     002601  1115  
+     002602  2014  
+     002603  1105  
+     002604  0440  
+     002605  0417  
+     002606  0000  
+ 722 002607  1617  SN,     TEXT    'NOT LEGAL AS SUBROUTINE NAME'
+     002610  2440  
+     002611  1405  
+     002612  0701  
+     002613  1440  
+     002614  0123  
+     002615  4023  
+     002616  2502  
+     002617  2217  
+     002620  2524  
+     002621  1116  
+     002622  0540  
+     002623  1601  
+     002624  1505  
+     002625  0000  
+ 723 002626  2331  TD,     TEXT    'SYNTAX ERROR IN TYPE STATEMENT'
+     002627  1624  
+     002630  0130  
+     002631  4005  
+     002632  2222  
+     002633  1722  
+     002634  4011  
+     002635  1640  
+     002636  2431  
+     002637  2005  
+     002640  4023  
+     002641  2401  
+     002642  2405  
+     002643  1505  
+     002644  1624  
+     002645  0000  
+ 724 002646  0411  BD,     TEXT    'DIMENSIONS TOO BIG, OR SYNTAX ERROR IN DIMENSION LIST'
+     002647  1505  
+     002650  1623  
+     002651  1117  
+     002652  1623  
+     002653  4024  
+     002654  1717  
+     002655  4002  
+     002656  1107  
+     002657  5440  
+     002660  1722  
+     002661  4023  
+     002662  3116  
+     002663  2401  
+     002664  3040  
+     002665  0522  
+     002666  2217  
+     002667  2240  
+     002670  1116  
+     002671  4004  
+     002672  1115  
+     002673  0516  
+     002674  2311  
+     002675  1716  
+     002676  4014  
+     002677  1123  
+     002700  2400  
+ 725 002701  1114  ED,     TEXT    'ILLEGAL AS DO ENDING STATEMENT'
+     002702  1405  
+     002703  0701  
+     002704  1440  
+     002705  0123  
+     002706  4004  
+     002707  1740  
+     002710  0516  
+     002711  0411  
+     002712  1607  
+     002713  4023  
+     002714  2401  
+     002715  2405  
+     002716  1505  
+     002717  1624  
+     002720  0000  
+ 726 002721  0124  RT,     TEXT    'ATTEMPT TO RE-TYPE A VARIABLE'
+     002722  2405  
+     002723  1520  
+     002724  2440  
+     002725  2417  
+     002726  4022  
+     002727  0555  
+     002730  2431  
+     002731  2005  
+     002732  4001  
+     002733  4026  
+     002734  0122  
+     002735  1101  
+     002736  0214  
+     002737  0500  
+ 727 002740  0124  RD,     TEXT    'ATTEMPT TO RE-DIMENSION A VARIABLE'
+     002741  2405  
+     002742  1520  
+     002743  2440  
+     002744  2417  
+     002745  4022  
+     002746  0555  
+     002747  0411  
+     002750  1505  
+     002751  1623  
+     002752  1117  
+     002753  1640  
+     002754  0140  
+     002755  2601  
+     002756  2211  
+     002757  0102  
+     002760  1405  
+     002761  0000  
+ 728 002762  1116  ST,     TEXT    'INTERNAL COMPILER ABORT NUMBER ONE'
+     002763  2405  
+     002764  2216  
+     002765  0114  
+     002766  4003  
+     002767  1715  
+     002770  2011  
+     002771  1405  
+     002772  2240  
+     002773  0102  
+     002774  1722  
+     002775  2440  
+     002776  1625  
+     002777  1502  
+     003000  0522  
+     003001  4017  
+     003002  1605  
+     003003  0000  
+ 729 003004  0522  CL,     TEXT    'ERROR IN COMPLEX LITERAL'
+     003005  2217  
+     003006  2240  
+     003007  1116  
+     003010  4003  
+     003011  1715  
+     003012  2014  
+     003013  0530  
+     003014  4014  
+     003015  1124  
+     003016  0522  
+     003017  0114  
+     003020  0000  
+ 730 003021  1720  MO,     TEXT    'OPERAND EXPECTED, NONE PRESENT'
+     003022  0522  
+     003023  0116  
+     003024  0440  
+     003025  0530  
+     003026  2005  
+     003027  0324  
+     003030  0504  
+     003031  5440  
+     003032  1617  
+     003033  1605  
+     003034  4020  
+     003035  2205  
+     003036  2305  
+     003037  1624  
+     003040  0000  
+ 731 003041  1017  HO,     TEXT    'HOLLERITH COUNT WRONG, OR MISSING QUOTES'
+     003042  1414  
+     003043  0522  
+     003044  1124  
+     003045  1040  
+     003046  0317  
+     003047  2516  
+     003050  2440  
+     003051  2722  
+     003052  1716  
+     003053  0754  
+     003054  4017  
+     003055  2240  
+     003056  1511  
+     003057  2323  
+     003060  1116  
+     003061  0740  
+     003062  2125  
+     003063  1724  
+     003064  0523  
+     003065  0000  
+ 732 003066  1511  MM,     TEXT    'MISMATCHED PARENTHESIS'
+     003067  2315  
+     003070  0124  
+     003071  0310  
+     003072  0504  
+     003073  4020  
+     003074  0122  
+     003075  0516  
+     003076  2410  
+     003077  0523  
+     003100  1123  
+     003101  0000  
+ 733 003102  2325  SS,     TEXT    'SUBSCRIPT OR ARGUMENT LIST ERROR'
+     003103  0223  
+     003104  0322  
+     003105  1120  
+     003106  2440  
+     003107  1722  
+     003110  4001  
+     003111  2207  
+     003112  2515  
+     003113  0516  
+     003114  2440  
+     003115  1411  
+     003116  2324  
+     003117  4005  
+     003120  2222  
+     003121  1722  
+     003122  0000  
+ 734 003123  1114  OP,     TEXT    'ILLEGAL OPERATOR'
+     003124  1405  
+     003125  0701  
+     003126  1440  
+     003127  1720  
+     003130  0522  
+     003131  0124  
+     003132  1722  
+     003133  0000  
+ 735 003134  0123  AS,     TEXT    'ASSIGN ???'
+     003135  2311  
+     003136  0716  
+     003137  4077  
+     003140  7777  
+     003141  0000  
+ 736 003142  0401  DA,     TEXT    'DATA STATEMENT ?'
+     003143  2401  
+     003144  4023  
+     003145  2401  
+     003146  2405  
+     003147  1505  
+     003150  1624  
+     003151  4077  
+     003152  0000  
+ 737 003153  1017  DH,     TEXT    'HOLLERITH COUNT OR QUOTE ERROR IN DATA STATEMENT'
+     003154  1414  
+     003155  0522  
+     003156  1124  
+     003157  1040  
+     003160  0317  
+     003161  2516  
+     003162  2440  
+     003163  1722  
+     003164  4021  
+     003165  2517  
+     003166  2405  
+     003167  4005  
+     003170  2222  
+     003171  1722  
+     003172  4011  
+     003173  1640  
+     003174  0401  
+     003175  2401  
+     003176  4023  
+     003177  2401  
+     003200  2405  
+     003201  1505  
+     003202  1624  
+     003203  0000  
+ 738 003204  2410  ML,     TEXT    'THIS LINE NUMBER IS ALREADY DEFINED'
+     003205  1123  
+     003206  4014  
+     003207  1116  
+     003210  0540  
+     003211  1625  
+     003212  1502  
+     003213  0522  
+     003214  4011  
+     003215  2340  
+     003216  0114  
+     003217  2205  
+     003220  0104  
+     003221  3140  
+     003222  0405  
+     003223  0611  
+     003224  1605  
+     003225  0400  
+ 739 003226  2722  DE,     TEXT    "WRONG WAY TO END A DO LOOP"
+     003227  1716  
+     003230  0740  
+     003231  2701  
+     003232  3140  
+     003233  2417  
+     003234  4005  
+     003235  1604  
+     003236  4001  
+     003237  4004  
+     003240  1740  
+     003241  1417  
+     003242  1720  
+     003243  0000  
+ 740 003244  1114  BS,     TEXT    'ILLEGAL IN BLOCK DATA'
+     003245  1405  
+     003246  0701  
+     003247  1440  
+     003250  1116  
+     003251  4002  
+     003252  1417  
+     003253  0313  
+     003254  4004  
+     003255  0124  
+     003256  0100  
+ 741 003257  1411  LT,     TEXT    'LINE TOO BIG'
+     003260  1605  
+     003261  4024  
+     003262  1717  
+     003263  4002  
+     003264  1107  
+     003265  0000  
+ 742 003266  1116  IE,     TEXT    'INPUT FILE ERROR, TAKEN AS END STATEMENT'
+     003267  2025  
+     003270  2440  
+     003271  0611  
+     003272  1405  
+     003273  4005  
+     003274  2222  
+     003275  1722  
+     003276  5440  
+     003277  2401  
+     003300  1305  
+     003301  1640  
+     003302  0123  
+     003303  4005  
+     003304  1604  
+     003305  4023  
+     003306  2401  
+     003307  2405  
+     003310  1505  
+     003311  1624  
+     003312  0000  
+ 743 003313  2410  PH,     TEXT    'THIS FUNCTION / SUBROUTINE STATEMENT IS UNACCEPTABLE'
+     003314  1123  
+     003315  4006  
+     003316  2516  
+     003317  0324  
+     003320  1117  
+     003321  1640  
+     003322  5740  
+     003323  2325  
+     003324  0222  
+     003325  1725  
+     003326  2411  
+     003327  1605  
+     003330  4023  
+     003331  2401  
+     003332  2405  
+     003333  1505  
+     003334  1624  
+     003335  4011  
+     003336  2340  
+     003337  2516  
+     003340  0103  
+     003341  0305  
+     003342  2024  
+     003343  0102  
+     003344  1405  
+     003345  0000  
+ 744 003346  3117  MK,     TEXT    'YOU MISPELED A KEYWURD'
+     003347  2540  
+     003350  1511  
+     003351  2320  
+     003352  0514  
+     003353  0504  
+     003354  4001  
+     003355  4013  
+     003356  0531  
+     003357  2725  
+     003360  2204  
+     003361  0000  
+ 745 003362  1114  OT,     TEXT    'ILLEGAL OPERAND TYPE FOR THIS OPERATOR'
+     003363  1405  
+     003364  0701  
+     003365  1440  
+     003366  1720  
+     003367  0522  
+     003370  0116  
+     003371  0440  
+     003372  2431  
+     003373  2005  
+     003374  4006  
+     003375  1722  
+     003376  4024  
+     003377  1011  
+     003400  2340  
+     003401  1720  
+     003402  0522  
+     003403  0124  
+     003404  1722  
+     003405  0000  
+ 746 003406  1116  PD,     TEXT    'INTERNAL COMPILER ABORT NUMBER TWO'
+     003407  2405  
+     003410  2216  
+     003411  0114  
+     003412  4003  
+     003413  1715  
+     003414  2011  
+     003415  1405  
+     003416  2240  
+     003417  0102  
+     003420  1722  
+     003421  2440  
+     003422  1625  
+     003423  1502  
+     003424  0522  
+     003425  4024  
+     003426  2717  
+     003427  0000  
+ 747 003430  1114  MT,     TEXT    "ILLEGAL VARIABLE TYPE MIXING"
+     003431  1405  
+     003432  0701  
+     003433  1440  
+     003434  2601  
+     003435  2211  
+     003436  0102  
+     003437  1405  
+     003440  4024  
+     003441  3120  
+     003442  0540  
+     003443  1511  
+     003444  3011  
+     003445  1607  
+     003446  0000  
+ 748 003447  2601  GV,     TEXT    'VARIABLE IN ASSIGNED OR COMPUTED GOTO MUST BE INTEGER OR REAL'
+     003450  2211  
+     003451  0102  
+     003452  1405  
+     003453  4011  
+     003454  1640  
+     003455  0123  
+     003456  2311  
+     003457  0716  
+     003460  0504  
+     003461  4017  
+     003462  2240  
+     003463  0317  
+     003464  1520  
+     003465  2524  
+     003466  0504  
+     003467  4007  
+     003470  1724  
+     003471  1740  
+     003472  1525  
+     003473  2324  
+     003474  4002  
+     003475  0540  
+     003476  1116  
+     003477  2405  
+     003500  0705  
+     003501  2240  
+     003502  1722  
+     003503  4022  
+     003504  0501  
+     003505  1400  
+ 749 003506  0530  LI,     TEXT    'EXPRESSION IN LOGICAL IF IS NOT TYPED LOGICAL'
+     003507  2022  
+     003510  0523  
+     003511  2311  
+     003512  1716  
+     003513  4011  
+     003514  1640  
+     003515  1417  
+     003516  0711  
+     003517  0301  
+     003520  1440  
+     003521  1106  
+     003522  4011  
+     003523  2340  
+     003524  1617  
+     003525  2440  
+     003526  2431  
+     003527  2005  
+     003530  0440  
+     003531  1417  
+     003532  0711  
+     003533  0301  
+     003534  1400  
+ 750 003535  0417  DP,     TEXT    'DO PARAMETERS MUST BE INTEGER OR REAL'
+     003536  4020  
+     003537  0122  
+     003540  0115  
+     003541  0524  
+     003542  0522  
+     003543  2340  
+     003544  1525  
+     003545  2324  
+     003546  4002  
+     003547  0540  
+     003550  1116  
+     003551  2405  
+     003552  0705  
+     003553  2240  
+     003554  1722  
+     003555  4022  
+     003556  0501  
+     003557  1400  
+ 751 003560  3117  DL,     TEXT    "YOUR DATA AND VARIABLE LISTS ARE OF DIFFERENT LENGTHS"
+     003561  2522  
+     003562  4004  
+     003563  0124  
+     003564  0140  
+     003565  0116  
+     003566  0440  
+     003567  2601  
+     003570  2211  
+     003571  0102  
+     003572  1405  
+     003573  4014  
+     003574  1123  
+     003575  2423  
+     003576  4001  
+     003577  2205  
+     003600  4017  
+     003601  0640  
+     003602  0411  
+     003603  0606  
+     003604  0522  
+     003605  0516  
+     003606  2440  
+     003607  1405  
+     003610  1607  
+     003611  2410  
+     003612  2300  
+ 752 003613  2325  AA,     TEXT    'SUBROUTINES MAY ONLY HAVE SIX ARGUMENTS THAT ARE DIMENSIONED'
+     003614  0222  
+     003615  1725  
+     003616  2411  
+     003617  1605  
+     003620  2340  
+     003621  1501  
+     003622  3140  
+     003623  1716  
+     003624  1431  
+     003625  4010  
+     003626  0126  
+     003627  0540  
+     003630  2311  
+     003631  3040  
+     003632  0122  
+     003633  0725  
+     003634  1505  
+     003635  1624  
+     003636  2340  
+     003637  2410  
+     003640  0124  
+     003641  4001  
+     003642  2205  
+     003643  4004  
+     003644  1115  
+     003645  0516  
+     003646  2311  
+     003647  1716  
+     003650  0504  
+     003651  0000  
+ 753 003652  0201  SF,     TEXT    'BAD STATEMENT FUNCTION'
+     003653  0440  
+     003654  2324  
+     003655  0124  
+     003656  0515  
+     003657  0516  
+     003660  2440  
+     003661  0625  
+     003662  1603  
+     003663  2411  
+     003664  1716  
+     003665  0000  
+ 754 003666  0201  DF,     TEXT    'BAD DEFINE FILE'
+     003667  0440  
+     003670  0405  
+     003671  0611  
+     003672  1605  
+     003673  4006  
+     003674  1114  
+     003675  0500  
+ 755 003676  0001  PAGEN, 1
+ 756               
+ 757 003677  2276  PUTNUM, ISZ PAGEN       /BUMP PAGE NUMBER
+ 758 003700  1276          TAD PAGEN
+ 759 003701  1377          TAD (-24        /LT 20?
+ 760 003702  7700          SMA CLA
+ 761 003703  5317          JMP OVER19      /YES
+ 762 003704  1376          TAD (-5         /NO
+ 763 003705  4352          JMS MOVE        /MOVE IN NUMBER
+ 764 003706  0000  NUM,    0
+ 765 003707  0733          PAGENO-1
+ 766 003710  1306          TAD NUM
+ 767 003711  1375          TAD (5
+ 768 003712  3306          DCA NUM         /PT TO NEXT ONE
+ 769 003713  5774          JMP I (CRLF+1
+ 770               
+ 771 003714  0000  TENS,   0
+ 772 003715  0000  ONES,   0
+ 773 003716  0000  KNT,    0
+ 774               
+ 775 003717  3314  OVER19, DCA TENS        /CONVERT
+ 776 003720  1276          TAD PAGEN       /PAGE NUMBER TO ONES AND TENS
+ 777 003721  1373  O1,     TAD (-12        /DIVIDE BY TEN
+ 778 003722  7510          SPA
+ 779 003723  5326          JMP .+3
+ 780 003724  2314          ISZ TENS
+ 781 003725  5321          JMP O1
+ 782 003726  1372          TAD (12
+ 783 003727  3315          DCA ONES
+ 784 003730  1314          TAD TENS
+ 785 003731  7106          CLL RTL
+ 786 003732  1371          TAD (HIS-10-1
+ 787 003733  3343          DCA HIP         /POINT TO HIGH PART
+ 788 003734  1315          TAD ONES
+ 789 003735  7106          CLL RTL
+ 790 003736  1315          TAD ONES
+ 791 003737  1370          TAD (LOS-5-1
+ 792 003740  3347          DCA LOP
+ 793 003741  1367          TAD (-4
+ 794 003742  4352          JMS MOVE
+ 795 003743  0000  HIP,    0
+ 796 003744  0733          PAGENO-1
+ 797 003745  1376          TAD (-5
+ 798 003746  4352          JMS MOVE
+ 799 003747  0000  LOP,    0
+ 800 003750  0737          PAGENO+4-1
+ 801 003751  5774          JMP I (CRLF+1
+ 802 003752  0000  MOVE,  0
+ 803 003753  3316          DCA KNT
+ 804 003754  1752          TAD I MOVE
+ 805 003755  3011          DCA X11
+ 806 003756  2352          ISZ MOVE
+ 807 003757  1752          TAD I MOVE
+ 808 003760  3012          DCA X12
+ 809 003761  2352          ISZ MOVE
+ 810 003762  1411          TAD I X11
+ 811 003763  3412          DCA I X12
+ 812 003764  2316          ISZ KNT
+ 813 003765  5362          JMP .-3
+ 814 003766  5752          JMP I MOVE
+ 815 003767  7774          $
+     003770  0777  
+     003771  1133  
+     003772  0012  
+     003773  7766  
+     003774  1516  
+     003775  0005  
+     003776  7773  
+     003777  7754  
+
+AA      3613
+AS      3134
+BD      2646
+BS      3244
+CHAR    0021
+CHAR1   2067
+CHAR2   2064
+CL      3004
+CO      2417
+CONVRT  1503
+CONVYR  0453
+CRLF    1515
+DA      3142
+DAY     0716
+DAYS    1210
+DE      3226
+DEV1CE  0173
+DEVH    0023
+DF      3666
+DH      3153
+DL      3560
+DO      2567
+DP      3535
+ED      2701
+ENDLIN  0674
+ENDX    1400
+ERRCHK  2101
+ERRLST  2216
+ERRPTR  2100
+EX      2463
+FILBLK  0007
+FILDEV  0006
+FILLST  0520
+FILSIZ  1413
+FIND    2126
+GETNEW  1607
+GT      2367
+GV      3447
+HEADER  0700
+HIP     3743
+HIS     1144
+HO      3041
+ICHAR   1600
+ICHAR1  1662
+ICHAR2  1656
+ICHAR3  1643 unreferenced
+IE      3266
+IF      2536
+II      2356
+INBREC  1624
+INBUF   6000
+INBUFP  1621
+INCALL  1620
+INCHCT  1710
+INCTR   1745
+INDEVH  6400
+INEOF   1707
+INERR   1634
+INFPTR  1706
+INGBUF  1611
+INHNDL  1723
+INJMP   1640
+INJMPP  1603
+INNEWF  1710
+INPTR   1746
+INREC   1622
+INTMP   1705
+IT      2451
+KNT     3716
+LI      3506
+LINECT  1514
+LINENO  0024
+LISTIT  1444
+LOP     3747
+LOS     1005
+LSTFIL  0517
+LT      3257
+M70     1420
+MK      3346
+ML      3204
+MM      3066
+MO      3021
+MONTH   0717
+MONTHS  1247
+MOVE    3752
+MT      3430
+NCHARS  0020
+NCNT    1462
+NOISN   0646
+NOSTOP  2034
+NOTAB   0624
+NOTTAB  0670
+NUM     3706
+NUMS    1012
+O1      3721
+OB      0424
+OBLOCK  2011
+OCHAR   2022
+OFOO3   2203
+OFSIZE  0521
+OH      0416
+OHDR    1532
+OLOOP   1467
+ONES    3715
+ONUMBR  1463
+OP      3123
+OS      0425
+OSIZE   2077
+OT      3362
+OUBUF   5400
+OUDEVH  7000
+OUDUMP  2000
+OUJMP   2075
+OUJUMP  2035
+OUPOLD  2073
+OUPTR   2074
+OUTEMP  2072
+OUWDCT  2076
+OVER19  3717
+PAGEN   3676
+PAGENO  0734
+PAJE    0600
+PD      3406
+PH      3313
+PMLOOP  2140
+PRHDR   1526
+PUTNUM  3677
+QL      2512
+QS      2474
+RALFNM  2157
+RD      2740
+RDACHO  0745
+RDECHO  1747
+RDECLP  1751
+RDLOOP  0610
+RDLUPE  0604
+RT      2721
+RW      2401
+SECDIG  0461
+SEVCHR  0025
+SF      3652
+SIMPLE  0476 unreferenced
+SN      2607
+SPASS3  0400
+SS      3102
+ST      2762
+SYSERR  2346
+TABCNT  0677
+TD      2626
+TEMP    0022
+TEMP1   0523
+TENS    3714
+TTY     2210
+VERSON  0004 unreferenced
+WHAT    0630
+X10     0010
+X11     0011
+X12     0012
+X232    1461
+X304    2200
+X305    2201
+X7605   2202
+X7643   1452
+YEAR    0721
+YRTEMP  0522

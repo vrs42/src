@@ -1,0 +1,211 @@
+   1                                       / VT50 HARD COPY OPTION HANDLER
+   2                                       /
+   3                                       /
+   4                                       /
+   5                                       /
+   6                                       /
+   7                                       /
+   8                                       / COPYRIGHT (C) 1975
+   9                                       / DIGITAL EQUIPMENT CORPORATION,MAYNARD, MASS.
+  10                                       /
+  11                                       /
+  12                                       /
+  13                                       /
+  14                                       / THIS SOFTWARE IS FURNISHED UNDER A LICENSE FOR USE
+  15                                       / ONLY ON A SINGLE COMPUTER SYSTEM AND MAY BE COPIED
+  16                                       / ONLY WITH THE INCLUSION OF THE ABOVE COPYRIGHT
+  17                                       / NOTICE. THIS SOFTWARE, OR ANY OTHER COPIES
+  18                                       / THEREOF, MAY NOT BE PROVIDED OR OTHERWISE MADE 
+  19                                       / AVAILABLE TO ANY OTHER PERSION EXCEPT FOR USE ON
+  20                                       / SUCH SYSTEM AND TO ONE WHO AGREES TO THESE
+  21                                       / LICENSE TERMS.  TITLE TO AND OWNERSHIP OF THE
+  22                                       / SOFTWARE SHALL AT ALL TIMES REMAIN IN DEC.
+  23                                       /
+  24                                       /
+  25                                       /
+  26                                       / THE INFORMATION IN THIS DOCUMENT IS SUBJECT
+  27                                       / TO CHANGE WITHOUT NOTICE AND SHOULD NOT BE
+  28                                       / CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  29                                       / CORPORATION.
+  30                                       /
+  31                                       /
+  32                                       /
+  33                                       / DEC ASSUMES NO RESPONSIBILITY FOR THE USE OR
+  34                                       / RELIABILITY OF ITS SOFTWARE ON EQUIPMENT
+  35                                       / WHICH IS NOT SUPPLIED BY DEC.
+  36                                       /
+  37                                       /
+  38                                       /
+  39                                       //
+  40                                       /
+  41                                       /
+  42                                       /
+  43                                       /
+  44                                       / SR,JG DATE 4/8/75
+  45                                       /
+  46                                       /
+  47                       *0              / LOCATION FOR BUILD
+  48 000000  7777          -1
+  49 000001  2624          DEVICE VT50;DEVICE LST;0;AUTOPT&177;ZBLOCK 2
+     000002  6560  
+     000003  1423  
+     000004  2400  
+     000005  0000  
+     000006  0000  
+     000007  0000  
+     000010  0000  
+  50                                       /
+  51                                       /
+  52                       *200
+  53                       AUTVERSION="A&77
+  54                                       /
+  55                                       /
+  56                                       /
+  57 000200  0001  AUTOPT, AUTVERSION
+  58 000201  6214          RDF             / GET THE DATA FIELD
+  59 000202  1350          TAD     TTYCIF  / MAKE A CDF CIF INSTRUCTION
+  60 000203  3254          DCA     TTYXIT  / STORE IT FOR LATER
+  61 000204  1600          TAD I   AUTOPT  / GET FIELD OF BUFFER
+  62 000205  0245          AND     TT70
+  63 000206  1335          TAD     TTCDF   / MAKE A CDF INST
+  64 000207  3221          DCA     TTYCDF  / SAVE IT
+  65 000210  1600          TAD I   AUTOPT  / GET BUFFER COUNTER
+  66 000211  0377          AND     (3700
+  67 000212  7040          CMA
+  68 000213  3351          DCA     TTYWC   / STORE IT IN WORD COUNT
+  69 000214  2200          ISZ     AUTOPT  /
+  70 000215  1600          TAD I   AUTOPT  /GET CURRENT ADDR.
+  71 000216  3352          DCA     TTYCA   / STORE IT
+  72 000217  2200          ISZ     AUTOPT  / SKIP BLOCK #
+  73 000220  2200          ISZ     AUTOPT  / LOOKING AT ERROR RETURN
+  74               TEM,
+  75 000221  0000  TTYCDF, 0
+  76 000222  4340  COOL,   JMS     CLSCRN  / GO CLEAR SCREEN
+  77 000223  1376          TAD     (136-33
+  78 000224  4300          JMS     ESCAP   / PRINT ESC CHAR
+  79 000225  5247          JMP     TTKLG   / START
+  80 000226  1752  NXTCHR, TAD I   TTYCA   / PICK UP BUFFER ADDRESS
+  81 000227  4257          JMS     TTYPCH  /GO TO UNPACK + OUTPUT ROUTINE
+  82 000230  3353          DCA     TTYGCH  / SAVE HIGH ORDER BITS
+  83 000231  2352          ISZ     TTYCA   / BUMP BUFF. POINTER
+  84 000232  7400  TT7400, 7400
+  85 000233  4310          JMS     TTYIN   / GO TO ABORT ROUTINE
+  86 000234  1752          TAD I   TTYCA   / GET NEXT CHAR.
+  87 000235  4257          JMS     TTYPCH
+  88 000236  7112          CLL RTR
+  89 000237  7012          RTR             / FORM THE
+  90 000240  1353          TAD     TTYGCH  / THIRD
+  91 000241  7112          CLL RTR         / CHARACTER
+  92 000242  7012          RTR
+  93 000243  4257          JMS     TTYPCH  / OUTPUT THIRD
+  94 000244  2352          ISZ     TTYCA   / BUMP POINTER
+  95 000245  0070  TT70,   70
+  96 000246  7600  L7600,  7600            / CLA
+  97 000247  2351  TTKLG,  ISZ     TTYWC   / BUMP THE COUNTR.
+  98 000250  5226          JMP     NXTCHR  / GO TO NEXT CHAR.
+  99 000251  1375  TTYRTN, TAD     (137-33/ GET ESC CHARS.
+ 100 000252  4300          JMS     ESCAP   / TURN ON COPYIER
+ 101 000253  2200          ISZ     AUTOPT  / GET NORMAL RETURN ADDR
+ 102 000254  7402  TTYXIT, HLT             / AND RETURN FIELDS
+ 103 000255  3222          DCA     COOL    / KILL THE CLEAR SCREEN FUNCTION 
+ 104 000256  5600          JMP I   AUTOPT  / AND LEAVE
+ 105 000257  0000  TTYPCH, 0
+ 106 000260  3354          DCA     HOLD    /SAVE CHAR FOR CHECKS
+ 107 000261  1354          TAD     HOLD
+ 108 000262  0374          AND     (177    / 
+ 109 000263  1373          TAD     (200-232        / END OF BUFF
+ 110 000264  7650          SNA CLA
+ 111 000265  5251          JMP     TTYRTN  / ^Z MEANS END OF BUFFER
+ 112 000266  1354          TAD     HOLD    / IF NOT, THEN LEGAL CHAR.
+ 113 000267  4273          JMS     TTYPRNT / OUTPUT CHAR
+ 114 000270  0232          AND     TT7400
+ 115 000271  7120          STL
+ 116 000272  5657          JMP I   TTYPCH  / SAVE HIGH BITS FOR 3RD CHAR.
+ 117 000273  0000  TTYPRN, 0
+ 118 000274  6046          TLS             / SEND CHAR.
+ 119 000275  6041          TSF             /  WAIT FOR FLAG ????
+ 120 000276  5275          JMP     .-1
+ 121 000277  5673          JMP I   TTYPRNT / RETURN
+ 122 000300  0000  ESCAP,  0
+ 123 000301  3221          DCA     TEM     / TEMP. STORAGE
+ 124 000302  1372          TAD     (33     / GET ESC CHAR.
+ 125 000303  4273          JMS     TTYPRNT/ GO TO OUTPUT ROUTINE
+ 126 000304  1221          TAD     TEM     / GET CHAR.
+ 127 000305  4273          JMS     TTYPRNT / GO TO OUTPUT
+ 128 000306  7200          CLA
+ 129 000307  5700          JMP I   ESCAP   / GO BACK TO CALLING AGR.
+ 130 000310  0000  TTYIN,  0
+ 131 000311  1246  HERE,   TAD     L7600   / SET A.C. FOR PARITY READ
+ 132 000312  6034          KRS             / PARITY READ
+ 133 000313  1371          TAD     (-7603  / IS IS A ^C ?
+ 134 000314  7450          SNA             / NO
+ 135 000315  5325          JMP     CTRLC   / YES, GET OUT OF HERE
+ 136 000316  1370          TAD     (203-221        /IS IT A ^Q ?
+ 137 000317  7450          SNA             / NO
+ 138 000320  5346          JMP     CTRLQ   / YES, GO BACK TO PRINTING
+ 139 000321  1367          TAD     (221-223/ IS IT A ^S ?
+ 140 000322  7650          SNA CLA
+ 141 000323  5311          JMP     HERE    / YES, STALL !!!!!
+ 142 000324  5710          JMP I   TTYIN   / ANYTHING ELSE
+ 143 000325  4340  CTRLC,  JMS     CLSCRN  / CLEAR SCREEN
+ 144 000326  1375          TAD     (137-33
+ 145 000327  4300          JMS     ESCAP   / OUTPUT ESC CHAR.
+ 146 000330  1370          TAD     (-16    / SET NULL COUNT
+ 147 000331  3221          DCA     TEM     /TEMPORARY LOC. FOR COUNTING
+ 148 000332  4273          JMS     TTYPRNT / FORCE THE SCREEN TO LISTEN
+ 149 000333  2221          ISZ     TEM     /COUNT NULLS
+ 150 000334  5332          JMP     .-2     / DO IT 16 TIMES
+ 151 000335  6201  TTCDF,  CDF 0           / SET RETURN FIELD
+ 152 000336  6032          KCC             / FLUSH INPUT BUFFER
+ 153 000337  5646          JMP I   L7600   / RETURN TO OS/8 !!!!!!!!!!
+ 154 000340  0000  CLSCRN, 0
+ 155 000341  1366          TAD     (110-33 / SET HOME CHAR
+ 156 000342  4300          JMS     ESCAP   / GO TO OUTPUT ROUTINE
+ 157 000343  1365          TAD     (112-33 / SET CLEAR SCREEN CHAR
+ 158 000344  4300          JMS     ESCAP
+ 159 000345  5740          JMP I   CLSCRN  / RETURN
+ 160 000346  6032  CTRLQ,  KCC
+ 161 000347  5710          JMP I   TTYIN   / CLEAR CHAR BEFORE GOING BACK
+ 162 000350  6203  TTYCIF, CDF CIF 0
+ 163 000351  0000  TTYWC,  0
+ 164 000352  0000  TTYCA,  0
+ 165 000353  0000  TTYGCH, 0
+ 166 000354  0000  HOLD,   0
+ 167 000365  0057  $$$$$
+     000366  0055  
+     000367  7776  
+     000370  7762  
+     000371  0175  
+     000372  0033  
+     000373  7746  
+     000374  0177  
+     000375  0104  
+     000376  0103  
+     000377  3700  
+
+AUTOPT  0200
+AUTVER  0001
+CLSCRN  0340
+COOL    0222
+CTRLC   0325
+CTRLQ   0346
+ESCAP   0300
+HERE    0311
+HOLD    0354
+L7600   0246
+NXTCHR  0226
+TEM     0221
+TT70    0245
+TT7400  0232
+TTCDF   0335
+TTKLG   0247
+TTYCA   0352
+TTYCDF  0221
+TTYCIF  0350
+TTYGCH  0353
+TTYIN   0310
+TTYPCH  0257
+TTYPRN  0273
+TTYRTN  0251
+TTYWC   0351
+TTYXIT  0254

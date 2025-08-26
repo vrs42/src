@@ -1,0 +1,227 @@
+   1               /2 RF08 SYSTEM HANDLER
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1974,1975 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               /MAINTENANCE RELEASE CHANGES:
+  46               
+  47               /1.     REMOVED SOFSET
+  48               /2.     CHANGED LENGTH OF PLATTER
+  49               
+  50                       DF32=0
+  51                       RF08=1
+  52                       VERSION="B&77
+  53               
+  54                       *0
+  55 000000  7777          -1
+  56 000001  2206          DEVICE RF08;DEVICE SYS;4064;2007;0;1777
+     000002  6070  
+     000003  2331  
+     000004  2300  
+     000005  4064  
+     000006  2007  
+     000007  0000  
+     000010  1777  
+  57               
+  58 000011  7736          STARTB-ENDB-1
+  59               
+  60                       NOPUNC
+  61                       *6604
+  62                       ENPUNC
+  63 006604  7000  STARTB, NOP             /FOR "SWAP"
+  64 006605  6653  B6653,  6653
+  65 006606  7647  B7647,  7647
+  66 006607  7577  B7577,  7577
+  67 006610  0200  B200,   200
+  68 006611  7605  B7605,  7605
+  69 006612  7751  B7751,  7751
+  70 006613  0000          ZBLOCK  6622-.
+     006614  0000  
+     006615  0000  
+     006616  0000  
+     006617  0000  
+     006620  0000  
+     006621  0000  
+  71 006622  1605          TAD I B6653
+  72 006623  6211          CDF 10
+  73 006624  3606          DCA I B7647
+  74 006625  6201          CDF 0
+  75 006626  2205          ISZ B6653
+  76 006627  2206          ISZ B7647
+  77 006630  5222          JMP .-6         /MOVE FIELD 1 RESIDENT UP
+  78 006631  6643          IFNZRO  RF08    <6643>
+  79 006632  6615          6615
+  80 006633  7600          7600
+  81 006634  1207          TAD B7577
+  82 006635  3612          DCA I B7751
+  83 006636  1210          TAD B200
+  84 006637  6603          6603            /NOW READ IN FIELD 0 RESIDENT FROM RECORD 1/2
+  85 006640  6623          IFNZRO  RF08    <6623>
+  86                       IFNZRO  DF32    <6622>
+  87 006641  5240          JMP .-1
+  88 006642  6621          6621
+  89 006643  7410          IFNZRO  RF08    <SKP>
+  90 006644  7402          HLT             /ERROR READING SYSTEM IN
+  91 006645  5611  ENDB,   JMP I B7605
+  92                      /BOOTSTRAP FOR DISK MONITOR IS AS FOLLOWS:
+  93               
+  94                       /       LOCATION        CONTENTS
+  95                       /       7750            7600
+  96                       /       7751            6603
+  97                       /       7752            6622
+  98                       /       7753            5352
+  99                       /       7754            5752
+ 100                      *200
+ 101               
+ 102                       NOPUNCH
+ 103                       *7600
+ 104                       ENPUNCH
+ 105               
+ 106 007600  0000          ZBLOCK 7
+     007601  0000  
+     007602  0000  
+     007603  0000  
+     007604  0000  
+     007605  0000  
+     007606  0000  
+ 107 007607  0002  SHNDLR, VERSION
+ 108 007610  7346          CLA CLL CMA RTL /-3
+ 109 007611  3304          DCA SYSCNT      /# TRYS ON ERROR
+ 110 007612  1607          TAD I SHNDLR
+ 111 007613  7004          RAL
+ 112 007614  7206          CLA RTL
+ 113 007615  1305          TAD S6603
+ 114 007616  3251          DCA SFUN        /EITHER A READ OR WRITE
+ 115 007617  1607          TAD I SHNDLR
+ 116 007620  0306          AND S70
+ 117 007621  3264          DCA SFIELD      /GET FIELD OF BUFFER
+ 118 007622  1607          TAD I SHNDLR
+ 119 007623  7004          RAL
+ 120 007624  0236          AND S7600
+ 121 007625  7041          CIA
+ 122 007626  3350          DCA SWC         /SET UP WORD COUNT
+ 123 007627  7240          CLA CMA
+ 124 007630  2207          ISZ SHNDLR
+ 125 007631  1607          TAD I SHNDLR
+ 126 007632  3351          DCA SCA         /BUFFER ADDRESS-1
+ 127 007633  2207          ISZ SHNDLR
+ 128                       IFNZRO  DF32 <
+ 129                       TAD I SHNDLR
+ 130                       RTL
+ 131                       AND S3700>
+ 132 007634  1264          TAD SFIELD
+ 133 007635  6615          6615            /LOAD DISK EXTENDED MEMORY
+ 134 007636  7600  S7600,  7600
+ 135                       IFNZRO RF08 <
+ 136 007637  1607          TAD I SHNDLR
+ 137 007640  7012          RTR
+ 138 007641  7012          RTR
+ 139 007642  0310          AND S377
+ 140 007643  6643          6643            /LOAD HIGH ORDER>
+ 141 007644  1607          TAD I SHNDLR
+ 142 007645  7012          RTR
+ 143 007646  7012          RTR
+ 144 007647  7010          RAR
+ 145 007650  0307          AND S7400
+ 146 007651  7402  SFUN,   HLT             /BECOMES DISK IOT.(READ OR WRITE)
+ 147 007652  6214          RDF
+ 148 007653  1303          TAD SCIF
+ 149 007654  3264          DCA SFIELD
+ 150                       IFNZRO  DF32    <6622>
+ 151 007655  6623          IFNZRO  RF08    <6623>
+ 152 007656  5255          JMP .-1
+ 153 007657  2207          ISZ SHNDLR
+ 154 007660  6621          6621            /SKIP ON ERROR
+ 155 007661  7410          IFNZRO RF08 <SKP        /SENSE OF SKIP IS REVERSED>
+ 156 007662  5271          JMP SYSER
+ 157 007663  2207          ISZ SHNDLR
+ 158 007664  7402  SFIELD, HLT             /RETURN TO PROPER FIELD
+ 159 007665  6601          6601            /CLEAR TROUBLESOME FLAG
+ 160 007666  5607          JMP I SHNDLR
+ 161 007667  0000          ZBLOCK 2
+     007670  0000  
+ 162 007671  7330  SYSER,  CLA CLL CML RAR /4000
+ 163 007672  2304          ISZ SYSCNT      /TRY AGAIN?
+ 164 007673  7610          SKP CLA
+ 165 007674  5264          JMP SFIELD      /WHY BOTHER
+ 166 007675  7346          CLA CLL CMA RTL
+ 167 007676  1207          TAD SHNDLR
+ 168 007677  3207          DCA SHNDLR      /RESET PARAMETERS AND TRY AGAIN
+ 169 007700  7410          IFNZRO RF08     <IFNZRO .-7700  <NZERR>;        SKP;    HLT>
+     007701  7402  
+ 170 007702  5212          JMP SHNDLR+3
+ 171 007703  6202  SCIF,   CIF 0
+ 172 007704  0000  SYSCNT, 0
+ 173                       IFNZRO DF32     <IFNZRO .-7700  <NZERR>;        SKP;    HLT>
+ 174 007705  6603  S6603,  6603
+ 175 007706  0070  S70,    70
+ 176 007707  7400  S7400,  7400
+ 177                       IFNZRO  DF32 <S3700,    3700>
+ 178 007710  0377          IFNZRO RF08 <S377,      377>
+ 179                       SCA=7751
+ 180                       SWC=7750
+ 181                       $
+
+B200    6610
+B6653   6605
+B7577   6607
+B7605   6611
+B7647   6606
+B7751   6612
+DF32    0000
+ENDB    6645
+RF08    0001
+S377    7710
+S6603   7705
+S70     7706
+S7400   7707
+S7600   7636
+SCA     7751
+SCIF    7703
+SFIELD  7664
+SFUN    7651
+SHNDLR  7607
+STARTB  6604
+SWC     7750
+SYSCNT  7704
+SYSER   7671
+VERSIO  0002

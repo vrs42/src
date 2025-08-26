@@ -1,0 +1,135 @@
+
+
+
+		OS/78 Version 4 System Generation
+
+1.0  General Information
+
+System generation for OS/78 requires two system devices. In the ex-
+amples that follow, the "master" system was RK05-based, the object
+system was either RL01/RL02 or RX01/RX02. System generation also re-
+quires a PDP-8/e, OS/8 Version 3D, and MACREL/LINK Version 2 (or
+later) for the assembly and linking of the CCL program modules, the
+FORMAT.SV utility, and FORLIB.RL. The batch files provided are:
+
+CCLGEN.BI  Assembles and links CCL
+FORMAT.BI  Assembles the MACREL version of FORMAT
+FORLIB.BI  Assembles and links FORLIB.RL
+BLDRxx.BI  Uses BUILD.SV to create a "system head"
+RxxFIN.BI  Finishes transfer of image files to the new system.
+
+NOTE: The above files must run under OS/8 on a PDP-8/e; the balance
+are supported by the VT278.
+
+BASGEN.BI  Assembles BASIC
+FORGEN.BI  Assembles FORTRAN run-time and monitor
+HANGEN.BI  Assembles the handlers and creates the .HN image files
+UTLGEN.BI  Assembles and creates the Utility program image files
+
+The files OS8V4.PA and CDV4.PA are assembled individually. The [binary]
+object files produced are then submitted to BUILD.SV to construct the
+"system head" and ABSLDR.SV.
+
+2.0  System Generation
+
+For the generation of this particular version of OS/78, the master
+system resided on an RK05 with an OS/8 V3D monitor. This system also
+contained the necessary MACREL/LINK utilities for assembly of sources
+written in MACREL. The balance of the .PA (PAL8 assembly language
+sources) were stored on an RL02. Executable image files were stored
+on the master as .V4, .HN or as applicable for special cases, for
+example BASIC.OV.
+
+2.1  Utility, Monitor and Language Image Files.
+
+Assemble the Utilities, Monitor and Langage image files with BASGEN.BI,
+FORGEN.BI, HANGEN.BI, and UTLGEN.BI. Move the image files to the master.
+Remember OS/78 does not preserve successive file generations so any .SV
+utility moved to the master will replace the OS/8 file of the same name
+and may not be compatible with the OS/8 monitor. Move BUILD.PA to the
+master.
+
+2.2  CCL, FORLIB and FORMAT.
+
+If no changes to any of the FORLIB modules (.RA) were made, move the
+FORTRAN library FORLIB.RL to the master system. If changes were made,
+assemble and link the new FORLIB.RL. Assemble and link CCL; assemble
+FORMAT. Both image files are saved as "filename.V4".
+
+							Page 2
+
+
+2.3  Creating the "System Head".
+
+The term "system head" describes those OS/78 image files that are per-
+manently resident in blocks 0, and 7-67, plus ABSLDR.SV. Blocks 0 and 66
+will contain the system device handler. The system head will also contain
+the device handlers that will be resident on the system. These may be
+replaced later with "SET HANDLER old device<new device", but the slots
+must be reserved at this point, since SET does not allow the insertion
+of handlers, only the replacement. Also, the SET handler replacement
+alogrithm requires that all handlers be two-page handlers with no
+more than two co-resident devices. OS/8 can support an RL02 handler
+with four co-resident devices; OS/78 is limited to two. BAT:, LPSV:
+and VXA0: are actually one-page handlers, but for OS/78 they are de-
+clared to be two pages, and are so treated by SET.
+
+You may use a previously "run" version of BUILD.SV to insert or re-
+place handlers in the new system head, but to build the image files
+that will comprise the Monitor, Command Decoder, User Service Routine,
+ODT, and ABLSDR.SV, you will need an unused assembly of BUILD.PA.
+Assemble BUILD and save as BUILDV.SV for the batch files provided in
+this system.
+
+Modify BLDRxx.BI to include the list of handlers you want. These hand-
+lers must reside on the master SYS: device and be binary (not save
+image) files with the .BN extension. The $BUILD command (not to be
+confused with the BUILD program) requires the .BN files that will
+be used to create the monitor. The first file is OS8V4.BN in this
+example, but may be renamed to anything, so long as it is still the
+OS/78 monitor, has a .BN extension, and resides on SYS:. The de-
+fault device for BUILD.SV is DSK:, but for OS/78 DSK=SYS. The second
+file that will be read by the $BUILD command is for the Command
+Decoder and ABLSDR.SV. Again, the file name CDV4 is not required,
+but the binary file must be generated from CDV4.PA.
+
+When the $BOOT command is given, BUILD will construct the system
+head. The date for ABSLDR.SV is generated from a fixed table in
+OS8V4.PA at the tag "DPROPR". Modifying "VERDATE" in OS8V4.PA will
+change the date from the fixed entry.
+
+See the OS/8 System Reference Manual for further information about
+BUILD.SV.
+
+2.4  Finalization.
+
+After the BUILD program has run its course, reboot the master 
+system and submit RxxFIN.BI to finish the transfer of image files.
+Most OS/78 features are defaults; however, "SET SYS VT278" for VT278
+systems and "SET TTY SCOPE" for all VDT-console systems is required.
+
+3.0  Alternative Methods
+
+3.1  Using PIP.SV.
+
+If the system head area has not undergone revision, and the system
+							Page 3
+
+
+built will have the same system device as the current system, the
+"older" method of using PIP to transfer the system head may be 
+used. The command ".R PIP" calls the command decoder processor to
+allow entry of input and output file specifications. The /Y option
+transfers the system head, but does not transfer the directory, or
+any files. See the OS/8 System Reference Manual for a complete de-
+scription of PIP and options.
+
+3.2  Using SET SYS DEVICE.
+
+In OS/78 V4, the command "SET SYS DEVICE old<new" will transfer the
+current system head to the new device, inserting the proper system
+handler in the process. Provided no changes were made to the system
+head files, this process is much quicker than using the BUILD batch
+files. For more information on this command see ".HELP SET" or the
+OS/78 V4 User's Guide.
+

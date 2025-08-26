@@ -1,0 +1,731 @@
+
+OS/78 command summary. Processed by HELP.SV. To add text files:
+
+
+ 
+&
+                    *** OS/78 Command Summary ***
+
+ASSIGN	Rename a logical device		LOAD	Load filespec
+BASIC	Enter BASIC system		MAP	Map binary files
+BOOT	Bootstrap another device	MEMORY	Adjust memory size
+COMPARE compare ASCII files		ODT	Run octal debugger
+COMPILE Compile FORTRAN, BASIC, PAL	PAL	Assemble filespec
+COPY	Copy filespec			R	Run program from SYS:
+CREATE	Open new filespec for editing	RENAME	Rename filespec
+CREF	Assemble with CREFed listing    RTFLOP  RT-11 to OS/78 transfer
+DATE    Enter or read date		RUN     Run filespec
+DEASSI  Deassign logical devices        SAVE    Save program image
+DELETE  Delete filespec                 SET     Alter device characteristics
+DIRECT  Request directory               SQUISH  Remove empty blocks on a device
+DUPLIC  Copy diskette                   START   Start [loaded] program
+EDIT    Edit file                       SUBMIT  Request BATCH operation
+EXECUTE Load/run FORTRAN, BASIC, PAL    TERMIN  Run TERMIN.SV (user written)
+FORMAT  Format RL01/02 disk for OS/78   TYPE    Type filespec
+FUTIL   File utility program            UA-UC   User defined commands
+GET     Load image file into memory     ZERO    Zero directory of a device
+HELP    "HELP" prints this list; "HELP ?" lists available HELP subjects.
+	"HELP WRITE" has instructions for writing your own HELP files.
+
+&BASIC
+	BASIC.SV
+ 
+@Calling Commands:
+.BASIC
+ 
+@Internal Commands:
+BYE	Exit from BASIC
+EDIT	Edit a line
+LIST	List current program statements
+NAME	Rename current program
+NEW	Prepare for a new program
+OLD	Retrieve an old program
+RUN	Run current program
+SAVE	Save current program
+SCRATCH	Delete current program
+SEQ	Begin auto sequence mode
+
+
+
+
+
+ 
+&BOOT
+	BOOT.SV
+
+@Calling Commands:
+
+.BOOT/dv
+
+@dv	= RX to boot from RL01/02 disk to RX01/02 diskette
+	= RL to boot from RX01/02 diskette to RL01/02 disk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+&COMPAR
+	SRCCOM.SV
+ 
+@Calling Commands:
+.COMPAR outdev:file.PA<indev:file1.PA,indev:file2.PA
+.COMPAR outfile.PA<infile1.PA,infile2.PA - - - -(iles on DSK)
+ 
+@Switches:
+/B	Compare blank lines
+/C	Don't compare (slashed) comments
+/S	Don't compare tabs and spaces
+/T	Convert tabs to spaces on output
+/X	Don't compare or print comments
+ 
+@ERRORS:
+?0	Insufficient memory
+?1	Input error file 1 (or less than 2 input files)
+?2	Input error file 2
+?3	Output file too large
+?4	Output error
+?5	Can't open output file
+ 
+ 
+&COMPILE
+&FORTRAN
+
+Assembles (and compiles if necessary) programs written in:
+
+	BASIC   (runs BASIC.SV)
+	FORTRAN (runs F4.SV)
+	PAL8	(runs PAL8.SV)
+
+@FORTRAN Calling Commands:	(Compile FORTRAN PROGRAM)
+
+.COMPILE outdev:ralffilE.RL,outdev:listfile.LS,outdev:mapfile.MP<indev:file.FT
+.COMPILE infile.FT - - - -(from DSK)
+  
+@Switches:
+/L	Chain to loader to create load-image file (use loader options too)
+/G	Same as /L and runs program
+/N	Suppress internal statement numbers
+/Q	Optimize cross-statement subscripting
+ 
+.HELP F4ERR	(Prints FORTRAN error messages)
+
+PAL8 and BASIC Calling Commands:	(Assemble PAL program compile, load 
+					 and run BASIC program)
+
+	See HELP for PAL8 and BASIC
+
+
+&CREF
+	CREF.SV
+
+@Calling Commands:
+.CREF outdev:binfile.BN,outdev:listfile.LS,outdev:tempfile.TM<indev:file.PA
+.CREF indev:file.PA - - (listing to LPT only)
+.CREF infile.PA - - - -	(listing to LPT, input file on DSK)
+
+@Switches:
+/E	Don't delete temporary CREF file (CREFLS.TM)
+/M	CREF files with many symbols in 2 passes (twice as slow)
+/P	No pass 1 listing
+/U	No listing or symbol table
+/X	No literals
+
+
+
+
+
+
+
+
+&DIRECT
+	DIRECT.SV
+
+@Calling Commands
+.DIR dev:filespec		(*  = wild name or extension)
+				(?  = wild character)
+.DIR 
+
+@Switches:
+/B	Include starting block numbers (octal)
+/C	List only files with current date
+/E	Include empties
+/F	Fast mode
+/M	List empties only
+/O	List only files with other than today's date
+/R	List remainder of files after first one (but use /C,/O)
+/U	Treat each input specification separately
+/V	List files not of form specified
+=n	Use n columns
+
+
+
+&DUPLICATE
+	RXCOPY.SV
+ 
+@Calling Commands:
+.DUPLIC outdev:<indev:
+ 
+@Switches:
+/C	Default, copy and match
+/D	Format output diskette to double-density (RX02)
+/M	Match with no implied copy
+/N	Copy with no implied match
+/P	Pause before and after accessing disk
+/R	Read output device with no implied copy or match
+/S	Format output diskette to single-density (RX02)
+
+
+
+
+
+
+
+&EDIT
+&CREATE
+	EDIT.SV			     
+@Calling Commands:		             Internal Commands:            
+
+.EDIT outdev:file.PA<indev:file.PA      A  Append text                 
+.CREATE outfile.PA		     	B  List # locations left       
+				     	C  Change text                 
+@Switches:
+			        	D  Delete text                 
+/A  Return to editor on close    	E  Transfer rest of data,close 
+/B  Convert spaces to tab	     	F  After j,resume search       
+/D  Predelete		     		G  Get and list tagged line    
+    				       	I  Insert text                 
+Errors:
+			     	        J  Inter-buffer search         
+?0  Input error			     	K  Kill buffer                 
+?1  Output error		     	L  List text                   
+?2  Close error			     	M  Wove text                   
+?3  Open error			     	N  Write text,read next page   
+?4  Couldn't load handler	     	P  Write buffer to output      
+				     	Q  Immediate end of file       
+				     	R  Read from input device      
+				     	S  Character search            
+				     	V  List on line printer        
+				     	Y  Input page,no output        
+   				     
+ 
+ 
+&EXECUTE
+	  PAL8.SV and ABSLDR.SV
+	  F4.SV, FRTS.SV, and LOAD.SV
+	  BASIC.SV, BRTS.SV, and BLOAD.SV
+
+			(Compile, assemble, load, and run PAL, FORTRAN, 
+@Calling Commands:	 and BASIC programs)
+.EXECUTE indev:file
+
+		NOTE
+   See BASIC, COMPILE, LOAD, and PAL
+   Commands for additional command
+   strings and options.
+
+
+
+&FUTIL
+	FUTIL.SV
+
+Note: FUTIL is a versatile program, but is also quite sophisticated.
+Do not use this utility until you have read the manual and understand
+what you want to do. Always operate with a copy of your system files.
+
+Conditions are established with the command SET "function argument".
+Currently existing conditions are returned with the command SHOW
+"function". Additional commands allow file manipulation, and BATCH
+control.
+
+  SET	DEVICE  device:		declare input device
+	DDEVIC  device:		declare output device
+	DMODE	ALL		output to declared and default devices
+		PART		output only to declared devices
+		NONE		no output
+	ERROR	LONG		long form of error messages
+		SHORT		abbreviated error messages
+	FILLER  numeric		sets low bits of numeric arguments
+	FORMAT  one of: ASCII, BCD, BYTE, DIRECTORY, FPP, OCTAL, OS,
+ 			UNSIGNED, SIGNED, XS240
+	LOWER	numeric		lower limit for search
+	MASK	numeric		mask for WORD search
+	MODE	one of: LOAD, NORMAL, OFFSET, SAVE
+	OFFSET  numeric          sets low bits of location searched for
+	OUTPUT	one of: FPP, OCTAL, PDP
+	TEMP	numeric		set TEMP=n (24bit)
+
+SHOW	one of:	ABSOLUTE, BLOCK, CCB, DEVICE, DDEVICE, ERRORS, FILLER,
+		FORMAT, HEADER, LOWER, MASK, MODE, ODT, OFFSET, OUTPUT,
+		RELATIVE, SMASK, UPPER, VERSION
+
+DUMP [format] location string
+
+LIST [format] location string
+
+MODIFY (in some format,) location string	Formats: ASCII, PACKED
+						OS, XS240, NUMERIC
+
+WORD	one of:	ABSOLUTE, FROM, MEMREF, TO, UNEQUAL  [bit pattern to use]
+
+STRING	one of: ABSOLUTE, FROM, MASKED, TO [string to use]
+
+SMASK   [string mask to use]
+
+FILE	retrieve file parameters
+WRITE	write out modification buffer
+SCAN    read check of DDEV
+REWIND  initialize directory references
+OPEN 	open a file on DDEV
+CLOSE	close a file on DDEV
+EVALUATE <expression>
+
+BATCH operations:
+
+	IF <expression> evaluates to zero continue, else skip to END
+	END enable execution following a non-zero IF
+	COMMENT pass comment from TTY to BATCH log
+	EXIT  exit to BATCH (if running, else exit to OS/78 monitor)
+
+Single character commands:  (n = optional numeric argument)
+
+  n/	open location in current mode (all locations are closed
+	before the next commands are executed)
+  n#	output location contents in BCD
+  n$	(dollar) output contents in ASCII
+  n%	output contents in OS/78 BYTE mode
+  n&	output contents in XS240 ASCII 
+  n:	output contents in SIGNED DECIMAL
+  n<	output contents in OCTAL
+  n=	output contents in UNSIGNED DECIMAL
+  n>	output contents in PDP (symbolic)
+  n?	output contents in DIRECTORY format
+  n@	output contents in OS/78 DATE format
+  n[	output contents in ASCII
+  n\	output contents in FFP (symbolic)
+  ]	output contents in PACKED ASCII
+n<esc>	output contents in the current format
+n<ret>	close the location(s) with no output
+  n;	close the location(s), open the next; has no output
+
+
+&FORMAT
+	FORMAT.SV
+
+@CALLING COMMAND:
+.FORMAT RL01/option
+
+or:
+
+.FORMAT RL02/option
+
+@Options:
+
+/0	Drive 0
+/1	Drive 1 (default)
+/P	Pause before and after formatting disk
+
+			NOTE:
+
+	If additional bad blocks are found on
+	existing packs, some files may not be
+	recoverable. If drive 0 is selected, a
+	PAUSE will follow to allow a chance to
+	exit the program before formatting the
+	system pack. Formatting does not alter
+	the contents of files.
+
+&F4ERR
+
+FORTRAN compiler errors:
+
+AA	Too many args are arrays	ML	Multiply defined line numbers
+AS	Bad ASSIGN statement		MM	Mismatched parenthesis
+BD	Bad dimensions			MO	Expected operand missing
+BS	Bad statement in BLOCK DATA	MT	Mixed variable types
+CL	Bad complex literal		OF	Error writing output file
+CO	Syntax error in COMMON		OP	Illegal operator
+DA	Bad syntax in DATA statement	OT	Wrong operand type
+DE	Illegal statement at end of DO	PD	Compiler stack overflow
+DF	Bad DEFINE FILE statement	PH	Bad program header line
+DH	Hollerith field error		QL	Nesting error in equivalence
+DL	Wrong data/variable list length	QS	Syntax error in EQUIVALENCE
+DN	DO-END missing			RD	Redefining variable dimensions
+DO	Syntax error in do		RT	Redefining variable type
+DP	Bad DO loop parameter		RW	Syntax error in read/write
+EX	Syntax error in EXTERNAL	SF	Bad arithmetic function
+GT	Syntax error in GOTO		SN	Illegal name in call
+GV	Variable not INTEGER or REAL	SS	Subscript expression error
+HO	Hollerith field error		ST	Symbol table full
+IE	Error reading input file	SY	System error
+IF	Improper statement		TD	Bad syntax in type declaration
+LI	Bad arg to logical IF		US	Undefined statement number
+LT	Input line too long		VE	Version error
+MK	Misspelled keyword
+
+
+&LOAD
+
+For PAL8 generated binaries:
+
+.LOAD indev:binfile.BN,...
+
+@Switches:
+
+/8	Prog doesn't use below 02000
+/9	Prog doesn't use below 12000
+/G	Execute program
+/I	Memory image file
+/R	Reset
+/S	Multiple binaries/file
+/ff	Force loading to field ff (ff is two octal digits)
+=ffnnnn	Set starting address
+
+For FORTRAN programs:
+
+.LOAD outdev:file.LD<indev:file1.RL,...
+ 
+@Switches:
+
+/C     Continue on next line (use RET for cont. lines and ESC for last line)
+/G     Chain to run-time system and execute program (terminate line with ESC
+       to give I/O specifications and with RET to begin execution)
+/S     Print symbol map
+
+
+&MAP
+	BITMAP.SV
+ 
+@Calling Command:
+
+.MAP outdev:mapfile.MP<indev:file.BN,...
+ 
+@Switches:
+
+/n	Force mapping of all files to field n (0-7)
+/R	Reset internal map
+/S	Allow multiple binaries per file
+/T	Select TTY (default) or LPT output format 
+
+
+
+
+
+
+
+
+
+
+
+&ODT
+	ODT
+  
+@Calling Commands:
+
+.ODT
+  
+@Internal Commands:
+ffnnnn/	  Open loc			nnnn+	Open current loc+nnnn
+/	  Reopen last opened loc	nnnn-	Open current loc-nnnn
+nnnn	  Deposit nnnn in open loc	nnnnG	Go from loc nnnn
+<cr>	  Close previously opened loc	nnnnB	Insert breakpoint at loc nnnn
+<lf>	  Close loc, open next loc	B	Remove breakpoint
+^	  Close,open loc addressed	A	Open AC
+_	  Close,open loc pointed to	L	Open link
+M	  Open search mask		C	Continue from breakpoint
+M<lf>	  Open lower search limit	nnnnC	Continue nnnn times
+M<lf><lf> Open upper search limit	D	Open data field
+nnnnW	  Search for nnnn in limits	F	Open field for ^,_, W and B
+CTRL/O	  Supress printing			commands
+
+&PAL
+	PAL8.SV
+
+@Calling Commands:
+
+.PAL outdev:binfile.BN,outdev:listfile.LS,outdev:tempfile.TM<indev:file.PA
+
+.PAL infile.PA
+
+@Switches:
+/B     Treat ! as byte shift		      /K     Use extra memory
+/C     Chain to CREF			      /L     Load
+/E     Enable error msg on link generated     /N     No listing
+/F     Disable 0-fill in TEXT pseudop	      /O     Disable origin 200
+/G     Load and execute program		      /S     No symbol table
+/H     Non-paginated output		      /T     No form feeds
+/J     Don't list lines conditionalized out   /W     Don't remember literals
+ 
+.HELP PALERR	prints PAL8 error messages
+
+
+
+
+
+&PALERR
+	PAL8.SV
+    ASSEMBLY ERRORS
+
+BE	Tables overlapped
+CF	REF.SV not on SYS:
+DE	Device error
+DF	Device full
+IC	Illegal character
+ID	Illegal redefinition
+IE	Illegal equals
+II	Illegal indirect
+IP	Illegal pseudo-op
+IZ	Illegal page zero reference
+LD	SYS:ABSLDR.SV not found
+LG	Link generated
+PE	Page exceeded
+PH	End of source conditionalized out
+RD	Redefinition
+SE	Symbol table exceeded
+UO	Undefined origin
+US	Undefined symbol
+ZE	Page 0 exceeded
+
+ 
+&RTFLOP
+	RTFLOP.SV
+
+@Called by:
+
+.RTFLOP
+
+RTFLOP>output filespec<input file/options
+
+Options:
+
+/R	Read file from an RT-11 floppy
+/W	Write file onto a floppy in RT-11 format
+/L	List directory of an RT-11 floppy
+/D	Delete a file from an RT-11 floppy
+/Z	Zero an RT-11 floppy (initialize and delete all files)
+/0	Select drive 0 (default)
+/1	Select drive 1
+
+Example:
+
+RTFLOP>RTFILE.EXT<OSFILE.EX/W/1    copies OSFILE.EX on drive 1 to
+				   drive 0 as RTFILE.EXT
+
+Errors:
+
+Bad slash option	 not a legal option
+No option flag		 required option not specified
+Bad directory		 directory requested was in wrong format
+			   has never been initialized
+Handler fetch failed	 OS/78 handler requested not available
+OS/78 I/O error		 I/O error in OS/78 handler
+Can't specify RT-11 dev  device not allowed in RT-11 filespec
+Need file name		 file structured devices must have file names
+Output device full	 output device has no room for the file
+File not found	  	 requested file not found
+Segment full		 no room in RT-11 directory
+RT-11 Floppy I/O error	 I/O error on RT-11 floppy
+OS/78 file overflow	 RT-11 file larger than available OS/78 space
+
+
+
+&SET
+	SET.SV
+ 
+.SET device [NO] parameter(s)
+
+devices:	terminals: TTY, COM0, COM1, SLU2, SLU3, VLU2, VLU3
+		line printers: LPT, LQP
+		system (SYS:)
+		device handlers (e.g. RXNS, LPSV, VXA0)
+
+Terminal parameters:
+
+	BAUD nn	  set baud rate of VT278 printer port
+	COL n	  Set number of columns used by DIRECT 
+	ECHO	  Restore terminal character echoing
+	ESC	  Echo ESC as dollar sign
+	HEIGHT n  Set number of lines sent between PAUSE
+	PAGE	  enable the PAGE function
+	PAUSE n	  Set pause between "pages" from 1-85 seconds.
+	SCOPE	  Erase character on terminal in response to DEL
+	WIDTH n	  Set width of terminal to n
+
+Line printer parameters:
+
+	LC	  do not convert lowercase to uppercase (LPSV only)
+	WIDTH n   Set width of lineprinter to n
+
+Device handler parameters:
+
+.SET HANDLER old new	old     = Handler to be replaced 
+			new     = Handler to be inserted
+
+Example:   .SET HANDLER LPTS LPSV     to replace the serial LPT
+				      handler with the parallel version
+
+NOTE: both old and new handlers must reside on SYS: as handler.HN
+
+.SET HANDLER /L			Display list of current handlers	
+
+System parameters:
+
+.SET SYS INIT file	Request execution of "file" when starting system.
+
+Examples:
+
+          .SET SYS INIT R LOG     will execute the file LOG.SV upon boot
+	  .SET SYS INIT HELP	  will execute the CCL command HELP
+	  .SET SYS INIT @NEW	  will execute the file NEW.CM
+
+.SET SYS DEVICE logdev handler.hn
+
+			Transfer current OS/78 system to another logical
+			device "logdev:". System handler to use is
+			"handler.hn". Read the SET command chapter before
+			doing this!
+
+
+&SUBMIT
+	BATCH.SV
+ 
+@Calling Commands:
+
+.SUBMIT spooldev:<batchfile.BI - - - - (batchfile must be on SYS:)	
+ 
+@Switches:
+
+/E	Don't abort on monitor, and CCL errors
+/H	Suppress BATCH log and terminal output
+/Q	Send only $JOB and $MSG lines to log
+/T	Send output from processing to terminal only
+/U	Accept no terminal input except CRTL/C
+
+
+
+
+
+
+
+
+
+
+&LIST
+&COPY
+&RENAME
+&DELETE
+&TYPE
+	FOTP.SV
+ 
+@Calling Commands:
+
+.COPY outdev:file.ex<indev:file.ex	   (* =  wild name or extension)
+.REN outdev:newfile.ex<indev:oldfile.ex	   (? =  wild character)
+.DEL dev:file.ex
+.LIST dev:file.ex - - - - (same as: .COPY LPT:<indev:file.ex)
+.TYPE dev:file.ex - - - - (same as: .COPY TTY:<indev:file.ex)
+ 
+@Switches:
+
+/C	Match only files with current date
+/F	Request new device if no room on current device
+/N	No pre-delete
+/O	Match only files with other than today's date
+/Q	Query user about file before operation
+/T	Use today's date
+/U	Treat each input specification separately
+/V	Match files not of form specified
+
+
+&ASSIGN
+&DATE
+&DEASSIGN
+&GET
+&MEMORY
+&R
+&RUN
+&SAVE
+&START
+&SQUISH
+&TERMIN
+&UA
+&UB
+&UC
+&ZERO
+	COMMANDS WITH SINGLE ARGUMENT
+ 
+@Calling Commands:
+.ASSIGN dev name		Assign name to device
+.DATE dd-mon-yy			Enter date into system
+.DEASSIGN			Deassign logical device names
+.GET dev:file.ex		Load memory image (.SV) file
+.MEMORY n			Specify highest memory field available
+.R file				Execute file.sv from SYS
+.RUN dev:file.ex		Execute file.ex from the device
+.SAVE dev:file.ex		Save memory image (.SV)
+.SQUISH dev:			Compress file storage on device
+.START fnnnn			Start execution at location fnnnn (octal)
+.TERMIN				Stop OS/78 operation and run TERMIN.SV
+.UA (UB, UC) commandline	Save commandline (type: .UA<cr> to execute it)
+.ZERO dev:			Zero device's directory
+
+
+
+
+
+
+
+
+&WRITE
+
+If you don't like the HELP files furnished with OS/78, you can write
+your own. Just follow a few guidelines for changing the text file
+accessed from HELP.
+
+1.  The HELP processor uses standard OS/78 handlers, so any ASCII
+file that is unpacked (one character/word) or packed in standard
+OS/78 format can be read.
+
+2.  The matching key for entries in the HELP file is &WORD, where
+"WORD" can be any length. Only the first 6 characters are considered
+unique for comparison by HELP.SV, and only the first 10 characters
+are printed by the HELP ? request to list all subjects.
+
+3.  The first keyword for a subject must be preceded by a linefeed
+character. The combination <LF>& indicates a file for a HELP sub-
+ject. Related keywords can be included under the first, provided
+they are preceded by only the amphersand. These keywords will also
+be found by HELP. For example, help requested for COMPILE and
+FORTRAN access the same subject file.
+
+4.  Keywords must be in uppercase, though the text of the HELP
+subject may be uppper and lowercase.
+
+5.  The HELP file may be as long as you like. Any entry in the file
+can be as long as you like, provided you don't exceed any OS/78 file
+size limitations.
+
+6.  Entries in the file need not be in alphabetical order. However,
+the list of keywords that reference the file material must be in
+alphabetical order. The order of subject entries in HELP.HL
+determines the order of display when the HELP ? command is given. If
+the subjects are alphabetical, the display across the VDT will be in
+alphabetical order. RX01/02 system users should note that HELP.SV
+reads 8 OS/78 blocks at a time when searching for a subject, so
+users of these systems can shuffle the most frequently referenced
+HELP commands toward the front of the file to minimize search time.
+
+
+7.  For detailed examples, LIST HELP.HL.
+
+

@@ -1,0 +1,674 @@
+   1               /R0CD.PA RL02 DRIVE 0 DEV C & D NON-SYSTEM HANDLER FOR OS78 V4
+   2               
+   3               /RL20: RL02 DRIVE 0 NON-SYSTEM HANDLER
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /
+  12               /
+  13               /COPYRIGHT  (C)  1977, 1981, 1984 BY DIGITAL EQUIPMENT CORPORATION
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /
+  23               /
+  24               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  25               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  26               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  27               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  28               /
+  29               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  30               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  31               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  32               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  33               /
+  34               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  35               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  36               /DIGITAL.
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               /
+  46               /
+  47               /RL02 DRIVE 0 NON-SYSTEM HANDLER
+  48               
+  49               
+  50               VERSION="B&77^100!61            //V4 OS78 IS B1
+  51               
+  52               NOCHK=  0       / 0 = No ctrl c check, 1 = check
+  53               
+  54               /NOTES:
+  55               /1. PRE-OMNIBUS COMPUTERS NOT SUPPORTED.
+  56               
+  57               /EDIT HISTORY:
+  58               /13-OCT-77 CREATION
+  59               /10-MAY-79 MODIFY FOR RL02 SUPPORT
+  60               /DEC 80 MODIFY TO SUPPORT DRIVES 2 & 3
+  61               /13-AUG-84 ADDED CTRL C CONDITIONAL
+  62               
+  63               /INSTRUCTIONS THAT GENERATE CONSTANTS
+  64               
+  65               AC0001=CLA IAC
+  66               AC0002=CLA CLL CML RTL
+  67               AC0003=CLA CLL CML IAC RAL      /*
+  68               AC0004=CLA CLL IAC RTL          /*
+  69               AC0006=CLA CLL CML IAC RTL      /*
+  70               AC0100=CLA IAC BSW              /*
+  71               AC2000=CLA CLL CML RTR
+  72               AC3777=CLA CLL CMA RAR
+  73               AC4000=CLA CLL CML RAR
+  74               AC5777=CLA CLL CMA RTR
+  75               AC6000=CLA CLL CML IAC RTR      /*
+  76               AC7775=CLA CLL CMA RTL
+  77               AC7776=CLA CLL CMA RAL
+  78               
+  79               /* USE ONLY ON VT-78 AND PDP-8E,F,M,A
+  80               
+  81               /ID CODE AT START OF BAD BLOCK LIST (BBL)
+  82                       ID=123
+  83               
+  84               /BAD BLOCK LIST FORMAT:
+  85               /WORD   CONTENTS
+  86               /0      ID (IDENTIFICATION CODE)
+  87               /1      BAD BLOCKS FOR DEVICE A (ASCENDING ORDER)
+  88               /...    ...
+  89               /10     0 (TERMINATOR FOR LIST A)
+  90               /11     BAD BLOCKS FOR DEVICE B (ASCENDING ORDER)
+  91               /...    ...
+  92               /20     0 (TERMINATOR FOR LIST B)
+  93               /21     BAD BLOCKS FOR DEVICE C (ASCENDING ORDER)
+  94               /...    ...
+  95               /30     0 (TERMINATOR FOR LIST C)
+  96               /31     BAD BLOCKS FOR DEVICE D (ASCENDING ORDER)
+  97               /...    ...
+  98               /40     0 (TERMINATOR FOR LIST D)
+  99               
+ 100               / DEFINITIONS
+ 101               
+ 102               RLIOT=6600
+ 103               RLDC=RLIOT 0    /CLEAR DEVICE
+ 104               RLSD=RLIOT 1    /SKIP IF DONE
+ 105               RLMA=RLIOT 2    /LOAD MEM ADDR
+ 106               RLCA=RLIOT 3    /LOAD REGISTER "A"
+ 107               RLCB=RLIOT 4    /LOAD REG "B" AND EXECUTE
+ 108               RLSA=RLIOT 5    /LOAD SECTOR ADDR
+ 109                               /RLIOT 6 UNUSED
+ 110               RLWC=RLIOT 7    /LOAD WORD COUNT
+ 111               RRER=RLIOT 10   /READ ERROR REG
+ 112               RRWC=RLIOT 11   /READ WORD COUNT
+ 113               RRCA=RLIOT 12   /READ REG "A"
+ 114               RRCB=RLIOT 13   /READ REG "B"
+ 115               RRSA=RLIOT 14   /READ SECTOR ADDR
+ 116               RRSI=RLIOT 15   /READ SILO BYTE
+ 117                               /RLIOT 16 UNUSED
+ 118               RLSE=RLIOT 17   /SKIP IF ERROR
+ 119               /RLCB FUNCTION BITS:
+ 120                       RLMT=0  /MAINTENANCE MODE
+ 121                       RLRE=1  /RESET DRIVE ERRORS
+ 122                       RLST=2  /READ STATUS REGS INTO SILO
+ 123                       RLSK=3  /SEEK
+ 124                       RLRH=4  /READ HEADER
+ 125                       RLWR=5  /WRITE
+ 126                       RLRD=6  /READ
+ 127                       RLRN=7  /READ WITH NO HEADER CHECK
+ 128               /BIT DEFINITIONS IN REGISTERS:
+ 129               BYTE=1000       /BYTE TRANSFER MODE
+ 130               
+ 131               /LOGICAL DEVICE (RELATIVE) ENTRY POINTS FOR RL02 HANDLERS:
+ 132               
+ 133               /DEVICE         A       B       C       D       E
+ 134               /DRIVE  0       117     113     106     77      145
+ 135               /       1       120     114     107     100     151
+ 136               /       2       121     115     110     101     155
+ 137               /       3       122     116     111     102     161
+ 138               
+ 139               
+ 140               
+ 141               /OS78 V4 RELEASE DIVIDES THE DRIVES INTO THREE LOGICAL DRIVES OF TWO
+ 142               /LOGICAL DEVICES EACH. ENTRY POINTS REMAIN THE SAME AS ABOVE.
+ 143               
+ 144               /       HANDLER         DEVICES
+ 145               
+ 146               /       R0AB            A & B   DRIVE 0
+ 147               /       R0CD            C & D
+ 148               
+ 149               /       R1AB            A & B   DRIVE 1
+ 150               /       R1CD            C & D
+ 151               
+ 152               /       R01E            DRIVE 0 DEV E, DRIVE 1 DEV E (THE "THIRD" DRIVE)
+ 153               /HEADER BLOCK FOR USE BY "BUILD"
+ 154               
+ 155                       *0
+ 156 000000  7776          -2              /- NUMBER OF LOGICAL DEVICES PER HANDLER
+ 157               
+ 158               /FORMAT OF ENTRIES IN HEADER BLOCK:
+ 159               /WORD   DESCRIPTION
+ 160               /0      GROUP NAME (4 CHAR)
+ 161               /2      DEVICE NAME (4 CHAR)
+ 162               /4      DCB WORD FOR AN RL02 (TYPE 37); IS A DIRECTORY DEVICE.
+ 163               /5      OFFSET TO ENTRY POINT; 2-PAGE INDICATOR.
+ 164               /6      0 (UNUSED WORD)
+ 165               /7      0 TO REPRESENT NON-SYSTEM DEVICE
+ 166               
+ 167                       DRIVE=0
+ 168               
+ 169               
+ 170               
+ 171               /DEVICE R0AB;DEVICE R20A;4370;RLA&177+4000;0;0
+ 172               /DEVICE R0AB;DEVICE R20B;4370;RLB&177+4000;0;0
+ 173 000001  2260  DEVICE R0CD;DEVICE R20C;4370;RLC&177+4000;0;0
+     000002  0304  
+     000003  2262  
+     000004  6003  
+     000005  4370  
+     000006  4106  
+     000007  0000  
+     000010  0000  
+ 174 000011  2260  DEVICE R0CD;DEVICE R20D;4370;RLD&177+4000;0;0
+     000012  0304  
+     000013  2262  
+     000014  6004  
+     000015  4370  
+     000016  4077  
+     000017  0000  
+     000020  0000  
+ 175               
+ 176               /HANDLER CODE
+ 177                               *200            /FIRST PAGE
+ 178               
+ 179               /THIS LOC IS SET TO ADDR OF NEXT PAGE BY ONCE-ONLY CODE
+ 180 000200  0000  GO,     0               /ADDR OF MAIN
+ 181               
+ 182               BBL,    /-----BOUNDARY OF BAD BLOCK LIST-----
+ 183                       /ONCE-ONLY CODE, REPLACED BY BAD BLOCK LIST
+ 184                       /READ IN BAD BLOCK LIST (BBL)
+ 185                       /SAVE CALLING DATA FIELD
+ 186               
+ 187 000201  6214          RDF
+ 188 000202  1204          TAD OOCDF
+ 189 000203  3243          DCA BACK
+ 190 000204  6201  OOCDF,  CDF 00          /SET TO CURRENT FIELD
+ 191               /REPLACE ONCE-ONLY JUMP INSTRUCTION
+ 192 000205  1244          TAD JMPSET
+ 193 000206  3332          DCA ONCE
+ 194 000207  1221  LOOP,   TAD LIST        /RELOCATE CROSS-PAGE REFERENCES;
+ 195                                       /SCAN "LIST" FOR RELATIVE LOCATIONS
+ 196                                       /OF VALUES TO BE RELOCATED
+ 197 000210  7450          SNA             /0 ACTS AS TERMINATOR
+ 198 000211  5241          JMP OUT
+ 199 000212  1200          TAD GO          /RELOCATE RELATIVE ADDRESS
+ 200 000213  3377          DCA ONLY        /"ONLY" IS NOW TEMP STORAGE
+ 201 000214  2207          ISZ LOOP        /NEXT VALUE
+ 202 000215  1200          TAD GO
+ 203 000216  1777          TAD I ONLY      /RELOCATE THE CONTENTS
+ 204 000217  3777          DCA I ONLY
+ 205 000220  5207          JMP LOOP        /CONTINUE UNTIL DONE
+ 206               
+ 207               /LIST OF RELATIVE ADDRESSES TO MODIFY
+ 208               
+ 209 000221  0161  LIST,   BARG-MAIN
+ 210 000222  7767          ABLOCK-MAIN
+ 211 000223  0163          BBBL-MAIN
+ 212 000224  7770          AMA-MAIN
+ 213 000225  7771          ASECT-MAIN
+ 214 000226  7772          ATRACK-MAIN
+ 215 000227  0162          MA-MAIN
+ 216 000230  7773          AERROR-MAIN
+ 217                       
+ 218 000231  0000          ZBLOCK 10+DRIVE /POSITION ENTRY POINTS TO BE UNIQUE FOR EACH
+     000232  0000  
+     000233  0000  
+     000234  0000  
+     000235  0000  
+     000236  0000  
+     000237  0000  
+     000240  0000  
+ 219                                       /LOGICAL DEVICE. MUST HAVE AT LEAST ONE 0
+ 220                                       /HERE FOR TERMINATOR TO LIST.
+ 221 000241  4600  OUT,    JMS I GO        /READ BAD BLOCK LIST
+ 222 000242  7200  OK,     CLA             /COULD TAKE THESE NEXT 2 OUT SINCE BBL READ-IN
+ 223 000243  6201  BACK,   CDF             /IS INITIALIZED TO THE SAME THING. (THIS IS 1 SHOT)
+ 224 000244  5335  JMPSET, JMP SET         /SETUP FOR TRANSFER
+ 225               
+ 226                       /END OF ONCE ONLY CODE. OK MUST BE HIGHER THAN 41 FOR RETURN
+ 227               
+ 228               
+ 229               /SETUP ARGS FOR CALL TO 2ND PAGE SUBROUTINE
+ 230               /CALCULATE TRACK AND SECTOR FROM BLOCK.
+ 231               
+ 232               / - - - ! - - - ! - - - ! - - -
+ 233               / 0-6 BECOME CYL    !  8-11 BECOME SECTOR, AFTER FUDGING TO SKIP FOR E DEVICE
+ 234               /                   !
+ 235               /               7 BECOMES THE "HEAD" BIT (1=UPPER)
+ 236               
+ 237 000245  1767  MAPPED, TAD I ABLOCK
+ 238 000246  7012          RTR
+ 239 000247  7012          RTR
+ 240 000250  0364          AND A377
+ 241 000251  1316          TAD OFFSET      /DEVICE OFFSET (0 OR 400)
+ 242 000252  3772          DCA I ATRACK
+ 243 000253  1767          TAD I ABLOCK    /CALCULATE SECTOR FROM BLOCK
+ 244 000254  0360          AND A17         /SECTOR CODE
+ 245 000255  7106          CLL RTL
+ 246 000256  1365          TAD A7751
+ 247 000257  7510          SPA
+ 248 000260  1361          TAD A47
+ 249 000261  7002          BSW
+ 250 000262  3771          DCA I ASECT
+ 251               /TRANSFER 1ST PAGE OF BLOCK
+ 252 000263  4600          JMS I GO
+ 253 000264  1363          TAD A200        /INCREMENT MA
+ 254 000265  1770          TAD I AMA
+ 255 000266  3770          DCA I AMA
+ 256               /INCREMENT SECTOR
+ 257 000267  1363          TAD A200
+ 258 000270  1771          TAD I ASECT
+ 259 000271  3771          DCA I ASECT
+ 260               /TRANSFER 2ND PAGE OF BLOCK
+ 261 000272  4600          JMS I GO
+ 262 000273  1363          TAD A200        /INCREMENT MA
+ 263 000274  1770          TAD I AMA
+ 264 000275  3770          DCA I AMA
+ 265               /CONTINUE WITH NEXT BLOCK
+ 266 000276  5354          JMP NEXT
+ 267               
+ 268               
+ 269               /ENTRY POINT FOR DEVICE D    
+ 270               
+ 271 000277  0261  RLD,    VERSION
+ 272 000300  7300          CLA CLL
+ 273 000301  1277          TAD RLD
+ 274 000302  3313          DCA RLB
+ 275 000303  7307          AC0004          /TRACK OFFSET WILL BE 1400
+ 276 000304  1357  CENT,   TAD A10
+ 277 000305  5323          JMP START       /SKIP AROUND RLA ENTRY POINT
+ 278               
+ 279               /ENTRY POINT FOR DEVICE C    
+ 280               
+ 281 000306  0261  RLC,    VERSION
+ 282 000307  7300          CLA CLL
+ 283 000310  1306          TAD RLC
+ 284 000311  3313          DCA RLB
+ 285 000312  5304          JMP CENT        /TRACK OFFSET WILL BE 1000
+ 286               
+ 287               /ENTRY POINT FOR DEVICE B    
+ 288               
+ 289 000313  0261  RLB,    VERSION
+ 290 000314  7307          AC0004          /TRACK OFFSET WILL BE 400
+ 291 000315  5323          JMP START       /SKIP AROUND RLA ENTRY POINT
+ 292 000316  0000  OFFSET, 0               /TRACK OFFSET FOR DEVICE (0 OR 400)
+ 293               
+ 294               /ENTRY POINT FOR DEVICE A    
+ 295               
+ 296 000317  0261  RLA,    VERSION
+ 297 000320  7600  A7600,  7600            /=CLA
+ 298 000321  1317          TAD RLA         /TRANSFER CALLING ADDR
+ 299 000322  3313          DCA RLB
+ 300 000323  7002  START,  BSW             /SET OFFSET TO 0 IF DEV A, 400 IF DEV B
+ 301 000324  3316          DCA OFFSET
+ 302 000325  1320          TAD A7600       /RETURN TO KEYBOARD MONITOR
+ 303               IFNZRO  NOCHK < KRS >   /IF CTRL,C TYPED
+ 304 000326  7000  IFZERO  NOCHK < NOP >
+ 305 000327  1362          TAD A175        /-CTRL,C
+ 306 000330  7650          SNA CLA
+ 307 000331  6031          KSF
+ 308 000332  5377  ONCE,   JMP ONLY        /THIS INSTRUCTION IS DONE ONCE ONLY. IT IS
+ 309                                       /THEN CHANGED TO "JMP SET" AFTER HANDLER RELOCATION
+ 310                                       /IS DONE AND THE BAD BLOCK LIST IS READ IN.
+ 311 000333  6203  ACDIF,  CIF CDF 00
+ 312 000334  5720          JMP I A7600     /CALL KB MONITOR
+ 313               
+ 314               /SET UP ARGUMENTS BY CALLING 2ND PAGE SUBROUTINE
+ 315 000335  1316  SET,    TAD OFFSET      /INITIALIZE MAPPING (BELOW)
+ 316 000336  7002          BSW
+ 317 000337  7104          CLL RAL         /0=DEV A, 10=B, 20=C, 30=D
+ 318 000340  1366          TAD BASE
+ 319 000341  3344          DCA MAP
+ 320 000342  1313          TAD RLB         /ADDR OF ARGS
+ 321 000343  4600          JMS I GO        /SETUP (AC NON-ZERO)
+ 322               /MAP NEXT BLOCK AROUND ANY BAD BLOCKS BELOW IT
+ 323 000344  1000  MAP,    TAD             /INITIALIZED ABOVE
+ 324 000345  7450          SNA             /0 TERMINATES LIST
+ 325 000346  5245          JMP MAPPED
+ 326 000347  7161          STL CIA         /13-BIT NEGATE
+ 327 000350  1767          TAD I ABLOCK    /COMPARE WITH BLOCK
+ 328 000351  7630          SZL CLA
+ 329 000352  5245          JMP MAPPED      /BAD BLOCK IS ABOVE CURRENT BLOCK
+ 330 000353  2344          ISZ MAP         /TRY NEXT BAD BLOCK ALSO
+ 331 000354  2767  NEXT,   ISZ I ABLOCK    /INCREMENT CURRENT BLOCK NUMBER,
+ 332                                       /EITHER DURING
+ 333                                       /BAD BLOCK MAPPING OR AFTER SUCCESSFUL TRANSFER
+ 334                                       /OF TWO SECTORS (PAGES) WITH MORE TO GO
+ 335 000355  5344          JMP MAP         /CONTINUE MAPPING
+ 336 000356  5773          JMP I AERROR    /ERROR ON BLOCK OVERFLOW
+ 337               
+ 338               
+ 339               /DATA
+ 340               
+ 341 000357  0010  A10,    10
+ 342 000360  0017  A17,    17
+ 343 000361  0047  A47,    47
+ 344 000362  0175  A175,   175
+ 345 000363  0200  A200,   200
+ 346 000364  0377  A377,   377
+ 347 000365  7751  A7751,  7751
+ 348 000366  1202  BASE,   TAD BBL+1
+ 349 000367  0147  ABLOCK, BLOCK-MAIN
+ 350 000370  0162  AMA,    MA-MAIN         /RELATIVE ADDR OF MA
+ 351 000371  0152  ASECT,  SECTOR-MAIN
+ 352 000372  0150  ATRACK, TRACK-MAIN
+ 353 000373  0141  AERROR, ERROR-MAIN
+ 354               
+ 355               
+ 356 000374  0000  ZBLOCK 377-.
+     000375  0000  
+     000376  0000  
+ 357               
+ 358               /ONCE-ONLY CODE AT END OF PAGE
+ 359 000377  4200  ONLY,   JMS GO          /SET UP CROSS-PAGE LINK USED ON INITIALIZATION.
+ 360                                       /2ND PAGE IN LOC "GO"
+ 361                      *400
+ 362               /2ND PAGE OF HANDLER
+ 363               
+ 364               /SUBROUTINE TO SETUP AND TRANSFER
+ 365               /AC=0 FOR TRANSFER ELSE SETUP
+ 366 000400  0000  MAIN,   0
+ 367 000401  7450          SNA
+ 368 000402  5242          JMP TRANS
+ 369               /GET HANDLER ARGUMENTS
+ 370 000403  3361  SETUP,  DCA BARG        /ADDR OF HANDLER ARGS
+ 371 000404  7330          AC4000          /SET "OLDTRK" TO INVALID TRACK
+ 372 000405  3356          DCA OLDTRK      /TO FORCE READING NEXT HEADER.
+ 373 000406  1366          TAD B7600       /SET FOR FULL PAGE TRANSFERS
+ 374 000407  3351          DCA WC          /(WAS SMALLER FOR BBL READ)
+ 375 000410  1761          TAD I BARG      /NOW GET HANDLER ARGUMENTS
+ 376                                       /FUNCTION WORD
+ 377               /NOTE: THE FOLLOWING INSTRUCTION IS USED AS A CONSTANT
+ 378 000411  0377  B377,   AND B4070       /CONVERT TO RLCB FORMAT
+ 379 000412  7510          SPA
+ 380 000413  1365          TAD B3777
+ 381 000414  1367          TAD BRLRD
+ 382 000415  3360          DCA FNC
+ 383 000416  1761          TAD I BARG      /FUNCTION WORD
+ 384 000417  7004          RAL             /CONVERT TO PAGE COUNT IN BITS [7600]
+ 385 000420  0366          AND B7600
+ 386 000421  3357          DCA PAGES
+ 387 000422  2361          ISZ BARG
+ 388 000423  1761          TAD I BARG      /MA
+ 389 000424  3362          DCA MA
+ 390 000425  2361          ISZ BARG
+ 391 000426  1761          TAD I BARG      /BLOCK
+ 392 000427  3347          DCA BLOCK
+ 393 000430  2361          ISZ BARG
+ 394               /SAVE CALLING FIELD FOR RETURN
+ 395 000431  6214          RDF
+ 396 000432  1234          TAD BCDIF
+ 397 000433  3344          DCA BRTN
+ 398               /RESET DATA FIELD AND RETURN FROM SETUP WITH AC=BLOCK
+ 399 000434  6203  BCDIF,  CIF CDF 00
+ 400               /GET DEVICE OFFSET FROM 1ST PAGE
+ 401 000435  1763          TAD I BBBL      /CHECK FOR BBL VALIDITY -
+ 402 000436  1372          TAD CHECK       /1ST LOC OF BBL CONTAINS AN
+ 403 000437  7640          SZA CLA         /IDENTIFICATION CODE ("ID")
+ 404 000440  5341          JMP ERROR       /TAKE ERROR RETURN FROM HANDLER
+ 405                                       /IF BBL IS INVALID.
+ 406 000441  5600          JMP I MAIN
+ 407               /TRANSFER ONE OR MORE PAGES TO/FROM DISK
+ 408               /GET INTERPAGE ARGUMENTS
+ 409               /RESET RETRY COUNT FOR 2 RETRIES ON I/O ERRORS
+ 410 000442  7346  TRANS,  AC7775          /AC=-3
+ 411 000443  3355          DCA ERRCNT
+ 412               /CALCULATE CYLINDER AND SURFACE FROM TRACK
+ 413 000444  1350          TAD TRACK
+ 414 000445  7110          CLL RAR
+ 415 000446  3353          DCA CYL
+ 416 000447  7012          RTR
+ 417 000450  3354          DCA SURF
+ 418               /COMPARE WITH OLD (PREVIOUS) TRACK; IF SAME, DO TRANSFER
+ 419 000451  4300          JMS TRKCMP
+ 420               /IF REQUESTED TRACK IS DIFFERENT, SEEK TO TRACK
+ 421               /RESET DRIVE (FUNCTION=1)
+ 422 000452  6600  RETRY,  RLDC            /CLEAR CONTROLLER, AC
+ 423               /SEEK (FUNCTION=3) WHEN CALLED FROM BELOW
+ 424 000453  7001  SEEK,   IAC             /AC=(1 OR 3)
+ 425 000454  4330          JMS IO          /RESET DRIVE OR SEEK
+ 426               /READ NEXT HEADER TO FIND OUT ACTUAL CURRENT TRACK
+ 427 000455  1370          TAD HEADER
+ 428 000456  4330          JMS IO          /READ NEXT HEADER
+ 429 000457  6615          RRSI            /GET HEADER BYTE #1
+ 430 000460  7002          BSW
+ 431 000461  0364          AND B3
+ 432 000462  3356          DCA OLDTRK      /SAVE 2 LSB
+ 433 000463  6615          RRSI            /GET HEADER BYTE #2
+ 434 000464  0211          AND B377        
+ 435 000465  7106          CLL RTL
+ 436 000466  1356          TAD OLDTRK      /ADD IN MSB
+ 437 000467  3356          DCA OLDTRK
+ 438               /COMPARE WITH OLD (PREVIOUS) TRACK; IF SAME, DO TRANSFER
+ 439 000470  4300          JMS TRKCMP
+ 440               /IF REQUESTED TRACK IS DIFFERENT, SEEK TO TRACK
+ 441               /CALCULATE DIFFERENCE WORD FOR SEEK FROM TRACK DIFFERENCE
+ 442 000471  7510          SPA             /IF POSITIVE, LINK WILL BE SET
+ 443 000472  7141          CLL CIA         /IF NEGATIVE, CLEAR LINK
+ 444 000473  7010          RAR             /DELETE SURFACE, INCLUDE DIRECTION
+ 445 000474  1354          TAD SURF        /ADD SURFACE
+ 446 000475  6603          RLCA            /LOAD DIFFERENCE WORD
+ 447 000476  7326          AC0002          /PREPARE FOR SEEK
+ 448               /LOOP BACK AND PERFORM SEEK; THIS ENSURES THAT THE TRACK
+ 449               /REACHED IS THE CORRECT ONE IN SPITE OF POSSIBLE RL
+ 450               /SEEK UNRELIABILITY
+ 451 000477  5253          JMP SEEK
+ 452               /SUBROUTINE TO COMPARE REQUESTED TRACK WITH OLD (REMEMBERED)
+ 453               /TRACK; IF SAME, DO TRANSFER. IF DIFFERENT, RETURN WITH AC=
+ 454               /REQUESTED-OLD, AND LINK=1
+ 455 000500  0000  TRKCMP, 0
+ 456 000501  1356          TAD OLDTRK      /CALCULATE DIFFERENCE
+ 457 000502  7041          CIA
+ 458 000503  1350          TAD TRACK
+ 459 000504  7120          STL             /LINK MUST BE SET WHEN
+ 460                                       /DIFFERENCE IS POSITIVE.
+ 461 000505  7440          SZA
+ 462 000506  5700          JMP I TRKCMP    /DIFFERENT; RETURN
+ 463               /ON TRACK: DO TRANSFER
+ 464               /LOAD ALL REGISTERS
+ 465 000507  1352          TAD SECTOR
+ 466 000510  6605          RLSA
+ 467 000511  1351          TAD WC
+ 468 000512  6607          RLWC
+ 469 000513  1354          TAD SURF
+ 470 000514  1353          TAD CYL
+ 471 000515  6603          RLCA
+ 472 000516  1362          TAD MA
+ 473 000517  6602          RLMA
+ 474               /DO THE READ OR WRITE
+ 475 000520  1360          TAD FNC
+ 476 000521  4330          JMS IO
+ 477               /COUNT REQUESTED NUMBER OF PAGES
+ 478 000522  1366          TAD B7600
+ 479 000523  1357          TAD PAGES
+ 480 000524  7450          SNA
+ 481 000525  5343          JMP DONE
+ 482 000526  3357          DCA PAGES
+ 483 000527  5600          JMP I MAIN      /RETURN FOR MORE
+ 484               /SUBROUTINE TO DO THE ACTUAL I/O
+ 485 000530  0000  IO,     0               /AC=MODE,FIELD,FUNCTION
+ 486 000531  1371          TAD BDRIVE
+ 487 000532  6604          RLCB            /DO THE OPERATION
+ 488 000533  6601          RLSD            /WAIT UNTIL DONE
+ 489 000534  5333          JMP .-1
+ 490 000535  6617          RLSE            /TEST FOR I/O ERROR(S)
+ 491 000536  5730          JMP I IO        /NONE; RETURN
+ 492               
+ 493               /IF ERROR, RETRY TWICE
+ 494 000537  2355          ISZ ERRCNT      /MORE RETRIES LEFT?
+ 495 000540  5252          JMP RETRY       /YES
+ 496               /AFTER THREE TRIES, TAKE HANDLER ERROR RETURN
+ 497               /WITH AC=4000
+ 498 000541  7330  ERROR,  AC4000
+ 499 000542  7410          SKP
+ 500               /NORMAL RETURN FROM HANDLER
+ 501 000543  2361  DONE,   ISZ BARG        /SKIP ERROR RETURN
+ 502 000544  6203  BRTN,   CIF CDF 00      /RETURN TO CALLING FIELD
+ 503                                       /BBL READ: NOP (FIELD 0)
+ 504 000545  5761          JMP I BARG      /RETURN TO CALLING PROGRAM
+ 505 000546  0000  DLAY,   0               /***
+ 506               /DATA
+ 507 000547  0000  BLOCK,  0
+ 508 000550  0000  TRACK,  0               /BBL READ: TRACK 0
+ 509 000551  7737  WC,     -41             /BBL READ: -BBL LENGTH
+ 510 000552  1400  SECTOR, 1400            /BBL READ: SECTOR 14
+ 511 000553  0000  CYL,    0
+ 512 000554  0000  SURF,   0
+ 513 000555  0000  ERRCNT, 0               /COUNT OF RETRIES
+ 514 000556  2000  OLDTRK, 2000            /FORCE INITIAL SEEK
+ 515 000557  0200  PAGES,  200             /BBL READ: ONE PAGE
+ 516 000560  0006  FNC,    RLRD            /BBL READ: READ FUNCTION
+ 517               
+ 518               /RELOCATED RELATIVE ADDRESSES
+ 519 000561  7642  BARG,   OK-MAIN         /BBL READ: RETURN FROM READ
+ 520                                       /ADDRESS OF HANDLER ARGUMENTS
+ 521 000562  7601  MA,     BBL-MAIN        /BBL READ: ADDR OF BBL
+ 522 000563  7601  BBBL,   BBL-MAIN
+ 523               
+ 524 000564  0003  B3,     3
+ 525 000565  3777  B3777,  3777
+ 526 000566  7600  B7600,  7600
+ 527 000567  0006  BRLRD,  RLRD
+ 528 000570  1004  HEADER, BYTE RLRH
+ 529 000571  0000  BDRIVE, DRIVE^100       /DRIVE BITS FOR RLCB
+ 530 000572  7655  CHECK,  -ID
+ 531               
+ 532               /THIS CONSTANT MUST BE AT END OF PAGE
+ 533 000573  0000          ZBLOCK 577-.
+     000574  0000  
+     000575  0000  
+     000576  0000  
+ 534 000577  4070  B4070,  4070
+ 535               $
+
+A10     0357
+A17     0360
+A175    0362
+A200    0363
+A377    0364
+A47     0361
+A7600   0320
+A7751   0365
+ABLOCK  0367
+AC0001  7201 unreferenced
+AC0002  7326
+AC0003  7325 unreferenced
+AC0004  7307
+AC0006  7327 unreferenced
+AC0100  7203 unreferenced
+AC2000  7332 unreferenced
+AC3777  7350 unreferenced
+AC4000  7330
+AC5777  7352 unreferenced
+AC6000  7333 unreferenced
+AC7775  7346
+AC7776  7344 unreferenced
+ACDIF   0333 unreferenced
+AERROR  0373
+AMA     0370
+ASECT   0371
+ATRACK  0372
+B3      0564
+B377    0411
+B3777   0565
+B4070   0577
+B7600   0566
+BACK    0243
+BARG    0561
+BASE    0366
+BBBL    0563
+BBL     0201
+BCDIF   0434
+BDRIVE  0571
+BLOCK   0547
+BRLRD   0567
+BRTN    0544
+BYTE    1000
+CENT    0304
+CHECK   0572
+CYL     0553
+DLAY    0546 unreferenced
+DONE    0543
+DRIVE   0000
+ERRCNT  0555
+ERROR   0541
+FNC     0560
+GO      0200
+HEADER  0570
+ID      0123
+IO      0530
+JMPSET  0244
+LIST    0221
+LOOP    0207
+MA      0562
+MAIN    0400
+MAP     0344
+MAPPED  0245
+NEXT    0354
+NOCHK   0000
+OFFSET  0316
+OK      0242
+OLDTRK  0556
+ONCE    0332
+ONLY    0377
+OOCDF   0204
+OUT     0241
+PAGES   0557
+RETRY   0452
+RLA     0317
+RLB     0313
+RLC     0306
+RLCA    6603
+RLCB    6604
+RLD     0277
+RLDC    6600
+RLIOT   6600
+RLMA    6602
+RLMT    0000 unreferenced
+RLRD    0006
+RLRE    0001 unreferenced
+RLRH    0004
+RLRN    0007 unreferenced
+RLSA    6605
+RLSD    6601
+RLSE    6617
+RLSK    0003 unreferenced
+RLST    0002 unreferenced
+RLWC    6607
+RLWR    0005 unreferenced
+RRCA    6612 unreferenced
+RRCB    6613 unreferenced
+RRER    6610 unreferenced
+RRSA    6614 unreferenced
+RRSI    6615
+RRWC    6611 unreferenced
+SECTOR  0552
+SEEK    0453
+SET     0335
+SETUP   0403 unreferenced
+START   0323
+SURF    0554
+TRACK   0550
+TRANS   0442
+TRKCMP  0500
+VERSIO  0261
+WC      0551

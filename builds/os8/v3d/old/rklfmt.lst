@@ -1,0 +1,2683 @@
+   1               /RK8E/RK8L DISK FORMATTER
+   2               /
+   3               /
+   4               /
+   5               /
+   6               /
+   7               /
+   8               /
+   9               /
+  10               /
+  11               /COPYRIGHT  (C)  1977 BY DIGITAL EQUIPMENT CORPORATION
+  12               /
+  13               /
+  14               /
+  15               /
+  16               /
+  17               /
+  18               /
+  19               /
+  20               /
+  21               /
+  22               /THE INFORMATION IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT NOTICE
+  23               /AND SHOULD NOT BE CONSTRUED AS A COMMITMENT BY DIGITAL EQUIPMENT
+  24               /CORPORATION.  DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY
+  25               /FOR ANY ERRORS THAT MAY APPEAR IN THIS DOCUMENT.
+  26               /
+  27               /THE SOFTWARE DESCRIBED IN THIS DOCUMENT IS FURNISHED TO THE PURCHASER
+  28               /UNDER A LICENSE FOR USE ON A SINGLE COMPUTER SYSTEM AND CAN BE COPIED
+  29               /(WITH INCLUSION OF DIGITAL'S COPYRIGHT NOTICE) ONLY FOR USE IN SUCH
+  30               /SYSTEM, EXCEPT AS MAY OTHERWISE BE PROVIDED IN WRITING BY DIGITAL.
+  31               /
+  32               /DIGITAL EQUIPMENT CORPORATION ASSUMES NO RESPONSIBILITY FOR THE USE
+  33               /OR RELIABILITY OF ITS SOFTWARE ON EQUIPMENT THAT IS NOT SUPPLIED BY
+  34               /DIGITAL.
+  35               /
+  36               /
+  37               /
+  38               /
+  39               /
+  40               /
+  41               /
+  42               /
+  43               /
+  44               /
+  45               /RK8E/RK8L DISK FORMATTER PROGRAM: MD-08-DHRKD-D
+  46               /MAINDEC-08-DHRKD-D-D
+  47               /
+  48               /MODIFIED FOR OS8V3D BY ED STEINBERGER
+  49               /
+  50               DLSC=6740                       /LOAD SECTOR COUNTER
+  51               DSKP=6741                       /SKIP ON TRANSFER DONE OR ERROR
+  52               DCLR=6742                       /CLEAR DISK CONTROL LOGIC
+  53               DLAG=6743                       /LOAD ADDRESS AND GO
+  54               DLCA=6744                       /LOAD CURRENT ADDRESS
+  55               DRST=6745                       /READ STATUS REGISTER
+  56               DLDC=6746                       /LOAD COMMAND REGISTER
+  57               DMAN=6747                       /LOAD MAINTENANCE
+  58               /
+  59               LDSC=JMS I      XXLDSC
+  60               IOTCHN=JMS I    XCHANG
+  61               LODTRK=JMS I    XWRTRK
+  62               REDDSK=JMS I    XRDTRK
+  63               RECAL=JMS I     XRESTR
+  64               RECEIV=JMS I    XWAIT
+  65               KILBUF=JMS I    XKLBUF
+  66               ERROR=JMS I     XERRO
+  67               RDSTAT=JMS I    XRDST
+  68               LDADD=JMS I     XLDAD
+  69               DSKSKP=JMS I    XSDKP
+  70               LDCMD=JMS I     XLDCM
+  71               LDCUR=JMS I     XLDCA
+  72               CLRALL=JMS I    XCLDR
+  73               PRNTER=JMS I    XPRN
+  74               OCTEL=JMS I     XFROCT
+  75               TWOCT=JMS I     XTOCT
+  76               TYPE=JMS I      XPRINT
+  77               CRLF=JMS I      XCRLF
+  78               APT8A=JMS I     XAPT8
+  79               TIME=JMS I      XTIME
+  80               TICK=JMS I      XTICK
+  81               KAERRO=JMS I    XAERRO
+  82               /
+  83               *0
+  84               /
+  85 000000  0304          304                     /REV D
+  86 000001  5001          5001
+  87 000002  0002          0002
+  88 000003  0003          0003
+  89               /
+  90               *10
+  91               /
+  92 000010  0000  AUTO10, 0
+  93               /
+  94 000011  0000  AUTO11, 0
+  95               /
+  96               *20
+  97               /
+  98 000020  0000          0000                    /PSEUDO SWITCH REGISTER
+  99 000021  0000          0                       /CONTROL WORD 1 - USE PSUEDO SWITCHES **ES**
+ 100 000022  0400          400                     /CONTROL WORD 2 - SET CONSOLE PACKAGE ACTIVE **ES**
+ 101 000023  0000          0000                    /RESERVED
+ 102 000024  1125  XAPT8,  APT8
+ 103 000025  1557  XTIME,  KTIME
+ 104 000026  1600  XAERRO, AERRO
+ 105 000027  1530  XTICK,  KTICK
+ 106 000030  1463  XCHANG, CHANG
+ 107 000031  0600  XWRTRK, WRTTRK
+ 108 000032  1000  XRDTRK, REDTRK
+ 109 000033  1400  XRESTR, RESTOR
+ 110 000034  1327  XWAIT,  WAIT
+ 111 000035  0752  XKLBUF, KLBUF
+ 112 000036  1312  XPRINT, PRINT
+ 113 000037  0436  XERRO,  ERRO
+ 114 000040  0671  XRDST,  RDST
+ 115 000041  0740  XSDKP,  SDKP
+ 116 000042  0720  XLDCM,  LDCM
+ 117 000043  0700  XLDCA,  LDCA
+ 118 000044  0711  XLDAD,  LDAD
+ 119 000045  0745  XCLDR,  CLDR
+ 120 000046  0733  XXLDSC, XLDSC
+ 121 000047  1252  XPRN,   PRN
+ 122 000050  1227  XFROCT, FROCT
+ 123 000051  1200  XTOCT,  TOCT
+ 124 000052  1215  XCRLF,  UPONE
+ 125 000053  2201  XLOTRK, LOTRK
+ 126 000054  2200  XHITRK, HITRK
+ 127 000055  2200  BGNBUF, WRKBUF
+ 128 000056  0000  AMOUNT, 0
+ 129 000057  0000  SWITCH, 0
+ 130 000060  0003  K0003,  0003
+ 131 000061  0004  K4,     4
+ 132 000062  0007  K0007,  0007
+ 133 000063  0040  K0040,  0040
+ 134 000064  7465  M313,   -313
+ 135 000065  0277  K0277,  0277
+ 136 000066  0200  K0200,  0200
+ 137 000067  0260  K0260,  0260
+ 138 000070  4000  K4000,  4000
+ 139 000071  7735  K7735,  7735
+ 140 000072  7760  K7760,  7760
+ 141 000073  0400  K0400,  400
+ 142 000074  0037  K0037,  0037
+ 143 000075  6201  KCDF,   CDF
+ 144 000076  7774  M4,     -4
+ 145 000077  7770  M10,    -10
+ 146 000100  0000  DRIVNO, 0
+ 147 000101  0000  CHAR,   0
+ 148 000102  0000  LOWAD,  0
+ 149 000103  0000  HIGHAD, 0
+ 150 000104  0000  TRKCNT, 0
+ 151 000105  0000  DSKCNT, 0
+ 152 000106  0000  SBCNT1, 0
+ 153 000107  0000  STCNT1, 0
+ 154 000110  0000  STCNT2, 0
+ 155 000111  0000  STCNT3, 0
+ 156 000112  0000  TCNTR1, 0
+ 157 000113  0000  TCNTR2, 0
+ 158 000114  0000  TCNTR3, 0
+ 159 000115  0000  TCNTR4, 0
+ 160 000116  0000  TCNTR5, 0
+ 161               /
+ 162 000117  0000  GDREG2, 0
+ 163 000120  0000  EXBIT,  0
+ 164 000121  0000  CMREG,  0
+ 165 000122  0000  STREG,  0
+ 166 000123  0000  DAREG,  0
+ 167 000124  0000  CAREG,  0
+ 168 000125  0000  ADREG,  0
+ 169 000126  0000  DTREG,  0
+ 170 000127  0263  BGNTST, FRMDSK
+ 171 000130  0000  HOMEMA, 0
+ 172 000131  0000  DATCNT, 0
+ 173 000132  7776  CLKCNT, -2
+ 174               /
+ 175 000133  1623  XMOVE,  MOVE
+ 176 000134  0000  LOC8ED, 0
+ 177 000135  0424  XEND,   ENDTST
+ 178 000136  0000  SOFT,   0
+ 179 000137  0140  ADPOT1, DSK0A
+ 180 000140  0000  DSK0A,  0
+ 181 000141  0000  DSK1A,  0
+ 182 000142  0000  DSK2A,  0
+ 183 000143  0000  DSK3A,  0
+ 184 000144  0000  DSK4A,  0
+ 185 000145  0000  DSK5A,  0
+ 186 000146  0000  DSK6A,  0
+ 187 000147  0000  DSK7A,  0
+ 188 000150  0151  ADPOT2, DSK0B
+ 189 000151  0000  DSK0B,  0
+ 190 000152  0000  DSK1B,  0
+ 191 000153  0000  DSK2B,  0
+ 192 000154  0000  DSK3B,  0
+ 193 000155  0000  DSK4B,  0
+ 194 000156  0000  DSK5B,  0
+ 195 000157  0000  DSK6B,  0
+ 196 000160  0000  DSK7B,  0
+ 197 000161  0000  PCOUNT, 0                               /USED ONLY IF ON APT
+ 198               /
+ 199               *200
+ 200               /
+ 201 000200  6224  BGN,    RIF
+ 202 000201  3130          DCA     HOMEMA
+ 203 000202  1130          TAD     HOMEMA
+ 204 000203  1075          TAD     KCDF                    /MAKE HOMEDF
+ 205 000204  3205          DCA     .+1
+ 206 000205  7402          HLT                             /MAKE DF=IF
+ 207               /NOW TEST FOR APT SYSTEM
+ 208               /IF ON APT TERMINAL MESSAGES ARE SKIP
+ 209               /TO AVOID TIMING PROBLEMS WITH THE SYSTEM
+ 210 000206  4424          APT8A                           /TEST FOR APT SYSTEM
+ 211 000207  4777          JMS     XC8PSW                  /GET SR=.
+ 212                       *.-1                    /**ES**
+ 213 000207  7000          NOP                     /**ES**
+ 214 000210  4430          IOTCHN                          /CHANGE DEVICE TO SWR3-8
+ 215 000211  4452          CRLF
+ 216 000212  4452          CRLF
+ 217 000213  4447          PRNTER                          /PRINT "RK8E/RK8L DISK FORMATTER PROGRAM"
+ 218 000214  2045          MES1                            /MESSAGE 1 POINTER
+ 219 000215  4452          CRLF
+ 220 000216  4447          PRNTER                          /PRINT "FOR ALL QUESTIONS"
+ 221 000217  2066          MES2                            /MESSAGE POINTER 2
+ 222 000220  1077  ALLAGN, TAD     M10
+ 223 000221  3107          DCA     STCNT1                  /COUNTER FOR AMOUNT OF DISKS
+ 224 000222  3134          DCA     LOC8ED
+ 225 000223  3110          DCA     STCNT2
+ 226 000224  4452  SAMAGN, CRLF
+ 227 000225  4447          PRNTER                  /PRINT "FORMAT DISK ? "
+ 228 000226  2117          MES3                            /MESSAGE POINTER 3
+ 229 000227  1110          TAD     STCNT2
+ 230 000230  1067          TAD     K0260
+ 231 000231  4436          TYPE                            /TYPE DISK NUMBER
+ 232 000232  1065  QUES1,  TAD     K0277
+ 233 000233  4436          TYPE                            /TYPE ?
+ 234 000234  1137          TAD     ADPOT1
+ 235 000235  1110          TAD     STCNT2
+ 236 000236  3111          DCA     STCNT3
+ 237 000237  4434          RECEIV                          /WAIT FOR CHARACTER
+ 238 000240  5244          JMP     NOTDSK                  /NO NOT THIS DISK
+ 239 000241  5232          JMP     QUES1                   /NEITHER YES OR NO
+ 240 000242  2134  WASDSK, ISZ     LOC8ED
+ 241 000243  7340          CLA CLL CMA
+ 242 000244  3511  NOTDSK, DCA I   STCNT3                  /YES, WAS CLEAR DISK POINTER
+ 243 000245  2110          ISZ     STCNT2                  /UPDATE POINTER
+ 244 000246  2107          ISZ     STCNT1                  /COUNT DISKS
+ 245 000247  5224          JMP     SAMAGN                  /ASK ABOUT NEXT
+ 246               /
+ 247 000250  4452  DONE,   CRLF
+ 248 000251  4447          PRNTER                          /PRINT "ARE YOU SURE ?"
+ 249 000252  2126          MES4                            /MESSAGE POINTER 4
+ 250 000253  4434          RECEIV                          /WAIT FOR CHARACTER
+ 251 000254  5220          JMP     ALLAGN                  /NO, START ALL OVER
+ 252 000255  5250          JMP     DONE                    /NEITHER TYPE ?
+ 253 000256  1134          TAD     LOC8ED
+ 254 000257  7041          CIA
+ 255 000260  7450          SNA                             /ANY DISKS
+ 256 000261  5200          JMP     BGN                     /NO, OPERATOR ERROR
+ 257 000262  3134          DCA     LOC8ED                  /YES, AMOUNT LOCATED
+ 258               /
+ 259               /FIRST RECALIBRATE AND FORMAT IN WRITE ALL MODE
+ 260               /ALL DISK DRIVES SELECTED BY OPERATOR,. MAKE THE FIRST
+ 261               /TWO WORDS OF EVERY DISK SECTOR EQUAL TO THE 
+ 262               /ABSOLUTE DISK ADDRESS.
+ 263               /
+ 264 000263  4533  FRMDSK, JMS I   XMOVE                   /MOVE DISK POINTERS
+ 265 000264  1134          TAD     LOC8ED
+ 266 000265  3056          DCA     AMOUNT
+ 267 000266  1056          TAD     AMOUNT
+ 268 000267  3105          DCA     DSKCNT                  /COUNTER FOR AMOUNT OF DISKS
+ 269 000270  3115          DCA     TCNTR4
+ 270 000271  1150          TAD     ADPOT2
+ 271 000272  3116          DCA     TCNTR5                  /A FEW COUNTERS
+ 272 000273  1516          TAD I   TCNTR5
+ 273 000274  7640          SZA CLA                         /FORMAT THIS DISK
+ 274 000275  5302          JMP     FORMAT                  /YES, GO
+ 275 000276  2116  NEXFRM, ISZ     TCNTR5                  /NO, TRY NEXT
+ 276 000277  2115          ISZ     TCNTR4
+ 277 000300  5273          JMP     .-5
+ 278 000301  7402          HLT                             /WHAT HAPPENED????
+ 279               /
+ 280 000302  1115  FORMAT, TAD     TCNTR4
+ 281 000303  0060          AND     K0003                   /MASK OUT
+ 282 000304  7104          CLL RAL                         /MAKE DISK NUMBER
+ 283 000305  3100          DCA     DRIVNO
+ 284 000306  1115          TAD     TCNTR4
+ 285 000307  0061          AND     K4
+ 286 000310  7640          SZA CLA
+ 287 000311  1066          TAD     K0200
+ 288 000312  3120          DCA     EXBIT                   /SET EXTENDED DRIVE BIT
+ 289 000313  4433          RECAL                           /RECALIBRATE THIS DRIVE
+ 290 000314  5335          JMP     RENEX1                  /RECALIBRATE NEXT EXISTING
+ 291 000315  3102          DCA     LOWAD                   /SETUP ADDRESS POINTER
+ 292 000316  3103          DCA     HIGHAD                  /SETUP ADDRESS POINTER
+ 293 000317  1064          TAD     M313
+ 294 000320  3104          DCA     TRKCNT                  /COUNTER FOR AMOUNT OF TRACKS
+ 295               /
+ 296               /
+ 297 000321  4427  WRTDSK, TICK                            /TIMING FOR APT IF NEEDED.
+ 298 000322  7774          -4                              /OTHERWISE BOTH ARE SKIPPED
+ 299 000323  4431          LODTRK                          /FORMAT A TRACK
+ 300 000324  5335          JMP     RENEX1                  /TO NEXT DISK
+ 301 000325  7300          CLA CLL
+ 302 000326  1102          TAD     LOWAD
+ 303 000327  1063          TAD     K0040
+ 304 000330  3102          DCA     LOWAD                   /UPDATE TO NEXT TRACK
+ 305 000331  7630          SZL CLA                         /SET EXTENDED BIT
+ 306 000332  2103          ISZ     HIGHAD                  /YES
+ 307 000333  2104          ISZ     TRKCNT                  /UPDATE TRACK COUNTER
+ 308 000334  5321          JMP     WRTDSK                  /DO NEXT TRACK
+ 309 000335  2105  RENEX1, ISZ     DSKCNT                  /UPDATE DISK COUNTER
+ 310 000336  5276         JMP     NEXFRM                  /DO NEXT DISK
+ 311               /
+ 312               /ROUTINE TO CHECK ADDRESSING INFORMATION ON THE DISK.
+ 313               /THE FIRST TWO WORDS OF EVERY SECTOR SHOULD EQUAL
+ 314               /THE ABSOLUTE DISK ADDRESS. ALL OTHER DATA IS
+ 315               /NOT CHECKED.
+ 316               /
+ 317 000337  1056  CHKDSK, TAD     AMOUNT
+ 318 000340  3105          DCA     DSKCNT                  /AMOUNT OF DISKS
+ 319 000341  3115          DCA     TCNTR4
+ 320 000342  1150          TAD     ADPOT2
+ 321 000343  3116          DCA     TCNTR5
+ 322 000344  1516          TAD I   TCNTR5                  /SOFTWARE INFORMATION
+ 323 000345  7640          SZA CLA                         /CHECK THIS DISK
+ 324 000346  5353          JMP     CHKDAT                  /CHECK THIS ONE
+ 325 000347  2116  NEXCHK, ISZ     TCNTR5                  /UPDATE FOR NEXT DISK
+ 326 000350  2115          ISZ     TCNTR4
+ 327 000351  5344          JMP     .-5
+ 328 000352  7402          HLT                             /WHAT HAPPENED?????
+ 329               /
+ 330 000353  1115  CHKDAT, TAD     TCNTR4
+ 331 000354  0060          AND     K0003                   /MASK OUT
+ 332 000355  7104          CLL RAL                         /MAKE DRIVE NUMBER
+ 333 000356  3100          DCA     DRIVNO
+ 334 000357  1115          TAD     TCNTR4
+ 335 000360  0061          AND     K4
+ 336 000361  7640          SZA CLA
+ 337 000362  1066          TAD     K0200
+ 338 000363  3120          DCA     EXBIT                   /SET EXTENDED DRIVE BIT
+ 339 000364  4433          RECAL                           /RECALIBRATE
+ 340 000365  5776          JMP     RENEX2                  /TRY NEXT DRIVE
+ 341 000366  3102          DCA     LOWAD
+ 342 000367  3103          DCA     HIGHAD                  /SETUP STARTING DISK ADDRESS
+ 343 000370  1064          TAD     M313
+ 344 000371  3104          DCA     TRKCNT                  /AMOUNT OF TRACKS TO DO
+ 345 000372  5775          JMP     CHECK
+ 346               /
+ 347 000375  0400  PAGE
+     000376  0414  
+     000377  3456  
+ 348               /
+ 349 000400  4427  CHECK,  TICK                            /TIMING FOR APT IF NEEDED.
+ 350 000401  7774          -4                              /SKIPPED IF NOT REQUIRED.
+ 351 000402  4432          REDDSK                          /READ AND CHECK ONE CYLINDER
+ 352 000403  5214          JMP     RENEX2                  /TO NEXT DISK
+ 353 000404  7300          CLA CLL
+ 354 000405  1102          TAD     LOWAD
+ 355 000406  1063          TAD     K0040
+ 356 000407  3102          DCA     LOWAD                   /UPDATE TO NEXT CYLINDER
+ 357 000410  7630          SZL CLA                         /TIME TO SET EXTENDED BIT
+ 358 000411  2103          ISZ     HIGHAD                  /YES, SET IT
+ 359 000412  2104          ISZ     TRKCNT                  /UPDATE CYLINDER COUNTER
+ 360 000413  5200          JMP     CHECK                   /CHECK NEXT ONE
+ 361 000414  2105  RENEX2, ISZ     DSKCNT                  /UPDATE DISK COUNTER
+ 362 000415  5777          JMP     NEXCHK                  /CHECK NEXT
+ 363               /
+ 364               /
+ 365 000416  1022          TAD     22
+ 366 000417  0070          AND     K4000                   /TEST FOR APT
+ 367 000420  7650          SNA CLA                         /ARE WE?
+ 368 000421  5224          JMP     ENDTST                  /NO. NORMAL RUN
+ 369 000422  2161          ISZ     PCOUNT                  /INCREMENT PASS COUNT
+ 370 000423  5776          JMP     FRMDSK                  /LOOP PROGRAM
+ 371 000424  4452  ENDTST, CRLF
+ 372 000425  4447          PRNTER                          /PRINT "PASS COMPLETE"
+ 373 000426  2021          TEXEND
+ 374 000427  4452          CRLF
+ 375 000430  4447          PRNTER                          /PRINT "TRY SAME SEQUENCE"
+ 376 000431  2135          MES5
+ 377 000432  4434          RECEIV                          /WAIT FOR INPUT FROM OPERATOR
+ 378 000433  5775          JMP     ALLAGN                  /NO, ASK AGAIN
+ 379 000434  5227          JMP     .-5
+ 380 000435  5776          JMP     FRMDSK                  /TRY SAME SEQUENCE
+ 381               /
+ 382               /
+ 383               /SUBROUTINE FOR "ERRORS," SCOPE LOOPS, AND
+ 384               /ERROR TYPEOUTS.
+ 385               /
+ 386 000436  0000  ERRO,   0
+ 387 000437  7301          CLA CLL IAC
+ 388 000440  1236          TAD     ERRO                    /GET PC STORED
+ 389 000441  3344          DCA     RETRN1                  /STORE FOR RETURN
+ 390 000442  4426          KAERRO                          /NOTIFY APT OF ERROR IS NEED BE
+ 391 000443  4452          CRLF
+ 392 000444  4452          CRLF
+ 393 000445  1636          TAD I   ERRO                    /GET TEXT POINTER
+ 394 000446  0062          AND     K0007                   /MASK 9-11
+ 395 000447  1352          TAD     HEDTAD                  /MAKE ERROR HEADER TAD
+ 396 000450  3251          DCA     .+1
+ 397 000451  7402          HLT                             /MODIFIED HEADER TAD
+ 398 000452  3254          DCA     .+2
+ 399 000453  4447          PRNTER                          /MODIFIED HEADER POINTER
+ 400 000454  7402          HLT
+ 401 000455  4452          CRLF
+ 402 000456  4447          PRNTER                          /PRINT PC:
+ 403 000457  1642          TEXPC
+ 404 000460  1236          TAD     ERRO                    /GET PC POINTER
+ 405 000461  4450          OCTEL                           /PRINT PC STORED
+ 406 000462  1636          TAD I   ERRO                    /GET TEXT POINTER
+ 407 000463  7104          CLL RAL
+ 408 000464  7420          SNL
+ 409 000465  5274          JMP     NTGD                    /NOT GD: REGISTER
+ 410 000466  3236          DCA     ERRO
+ 411 000467  4447          PRNTER                          /PRINT GD:
+ 412 000470  1644          TEXGD
+ 413 000471  1117          TAD     GDREG2
+ 414 000472  4450          OCTEL                           /PRINT FOUR OCTAL
+ 415 000473  7610          SKP CLA
+ 416 000474  3236  NTGD,   DCA     ERRO
+ 417 000475  4447          PRNTER
+ 418 000476  1646          TEXEX
+ 419 000477  1120          TAD     EXBIT
+ 420 000500  7640          SZA CLA
+ 421 000501  7001          IAC
+ 422 000502  4450          OCTEL
+ 423 000503  1345          TAD     XTEXT
+ 424 000504  3350          DCA     PCNTR2
+ 425 000505  1346          TAD     XREG
+ 426 000506  3010          DCA     AUTO10
+ 427 000507  1357          TAD     K7771
+ 428 000510  3347          DCA     PCNTR1                  /COUNTER FOR    # OF HEADS
+ 429 000511  7344          CLA CLL CMA RAL
+ 430 000512  3351          DCA     PCNTR3
+ 431 000513  1236  STRAUT, TAD     ERRO                    /GET TEXT POINTER
+ 432 000514  7500          SMA
+ 433 000515  5336          JMP     NOTEX                   /NOT THIS ONE
+ 434 000516  7104          CLL RAL
+ 435 000517  3236          DCA     ERRO
+ 436 000520  1350          TAD     PCNTR2                  /GET TEXT MESSAGE POINTER
+ 437 000521  2350          ISZ     PCNTR2
+ 438 000522  2350          ISZ     PCNTR2
+ 439 000523  3325          DCA     .+2                     /STORE FOR PRNTER
+ 440 000524  4447          PRNTER                          /PRINT XX:
+ 441 000525  7402          HLT                             /MODIFIED TEXT POINTER
+ 442 000526  1410          TAD I   AUTO10
+ 443 000527  4450          OCTEL                           /PRINT FOUR OCTAL
+ 444 000530  2351          ISZ     PCNTR3
+ 445 000531  7610          SKP CLA
+ 446 000532  4452          CRLF
+ 447 000533  2347  AGAIN,  ISZ     PCNTR1
+ 448 000534  5313          JMP     STRAUT                  /CHECK FOR NEXT XX:
+ 449 000535  5744          JMP I   RETRN1                  /RETURN TO QUESTION
+ 450 000536  7104  NOTEX,  CLL RAL
+ 451 000537  3236          DCA     ERRO
+ 452 000540  2350          ISZ     PCNTR2
+ 453 000541  2350          ISZ     PCNTR2
+ 454 000542  2010          ISZ     AUTO10
+ 455 000543  5333          JMP     AGAIN
+ 456               /
+ 457 000544  0000  RETRN1, 0
+ 458 000545  1650  XTEXT,  TEXCM
+ 459 000546  0120  XREG,   EXBIT
+ 460 000547  0000  PCNTR1, 0
+ 461 000550  0000  PCNTR2, 0
+ 462 000551  0000  PCNTR3, 0
+ 463 000552  1353  HEDTAD, TAD     HEDLST
+ 464 000553  1664  HEDLST, ERTX1
+ 465 000554  1675          ERTX2
+ 466 000555  1705          ERTX3
+ 467 000556  1717          ERTX4
+ 468 000557  7771  K7771,  7771
+ 469               /
+ 470 000575  0220  PAGE
+     000576  0263  
+     000577  0347  
+ 471               /
+ 472               /ROUTINE TO FORMAT CYLINDER
+ 473               /MAKE FIRST TWO WORDS OF EVERY SECTOR
+ 474               /EQUAL TO DISK ADDRESS.
+ 475               /
+ 476 000600  0000  WRTTRK, 0
+ 477 000601  7330          CLA CLL CML RAR
+ 478 000602  3117          DCA     GDREG2                  /SETUP COMPARE REGISTER
+ 479 000603  4435          KILBUF                          /CLEAR BUFFER
+ 480 000604  1071          TAD     K7735                   /AMOUNT OF SECTORS TO DO
+ 481 000605  3112          DCA     TCNTR1                  /SETUP COUNTER
+ 482 000606  3113          DCA     TCNTR2                  /STARTING WITH 0
+ 483 000607  1072          TAD     K7760                   /STOPPER
+ 484 000610  3114          DCA     TCNTR3                  /SECTOR COUNTER POINTER STOP
+ 485 000611  1113  LODR1,  TAD     TCNTR2
+ 486 000612  0074          AND     K0037                   /MASK SECTOR BITS
+ 487 000613  1102          TAD     LOWAD                   /ADD IN CYLINDER
+ 488 000614  3453          DCA I   XLOTRK                  /SETUP TRACK WORD IN BUFFER
+ 489 000615  1120          TAD     EXBIT                   /ADD IN EXTENDED BIT
+ 490 000616  1103          TAD     HIGHAD
+ 491 000617  1100          TAD     DRIVNO                  /ADD IN DRIVE NUMBER
+ 492 000620  3454          DCA I   XHITRK                  /SETUP TRACK WORD IN BUFFER
+ 493 000621  1454          TAD I   XHITRK
+ 494 000622  0270          AND     K7577
+ 495 000623  1130          TAD     HOMEMA                  /CURRENT FIELD
+ 496 000624  1267          TAD     K5000                   /FUNCTION WRITE ALL
+ 497 000625  4442          LDCMD                           /LOAD COMMAND
+ 498 000626  1120          TAD     EXBIT
+ 499 000627  4446          LDSC                            /LOAD EXTENDED DRIVE BIT
+ 500 000630  7200          CLA                             /CLEAR EXTENDED DRIVE BIT
+ 501 000631  1055          TAD     BGNBUF
+ 502 000632  4443          LDCUR                           /LOAD CURRENT ADDRESS
+ 503 000633  1453          TAD I   XLOTRK
+ 504 000634  4444          LDADD                           /LOAD TRACK AND GO
+ 505 000635  4441          DSKSKP                          /SKIP ON FLAG
+ 506 000636  5235          JMP     .-1                     /WAIT FOR FLAG
+ 507 000637  4440          RDSTAT                          /READ STATUS
+ 508 000640  1070          TAD     K4000
+ 509 000641  7640          SZA CLA                         /WAS STATUS 0?
+ 510 000642  5254          JMP     LODER                   /ERROR, STATUS ON WRITE ALL
+ 511 000643  2113          ISZ     TCNTR2
+ 512 000644  2114          ISZ     TCNTR3                  /COUNT FIRST REVOLUTION
+ 513 000645  7610          SKP CLA                         /STILL IN FIRST REV.
+ 514 000646  3113          DCA     TCNTR2                  /SETUP FOR SECTOR "1"
+ 515 000647  2113          ISZ     TCNTR2
+ 516 000650  2112          ISZ     TCNTR1                  /UPDATE SECTOR COUNTER
+ 517 000651  5211         JMP     LODR1                   /TRY NEXT SECTOR
+ 518 000652  2200          ISZ     WRTTRK
+ 519 000653  5600          JMP I   WRTTRK                  /THIS CYLINDER DONE
+ 520 000654  4437  LODER,  ERROR                           /ERROR, STATUS
+ 521 000655  3602          3602                            /TEXT POINTER
+ 522               /
+ 523 000656  4433          RECAL                           /CLEAR CONTROL AND DRIVE
+ 524 000657  5600          JMP I   WRTTRK                  /TO NEXT DISK
+ 525 000660  4452          CRLF
+ 526 000661  4447          PRNTER                          /PRINT "TRY SAME AGAIN"
+ 527 000662  1734          ERMES1
+ 528 000663  4434          RECEIV                          /WAIT FOR YES OR NO
+ 529 000664  5252          JMP     LODER-2                 /WAS A NO TRY SAME CYLINDER
+ 530 000665  5260          JMP     .-5                     /WAS NEITHER ASK AGAIN
+ 531 000666  5201          JMP     WRTTRK+1                /YES, TRY NEXT
+ 532 000667  5000  K5000,  5000
+ 533 000670  7577  K7577,  7577
+ 534               /
+ 535               /
+ 536               /SUBROUTINE TO READ STATUS REGISTER
+ 537               /
+ 538 000671  0000  RDST,   0
+ 539 000672  6745  IOT5,  DRST                            /READ STATUS IOT
+ 540 000673  7410          SKP
+ 541 000674  4777  ERHLT5, JMS     XC8ERR                  /SKIP TRAP ERROR.
+ 542 000675  3122          DCA     STREG                   /SAVE RESULTS
+ 543 000676  1122          TAD     STREG
+ 544 000677  5671          JMP I   RDST                    /EXIT
+ 545               /
+ 546               /SUBROUTINE TO LOAD CURRENT ADDRESS REGISTER
+ 547               /
+ 548 000700  0000  LDCA,   0
+ 549 000701  3125          DCA     ADREG                   /SAVE IN ADDRESS
+ 550 000702  1125          TAD     ADREG
+ 551 000703  3124          DCA     CAREG                   /SETUP INITIAL CURRENT ADDRESS
+ 552 000704  1125          TAD     ADREG
+ 553 000705  6744  IOT4, DLCA                            /LOAD CURRENT ADDRESS IOT
+ 554 000706  5700          JMP I   LDCA                    /EXIT
+ 555 000707  4777  ERHLT4, JMS     XC8ERR                  /SKIP TRAP ERROR.
+ 556 000710  5307          JMP     .-1
+ 557               /
+ 558               /
+ 559               /SUBROUTINE TO LOAD TRACK ADDRESS REGISTER
+ 560               /
+ 561 000711  0000  LDAD,   0
+ 562 000712  3123          DCA     DAREG                   /SAVE OUTBOUND DATA
+ 563 000713  1123          TAD     DAREG
+ 564 000714  6743  IOT3,  DLAG                            /LOAD DISK ADDRESS REGISTER
+ 565 000715  5711          JMP I   LDAD                    /EXIT
+ 566 000716  4777  ERHLT3, JMS     XC8ERR                  /SKIP TRAP ERROR.
+ 567 000717  5316          JMP     .-1
+ 568               /
+ 569               /
+ 570               /SUBROUTINE TO LOAD COMMAND REGISTER
+ 571               /
+ 572 000720  0000  LDCM,   0
+ 573 000721  3121          DCA     CMREG                   /SAVE OUTBOUND DATA
+ 574 000722  3776          DCA     INMODE
+ 575 000723  4775          JMS     XC8CKP                  /CHECK FOR CONTROL CHARACTERS.
+ 576 000724  7200          CLA
+ 577 000725  7200          CLA
+ 578 000726  1121          TAD     CMREG
+ 579 000727  6746  IOT6,   DLDC                            /LOAD COMMAND REGISTER
+ 580 000730  5720          JMP I   LDCM                    /EXIT
+ 581 000731  4777  ERHLT6, JMS     XC8ERR                  /SKIP TRAP ERROR.
+ 582 000732  5331          JMP     .-1
+ 583               /
+ 584               /
+ 585               /SUBROUTINE ISSUE "DLSC"
+ 586 000733  0000  XLDSC,  0
+ 587 000734  6740  IOT0,   DLSC
+ 588 000735  5733          JMP I   XLDSC
+ 589 000736  4777  ERHLT0, JMS     XC8ERR
+ 590 000737  5336          JMP     .-1
+ 591               
+ 592               /SUBROUTINE TO ISSUE "DSKP" DISK SKIP IOT
+ 593               /
+ 594 000740  0000  SDKP,   0
+ 595 000741  6741  IOT1,  DSKP                            /DISK SKIP IOT
+ 596 000742  7410          SKP                             /DID NOT SKIP
+ 597 000743  2340          ISZ     SDKP
+ 598 000744  5740          JMP I   SDKP                    /EXIT
+ 599               /
+ 600               /SUBROUTINE TO ISSUE "DCLR" CLEAR IOT
+ 601               /
+ 602 000745  0000  CLDR,   0
+ 603 000746  6742  IOT2,  DCLR                            /DCLR "CLEAR IOT"
+ 604 000747  5745          JMP I   CLDR                    /EXIT
+ 605 000750  4777  ERHLT2, JMS     XC8ERR                  /SKIP TRAP ERROR.
+ 606 000751  5350          JMP     .-1
+ 607               /
+ 608               /ROUTINE TO ZERO WORK BUFFER
+ 609               /
+ 610 000752  0000  KLBUF,  0
+ 611 000753  7340          CLA CLL CMA
+ 612 000754  1055          TAD     BGNBUF                  /START OF BUFFER -1
+ 613 000755  3010          DCA     AUTO10                  /SETUP AUTO INDEX
+ 614 000756  1364          TAD     K7400
+ 615 000757  3131          DCA     DATCNT                  /SETUP COUNTER
+ 616 000760  3410          DCA I   AUTO10                  /CLEAR BUFFER
+ 617 000761  2131          ISZ     DATCNT                  /UPDATE COUNTER
+ 618 000762  5360          JMP     .-2                     /NOT ALL CLEARED YET
+ 619 000763  5752          JMP I   KLBUF                   /BUFFER CLEARED
+ 620 000764  7400  K7400,  7400
+ 621               /
+ 622 000775  3641  PAGE
+     000776  3676  
+     000777  4007  
+ 623               /
+ 624               /
+ 625               /ROUTINE TO READ AND CHECK A CYLINDER
+ 626               /
+ 627 001000  0000  REDTRK, 0
+ 628 001001  1071          TAD     K7735
+ 629 001002  3112          DCA     TCNTR1                  /AMOUNT OF SECTORS TO DO
+ 630 001003  3113          DCA     TCNTR2                  /STARTING WITH 0
+ 631 001004  1072          TAD     K7760
+ 632 001005  3114          DCA     TCNTR3
+ 633 001006  4435          KILBUF                          /CLEAR BUFFER
+ 634 001007  7340  CHKR1,  CLA CLL CMA
+ 635 001010  3136          DCA     SOFT                    /SETUP SOFT ERROR FLAG
+ 636 001011  1055          TAD     BGNBUF
+ 637 001012  4443          LDCUR                           /LOAD CURRENT ADDRESS
+ 638 001013  1103          TAD     HIGHAD                  /EXTENDED CYLINDER BIT
+ 639 001014  1100          TAD     DRIVNO                  /CURRENT DRIVE
+ 640 001015  1130          TAD     HOMEMA                  /CURRENT FIELD
+ 641 001016  4442          LDCMD                           /LOAD COMMAND
+ 642 001017  1120          TAD     EXBIT                   /LOAD EXTENDED DRIVE BIT
+ 643 001020  4446          LDSC
+ 644 001021  7200          CLA                             /CLEAR EXTENDED DRIVE BIT
+ 645 001022  1113          TAD     TCNTR2
+ 646 001023  0074          AND     K0037                   /MASK SECTOR BITS OFF
+ 647 001024  1102          TAD     LOWAD                   /ADD IN OTHER DISK ADDRESS
+ 648 001025  4444          LDADD                           /LOAD AND GO
+ 649 001026  4441          DSKSKP                          /DISK SKIP IOT
+ 650 001027  5226          JMP     .-1                     /WAIT FOR FLAG
+ 651 001030  4440          RDSTAT                          /READ STATUS
+ 652 001031  1070          TAD     K4000                   /ADD IN FUDGE FACTOR
+ 653 001032  7650          SNA CLA                         /SKIP IF ERROR
+ 654 001033  5241          JMP     STAOK                   /STATUS O.K.
+ 655 001034  1122          TAD     STREG                   /GET STATUS READ
+ 656 001035  0777          AND     K0010
+ 657 001036  7650          SNA CLA                         /WAS IT A CRC
+ 658 001037  5306          JMP     STAER                   /NO, JUST A HARD ERROR
+ 659 001040  3136          DCA     SOFT                    /CLEAR SOFT ERROR FLAG
+ 660 001041  1121  STAOK,  TAD     CMREG                   /GET LAST COMMAND
+ 661 001042  0062          AND     K0007
+ 662 001043  1120          TAD     EXBIT                   /ADD EXTENDED DRIVE BIT
+ 663 001044  7041          CIA
+ 664 001045  1454          TAD I   XHITRK                  /GET WORD READ FROM DISK
+ 665 001046  7650          SNA CLA                         /SKIP IF ERROR
+ 666 001047  5256          JMP     FRSTOK                  /FIRST WORD O.K.
+ 667 001050  1454          TAD I   XHITRK                  /GET WORD
+ 668 001051  3126          DCA     DTREG                   /SETUP ERROR PRINTER
+ 669 001052  1121          TAD     CMREG
+ 670 001053  0062          AND     K0007
+ 671 001054  3117          DCA     GDREG2                  /SETUP GOOD FOR PRINTER
+ 672 001055  5303          JMP     DATER                   /NO, DATA ERROR
+ 673 001056  1453  FRSTOK, TAD I   XLOTRK                  /GET WORD READ
+ 674 001057  7041          CIA
+ 675 001060  1123          TAD     DAREG                   /COMPARE TO GOOD
+ 676 001061  7650          SNA CLA                         /SKIP IF ERROR
+ 677 001062  5271          JMP     DATOK                   /WORD O.K.
+ 678 001063  2125          ISZ     ADREG                   /SETUP ERROR PRINTER
+ 679 001064  1123          TAD     DAREG
+ 680 001065  3117          DCA     GDREG2                  /SETUP GOOD WORD FOR PRINTER
+ 681 001066  1453          TAD I   XLOTRK                  /GET WORD READ
+ 682 001067  3126          DCA     DTREG                   /SETUP FOR PRINTER
+ 683 001070  5303          JMP     DATER                   /DATA ERROR
+ 684 001071  1136  DATOK,  TAD     SOFT                    /GET SOFT ERROR FLAG
+ 685 001072  7650          SNA CLA                         /WAS IT CLEAR
+ 686 001073  5306          JMP     STAER                   /YES, STATUS ERROR
+ 687 001074  1113          TAD     TCNTR2
+ 688 001075  1060          TAD     K0003                   /ADVANCE 3 SECTORS
+ 689 001076  3113          DCA     TCNTR2
+ 690 001077  2114          ISZ     TCNTR3
+ 691 001100  5207          JMP     CHKR1                   /MORE TO FORMAT
+ 692 001101  2200          ISZ     REDTRK
+ 693 001102  5600          JMP I   REDTRK                  /EXIT, O.K.
+ 694 001103  1776  DATER,  TAD     K7741
+ 695 001104  3313          DCA     TCHKT                   /SETUP TEXT POINTER
+ 696 001105  5312          JMP     CHKER                   /ERROR
+ 697 001106  1775  STAER,  TAD     K3600
+ 698 001107  3313          DCA     TCHKT                   /SETUP TEXT POINTER
+ 699 001110  7330          CLA CLL CML RAR
+ 700 001111  3117          DCA     GDREG2                  /SETUP GOOD STATUS PRINTER
+ 701 001112  4437  CHKER,  ERROR                           /ERROR, READ DATA
+ 702 001113  0000  TCHKT,  0                               /MODIFIED TEXT POINTER
+ 703 001114  4433          RECAL                           /CLEAR CONTROL AND DRIVE
+ 704 001115  5600          JMP I   REDTRK                  /TO NEXT DISK
+ 705 001116  4452          CRLF
+ 706 001117  4447          PRNTER                          /PRINT "TRY SAME AGAIN"
+ 707 001120  2000          ERMES3
+ 708 001121  4434          RECEIV
+ 709 001122  5301          JMP     DATER-2                 /CHECK NEXT 
+ 710 001123  5316          JMP     .-5                     /RE-PRINT
+ 711 001124  5201          JMP     REDTRK+1                /TRY SAME AGAIN
+ 712               /
+ 713               /THIS ROUTINE WILL TEST FOR APT AND NOP CONSOLE
+ 714               /PACKAGE IF NEED BE
+ 715               /
+ 716 001125  0000  APT8,   0
+ 717 001126  1022          TAD     22
+ 718 001127  7700          SMA CLA
+ 719 001130  5725          JMP I   APT8
+ 720 001131  1022          TAD     22
+ 721 001132  0373          AND     K7377                   /ON APT. NOP CONSOLE PACKAGE
+ 722 001133  3022         DCA     22
+ 723 001134  1022          TAD     22
+ 724 001135  0062          AND     K0007                   /ISOLATE DRIVE NUMBER OR
+ 725                                                       /NUMBER OF DRIVES TO BE DONE
+ 726 001136  3107          DCA     STCNT1
+ 727 001137  1022          TAD     22
+ 728 001140  0774          AND     K0100
+ 729 001141  7650          SNA CLA                         /SINGLE DRIVE TESTING
+ 730 001142  5353          JMP     MULDSK                  /NO.SEVERAL TO DO
+ 731 001143  1137          TAD     ADPOT1                  /GET DISK POINTER
+ 732 001144  1107          TAD     STCNT1                  /ESTABLISH DRIVE TO DO
+ 733 001145  3107          DCA     STCNT1
+ 734 001146  7340          CLL CLA CMA                     /-1
+ 735 001147  3507          DCA I   STCNT1
+ 736 001150  7340          CLL CLA CMA                     /ONE DISK TO DO
+ 737 001151  3134          DCA     LOC8ED
+ 738 001152  5527          JMP I   BGNTST
+ 739 001153  1107  MULDSK, TAD     STCNT1                  /DRIVE TO BE DONE
+ 740 001154  7040          CMA
+ 741 001155  3107          DCA     STCNT1
+ 742 001156  1137          TAD     ADPOT1                  /GET DISK POINTER
+ 743 001157  1110          TAD     STCNT2                  /ESTABLISH DRIVE TO BE DONE
+ 744 001160  3111          DCA     STCNT3
+ 745 001161  2134          ISZ     LOC8ED
+ 746 001162  7340          CLL CLA CMA
+ 747 001163  3511          DCA I   STCNT3                  /DO THIS DRIVE
+ 748 001164  2110          ISZ     STCNT2  
+ 749 001165  2107          ISZ     STCNT1
+ 750 001166  5356          JMP     MULDSK+3                /MORE TO DO
+ 751 001167  1134          TAD     LOC8ED
+ 752 001170  7041          CIA
+ 753 001171  3134          DCA     LOC8ED          /NUMBER TO BE DONE
+ 754 001172  5527          JMP I   BGNTST
+ 755 001173  7377  K7377,  7377
+ 756 001174  1556  PAGE
+     001175  1326  
+     001176  1325  
+     001177  1324  
+ 757               /
+ 758               /SUBROUTINE TO PRINT TWO OCTAL
+ 759               /
+ 760 001200  0000  TOCT,   0
+ 761 001201  3106          DCA     SBCNT1                  /SAVE AC
+ 762 001202  1106          TAD     SBCNT1
+ 763 001203  7010          RAR
+ 764 001204  7012          RTR
+ 765 001205  0062          AND     K0007
+ 766 001206  1067          TAD     K0260
+ 767 001207  4436          TYPE                            /PRINT FIRST BYTE
+ 768 001210  1106          TAD     SBCNT1
+ 769 001211  0062          AND     K0007
+ 770 001212  1067          TAD     K0260
+ 771 001213  4436          TYPE                            /PRINT SECOND BIT
+ 772 001214  5600          JMP I   TOCT                    /EXIT
+ 773               /
+ 774               /
+ 775               /
+ 776               /ROUTINE TO DO CRLF
+ 777               /
+ 778 001215  0000  UPONE,  0
+ 779 001216  7300          CLA CLL
+ 780 001217  1225          TAD     K0215
+ 781 001220  4436          TYPE
+ 782 001221  1226          TAD     K0212
+ 783 001222  4436          TYPE
+ 784 001223  4436          TYPE                            /TYPE ONE NULL
+ 785 001224  5615          JMP I   UPONE
+ 786               /
+ 787 001225  0215  K0215,  0215
+ 788 001226  0212  K0212,  0212
+ 789               /
+ 790               /ROUTINE TO PRINT FOUR OCTAL
+ 791               /
+ 792 001227  0000  FROCT,  0
+ 793 001230  7006          RTL
+ 794 001231  7006          RTL
+ 795 001232  3215          DCA     UPONE
+ 796 001233  1076          TAD     M4
+ 797 001234  3200          DCA     TOCT
+ 798 001235  1215          TAD     UPONE
+ 799 001236  0062          AND     K0007
+ 800 001237  1067          TAD     K0260
+ 801 001240  4436          TYPE
+ 802 001241  1215          TAD     UPONE
+ 803 001242  7006          RTL
+ 804 001243  7004          RAL
+ 805 001244  3215          DCA     UPONE
+ 806 001245  2200          ISZ     TOCT
+ 807 001246  5235          JMP     .-11
+ 808 001247  1321          TAD     K0240
+ 809 001250  4436          TYPE
+ 810 001251  5627          JMP I   FROCT
+ 811               /
+ 812               /SUBROUTINE TO PRINT TEXT
+ 813               /
+ 814 001252  0000  PRN,    0
+ 815 001253  7300          CLA CLL
+ 816 001254  1652          TAD I   PRN                     /GET POINTER
+ 817 001255  2252          ISZ     PRN
+ 818 001256  3227          DCA     FROCT
+ 819 001257  1627          TAD I   FROCT
+ 820 001260  0322          AND     K7700
+ 821 001261  7450          SNA
+ 822 001262  5306          JMP     EXIT
+ 823 001263  7500          SMA
+ 824 001264  7020          CML
+ 825 001265  7001          IAC
+ 826 001266  7012          RTR
+ 827 001267  7012          RTR
+ 828 001270  7012          RTR
+ 829 001271  4436          TYPE
+ 830 001272  1627          TAD I   FROCT
+ 831 001273  0323          AND     K0077
+ 832 001274  7450          SNA
+ 833 001275  5306          JMP     EXIT
+ 834 001276  1311          TAD     K3740
+ 835 001277  7500          SMA
+ 836 001300  1310          TAD     K4100
+ 837 001301  1321          TAD     K0240
+ 838 001302  4436          TYPE
+ 839 001303  2227          ISZ     FROCT
+ 840 001304  7300          CLA CLL
+ 841 001305  5257          JMP     PRN+5
+ 842 001306  7300  EXIT,   CLA CLL
+ 843 001307  5652          JMP I   PRN
+ 844               
+ 845               /
+ 846 001310  4100  K4100,  4100
+ 847 001311  3740  K3740,  3740
+ 848               /
+ 849               /ROUTINE TO TYPE
+ 850               /
+ 851 001312  0000  PRINT,  0
+ 852 001313  6046          TLS
+ 853 001314  6041          TSF
+ 854 001315  5314          JMP     .-1
+ 855 001316  6042          TCF
+ 856 001317  7200          CLA
+ 857 001320  5712          JMP I   PRINT
+ 858 001321  0240  K0240,  0240
+ 859 001322  7700  K7700,  7700
+ 860 001323  0077  K0077,  0077
+ 861 001324  0010  K0010,  10
+ 862 001325  7741  K7741,  7741
+ 863 001326  3600  K3600,  3600
+ 864               /ROUTINE TO WAIT FOR KEY FROM OPERATOR
+ 865               /
+ 866 001327  0000  WAIT,   0
+ 867 001330  7300          CLA CLL
+ 868 001331  6032          KCC
+ 869 001332  6031          KSF
+ 870 001333  5332          JMP     .-1
+ 871 001334  6036          KRB
+ 872 001335  6046          TLS
+ 873 001336  6041          TSF
+ 874 001337  5336          JMP     .-1
+ 875 001340  0370          AND     K0177
+ 876 001341  1066          TAD     K0200
+ 877 001342  3101          DCA     CHAR
+ 878 001343  1101          TAD     CHAR
+ 879 001344  3777          DCA     C8CHAR
+ 880 001345  2776          ISZ     INMODE
+ 881 001346  4775          JMS     XC8CNT          /CHECK FOR CONTROL CHARACTERS.
+ 882 001347  7200          CLA
+ 883 001350  7200          CLA
+ 884 001351  3776          DCA     INMODE
+ 885 001352  6032          KCC
+ 886 001353  6042          TCF
+ 887 001354  1101          TAD     CHAR
+ 888 001355  7041          CIA
+ 889 001356  1371          TAD     K0316
+ 890 001357  7650          SNA CLA                         /WAS IT A NO
+ 891 001360  5727          JMP I   WAIT                    /YES
+ 892 001361  2327          ISZ     WAIT                    /UPDATE RETURN POINTER
+ 893 001362  1101          TAD     CHAR
+ 894 001363  7041          CIA
+ 895 001364  1372          TAD     K0331
+ 896 001365  7650          SNA CLA                         /WAS IT A YES
+ 897 001366  2327          ISZ     WAIT                    /WAS A YES
+ 898 001367  5727          JMP I   WAIT                    /WAS NEITHER
+ 899 001370  0177  K0177,  0177
+ 900 001371  0316  K0316,  0316
+ 901 001372  0331  K0331,  0331
+ 902               /
+ 903 001375  3200  PAGE
+     001376  3676  
+     001377  3675  
+ 904               /
+ 905               /
+ 906               /ROUTINE TO RECALIBRATE SELECTED DRIVE
+ 907               /
+ 908 001400  0000  RESTOR, 0
+ 909 001401  7301          CLA CLL IAC                     /ENABLE CLEAR CONTROL
+ 910 001402  4445          CLRALL                          /CLEAR CONTROL
+ 911 001403  1100          TAD     DRIVNO                  /CURRENT DRIVE
+ 912 001404  1130          TAD     HOMEMA                  /CURRENT FIELD
+ 913 001405  4442          LDCMD                           /LOAD COMMAND
+ 914 001406  1120          TAD     EXBIT
+ 915 001407  4446          LDSC                            /LOAD EXTENDED DRIVE BIT
+ 916 001410  7330          CLA CLL CML RAR                 /MAYBE EXPECTED STATUS
+ 917 001411  3117          DCA     GDREG2                  /SETUP COMPARE REGISTER
+ 918 001412  7326          CLA CLL CML RTL                 /ENABLE RECALIBRATE BIT
+ 919 001413  4445          CLRALL                          /"RECALIBRATE"
+ 920 001414  4441          DSKSKP                          /DISK SKIP IOT
+ 921 001415  5214          JMP     .-1                     /WAIT FOR FIRST DONE FLAG
+ 922 001416  4440          RDSTAT                          /READ STATUS
+ 923 001417  1327          TAD     K2000
+ 924 001420  7450          SNA                             /WAS IT BUSY AND DONE
+ 925 001421  5225          JMP     RESTA                   /YES, THEN ITS O.K.
+ 926 001422  1327          TAD     K2000                   /NO, THEN IT MUST BE JUST DONE
+ 927 001423  7640          SZA CLA                         /WAS IT JUST DONE
+ 928 001424  5243          JMP     RESTER                  /NO, ERROR
+ 929 001425  4445  RESTA,  CLRALL                          /CLEAR STATUS
+ 930 001426  1066          TAD     K0200                   /ENABLE SET SECOND DONE FLAG
+ 931 001427  1121          TAD     CMREG                   /ORIGINAL COMMAND
+ 932 001430  4442          LDCMD                           /LOAD COMMAND
+ 933 001431  4441          DSKSKP                          /DISK SKIP IOT
+ 934 001432  5231          JMP     .-1                     /WAIT FOR SECOND DONE
+ 935 001433  4440          RDSTAT                          /READ STATUS
+ 936 001434  1070          TAD     K4000
+ 937 001435  7640          SZA CLA                         /WAS IT ONLY DONE FLAG
+ 938 001436  5243          JMP     RESTER                  /NO, ERROR STATUS
+ 939 001437  7301          CLA CLL IAC                     /ENABLE CLEAR CONTROL
+ 940 001440  4445          CLRALL                          /CLEAR CONTROL
+ 941 001441  2200          ISZ     RESTOR                  /UPDATE FOR GOOD RECALIBRATE
+ 942 001442  5600          JMP I   RESTOR                  /RETURN
+ 943 001443  4437  RESTER, ERROR                           /ERROR, STATUS
+ 944 001444  3603          3603                            /TEXT POINTER
+ 945               /
+ 946 001445  4452          CRLF
+ 947 001446  4447          PRNTER                          /PRINT "TRY RECALIBRATE"
+ 948 001447  1756          ERMES2
+ 949 001450  4434          RECEIV                          /WAIT FOR INPUT
+ 950 001451  5254          JMP     .+3                     /TRY NEXT EXISTING DISK
+ 951 001452  5245          JMP     .-5
+ 952 001453  5201          JMP     RESTOR+1                /TRY AGAIN
+ 953 001454  7301          CLA CLL IAC
+ 954 001455  1056          TAD     AMOUNT                  /GET AMOUNT ON SYSTEM
+ 955 001456  7450          SNA                             /WAS THERE ONLY 1 LEFT
+ 956 001457  5535          JMP I   XEND                    /LAST DISK
+ 957 001460  3056          DCA     AMOUNT                  /MORE TO GO BUT CLEAR THIS ONE
+ 958 001461  3516          DCA I   TCNTR5                  /CLEAR DISK POINTER
+ 959 001462  5600          JMP I   RESTOR                  /TRY NEXT ONE
+ 960               /
+ 961               /
+ 962               /ROUTINE TO CHANGE DEVICE CODES
+ 963               /
+ 964 001463  0000  CHANG,  0
+ 965 001464  4777          JMS     XC8SW                   /GET SWITCH REGISTER BITS.
+ 966 001465  7010          RAR
+ 967 001466  7620          SNL CLA                         /CHANGE DEVICE CODES?
+ 968 001467  5663          JMP I   CHANG                   /NO.
+ 969 001470  4777          JMS     XC8SW                   /GET SWITCHES.
+ 970 001471  0313          AND     A0770
+ 971 001472  3314          DCA     CSAVE1                  /SAVE DESIRED
+ 972 001473  1316          TAD     CCNTR1
+ 973 001474  3315          DCA     CSAVE2
+ 974 001475  1317         TAD     CHNPOT
+ 975 001476  3200          DCA     RESTOR
+ 976 001477  1600  CHANGR, TAD I   RESTOR                  /GET ADDRESS POINTER
+ 977 001500  3311          DCA     KWAIT
+ 978 001501  1711          TAD I   KWAIT                   /GET OLD CODE
+ 979 001502  0312          AND     A7007                   /MASK
+ 980 001503  1314          TAD     CSAVE1                  /ADD IN DESIRED
+ 981 001504  3711          DCA I   KWAIT                   /STORE DESIRED DEVICE CODE
+ 982 001505  2200          ISZ     RESTOR                  /UPDATE POINTER
+ 983 001506  2315          ISZ     CSAVE2                  /UPDATE CHANGE COUNTER
+ 984 001507  5277          JMP     CHANGR
+ 985 001510  5663          JMP I   CHANG                   /EXIT TO PROGRAM.
+ 986               /
+ 987 001511  0000  KWAIT,  0
+ 988 001512  7007  A7007,  7007
+ 989 001513  0770  A0770,  0770
+ 990 001514  0000  CSAVE1, 0
+ 991 001515  0000  CSAVE2, 0
+ 992 001516  7771  CCNTR1, 7771
+ 993 001517  1520  CHNPOT, CHNPOT+1
+ 994 001520  0734          IOT0
+ 995 001521  0741          IOT1
+ 996 001522  0746          IOT2
+ 997 001523  0714          IOT3
+ 998 001524  0705          IOT4
+ 999 001525  0672          IOT5
+1000 001526  0727          IOT6
+1001 001527  2000  K2000,  2000
+1002               /
+1003               /THIS ROUTINE WILL GENERATE TIMING IF NEEDED BY THE APT SYSTEM
+1004               /
+1005 001530  0000  KTICK,  0
+1006 001531  7300          CLL CLA
+1007 001532  1022          TAD     22                      /GET HARDWARE CONFIGURATION
+1008 001533  0070          AND     K4000
+1009 001534  7650          SNA CLA                         /ON APT?
+1010 001535  5351          JMP     EXTICK                  /NO
+1011 001536  1730          TAD I   KTICK                   /GET TIMING VALUE
+1012 001537  3353          DCA     COUNT                   /ESATABLISH TIME
+1013 001540  2132          ISZ     CLKCNT
+1014 001541  5351          JMP     EXTICK                  /RETURN
+1015 001542  1353          TAD     COUNT                   /GET VALUE OF COUNTER
+1016 001543  3132          DCA     CLKCNT                  /STORE IT
+1017 001544  2354          ISZ     CNT                     /TIMING NEED BE DONE?
+1018 001545  5351          JMP     EXTICK
+1019 001546  4425          TIME
+1020 001547  1355          TAD     KCNT                    /TIMING VALUE
+1021 001550  3354          DCA     CNT                     /INIT SECOND COUNTER
+1022 001551  2330  EXTICK, ISZ     KTICK                   /MOVE BEYOND TIMING VALUE
+1023 001552  5730          JMP I   KTICK
+1024               
+1025 001553  0000  COUNT,  0
+1026 001554  7776  CNT,    -2
+1027 001555  7776  KCNT,   -2
+1028 001556  0100  K0100,  0100
+1029               /
+1030               /
+1031               /ROUTINE TO NOTIFY APT OF USE IF REQUIRED
+1032               /
+1033 001557  0000  KTIME,  0
+1034 001560  6002          IOF                     /DISABLE INTERUPTS
+1035 001561  6214          RDF                     /GET PRESENT DATA FIELD
+1036 001562  1075          TAD KCDF
+1037 001563  3364          DCA .+1                 /ESTABLISHES CURRENT DATA FIELD
+1038 001564  7402          HLT
+1039 001565  6272          CIF 70                          /FIELD 7. LOCATION OF UV PROM
+1040 001566  4771          JMS I K6500
+1041 001567  7300          CLL CLA
+1042 001570  5757          JMP I KTIME
+1043               /
+1044 001571  6500  K6500,  6500
+1045               /
+1046 001577  3062  PAGE
+1047               /
+1048               /
+1049               /THIS ROUTINE WILL NOTIFY APT OF AN ERROR AND SEND PC TO
+1050               /APT SYSTEM. ALL ERRORS WILL RESULT IN PROGRAM HLT AND A TIME OUT ON
+1051               /APT. APT WILL TAKE OVER FROM THERE.
+1052               
+1053               /
+1054 001600  0000  AERRO,  0
+1055 001601  6002          IOF                     /DISABLE INTERUPTS
+1056 001602  7200          CLA
+1057 001603  1022          TAD     22              /CHECK FOR APT SYSTEM
+1058 001604  7700          SMA CLA
+1059 001605  5600          JMP I   AERRO           /RETURN NOT ON APT
+1060 001606  1621          TAD I   KERRO           /GET PC
+1061 001607  3222          DCA SAVPC
+1062 001610  6214          RDF                     /GET CURRENT DATA FIELD
+1063 001611  1075          TAD KCDF
+1064 001612  3214          DCA .+2
+1065 001613  1222          TAD SAVPC
+1066 001614  7402          HLT                     /REPLACED WILL CURRENT DATA FIELD
+1067 001615  6272          CIF 70                  /CHANGE IF FOR APT RETURN TO FIELD 7
+1068 001616  5620          JMP I K6520             /NOTIFIES APT OF ERROR
+1069 001617  7402          HLT
+1070               /
+1071 001620  6520  K6520,  6520
+1072 001621  0436  KERRO,  ERRO
+1073 001622  0000  SAVPC,  0
+1074               /
+1075               /
+1076               /ROUTINE TO MOVE DISK POINTERS
+1077               /
+1078 001623  0000  MOVE,   0
+1079 001624  1237          TAD     ADPT1
+1080 001625  3010          DCA     AUTO10
+1081               
+1082 001626  1240          TAD     ADPT2
+1083 001627  3011          DCA     AUTO11
+1084 001630  1077          TAD     M10
+1085 001631  3241          DCA     MCNTR1
+1086 001632  1410          TAD I   AUTO10                  /FROM HERE
+1087 001633  3411          DCA I   AUTO11                  /TO THERE
+1088 001634  2241          ISZ     MCNTR1                  /4 POINTERS
+1089 001635  5232          JMP     .-3
+1090 001636  5623          JMP I   MOVE
+1091               /
+1092 001637  0137  ADPT1,  DSK0A-1
+1093 001640  0150  ADPT2,  DSK0B-1
+1094 001641  0000  MCNTR1, 0
+1095               /
+1096               /
+1097 001642  2003  TEXPC,  TEXT    "PC:"
+     001643  7200  
+1098 001644  0704  TEXGD,  TEXT    "GD:"
+     001645  7200  
+1099 001646  0530  TEXEX,  TEXT    "EX:"
+     001647  7200  
+1100 001650  0315  TEXCM,  TEXT    "CM:"
+     001651  7200  
+1101 001652  2324  TEXST,  TEXT    "ST:"
+     001653  7200  
+1102 001654  0401  TEXDA,  TEXT    "DA:"
+     001655  7200  
+1103 001656  0301  TEXCA,  TEXT    "CA:"
+     001657  7200  
+1104 001660  0104  TEXAD,  TEXT    "AD:"
+     001661  7200  
+1105 001662  0424  TEXDT,  TEXT    "DT:"
+     001663  7200  
+1106               /
+1107 001664  2205  ERTX1,  TEXT    "READ STATUS ERROR"
+     001665  0104  
+     001666  4023  
+     001667  2401  
+     001670  2425  
+     001671  2340  
+     001672  0522  
+     001673  2217  
+     001674  2200  
+1108 001675  0411  ERTX2,  TEXT    "DISK DATA ERROR"
+     001676  2313  
+     001677  4004  
+     001700  0124  
+     001701  0140  
+     001702  0522  
+     001703  2217  
+     001704  2200  
+1109 001705  2722  ERTX3,  TEXT    "WRITE STATUS ERROR"
+     001706  1124  
+     001707  0540  
+     001710  2324  
+     001711  0124  
+     001712  2523  
+     001713  4005  
+     001714  2222  
+     001715  1722  
+     001716  0000  
+1110 001717  2205  ERTX4,  TEXT    "RECALIBRATE STATUS ERROR"
+     001720  0301  
+     001721  1411  
+     001722  0222  
+     001723  0124  
+     001724  0540  
+     001725  2324  
+     001726  0124  
+     001727  2523  
+     001730  4005  
+     001731  2222  
+     001732  1722  
+     001733  0000  
+1111               /
+1112 001734  2422  ERMES1, TEXT "TRY TO FORMAT SAME CYLINDER AGAIN?"
+     001735  3140  
+     001736  2417  
+     001737  4006  
+     001740  1722  
+     001741  1501  
+     001742  2440  
+     001743  2301  
+     001744  1505  
+     001745  4003  
+     001746  3114  
+     001747  1116  
+     001750  0405  
+     001751  2240  
+     001752  0107  
+     001753  0111  
+     001754  1677  
+     001755  0000  
+1113 001756  2422  ERMES2, TEXT "TRY TO RECALIBRATE SAME DISK AGAIN?"
+     001757  3140  
+     001760  2417  
+     001761  4022  
+     001762  0503  
+     001763  0114  
+     001764  1102  
+     001765  2201  
+     001766  2405  
+     001767  4023  
+     001770  0115  
+     001771  0540  
+     001772  0411  
+     001773  2313  
+     001774  4001  
+     001775  0701  
+     001776  1116  
+     001777  7700  
+1114 002000  2422  ERMES3, TEXT "TRY TO CHECK SAME CYLINDER AGAIN?"
+     002001  3140  
+     002002  2417  
+     002003  4003  
+     002004  1005  
+     002005  0313  
+     002006  4023  
+     002007  0115  
+     002010  0540  
+     002011  0331  
+     002012  1411  
+     002013  1604  
+     002014  0522  
+     002015  4001  
+     002016  0701  
+     002017  1116  
+     002020  7700  
+1115               /
+1116 002021  2213  TEXEND, TEXT    "RK8E/RK8L DISK FORMATTER PASS COMPLETE"
+     002022  7005  
+     002023  5722  
+     002024  1370  
+     002025  1440  
+     002026  0411  
+     002027  2313  
+     002030  4006  
+     002031  1722  
+     002032  1501  
+     002033  2424  
+     002034  0522  
+     002035  4020  
+     002036  0123  
+     002037  2340  
+     002040  0317  
+     002041  1520  
+     002042  1405  
+     002043  2405  
+     002044  0000  
+1117 002045  2213  MES1,   TEXT "RK8E/RK8L DISK FORMATTER PROGRAM"
+     002046  7005  
+     002047  5722  
+     002050  1370  
+     002051  1440  
+     002052  0411  
+     002053  2313  
+     002054  4006  
+     002055  1722  
+     002056  1501  
+     002057  2424  
+     002060  0522  
+     002061  4020  
+     002062  2217  
+     002063  0722  
+     002064  0115  
+     002065  0000  
+1118 002066  0617  MES2,   TEXT "FOR ALL QUESTIONS, ANSWER Y FOR YES OR N FOR NO."
+     002067  2240  
+     002070  0114  
+     002071  1440  
+     002072  2125  
+     002073  0523  
+     002074  2411  
+     002075  1716  
+     002076  2354  
+     002077  4001  
+     002100  1623  
+     002101  2705  
+     002102  2240  
+     002103  3140  
+     002104  0617  
+     002105  2240  
+     002106  3105  
+     002107  2340  
+     002110  1722  
+     002111  4016  
+     002112  4006  
+     002113  1722  
+     002114  4016  
+     002115  1756  
+     002116  0000  
+1119 002117  0617  MES3,   TEXT "FORMAT DISK "
+     002120  2215  
+     002121  0124  
+     002122  4004  
+     002123  1123  
+     002124  1340  
+     002125  0000  
+1120 002126  0122  MES4,   TEXT "ARE YOU SURE?"
+     002127  0540  
+     002130  3117  
+     002131  2540  
+     002132  2325  
+     002133  2205  
+     002134  7700  
+1121 002135  0617  MES5,   TEXT "FORMAT SAME DISK(S) AGAIN?"
+     002136  2215  
+     002137  0124  
+     002140  4023  
+     002141  0115  
+     002142  0540  
+     002143  0411  
+     002144  2313  
+     002145  5023  
+     002146  5140  
+     002147  0107  
+     002150  0111  
+     002151  1677  
+     002152  0000  
+1122               /
+1123               PAGE
+1124               /
+1125               WRKBUF=.
+1126               /
+1127               HITRK=.
+1128               LOTRK=.+1
+1129               /
+1130               ENDBUF=.+377
+1131               /
+1132               
+1133               
+1134               /CONSOL SRC -V2-R0- CONSOLE PACKAGE
+1135               
+1136               
+1137               /LAS= CALL C8CKSW OR JMS XC8SW
+1138               /THIS WILL READ THE SWITCH REGISTER FROM THE PLACE SPECIFIED
+1139               /BY LOCATION 20 BIT 0.
+1140               
+1141               
+1142               /THE PROGRAN SHOULD CHECK FOR A CONTROL CHARACTER FRON THE TERMINAL
+1143               /EVERY FIVE(5) SECONDS OR SOONER.
+1144               
+1145               /LOCATIONS THAT NEED TO BE SET UP FOR USING THE CONSOLE PACKAGE.
+1146               
+1147               /CNTVAL IN XC8PASS    THIS LOCATION DETERMINDS THE NUMBER OF
+1148               /PROGRAM COMPLETIONS THAT ARE NEEDED BEFORE THE PASS MESSAGE IS TYPED
+1149               /THE VALUE SHOULD PUT THE PASS MESSAGE OUT IN THE RANGE OF 1 TO 5 MINUTES.
+1150               /THIS SHOULD BE A POSITIVE NUNBER.
+1151               
+1152               /C8STRT   THIS IS FOUND IN CNTRL ROUTINE CONTROL R PART
+1153               /IT IS THE RETURN WHEN CONTROL R IS ENTERED (RESTART PROGRAM)
+1154               /THE RETURN JUMPS TO XDOSW WHICH CONTAINS C8STRT SO PUT THE LABEL C8STRT
+1155               /WHERE YOU WANT TO RESTART THE PROGRAM.
+1156               
+1157               
+1158               /SETUP1 IN XC8ERR    THIS IS THE MASK BIT FOR HALT ON ERROR
+1159               /PLACE THE CORRECT BIT IN THIS LOCATION FOR HALTING ON ERRORS.
+1160               
+1161               /SETUP2 IN XC8PASS   THIS IS THE MASK FOR HALT A END OF PASS.
+1162               
+1163               /THE CALL TABLE IS A CONDITIONAL ASSEMBLY.
+1164               /TO ASSEMBLE THE CALL REMOVE THE / BEFORE CONSOL=0.
+1165               /IN COMBINING THE CONSOL PACKAGE TO A DIAGNOSTIC.
+1166               /THE CALL TABLE IS TO BE AT THE BEGINNING OF A PROGRAM.
+1167               
+1168               
+1169               /CONSOL=0
+1170                       PSKF=   6661
+1171                       PCLF=   6662
+1172                       PSKE=   6663
+1173                       PSTB=   6664
+1174                       PSIE=   6665
+1175                       GTF=    6004
+1176                       ACL=    7701
+1177                       CAF=    6007
+1178                       MQL=    7421
+1179                       MQA=    7501
+1180               /
+1181               *3000
+1182               /
+1183               /*********************************************************************
+1184               /C8PASS
+1185               /THIS IS CALLED AT THE END OF EACH PROGRAM COMPLETION
+1186               /THE VALUE OF** CNTVAL** WILL BE DETERMINED BY THE TIME IT TAKES
+1187               /THE PROGRAM TO COMPLETE THIS MANY C8PASS TO BE IN THE 1 TO 4 MINUTE
+1188               /RANGE
+1189               /       C8PASS=JMS   XC8PAS
+1190               /EX. OF CALL            C8PASS
+1191                       /               HLT             /HALT IF NON CONSOL PACKAGE
+1192               /               JMP     START1          /CONTINUE RUNNING THIS PROGRAM
+1193               
+1194               
+1195               /RETURN TO LOCATION CALL PLUS ONE WITH THE AC=0 IF NON CONSOL PACKAGE AND HLT
+1196               /IF CONTINUE TO RUN THEN RETURN TO CALL PLUS2 AC=0 
+1197               /THE LOCATION SETUP2 IS THE MASK BIT FOR THE HALT AT END OF PASS
+1198               /CHECK THAT IT IS CORRECT FOR THE CURRENT PROGRAM
+1199               
+1200               /CALLS USED BY XC8PAS ARE  CHKCLA-XC8CRLF-XC8OCTA-XC8SW-XC8PNT-XC8INQ-
+1201               
+1202               
+1203 003000  0000  XC8PAS, 0
+1204 003001  7200          CLA
+1205 003002  4777         JMS     CHKCLA          /IS WORD 22 BIT 3 ACTIVE CONSOLE?
+1206 003003  5212          JMP     DOPACK          /IS CLASSIC
+1207 003004  4776          JMS     C8GET           /GET THE REGISTERS.
+1208 003005  4262          JMS     XC8SW           /DEACTIVE CONSOL CHECK SR SETTING
+1209 003006  0375          AND     (400            /FOR HALT ON END OF C8PASS
+1210 003007  7640          SZA CLA                 /1= HALT 0 CONTINUE
+1211 003010  5600          JMP I   XC8PAS          /GO TO HALT
+1212 003011  5230          JMP     C8BY1           /CONTINUE ON RUNNING PROGRAM
+1213 003012  4232  DOPACK, JMS     CKCOUT          /CLASS CHECK C8PASS COUNT
+1214 003013  5230          JMP     C8BY1           /C8PASS COUNT NOT DONE REDO PROGRAM
+1215 003014  2250          ISZ     PASCNT          /C8PASS COUNT DONE SET C8PASS COUNT
+1216 003015  4774          JMS     XC8CRLF
+1217 003016  4303          JMS     XC8PNT          /C8PRNT BUFFER
+1218 003017  3053          MESPAS                  /
+1219 003020  1250          TAD     PASCNT          /GET NUMBER
+1220 003021  4773          JMS     XC8OCTA         /CONVERT IT TO ASCII
+1221 003022  4774          JMS     XC8CRLF         /DO A CARRIAGE RETURN
+1222 003023  4776          JMS     C8GET           /GET THE REGISTERS.
+1223 003024  4262          JMS     XC8SW           /CHECK A HALT AT END OF C8PASS
+1224 003025  0375  SETUP2, AND     (400            /MASK BIT
+1225 003026  7640          SZA CLA                 /HALT =1 NO SKIP CONTINUE =0
+1226 003027  4772          JMS     XC8INQ          /STOP PROGRAM EXECUTION-LOOK FOR INPUT
+1227 003030  2200  C8BY1,  ISZ     XC8PAS          /BUMP RETURN
+1228 003031  5600          JMP I   XC8PAS
+1229 003032  0000  CKCOUT, 0
+1230 003033  1251          TAD     DOSET           /CHECK IF SET UP NEEDED
+1231 003034  7640          SZA CLA                 /0=SET UP C8PASS COUNT VALUE
+1232                                               /1=C8PASS COUNT VALUE OK
+1233 003035  5242          JMP     NOSET           /C8PASS COUNT VALUE ON
+1234 003036  1252          TAD     CNTVAL          /GET COUNT VALUE FOR THIS PROG
+1235 003037  7040          CMA                     /SET TO NEGATIVE
+1236 003040  3247          DCA     DOCNT           /STORE IN HERE
+1237 003041  2251          ISZ     DOSET           /INDICATE VALUE SET UP
+1238 003042  2247  NOSET,  ISZ     DOCNT           /COUNT THE NUMBER OF PASSES
+1239 003043  5230          JMP     C8BY1           /EXIT FOR ANOTHER PASS
+1240 003044  3251          DCA     DOSET           /SET TO C8PRNT C8PASS
+1241 003045  2232          ISZ     CKCOUT          /BUMP RETURN FOR
+1242 003046  5632          JMP I   CKCOUT          /C8PASS C8TYPE OUT
+1243 003047  0000  DOCNT,  0
+1244 003050  0000  PASCNT, 0                       /
+1245 003051  0000  DOSET,  0
+1246 003052  0000  CNTVAL, 0
+1247 003053  0410  MESPAS, TEXT    "DHRKDD  PASS "
+     003054  2213  
+     003055  0404  
+     003056  4040  
+     003057  2001  
+     003060  2323  
+     003061  4000  
+1248               
+1249               
+1250               
+1251               /*********************************************************************
+1252               
+1253               /C8CKSW
+1254               
+1255               /THIS ROUTINE CAN BE USED INPLACE OF A READ THE SWITCHES LAS.
+1256               /ROUTINE THAT WILL CHECK WHERE TO READ THE
+1257               /C8 SWITCHES FROM IE. FROM PANEL OR PSEUDO SWITCH REGISTER
+1258               /THE SELECTION IS DETERMINED BY THE STATE OF BIT 0 IN LOCATION 21.
+1259               
+1260                       /C8CKSW=        JMS XC8SW
+1261                       /EX.    JMS     XC8SW           /READ THE C8SWIT REGISTER
+1262                                                       /RETURN WITH THE CONTENTS OF SWITCH REGISTER
+1263               
+1264               /RETURN TO NEXT LOCATION FOLLOWING CALL WITH THE AC= TO VALUE OF C8SWIT SETTING
+1265               
+1266               /CALLS USED ARE-XC8CKPA-
+1267               
+1268               
+1269               
+1270 003062  0000  XC8SW,  0
+1271 003063  4771          JMS     XC8CKPA         /GO CHECK THE IF ANY CONTRL
+1272 003064  7000          NOP
+1273 003065  1021          TAD     21              /GET WD FOR INDICATOR
+1274 003066  7710          SPA CLA                 /CHECK IF FROM PANEL 4000
+1275 003067  7614          7614                    /DO LAS AND SKIP GET FROM PANEL WITH LAS
+1276 003070  1020          TAD     20              /PSEUDO SWITCH
+1277 003071  5662          JMP I   XC8SW           /EXIT WITH STATUS BIT IN AC.
+1278               
+1279               
+1280               /*********************************************************************
+1281               
+1282               /C8TTYI
+1283               /THIS ROUTINE WILL LOOK FOR A INPUT FROM THE TERMINAL
+1284               /AND REMOVE ANY PARITY BITS, THEN MAKE IT 8 BIT ASCI.
+1285               /       C8TTYI= JMS XC8TTY
+1286               /EX.    JMS     XC8TTYI         /READ CHAR FROM THE CONSOL DEVICE
+1287                       /                       /RETURN TO CALL PLUS ONE AC CONTAINS THE CHAR
+1288               
+1289               
+1290               /CALLS USED -NONE- BUT C8CHAR IS OFF PAGE AND IN ROUTINE CALLED XC8ECHO
+1291               
+1292               /
+1293               /
+1294 003072  0000  XC8TTY, 0
+1295 003073  6031          KSF                     /LOOK FOR KEYBOARD FLAG
+1296 003074  5273          JMP     .-1
+1297 003075  6036          KRB                     /GET CHAR
+1298 003076  0370          AND     (177            /MASK FOR 7 BITS
+1299 003077  1367          TAD     (200            /ADD THE EIGTH BIT
+1300 003100  3766          DCA     C8CHAR          /STORE IT
+1301 003101  1766          TAD     C8CHAR
+1302 003102  5672          JMP I   XC8TTY          /EXIT
+1303               
+1304               
+1305               
+1306               /*********************************************************************
+1307               
+1308               /C8PRNT
+1309               
+1310               /THIS ROUTINE WILL TYPE THE CONTENTS OF THE C8 PRINT BUFFER. THE LOCATION
+1311               /OF THE BUFFER WILL BE IN THE ADDRS FOLLOWING THE CALL.   PRINTING OF THE BUFFER
+1312               /WILL STOP WHEN A 00 CHAR IS DETECTED. CHARACTERS ARE PACKED 2 PER WORD.
+1313               
+1314               /       C8PRNT= JMS XC8PNT
+1315               
+1316               
+1317               /EX.    JMS     XC8PNT                  /C8PRNT THE CONTENTS OF THE FOLLOWING BUFFER
+1318               /       MESS77                          /LOCATION OF C8PRNT BUFFER
+1319               
+1320               /C8PRNT WILL USE THE LOCATION FOLLOWING THE CALL AS THE POINTER FOR THE
+1321               /C8PRNT ROUTINE.RETURN TO CALL PLUS TWO WITH AC= 0
+1322               
+1323               /CALLS USED ARE-XC8TYPE-XC8PNT
+1324               
+1325               
+1326               
+1327 003103  0000  XC8PNT, 0
+1328 003104  7300          CLA CLL
+1329 003105  1703          TAD I   XC8PNT          /GET C8PRNT BUFFERS STARTING LOCATION
+1330 003106  3336          DCA     PTSTOR          /STORE IN PTSTOR
+1331 003107  2303          ISZ     XC8PNT          /BUMP RETURN
+1332 003110  1736  C8DO1,  TAD I   PTSTOR          /GET DATA WORD
+1333 003111  0365          AND     (7700           /MASK FOR LEFT BYTE
+1334 003112  7450          SNA                     /CHECK IF 00 TERMINATE
+1335 003113  5703          JMP I   XC8PNT          /EXIT
+1336 003114  7500          SMA                     /IS AC MINUS
+1337 003115  7020          CML                     /MAKE CHAR A 300 AFTER ROTATE
+1338 003116  7001          IAC                     /MAKE CHAR A 200 AFTER ROTATE
+1339 003117  7012          RTR
+1340 003120  7012          RTR
+1341 003121  7012          RTR                     /PUT CHAR IN BITS 4-11 MAKE IT 8 BIT ASCII
+1342 003122  4764          JMS     XC8TYPE         /C8PRNT IT ON CONSOLE
+1343 003123  1736          TAD I   PTSTOR          /GET DATA WORD
+1344 003124  0363          AND     (0077           /MASK FOR RIGHT BYTE
+1345 003125  7450          SNA                     /CHECK IF 00 TERMINATOR
+1346 003126  5703          JMP I   XC8PNT          //EXIT
+1347 003127  1362          TAD     (3740           /ADD FUDGE FACTOR TO DETERMINE IF 200
+1348 003130  7500          SMA                     /OR 300 IS TO BE ADD TO CHAR
+1349 003131  1361          TAD     (100            /ADD 100
+1350 003132  1360          TAD     (240            /ADD 200
+1351 003133  4764          JMS     XC8TYPE         /C8TYPE ONLY BITS 4-11
+1352 003134  2336          ISZ     PTSTOR          /BUMP POINTER FOR NEXT WORD
+1353 003135  5310          JMP     C8DO1           /DO AGAIN
+1354 003136  0000  PTSTOR, 0                       /STOR FOR C8PRNT BUFFER
+1355               /**************************************************************************
+1356               
+1357               
+1358               /C8PAUS
+1359               /THIS ROUTINE WILL CHECK IF THE CONSOL PACKAGE IS ACTIVE,IF ACTIVE
+1360               /IT WILL RETURN TO CALL PLUS ONE AC= 0. AND DO THAT INSTRUCTION.
+1361               /IF THE CONSOL PACKAGE IS NOT ACTIVE THE CALL WILL BE REPLACED
+1362               /WITH A 7402 HALT AND THEN RETURN TO THE HALT.
+1363               
+1364               /       C8PAUS= JMS XC8PAU
+1365               /
+1366               /
+1367               /EX.            JMS     XC8PAUS         /CHECK IF ON ACTIVE CONSOL IF NOT HALT HERE
+1368               /               ANYTHING                /RETURN HERE IF ON ACTIVE CONSOL
+1369               /
+1370               /
+1371               
+1372               /CALLS USED ARE -CHKCLA-
+1373               
+1374               
+1375               
+1376 003137  0000  XC8PAU, 0
+1377 003140  7300          CLA CLL
+1378 003141  4777          JMS     CHKCLA          /CHECK LOC 22 BIT 3 CONSOLE BIT
+1379 003142  5350          JMP     C8DO3           /GO DO CONSOL PART RETURN CALL +1
+1380 003143  7040          CMA                     /DEACTIVE CONSOLE PACKAGE PUT HLT IN CALL
+1381 003144  1337          TAD     XC8PAU          /GET CORRECT RETURN ADDRS
+1382 003145  3337          DCA     XC8PAU          /SET UP RETURN
+1383 003146  1357          TAD     (7402           /GET CODE FOR HLT
+1384 003147  3737          DCA I   XC8PAU          /PUT HALT IN CALL LOCATION
+1385 003150  5737  C8DO3,  JMP I   XC8PAU          /GO TO HALT OR RETURN TO NEXT LOCATION
+1386               
+1387               
+1388 003157  7402  PAGE
+     003160  0240  
+     003161  0100  
+     003162  3740  
+     003163  0077  
+     003164  3677  
+     003165  7700  
+     003166  3675  
+     003167  0200  
+     003170  0177  
+     003171  3641  
+     003172  3435  
+     003173  3600  
+     003174  3623  
+     003175  0400  
+     003176  3424  
+     003177  4000  
+1389               /*********************************************************************
+1390               
+1391               
+1392               /C8CNTR
+1393               /THIS ROUTINE WILL CHECK FOR THE PRESENCE OF CONTROL CHARACTERS
+1394               /IT WILL CHECK FOR THE FOLLOWING CHAR C-R-Q-L-S
+1395               /       C8CNTR= JMS XC8CNT
+1396               
+1397               /EX.    JMS     XC8CNTR                 /CHECK FOR CONTROL CHARACTER
+1398               /       JMP     ANYTHING                /LOC FOLLOWING CALL IS FOR CONTINUING THE PROGRAM
+1399               /       JMP     ANYTHING                /LOC. IS FOR RETURN IF INMODE SET AND NOT CNTRL CHAR
+1400               /
+1401               
+1402               /RETURN IS TO CALL PLUS ONE IF CONTINUE
+1403               /RETURN IS TO CALL PLUS TWO IF INMODE SET AND NOT CONTROL CHAR
+1404               /RETURN IS TO CALL PLUS TWO IF INMODE IS NOT SET AND NO
+1405               /CONTROL CHAR ..THIS WILL PRINT THE CHARACTER AND A ? 
+1406               /CLEAR THE AC AND RETURN CALL+2.
+1407               
+1408               /CALLS USED ARE-CHKCLA-XC8TYPE-XC8CRLF-C8GET-UPAROW-XC8TYI-XC8PSW-
+1409               /
+1410               /
+1411               /
+1412 003200  0000  XC8CNT, 0
+1413 003201  3777          DCA     ACSAVE          /SAVE THE AC
+1414 003202  4776          JMS     CHKCLA          /CHECK LOC.22 BIT3 FOR CONSOLE BIT
+1415 003203  5206          JMP     .+3             /ON ACTIVE CONSOLE
+1416 003204  1777          TAD     ACSAVE          /DEACTIVE CONSOLEGET AC FOR RETURN
+1417 003205  5600          JMP I   XC8CNT          /EXIT NOT ON ACTIVE CONSOLE
+1418 003206  6004          GTF
+1419 003207  3775          DCA     FLSAVE
+1420 003210  7501          MQA
+1421 003211  3774          DCA     MQSAVE          /SAVE THE MQ
+1422 003212  3255          DCA     INDEXA          /SET DISPLACEMENT INTO TABLE B 
+1423 003213  1257          TAD     XTABLA          /GET ADDRS OF TABLE A
+1424 003214  3256          DCA     GETDAT          /CONTAINS POINTER TO CONTROL CHAR
+1425 003215  1656  REDOA,  TAD I   GETDAT          /GET CONTROL CHAR FROM TABLE
+1426 003216  7450          SNA                     /CHECK FOR A 0 END OF TABLE
+1427 003217  5226          JMP     DONEA           /END OF TABLE NO CONTROL CHAR
+1428 003220  1773          TAD     C8CHAR          /COMPARE CHAR TO CONTROL CHAR
+1429 003221  7650          SNA CLA                 /0 IF MATCH
+1430 003222  5243          JMP     GOITA           /MATCH
+1431 003223  2255          ISZ     INDEXA          /NO MATCH NOT END OF TABLE REDO
+1432 003224  2256          ISZ     GETDAT          /BUMP INDEX FOR EXIT WHEN CONTROL FOUND
+1433 003225  5215          JMP     REDOA           /BUMP GETDAT FOR COMPARE OF NEXT CNTRL CHAR.
+1434 003226  1772  DONEA,  TAD     INMODE          /CHECK IF PROGRAM EXPECTS CHAR
+1435 003227  7640          SZA CLA                 /1=CHAR EXPECTED  0= NO CHAR EXPECTED
+1436 003230  5240          JMP     EXITA           /CHAR EXPECTED
+1437 003231  1773          TAD     C8CHAR          /GET CHAR - NOT CONTROL + NOT EXPECTED
+1438 003232  4771          JMS     XC8TYPE         /C8PRNT CHAR
+1439 003233  1370          TAD     (277            /GET CODE FOR "?"
+1440 003234  4771          JMS     XC8TYPE
+1441 003235  4767          JMS     XC8CRLF
+1442 003236  2200          ISZ     XC8CNT          /BUMP RETURN
+1443 003237  5600          JMP I   XC8CNT          /EXIT CALL+2
+1444 003240  2200  EXITA,  ISZ     XC8CNT          /BUMP RETURN FOR MAIN PROGRAM CHECK OF CHAR
+1445 003241  1773          TAD     C8CHAR          /PUT CHAR IN AC.
+1446 003242  5600          JMP I   XC8CNT          /EXIT
+1447 003243  1773  GOITA,  TAD     C8CHAR          /GET THE CONTENTS OF CHAR
+1448 003244  1366          TAD     (100            /ADD 100 TO FORM A GOOD ASCII CHARACTER
+1449 003245  3773          DCA     C8CHAR          /RESTORE COFFECT CHAR
+1450 003246  1260          TAD     XTABLB          /GET START OF TABLE B
+1451 003247  1255          TAD     INDEXA          /GET NOW FAR INTO TABLE
+1452 003250  3254          DCA     GOTOA           /STORE IT
+1453 003251  1654          TAD I   GOTOA           /GET THE ROUTINE STARTTING ADDRESS
+1454 003252  3254          DCA     GOTOA           /STORE IT IN HERE
+1455 003253  5654          JMP I   GOTOA           /GOTO CONTROL CHAR ROUTINE
+1456 003254  0000  GOTOA,  0000                    /ADD OF CNTRL ROUTINE TO EXECUTE
+1457 003255  0000  INDEXA, 0000                    /DISPLACEMENT INTO CNTRL TABLE
+1458 003256  0000  GETDAT, 0000                    /LOCATION OF ADDRS OF CONTROL CHAR.
+1459 003257  3261  XTABLA, TABLA                   /ADDRS OF TABLEA
+1460 003260  3271  XTABLB, TABLB                   /ADDRS OF TABLEB
+1461 003261  7575  TABLA,  7575                    /CNTRL C BACK TO MONITOR 203
+1462 003262  7564          7564                    /CNTRL L SWITCH ERROR PRINTTING DEVICE 214
+1463 003263  7557          7557                    /CNTRL Q START DISPLAYING CHAR. AGAIN 221
+1464 003264  7556          7556                    /CNTRL R BACK TO BEGINNING OF PROGRAM 222
+1465 003265  7555          7555                    /CNTRL S STOP SENDING CHAR TO DISPLAY WAIT FOR CNTRL Q 223
+1466 003266  7573          7573                    /CNTRL E CONTINUE WITH PROGRAM 205
+1467 003267  7574          7574                    /CONTROL D CHANGE SWITCH REGISTER ON FLY
+1468 003270  0000          0000
+1469               
+1470 003271  3347  TABLB,  CNTRLC
+1471 003272  3336          CNTRLL
+1472 003273  3300          CNTRLQ
+1473 003274  3311          CNTRLR
+1474 003275  3320          CNTRLS
+1475 003276  3344          CNTRLE
+1476 003277  3400          CNTRLD
+1477               /
+1478               /CONTROL Q
+1479               /START SENDING CHAR. TO THE DISPLAY
+1480               /THIS WILL RETURN CONTROL TO CALL THAT WAS SET BY
+1481               /THE CALL FOR CONTROL S.
+1482               /
+1483 003300  3772  CNTRLQ, DCA     INMODE          /SET SOFT FLAG FOR UNEXPECTED CHAR
+1484 003301  1334          TAD     C8SETS          /CHECK IF CONTROL S TYPED IN
+1485 003302  7640          SZA CLA
+1486 003303  5306          JMP     BYRETR          /CONTROL S TYPED IN 
+1487 003304  4765          JMS     C8GET           /NO CONTROL S TYPED PREVIOUSLY
+1488 003305  5600          JMP I   XC8CNTR         /LEAVE VIA CNTR ENTRY ADDRESS
+1489 003306  3334  BYRETR, DCA     C8SETS          /CLEAR THE SOFT FLAG
+1490 003307  4765          JMS     C8GET           /RESTORE REGISTERS
+1491 003310  5735          JMP I   C8RETR          /EXIT TO ADDRESS SET BY CONTROL S
+1492               /
+1493               /
+1494               /CONTROL R
+1495               /GO TO THE QUESTION C8SWIT
+1496 003311  3764  CNTRLR, DCA     TTYLPT          /CLEAR THE TYPE FLAG SET TO TTY
+1497 003312  3334          DCA     C8SETS          /CLEAR SOFT FLAG FOR CNTRL S
+1498 003313  3772          DCA     INMODE
+1499 003314  4763          JMS     UPAROW          /PRINT THE ^ AND C8CHAR
+1500 003315  3762  C8BY4,  DCA     C8SWST          /CLEAR FLAG FOR CNTRL D OR R
+1501 003316  5717          JMP I   XDOSW           /GO TO ADDRS OF C8SWIT
+1502 003317  0200  XDOSW,  BGN                     /DOSW IS LABEL FOR C8SWIT QUESTION
+1503               /
+1504               /
+1505               /CONTROL S
+1506               /STOP SENDING CHAR. TO DISPLAY UNTIL A ^Q IS RECEIVED
+1507               /
+1508               /
+1509 003320  1334  CNTRLS, TAD     C8SETS          /IF1 DO NOT STORE IN C8RETR
+1510 003321  7640          SZA CLA
+1511 003322  5326          JMP     C8DO7           /DONT SET UP C8RETR
+1512 003323  7001          IAC                     /MAKE RETURN CALL PLUS 2
+1513 003324  1200          TAD     XC8CNT          /GET RETURN FOR THIS CALL
+1514 003325  3335          DCA     C8RETR          /STORE IT HERE FOR USE BE CNTROL Q
+1515 003326  2334  C8DO7,  ISZ     C8SETS          /SET FLAG TO SAVE CALL
+1516 003327  4761          JMS     XC8TTYI                 /LOOK FOR THE INPUT
+1517 003330  4765          JMS     C8GET           /GET REGISTERS 
+1518 003331  4200          JMS     XC8CNTR                 /CHECK FOR THE CONTROL CHAR
+1519 003332  7200          CLA
+1520 003333  5320          JMP     CNTRLS          /IF NOT A CNTRL Q R C REASK
+1521 003334  0000  C8SETS, 0
+1522 003335  0000  C8RETR, 0
+1523               /
+1524               /SWITCH OUTPUT FROM ONE OUTPUT DEVICE TO ANOTHER - THE TWO OUTPUTS ARE THE
+1525               /CONSOLE AND THE PRINTER WITH DEVICE CDOE 66.
+1526               /
+1527               /
+1528 003336  1764  CNTRLL, TAD     TTYLPT          /GET PRESENT C8SWIT INDICATOR
+1529 003337  7040          CMA                     /COMPLEMENT IT
+1530 003340  3764          DCA     TTYLPT          /STOR NEW C8SWIT
+1531 003341  4763          JMS     UPAROW          /C8PRNT ^ AND CHAR ON NEW DEVICE
+1532 003342  4765          JMS     C8GET           /RESTORE THE REGISTERS
+1533 003343  5600          JMP I   XC8CNT          /EXIT
+1534               /
+1535               /CONTROL E
+1536               /CONTINUE RUNNING FROM A INQUIRE OR ERROR
+1537               /
+1538               /
+1539 003344  4763  CNTRLE, JMS     UPAROW          /PRINT THE CONTROL CHAR
+1540 003345  4765          JMS     C8GET           /GET THE REGISTERS
+1541 003346  5600          JMP I   XC8CNT          /RETURN TO CALL PLUS ONE
+1542               /
+1543               
+1544               /CONTROL C
+1545               /RETURN TO MONITOR CONTROL C
+1546 003347  3764  CNTRLC, DCA     TTYLPT          /CLEAR THE LPT FLAG TO PRINT ON DISPLAY
+1547 003350  4763          JMS     UPAROW          /C8PRNT A^ AND LETTER IN CHAR
+1548 003351  6203          CDF CIF                 /GO TO 0 FLD
+1549 003352  6007          CAF                     /CLEAR THE WORLD
+1550 003353  5760          JMP I   (7600           /GO TO DIAGNOSTIC MONITOR
+1551               /*********************************************************************
+1552               /
+1553               /
+1554               /
+1555 003360  7600  PAGE
+     003361  3072  
+     003362  3545  
+     003363  3415  
+     003364  3721  
+     003365  3424  
+     003366  0100  
+     003367  3623  
+     003370  0277  
+     003371  3677  
+     003372  3676  
+     003373  3675  
+     003374  4123  
+     003375  4124  
+     003376  4000  
+     003377  4122  
+1556               
+1557               /
+1558                       /CONTROL D
+1559                       /CHANGE THE SWITCH REGISTER ANYTIME CNTRL D AND RETURN TO
+1560                       /THE PROGRAM RUNNING.
+1561               
+1562               
+1563 003400  4215  CNTRLD, JMS     UPAROW
+1564 003401  1213         TAD     C8SETD          /CHECK IF THE RETURN ADDRS IS SAFE
+1565 003402  7640          SZA CLA
+1566 003403  5207          JMP     C8DO11          /DO NOT CHANGE THE RETURN ADDRS
+1567 003404  1777          TAD     XC8CNT          /GET THE RETURN ADDRS AND SAVE IT
+1568 003405  3214          DCA     C8RETD          /SAVE THE RETURN HERE
+1569 003406  2213          ISZ     C8SETD          /INDICATE RETURN SAVED DONT DISTROY
+1570 003407  4256  C8DO11, JMS     XC8PSW                  /GO CHANGE THE SWITCH REGISTER
+1571 003410  3213          DCA     C8SETD          /CLEAR THE FLAG
+1572 003411  4224          JMS     C8GET           /RESTORE THE AC MQ LINK ETC
+1573 003412  5614          JMP I   C8RETD          /RETURN TO THE PROGRAM
+1574               /
+1575 003413  0000  C8SETD, 0
+1576 003414  0000  C8RETD, 0
+1577               
+1578               
+1579               
+1580               /THIS WILL TYPE A UP ARROW AND THE CHAR IN C8CHAR.
+1581               
+1582 003415  0000  UPAROW, 0                       /C8PRNT THE "^" AND THE CHAR C8TYPED IN
+1583 003416  1376          TAD     (336            /CODE FOR ^
+1584 003417  4775          JMS     XC8TYPE
+1585 003420  1774          TAD     C8CHAR          /C8TYPE THE CHAR
+1586 003421  4775          JMS     XC8TYPE
+1587 003422  4773          JMS     XC8CRLF
+1588 003423  5615          JMP I   UPAROW          /EXIT
+1589               
+1590               
+1591               
+1592               /***********************************************************************
+1593               
+1594 003424  0000  C8GET,  0
+1595 003425  7200          CLA
+1596 003426  1772          TAD     MQSAVE
+1597 003427  7421          MQL                     /RESTORE MQ
+1598 003430  1771          TAD     FLSAVE
+1599 003431  7004          RAL                     /RESTORE THE LINK
+1600 003432  7200          CLA
+1601 003433  1770          TAD     ACSAVE          /RESTORE THE AC
+1602 003434  5624          JMP I   C8GET           /GET THE REGISTERS
+1603               
+1604               
+1605               
+1606               /********************************************************************
+1607               
+1608               /C8INQU
+1609               /C8INQU ROUTINE WILL PRINT A WAITING
+1610               /AND THE PROGRAM IS EXPECTING A CONTROL CHAR INPUT
+1611               /IF CONTINUE FROM CONTROL CHAR RETURN IS CALL PLUS ONE
+1612               /IF NO CONTROL CHAR ENTERED THEN WAITING IS REPRINTED
+1613               /AND PROGRAM WAITS FOR A CONTROL CHAR AGAIN.
+1614               
+1615               /       C8INQU =        JMS XC8INQ
+1616               
+1617               /EX.    JMS     XC8INQ                  /C8 WILL PRINT A WAITINGAND WAIT FOR INPUT
+1618               /       DO ANYTHING                     /RETURN IS CALL PLUS ONE AC =0 CONTINUE
+1619               
+1620               /CALLS USED ARE -CHKCLA-XC8PNT-XC8TYI-C8GET-XC8CNTR-
+1621               
+1622               
+1623 003435  0000  XC8INQ, 0
+1624 003436  7300          CLA CLL
+1625 003437  4767          JMS     CHKCLA          /CHECK LOC 22 BIT 3 CONSOLE BIT
+1626 003440  7410          SKP                     /ACTIVE CONSOLE PACKAGE
+1627 003441  5635          JMP I   XC8INQ          /NOT CONSOLE LEAVE
+1628 003442  4766          JMS     XC8PNT
+1629 003443  3451          WATMES                  /INQUIR WAITTING
+1630 003444  4765          JMS     XC8TTYI         /GET CHARACTER
+1631 003445  4224          JMS     C8GET
+1632 003446  4777          JMS     XC8CNTR         /CHECK IF CONTROL CHARACTER
+1633 003447  5635          JMP I   XC8INQ          /EXIT AND CONTINUE
+1634 003450  5236          JMP     XC8INQ+1        /REASK
+1635 003451  2701  WATMES, TEXT    "WAITING "
+     003452  1124  
+     003453  1116  
+     003454  0740  
+     003455  0000  
+1636               
+1637               
+1638               /*********************************************************************
+1639               
+1640               /C8SWIT
+1641               
+1642               /ROUTINE WILL CHECK IF CONSOL IS ACTIVE IF IT IS ACTIVE DISPLAY 
+1643               /SW QUESTION . IN NOT ACTIVE IT WILL NOT PRINT THE SW QUESTION BUT
+1644               /RETURN TO CALL PLUS ONE AC=0.
+1645               /C8SWIT WILL SET UP THE PSEUDO SWITCH
+1646               /REGISTER WITH THE NEW DATA ENTERED
+1647               /
+1648               /       C8SWIT =        JMS XC8PSW
+1649               
+1650               /EX.            JMS     XC8PSW          /SET UP PSEUDO C8SWIT REGISTER IF
+1651                                                       /ON THE CONSOL PACKAGE. RETURN IS CALL PLUS ONE AC = 0
+1652               
+1653               /CALLS USED ARE -CHKCLA-XC8PSW-XC8PNT-XC8OCTA-XC8TYPE-
+1654               
+1655               
+1656 003456  0000  XC8PSW, 0
+1657 003457  4767          JMS     CHKCLA          /CHECK LOC 22 BIT 3 CONSOLE BIT
+1658 003460  7410          SKP                     /ACTIVE CONSOLE
+1659 003461  5656          JMP I   XC8PSW          /DEACTIVE CONSOLE PACKAGE
+1660                                               /RETURN WITHOUT ASKING PSEUDO SWITCH
+1661 003462  1345          TAD     C8SWST          /IS THE SOFT FLAG SET FOR SWITCH?
+1662 003463  7640          SZA CLA                 /SKIP IF ONE ENTRY AT ATIME OK
+1663 003464  5764          JMP     C8BY4           /SECOND ENTRY WITH OUT A EXIT GO TO SW QUESTION
+1664 003465  2345          ISZ     C8SWST          /FIRST ENTRY SET FLAG
+1665 003466  4766  C8RDPS, JMS     XC8PNT          /C8PRNT SR=
+1666 003467  3547          MESA
+1667 003470  1020          TAD     20              /GET CONTENTS OF SW
+1668 003471  4763          JMS     XC8OCTA         /CONVERT IT TO ASCII
+1669 003472  1362          TAD     (40             /GET SPACE
+1670 003473  4775          JMS     XC8TYPE
+1671 003474  2761          ISZ     INMODE          /SET FLAG FOR CHAR EXECTED
+1672 003475  4760          JMS     XC8ECHO         /LOOK FOR INPUT
+1673 003476  4315          JMS     TSTCHA          /NOT CONTROL TEST IT IS LEGAL
+1674 003477  1774          TAD     C8CHAR          /STORE NEW CHAR IN SW REG
+1675 003500  3020          DCA     20
+1676               
+1677 003501  1357          TAD     (-3             /GET A MINUS 3
+1678 003502  3346          DCA     TMPCNT          /STORE IN TEMP COUNT
+1679 003503  4760  GETCH1, JMS     XC8ECHO         /GET NEXT CHAR
+1680 003504  4315          JMS     TSTCHA          /CHECK IF CR + GOOD CHAR
+1681 003505  1020          TAD     20              /GET C8SWIT REGISTER
+1682 003506  7106          RTL CLL                 /ROTATE IT LEFT 3 PLACES
+1683 003507  7004          RAL
+1684 003510  1774          TAD     C8CHAR          /GET CHAR + ADD IT TO PREVIOUS CONTENTS
+1685 003511  3020          DCA     20              /SAVE NEW CONTENTS
+1686 003512  2346          ISZ     TMPCNT          /BUMP COUNT
+1687 003513  5303          JMP     GETCH1          /JMP BACK + GET NEXT CHAR
+1688 003514  5342          JMP     ENDIT           /END 4 CHAR C8TYPED IN
+1689 003515  0000  TSTCHA, 0
+1690 003516  7041          CIA                     /CMPL CHAR IN AC
+1691 003517  1356          TAD     (215            /TEST IF IT IS A CARRIAGE RETURN
+1692 003520  7650          SNA CLA                 /SKIP IN NOT CR.
+1693 003521  5342          JMP     ENDIT           /WAS CARRIAGE RETURN
+1694 003522  1774          TAD     C8CHAR          /NOT CR. GET CHAR
+1695 003523  1355          TAD     (-260           /CHECK IF IT IS IN RANGE
+1696 003524  7710          SPA CLA                 /IF NOT POSITIVE C8ERR CHAR SMALLER THEN 260
+1697 003525  5336          JMP     ERR1            /C8ERR - CHAR TOO SMALL
+1698 003526  1774          TAD     C8CHAR          /GET CHAR
+1699 003527  1354          TAD     (-270           /GET A -270 + CHECK IF IT IS LARGER THEN 7
+1700 003530  7700          SMA CLA                 /SKIP IF LESS THEN 7
+1701 003531  5336          JMP     ERR1            /C8ERR ON CHAR NOT IN RANGE
+1702 003532  1774          TAD     C8CHAR          /GET CHAR
+1703 003533  0353          AND     (7              /MASK FOR RIGHT BYTE
+1704 003534  3774          DCA     C8CHAR          /STORE IN CHAR
+1705                                               /GET CHAR IN AC
+1706 003535  5715          JMP I   TSTCHA          /EXIT
+1707 003536  1352  ERR1,   TAD     (277            /C8PRNT
+1708 003537  4775          JMS     XC8TYPE         /?
+1709 003540  4773          JMS     XC8CRLF         /
+1710 003541  5266          JMP     C8RDPS          /EXIT + ASK AGAIN
+1711 003542  4773  ENDIT,  JMS     XC8CRLF         /DO A CR LF
+1712 003543  3345          DCA     C8SWST          /CLEAR THE PSW ENTRY FLAG
+1713 003544  5656          JMP I   XC8PSW          /EXIT ROUTINE
+1714 003545  0000  C8SWST, 0
+1715               
+1716 003546  0000  TMPCNT, 0
+1717 003547  2322  MESA,   TEXT    "SR= "
+     003550  7540  
+     003551  0000  
+1718               
+1719               
+1720 003552  0277  PAGE
+     003553  0007  
+     003554  7510  
+     003555  7520  
+     003556  0215  
+     003557  7775  
+     003560  3663  
+     003561  3676  
+     003562  0040  
+     003563  3600  
+     003564  3315  
+     003565  3072  
+     003566  3103  
+     003567  4000  
+     003570  4122  
+     003571  4124  
+     003572  4123  
+     003573  3623  
+     003574  3675  
+     003575  3677  
+     003576  0336  
+     003577  3200  
+1721               
+1722               /C8OCTA
+1723               
+1724               /OCTAL TO ASCII CONVERSION
+1725               /THIS ROUTINE WILL TAKE THE OCTAL NUMBER IN THE AC AND CONVERT IT TO ASCII
+1726               /THE RESULT WILL BE PRINTED ON THE CONSOL TERMINAL
+1727               /       C8OCTA= JMS XC8OCT
+1728               /
+1729               /EX.    JMS     XC8OCTA         /AC CONTAINS NUMBER TO BE CHANGE
+1730               /       RETURN IS TO CALL PLUS ONE AC=0
+1731               /
+1732               /CALLS USED ARE -XC8TYPE-
+1733               
+1734               
+1735 003600  0000  XC8OCT, 0
+1736 003601  7106          CLL RTL
+1737 003602  7006          RTL                     /POSITION THE FIRST CHAR FOR PRINTING
+1738 003603  3221          DCA     C8TMP1          /SAVE CORRECT POSITIONED WORD HERE
+1739 003604  1377          TAD     (-4
+1740 003605  3222          DCA     C8CKP           /STORE COUNTER IN HERE
+1741 003606  1221  C8DO4,  TAD     C8TMP1          /GET FIRST NUMBER
+1742 003607  0376          AND     (0007           /MASK
+1743 003610  1375          TAD     (260            /ADD THE PRINT CONSTANT
+1744 003611  4277          JMS     XC8TYPE         /TYPE THE NUMBER
+1745 003612  1221          TAD     C8TMP1          /
+1746 003613  7006          RTL
+1747 003614  7004          RAL                     /PUT NEXT NUMBER IN POSITION
+1748 003615  3221          DCA     C8TMP1          /STORE IT
+1749 003616  2222          ISZ     C8CKP           /DONE YET WITH FOUR NUMBERS
+1750 003617  5206          JMP     C8DO4           /NOT YET DO MORE
+1751 003620  5600          JMP I   XC8OCT          /DONE WITH FOUR 
+1752 003621  0000          C8TMP1, 0
+1753 003622  0000          C8CKP,  0
+1754               
+1755               
+1756               /*********************************************************************
+1757               
+1758               /C8CRLF
+1759               /C8TYPE CR AND LF WITH FILLERS FOLLOWING EACH LF AND CR
+1760               /
+1761               /       C8CRLF= JMS XC8CRL
+1762               /
+1763               /EX.    JMS     XC8CRLF         /C8PRNT A CR AND LF WITH FILL
+1764               /                               /RETURN TO CALL PLUS ONE AC =0
+1765               /CALLS USED ARE -XC8TYPE-
+1766               
+1767               
+1768 003623  0000  XC8CRLF,0
+1769 003624  7300          CLA CLL
+1770 003625  1374          TAD     (215            /GET CODE FOR CR
+1771 003626  4277          JMS     XC8TYPE
+1772 003627  1237          TAD     FILLER
+1773 003630  7040          CMA
+1774 003631  3240          DCA     FILCNT          /STORE FILLER IN HERE
+1775 003632  1373          TAD     (212            /GET CODE FOR LF
+1776 003633  4277  C8DO2,  JMS     XC8TYPE
+1777 003634  2240          ISZ     FILCNT          /CHECK ON FILLER CHAR
+1778 003635  5233          JMP     C8DO2           /TYPE A NON PRINTING CHAR
+1779 003636  5623          JMP I   XC8CRL          /EXIT
+1780 003637  0004  FILLER, 0004                    /FILLER SET FOR 4 CHAR
+1781 003640  0000  FILCNT, 0                       /COUNTER FOR FILL
+1782               
+1783               
+1784               
+1785               //*************************************************************
+1786               /C8CKPA
+1787               /THIS ROUTINE WILL CHECK IF A CHARACTER WAS ENTERED FROM THE
+1788               /TERMINAL. IFTHE FLAG IS SET AND THE CONSOLE PACKAGE IS
+1789               /ACTIVE A CHECK IS MADE TO DETERMIND IF IT IS A CONTROL CHAR.
+1790               /IF IT WAS A CONTROL CHAR THEN ITS CONTROL FUNCTION IS PERFORMED.
+1791               /IF NOT A CONTROL CHARACTER OR A CONTROL E-D-L-O- IT WILL DO
+1792               /THE CONTROL FUNCTION AND RETURN TO CALL PLUS 2.
+1793               /A NON CONTROL CHARACTER WILL BE PRINTEDAND A "?" IT WILL RETURN TO
+1794               /CALL PLUS 2.
+1795               /IF NO FLAG IS SET OR THE CONSOL IS NOT ACTIVE THE RETURN IS TO
+1796               /CALL PLUS 1.
+1797               
+1798               
+1799               /       C8CKPA= JMS     XC8CKP
+1800               
+1801               
+1802               /EX.    JMS     XC8CKPA                 /CALL TO CHECK IF CONTROL CHAR SET
+1803               /       ANYTHING(SKIP)          /RETURN IF NOT FLAG OR NOT CONSOLE ACTIVE
+1804               /       ANYTHING(JMP EXIT SKIP CHAIN)   /RETURN IF NOT CONTROL OR CONTINUE CONTROL
+1805               
+1806               
+1807               /CALLS USED ARE -XC8TTYI-XC8CNTR-C8GET-
+1808               
+1809               
+1810 003641  0000  XC8CKP, 0
+1811 003642  3772          DCA     ACSAVE          /SAVE THE AC
+1812 003643  6004          GTF                     /SAVE THE FLAGS
+1813 003644  3771          DCA     FLSAVE          /SAVE THE FLAGS
+1814 003645  7501          MQA                     /PUT MQ IN AC
+1815 003646  3770          DCA     MQSAVE          /SACE THE MQ
+1816 003647  6031          KSF                     /CHECK THE KEYBOARD FLAG
+1817 003650  5261          JMP     C8BY3           /EXIT TO CALL PLUS 1
+1818 003651  4767          JMS     CHKCLA          /CHECK LOC 22 BIT 3 CONSOLE BIT
+1819 003652  7410          SKP                     /ACTIVE CONSOLE PACKAGE
+1820 003653  5261          JMP     C8BY3           /EXIT TO CALL PLUS 1
+1821 003654  4766          JMS     XC8TTYI         /GET THE CHAR
+1822 003655  4765          JMS     C8GET           /GET THE FLAGS
+1823 003656  4764          JMS     XC8CNTR         /CHECK IF CONTROL  CHAR.
+1824 003657  7000          NOP                     /RETURN IF A CONTINUE CHAR.
+1825 003660  2241          ISZ     XC8CKP          /BUMP RETURN FOR CALL PLUS 2
+1826 003661  4765  C8BY3,  JMS     C8GET           /GET REGISTERS
+1827 003662  5641          JMP I   XC8CKP          /SAY GOOD BY
+1828               
+1829               //*********************************************************************
+1830               
+1831               /C8ECHO
+1832               /THIS ROUTINE WILL LOOK FOR A CHAR FROM THE KEYBOARD.  STORE IT IN LOCATION CHAR
+1833               /CHECK IF IT WAS A CONTROL CHARACTER - SET INMODE - PRINT CHARACTER
+1834               
+1835               /       C8ECHO =        JMS XC8ECH
+1836               /EX.    JMS     XC8ECHO         /LOOK FOR CONSOL CHAR C8PRNT IT
+1837                                               /RETURN CALL PLUS ONE AC = CHAR C8TYPED IN
+1838               
+1839               /CALLS USED ARE -XC8TTYI-XC8CNTR-C8GET-XC8ECH-XC8TTYPE
+1840               
+1841               /
+1842 003663  0000  XC8ECH, 0
+1843 003664  4766          JMS     XC8TTYI         /WAIT FOR CHAR FROM KEYBOARD
+1844 003665  4765          JMS     C8GET           /RESTORE THE REGISTERS
+1845 003666  2276          ISZ     INMODE          /SET INMODE IDENTIFING THIS AS A EXPECTED CHAR
+1846 003667  4764          JMS     XC8CNTR         /GO CHECK IF IT IS A CONTROL CHAR
+1847 003670  5663          JMP I   XC8ECH          /WAS A CONTROL CHAR - CONTINUE RUNNING
+1848 003671  4277          JMS     XC8TYPE         /NOT A CONTROL CHAR C8PRNT IT
+1849 003672  3276          DCA     INMODE          /CLEAR FLAG THAT CHAR EXPECTED
+1850 003673  1275          TAD     C8CHAR          /GET CHAR IN AC
+1851 003674  5663          JMP I   XC8ECH          /EXIT
+1852 003675  0000  C8CHAR, 0
+1853 003676  0000  INMODE, 0
+1854               
+1855               /*********************************************************************
+1856               
+1857               /C8TYPE
+1858               /THIS ROUTINE WILL C8PRNT ON THE CONSOLE OR THE LPT WITH DEVICE CODE 66.
+1859               /
+1860               /       C8TYPE= JMS XC8TYP
+1861               
+1862               /EX.    JMS     XC8TYPE         /C8PRNT THE CHAR IN THE AC.
+1863                       /                       /RETURN CALL PLUS ONE AC =0000
+1864                                               /DO NOT CLEAR THE LINK IN THIS ROUTINE NEEDED BYC8OCT
+1865               
+1866               /CALLS USED ARE -C8HANG-XC8CNTR-XC8PNT-XC8CRLF-XC8INQU-
+1867               
+1868               
+1869 003677  0000  XC8TYP, 0
+1870 003700  3320          DCA     PNTBUF          /STORE CHAR
+1871 003701  1321          TAD     TTYLPT          /CHECK O=TTY 7777=LPT
+1872 003702  7640          SZA CLA
+1873 003703  5312          JMP     XDOLPT          /DO OUT PUT ON LPT
+1874 003704  1320          TAD     PNTBUF
+1875 003705  6046          TLS
+1876 003706  6041          TSF
+1877 003707  5306          JMP     .-1
+1878 003710  6042          TCF
+1879 003711  5316          JMP     C8BY5
+1880 003712  1320  XDOLPT, TAD     PNTBUF          /GET CHAR
+1881 003713  6666          PSTB    PCLF            /C8PRNT IT
+1882 003714  4322          JMS     C8HANG          /CHECK KEYBOARD IF HUNG
+1883 003715  6662          PCLF                    /CLEAR THE FLAG
+1884 003716  7600  C8BY5,  7600                    /CLEAR THE AC
+1885 003717  5677          JMP I   XC8TYP          /EXIT
+1886 003720  0000  PNTBUF, 0
+1887 003721  0000  TTYLPT, 0
+1888               
+1889               
+1890 003722  0000  C8HANG, 0
+1891 003723  7200          CLA             /
+1892 003724  1316          TAD     C8BY5           /GET CONSTANT 7600
+1893 003725  3320          DCA     PNTBUF          /PNTBUF IS NOW A COUNTER 
+1894 003726  6661          PSKF                    /SKIP ON PRINTER DONE
+1895 003727  7410          SKP                     /NOT DONE YET
+1896 003730  5722          JMP I   C8HANG          /SAW FLAG DONE 
+1897 003731  2345          ISZ     C8CONT          /FIRST COUNTER FAST ONE
+1898 003732  5326          JMP     .-4             /CHECK IF FLAG SET YET
+1899 003733  2320          ISZ     PNTBUF          /MADE 4096 COUNTS ON FAST COUNTER
+1900 003734  5331          JMP     .-3             /KEEP IT UP FOR 5 SEC 
+1901 003735  1764          TAD     XC8CNTR         /GET THE RETURN ADDRESS IN CONTROL
+1902 003736  3322          DCA     C8HANG          /SAVE IT IN HANG
+1903 003737  3321          DCA     TTYLPT          /ALLOW PRINTING ON TTY
+1904 003740  4763          JMS     XC8PNT
+1905 003741  3746          MESHANG                 /LPT ERROR
+1906 003742  4223          JMS     XC8CRLF
+1907 003743  4762          JMS     XC8INQU         /PRINT WAITING 
+1908 003744  5722          JMP I   C8HANG          /CONTINUE TO SAVE ADDRESS
+1909 003745  0000  C8CONT, 0                       /COUNTER FOR TIMER
+1910 003746  1420  MESHANG,TEXT    "LPT ERROR"
+     003747  2440  
+     003750  0522  
+     003751  2217  
+     003752  2200  
+1911               
+1912 003762  3435  PAGE
+     003763  3103  
+     003764  3200  
+     003765  3424  
+     003766  3072  
+     003767  4000  
+     003770  4123  
+     003771  4124  
+     003772  4122  
+     003773  0212  
+     003774  0215  
+     003775  0260  
+     003776  0007  
+     003777  7774  
+1913               /*********************************************************************
+1914               /*******************************************************************
+1915               
+1916               /THIS ROUTINE WILL CHECK LOCATION 22 THE HARD WARE CONFIG WORD.
+1917               /TO SEE IF THE CONSOLE BIT 3 )400) IS SET IF SET THEN RETURN
+1918               /TO CALL PLUS TWO FO A ACTIVE CONSOLR PACKAGE AC=0
+1919               /IF NOT SET THEN TO CALL PLUS ONE FOR A DEACTIVE CONSOLE PACKAGE.
+1920               
+1921               
+1922 004000  0000  CHKCLA, 0
+1923 004001  7200          CLA
+1924 004002  1022          TAD     22              /GET THE COTENTA OF LOCATION 22
+1925 004003  0377          AND     (400            /MASK FOR BIT 3 (400
+1926 004004  7650          SNA CLA                 /
+1927 004005  2200          ISZ     CHKCLA          /ACTIVE CONSOLE PACKAGE RETURN
+1928                                               /CALL PLUS ONE (1) FOR ACTIVE
+1929 004006  5600          JMP I   CHKCLA          /DEACTIVE CONSOLE PACKAGE RETURN
+1930                                               /CALL PLUS TWO (2)
+1931               
+1932               /C8ERR
+1933               /THIS ROUTINE WILL DETERMINE WHAT TO DO WHEN A C8ERR IS ENCOUNTERED
+1934               /WILL CHECK IF CLASSIC SYSTEM, WILL CHECK C8SWIT REGISTERS.
+1935               /       C8ERR=  JMS XC8ERR
+1936               /EX.    JMS     XC8ERR          /GO TO C8ERR CALL IF NOT CONSOL 
+1937               /                               /RETURN IS CALL PLUS ONE AC =0000
+1938               
+1939               /CALLS USED ARE -CHKCLA-XC8CRLF-XC8SW-XC8INQU-XC8PNT-XC8OCTA-
+1940               
+1941               
+1942 004007  0000  XC8ERR, 0
+1943 004010  6002          IOF
+1944 004011  3322          DCA     ACSAVE          /SAVE AC
+1945 004012  6004          GTF
+1946 004013  3324          DCA     FLSAVE          /SAVE THE FLAGS
+1947 004014  7501          MQA
+1948 004015  3323          DCA     MQSAVE          /SAVE THE MQ
+1949 004016  7340          CLA CLL CMA             /SUBTRACT A 1 FOR TRUE LOCATION
+1950 004017  1207          TAD     XC8ERR          /GET RETTURN LOCATION
+1951 004020  3321          DCA     PCSAVE          /SAVE ADD OF C8ERR CALL
+1952 004021  4200          JMS     CHKCLA          /CHECK LOC.22 BIT 3 CONSOL BIT
+1953 004022  7410          SKP                     /ACTIVE CONSOLE PACKAGE
+1954 004023  5263          JMP     NTCLAS          /NOT CLASSIC SYSTEM
+1955 004024  4776          JMS     C8GET           /GET THE REGISTERS.
+1956 004025  4775          JMS     XC8SW           /CHECK SWITCH REG FOR BIT THAT INDICATES
+1957                                               /NO ERROR MESSAGE
+1958 004026  0374  SETUP1, AND     (0000           /MASK FOR BIT FOR NO ERROR PRINTING
+1959                                               /IF THIS ERROR MESSAGE IS TO ALWAYS
+1960                                               /BE PRINTED LEAVE AND VALUE AT 0000
+1961 004027  7640          SZA CLA                 /SKIP IF BIT IS 0 PRINT ERROR MESSAGE
+1962 004030  5255          JMP     C8DO10          /DO NOT PRINT
+1963 004031  4773          JMS     XC8CRLF
+1964 004032  4772          JMS     XC8PNT
+1965 004033  4075          ERRMES                  /PRINT THE ERROR MESSAGE
+1966 004034  4772          JMS     XC8PNT
+1967 004035  4105          MESPC                   /PRINT THE PC STSTEMENT
+1968 004036  1321          TAD     PCSAVE
+1969 004037  4771          JMS     XC8OCTA         /CONVERT 4 DIGIT PC TO ASCII
+1970 004040  4772          JMS     XC8PNT
+1971 004041  4110          MESAC                   /PRINT THE AC MESS
+1972 004042  1322          TAD     ACSAVE
+1973 004043  4771          JMS     XC8OCTA
+1974 004044  4772          JMS     XC8PNT
+1975 004045  4113          MESMQ                   /PRINT MQ
+1976 004046  1323          TAD     MQSAVE
+1977 004047  4771          JMS     XC8OCTA
+1978 004050  4772          JMS     XC8PNT
+1979 004051  4116          MESFL                   /PRINT FL
+1980 004052  1324          TAD     FLSAVE
+1981 004053  4771          JMS     XC8OCTA
+1982 004054  4773          JMS     XC8CRLF
+1983 004055  4776  C8DO10, JMS     C8GET           /GET THE REGISTERS.
+1984 004056  4775          JMS     XC8SW           /CHECK SWITCH REGISTER
+1985 004057  7610          SKP CLA                 /SKIP IF BIT 0 SET
+1986 004060  5273          JMP     C8BY2           /LEAVE
+1987 004061  4770          JMS     XC8INQ          /GO TO THE INQUIRE ROUTINE
+1988 004062  5273          JMP     C8BY2           /LEAVE
+1989 004063  4776  NTCLAS, JMS     C8GET           /GET THE REGISTERS.
+1990 004064  4775          JMS     XC8SW           /CHECK PSEUDO SWITCH REGISTER
+1991                                               /CHECK THE C8SWIT REGISTER
+1992 004065  7610          SKP CLA                 /SKIP IF HALT
+1993 004066  5607          JMP I   XC8ERR          /NO HALT CONTINUE
+1994 004067  1367          TAD     (7402           /CODE FOR HLT
+1995 004070  3721          DCA I   PCSAVE          /PUT IT IN CALL LOC.
+1996 004071  4776          JMS     C8GET
+1997 004072  5721          JMP I   PCSAVE          /EXIT  TO CALL AND HALT
+1998 004073  4776  C8BY2,  JMS     C8GET           /GET THE REGISTERS
+1999 004074  5607          JMP I   XC8ERR
+2000 004075  0410  ERRMES, TEXT    "DHRKDD  FAILED "
+     004076  2213  
+     004077  0404  
+     004100  4040  
+     004101  0601  
+     004102  1114  
+     004103  0504  
+     004104  4000  
+2001 004105  4040  MESPC,  TEXT    "  PC:"
+     004106  2003  
+     004107  7200  
+2002 004110  4040  MESAC,  TEXT    "  AC:"
+     004111  0103  
+     004112  7200  
+2003 004113  4040  MESMQ,  TEXT    "  MQ:"
+     004114  1521  
+     004115  7200  
+2004 004116  4040  MESFL,  TEXT    "  FL:"
+     004117  0614  
+     004120  7200  
+2005 004121  7777  PCSAVE, 7777
+2006 004122  7777  ACSAVE, 7777
+2007 004123  7777  MQSAVE, 7777
+2008 004124  7777  FLSAVE, 7777
+2009               
+2010 004167  7402          $$$
+     004170  3435  
+     004171  3600  
+     004172  3103  
+     004173  3623  
+     004174  0000  
+     004175  3062  
+     004176  3424  
+     004177  0400  
+
+A0770   1513
+A7007   1512
+ACL     7701 unreferenced
+ACSAVE  4122
+ADPOT1  0137
+ADPOT2  0150
+ADPT1   1637
+ADPT2   1640
+ADREG   0125
+AERRO   1600
+AGAIN   0533
+ALLAGN  0220
+AMOUNT  0056
+APT8    1125
+APT8A   4424
+AUTO10  0010
+AUTO11  0011
+BGN     0200
+BGNBUF  0055
+BGNTST  0127
+BYRETR  3306
+C8BY1   3030
+C8BY2   4073
+C8BY3   3661
+C8BY4   3315
+C8BY5   3716
+C8CHAR  3675
+C8CKP   3622
+C8CONT  3745
+C8DO1   3110
+C8DO10  4055
+C8DO11  3407
+C8DO2   3633
+C8DO3   3150
+C8DO4   3606
+C8DO7   3326
+C8GET   3424
+C8HANG  3722
+C8RDPS  3466
+C8RETD  3414
+C8RETR  3335
+C8SETD  3413
+C8SETS  3334
+C8SWST  3545
+C8TMP1  3621
+CAF     6007
+CAREG   0124
+CCNTR1  1516
+CHANG   1463
+CHANGR  1477
+CHAR    0101
+CHECK   0400
+CHKCLA  4000
+CHKDAT  0353
+CHKDSK  0337 unreferenced
+CHKER   1112
+CHKR1   1007
+CHNPOT  1517
+CKCOUT  3032
+CLDR    0745
+CLKCNT  0132
+CLRALL  4445
+CMREG   0121
+CNT     1554
+CNTRLC  3347
+CNTRLD  3400
+CNTRLE  3344
+CNTRLL  3336
+CNTRLQ  3300
+CNTRLR  3311
+CNTRLS  3320
+CNTVAL  3052
+COUNT   1553
+CRLF    4452
+CSAVE1  1514
+CSAVE2  1515
+DAREG   0123
+DATCNT  0131
+DATER   1103
+DATOK   1071
+DCLR    6742
+DLAG    6743
+DLCA    6744
+DLDC    6746
+DLSC    6740
+DMAN    6747 unreferenced
+DOCNT   3047
+DONE    0250
+DONEA   3226
+DOPACK  3012
+DOSET   3051
+DRIVNO  0100
+DRST    6745
+DSK0A   0140
+DSK0B   0151
+DSK1A   0141 unreferenced
+DSK1B   0152 unreferenced
+DSK2A   0142 unreferenced
+DSK2B   0153 unreferenced
+DSK3A   0143 unreferenced
+DSK3B   0154 unreferenced
+DSK4A   0144 unreferenced
+DSK4B   0155 unreferenced
+DSK5A   0145 unreferenced
+DSK5B   0156 unreferenced
+DSK6A   0146 unreferenced
+DSK6B   0157 unreferenced
+DSK7A   0147 unreferenced
+DSK7B   0160 unreferenced
+DSKCNT  0105
+DSKP    6741
+DSKSKP  4441
+DTREG   0126
+ENDBUF  2577 unreferenced
+ENDIT   3542
+ENDTST  0424
+ERHLT0  0736 unreferenced
+ERHLT2  0750 unreferenced
+ERHLT3  0716 unreferenced
+ERHLT4  0707 unreferenced
+ERHLT5  0674 unreferenced
+ERHLT6  0731 unreferenced
+ERMES1  1734
+ERMES2  1756
+ERMES3  2000
+ERR1    3536
+ERRMES  4075
+ERRO    0436
+ERROR   4437
+ERTX1   1664
+ERTX2   1675
+ERTX3   1705
+ERTX4   1717
+EXBIT   0120
+EXIT    1306
+EXITA   3240
+EXTICK  1551
+FILCNT  3640
+FILLER  3637
+FLSAVE  4124
+FORMAT  0302
+FRMDSK  0263
+FROCT   1227
+FRSTOK  1056
+GDREG2  0117
+GETCH1  3503
+GETDAT  3256
+GOITA   3243
+GOTOA   3254
+GTF     6004
+HEDLST  0553
+HEDTAD  0552
+HIGHAD  0103
+HITRK   2200
+HOMEMA  0130
+INDEXA  3255
+INMODE  3676
+IOT0    0734
+IOT1    0741
+IOT2    0746
+IOT3    0714
+IOT4    0705
+IOT5    0672
+IOT6    0727
+IOTCHN  4430
+K0003   0060
+K0007   0062
+K0010   1324
+K0037   0074
+K0040   0063
+K0077   1323
+K0100   1556
+K0177   1370
+K0200   0066
+K0212   1226
+K0215   1225
+K0240   1321
+K0260   0067
+K0277   0065
+K0316   1371
+K0331   1372
+K0400   0073 unreferenced
+K2000   1527
+K3600   1326
+K3740   1311
+K4      0061
+K4000   0070
+K4100   1310
+K5000   0667
+K6500   1571
+K6520   1620
+K7377   1173
+K7400   0764
+K7577   0670
+K7700   1322
+K7735   0071
+K7741   1325
+K7760   0072
+K7771   0557
+KAERRO  4426
+KCDF    0075
+KCNT    1555
+KERRO   1621
+KILBUF  4435
+KLBUF   0752
+KTICK   1530
+KTIME   1557
+KWAIT   1511
+LDAD    0711
+LDADD   4444
+LDCA    0700
+LDCM    0720
+LDCMD   4442
+LDCUR   4443
+LDSC    4446
+LOC8ED  0134
+LODER   0654
+LODR1   0611
+LODTRK  4431
+LOTRK   2201
+LOWAD   0102
+M10     0077
+M313    0064
+M4      0076
+MCNTR1  1641
+MES1    2045
+MES2    2066
+MES3    2117
+MES4    2126
+MES5    2135
+MESA    3547
+MESAC   4110
+MESFL   4116
+MESHAN  3746
+MESMQ   4113
+MESPAS  3053
+MESPC   4105
+MOVE    1623
+MQA     7501
+MQL     7421
+MQSAVE  4123
+MULDSK  1153
+NEXCHK  0347
+NEXFRM  0276
+NOSET   3042
+NOTDSK  0244
+NOTEX   0536
+NTCLAS  4063
+NTGD    0474
+OCTEL   4450
+PASCNT  3050
+PCLF    6662
+PCNTR1  0547
+PCNTR2  0550
+PCNTR3  0551
+PCOUNT  0161
+PCSAVE  4121
+PNTBUF  3720
+PRINT   1312
+PRN     1252
+PRNTER  4447
+PSIE    6665 unreferenced
+PSKE    6663 unreferenced
+PSKF    6661
+PSTB    6664
+PTSTOR  3136
+QUES1   0232
+RDST    0671
+RDSTAT  4440
+RECAL   4433
+RECEIV  4434
+REDDSK  4432
+REDOA   3215
+REDTRK  1000
+RENEX1  0335
+RENEX2  0414
+RESTA   1425
+RESTER  1443
+RESTOR  1400
+RETRN1  0544
+SAMAGN  0224
+SAVPC   1622
+SBCNT1  0106
+SDKP    0740
+SETUP1  4026 unreferenced
+SETUP2  3025 unreferenced
+SOFT    0136
+STAER   1106
+STAOK   1041
+STCNT1  0107
+STCNT2  0110
+STCNT3  0111
+STRAUT  0513
+STREG   0122
+SWITCH  0057 unreferenced
+TABLA   3261
+TABLB   3271
+TCHKT   1113
+TCNTR1  0112
+TCNTR2  0113
+TCNTR3  0114
+TCNTR4  0115
+TCNTR5  0116
+TEXAD   1660 unreferenced
+TEXCA   1656 unreferenced
+TEXCM   1650
+TEXDA   1654 unreferenced
+TEXDT   1662 unreferenced
+TEXEND  2021
+TEXEX   1646
+TEXGD   1644
+TEXPC   1642
+TEXST   1652 unreferenced
+TICK    4427
+TIME    4425
+TMPCNT  3546
+TOCT    1200
+TRKCNT  0104
+TSTCHA  3515
+TTYLPT  3721
+TWOCT   4451 unreferenced
+TYPE    4436
+UPAROW  3415
+UPONE   1215
+WAIT    1327
+WASDSK  0242 unreferenced
+WATMES  3451
+WRKBUF  2200
+WRTDSK  0321
+WRTTRK  0600
+XAERRO  0026
+XAPT8   0024
+XC8CKP  3641
+XC8CNT  3200
+XC8CRL  3623
+XC8ECH  3663
+XC8ERR  4007
+XC8INQ  3435
+XC8OCT  3600
+XC8PAS  3000
+XC8PAU  3137
+XC8PNT  3103
+XC8PSW  3456
+XC8SW   3062
+XC8TTY  3072
+XC8TYP  3677
+XCHANG  0030
+XCLDR   0045
+XCRLF   0052
+XDOLPT  3712
+XDOSW   3317
+XEND    0135
+XERRO   0037
+XFROCT  0050
+XHITRK  0054
+XKLBUF  0035
+XLDAD   0044
+XLDCA   0043
+XLDCM   0042
+XLDSC   0733
+XLOTRK  0053
+XMOVE   0133
+XPRINT  0036
+XPRN    0047
+XRDST   0040
+XRDTRK  0032
+XREG    0546
+XRESTR  0033
+XSDKP   0041
+XTABLA  3257
+XTABLB  3260
+XTEXT   0545
+XTICK   0027
+XTIME   0025
+XTOCT   0051
+XWAIT   0034
+XWRTRK  0031
+XXLDSC  0046

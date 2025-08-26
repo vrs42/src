@@ -1,0 +1,666 @@
+   1               / RX02 SYSTEM HANDLER
+   2               /
+   3               
+   4               / COPYRIGHT  (C) 1984 BY DIGITAL EQUIPMENT CORPORATION
+   5               
+   6               / The information in this document is subject to change without notice
+   7               / and should not be construed as a commitment by Digital Equipment
+   8               / Corporation.  Digital Equipment Corporation assumes no responsibility
+   9               / for any errors that may appear in this document.
+  10               
+  11               / The software described in this document is furnished to the purchaser
+  12               / under a license for use on a single computer system and can be copied
+  13               / (with inclusion of DIGITAL'S Copyright notice) only for use in such
+  14               / system, except as may otherwise be provided in writing by DIGITAL.
+  15               
+  16               / Digital Equipment Corporation assumes no responsibility for the use
+  17               / or reliability of its software on equipment that is not supplied by
+  18               / DIGITAL.
+  19               
+  20               
+  21               /  THIS HANDLER WAS DESIGNED TO WORK WITH RX01, RX02, RX03
+  22               /
+  23               /  HOWEVER, ONE SINGLE BINARY CANNOT SUCCESSFULLY BE USED IN A
+  24               /  VIRGIN BUILD FOR ALL THREE DEVICES. IT IS CURRENTLY SET UP
+  25               /  TO BUILD AN RX02.
+  26               /  TO GENERATE A BINARY TO BUILD AN RX01, CHANGE THE RXTYP
+  27               /  EQUATE TO 1. FOR AN RX03 BUILD, CHANGE RXTYP TO 3.
+  28               /
+  29               RXTYP=2         /DEFAULT, BUILD ONTO AN RX02
+  30               /
+  31               /
+  32               /
+  33               VERSION=0261    /VERSION = B1
+  34               /
+  35               /
+  36               AC1=CLL CLA IAC
+  37               AC2=CLL CLA CML RTL
+  38               AC6=CLL CLA CML IAC RTL         /RX02'S MUST RUN ON AN OMNI-BUS !!
+  39               AC4000=CLL CLA CML RAR
+  40               AC3777=CLL CLA CMA RAR
+  41               AC7775=CLL CLA CMA RTL
+  42               /
+  43               /  DEVICE IOT SYMBOLIC EQUATES
+  44               /
+  45               LCD=6751                /LOAD COMMAND
+  46               XDR=6752                /TRANSFER DATA
+  47               STR=6753                /SKIP IF READY TO TRANSFER
+  48               SER=6754                /SKIP ON ERROR
+  49               SDN=6755                /SKIP ON DONE
+  50               /
+  51               /  HEADER BLOCK FOR BUILD
+  52               /
+  53                       *0
+  54 000000  7777          -1              /ONE ENTRY
+  55                       IFZERO RXTYP-1  <DEVICE RX01>   /GROUP NAME FOR HANDLER
+  56 000001  2230          IFZERO RXTYP-2  <DEVICE RX02>
+     000002  6062  
+  57                       IFZERO RXTYP-3  <DEVICE RX03>
+  58 000003  2331          DEVICE  SYS
+     000004  2300  
+  59 000005  4320          4320            /MULTI-TYPE RX HANDLER
+  60 000006  6007          SYS&177+6000    /TWO PAGE HANDLER
+  61 000007  0000          0               /UNUSED
+  62                       IFZERO  RXTYP-1 <756>   /SIZE FOR BUILD
+  63 000010  1734          IFZERO  RXTYP-2 <1734>
+  64                       IFZERO  RXTYP-3 <3670>
+  65               /
+  66 000011  7636          STBOOT-NDBOOT+12        /-SIZE (+12 FOR GAP)
+  67               /
+  68               /  HERE IS A LISTING OF THE PRIMARY BOOT FOR CONVENIENCE
+  69               /
+  70                       NOPUNCH
+  71               /
+  72                       *20
+  73               /
+  74 000020  1061  READ,   TAD     UNIT    /TRY NEXT COMBINATION OF DENSITY AND UNIT
+  75 000021  1046          TAD     CON360  /ADDING IN 360
+  76 000022  0060          AND     CON420  /KEEPING ONLY 420 BITS
+  77 000023  3061          DCA     UNIT    /CYCLES 400,420,0,20,400,,,,,,,,
+  78 000024  7327          AC6             /COMMAND TO READ DISK
+  79 000025  1061          TAD     UNIT    /UNIT AND DENSITY
+  80 000026  6751          LCD             /COMMAND TO CONTROLLER
+  81 000027  7301          AC1             /TO SET SECTOR AND TRACK TO 1
+  82 000030  4053          JMS     LOAD    /SECTOR TO CONTROLLER, LEAVES AC ALONE
+  83 000031  4053          JMS     LOAD    /AND TRACK
+  84 000032  7004  LITRAL, 7004            /LEAVING A 2 IN AC; SERVES AS LITERAL
+  85               /
+  86               /  FOLLOWING IS PART OF WAIT LOOP, SAME SECONDARY BOOTS, OLD PRIMARY BOOT
+  87               /
+  88 000033  6755  START,  SDN             /HAS DONE COME UP; CODE STARTS HERE!
+  89 000034  5054          JMP     LOAD+1  /NO, GO CHECK FOR READY TO TRANSFER
+  90               /
+  91               /  NOW, DONE OR ERROR
+  92               /
+  93 000035  6754          SER             /SKIP ON AN ERROR, TRY ANOTHER DENSITY ETC.
+  94 000036  7450          SNA             /NASTY, AC=2 FOR ABOUT TO DO SILO, 0 ON START-UP
+  95 000037  5020          JMP     READ    /START-UP, GO SET UP UNIT, THEN READ TO SILO
+  96 000040  1061          TAD     UNIT    /AC ALREADY 2, PUT IN UNIT, DENSITY
+  97 000041  6751          LCD             /TO EMPTY THE SILO
+  98 000042  1061          TAD     UNIT    /SET UP LOC 60 FOR OLD SECONDARY BOOT
+  99 000043  0046          AND     CON360  /KEEPING UNLY DENSITY BIT
+ 100 000044  1032          TAD     LITRAL  /ADDING IN 7004, BECAUSE THAT'S WHAT SYS WANTS
+ 101 000045  3060          DCA     RX1SAV  /OLD SECONDARY BOOT MOVES IT TO HANDLER
+ 102 000046  0360  CON360, 360             /LITERAL; EXECUTES IN LINE AS A NO-OP
+ 103               /                       /FALLS THRU TO NEXT PAGE OF LISTING
+ 104               /
+ 105               /
+ 106               /  FOLLOWING CODE SAME AS OLD PRIMARY BOOT
+ 107               /
+ 108 000047  4053          JMS     LOAD    /GRAB NEXT ITEM FROM SILO
+ 109 000050  3002          DCA     2       /TRADITION; SECONDARY BOOT STARTS LOADING AT 2 !
+ 110 000051  2050          ISZ     50      /INCREMENT LOAD ADDRESS
+ 111 000052  5047          JMP     47      /GO BACK FOR ANOTHER
+ 112               /
+ 113               /  SECONDARY BOOT LOADS OVER PRIMARY BOOT UNIT LOCATION 47 IS LOADED,
+ 114               /  THEN CONTROL PASSES TO SECONDARY BOOT
+ 115               /
+ 116 000053  0000  LOAD,   0               /SUBROUTINE TO GIVE AND TAKE DATA FROM CONTROLLER
+ 117 000054  6753          STR             /IS HE READY TO TALK TO US?
+ 118 000055  5033          JMP     START   /NO, IS HE PERHAPS DONE WITH SILO, OR IN ERROR?
+ 119 000056  6752          XDR             /YES, DATA IN OR OUT;IF DATA TO CONTROLLER, AC UNCHANGED
+ 120 000057  5453          JMP I   LOAD    /NO MAGIC, JUST EXIT FROM SUBROUTINE
+ 121               /
+ 122               /  60 GOES TO OLD SECONDARY BOOT
+ 123               /  61 HAS DENSITY AND UNIT THAT BOOTED SUCCESSFULLY
+ 124               /
+ 125               /
+ 126               CON420,                 /USE IT TO HOLD 420 LITERAL TO START OUT
+ 127 000060  0420  RX1SAV, 420             /UNIT^20+7004 TO GO TO SYS HANDLER
+ 128 000061  0020  UNIT,   20              /<DENSITY^400>+<UNIT^20> THAT BOOTED OK
+ 129               /
+ 130                       ENPUNCH
+ 131               /
+ 132               /      ##  SECONDARY BOOT  ##
+ 133               /
+ 134                       RELOC   2       /SECTION LOADING OVER PRIMARY BOOT 2 - 47
+ 135               /
+ 136               STBOOT=.
+ 137               /
+ 138               /  ONCE-ONLY CODE AFTER FIRST SECTOR IS TRANSFERED
+ 139               /
+ 140 000002* 1013  ONCE,   TAD     XR      /SINGLE=113, DOUBLE=213
+ 141 000003* 7110          CLL RAR         /SINGLE=45, DOUBLE=105
+ 142 000004* 1014          TAD     YR      /SETTING UP POINTER TO SECTOR, TRACK, FIELD, ADDR DATA
+ 143 000005* 3014          DCA     YR      /DAT01-1 OR DAT02-1
+ 144 000006* 1414          TAD I   YR      /GETTING SINGLE=774, DOUBLE=1374 (IN CASE OLD
+ 145 000007* 1060          TAD     RX1SAV  /ADD IN 20^UNIT+7004              PRIMARY BOOT)
+ 146 000010* 3061          DCA     UNIT    /PUT INTO 61: <DENSITY^400>+<UNIT^20>
+ 147 000011* 4015          JMS     NEXSEC  /DESTROY LINKAGE TO ONCE ONLY CODE!
+ 148 000012* 0000  XTRA,   0               /EXTRA TO MAKE ALL FIT
+ 149               /
+ 150               /
+ 151               /  AUTO INCREMENT REGISTERS
+ 152               /
+ 153 000013* 0061  XR,     61              /CONTINUE TO LOAD FIRST SECTOR AT 62
+ 154 000014* 0022  YR,     DAT01-45-1      /SET UP POINTER TO DATA AREA
+ 155               /
+ 156               /  SECTOR DONE, SET UP FOR NEXT
+ 157               /
+ 158 000015* 5002  NEXSEC, JMP     ONCE    /END OF FIRST SECTOR, DO SET-UP CODE
+ 159 000016* 6201          CDF     0       /DATA FIELD HERE TO USE AUTO INCR REGISTERS
+ 160 000017* 1414          TAD I   YR      /GET DATA FIELD FOR PLACEMENT OF NEXT SECTOR
+ 161 000020* 7500          SMA             /SKIP IF MORE TO DO
+ 162 000021* 5146          JMP     EBOOT   /END OF BOOT, 
+ 163 000022* 3044          DCA     XFIELD  /PLACE IN LINE TO SET DATA FIELD
+ 164 000023* 7327          AC6             /GET AC OF 6 TO SET UP FLOPPY READ
+ 165 000024* 1061          TAD     UNIT    /DENSITY AND UNIT NUMBER
+ 166 000025* 6751          LCD
+ 167 000026* 1414          TAD I   YR      /SECTOR FOR NEXT READ
+ 168 000027* 4053          JMS     LOAD    /LOAD LEAVES AC ALONE
+ 169 000030* 1414          TAD I   YR      /TRACK-SECTOR FOR NEXT READ
+ 170 000031* 4053          JMS     LOAD    /LOAD REMAINS FROM PRIMARY BOOT
+ 171 000032* 1414          TAD I   YR      /ADDRESS-TRACK-1 FOR NEXT READ
+ 172               /                       /FALL TO HANGGG WITH AC NON0 TO SHOW READ
+ 173               /
+ 174               /  FOLLOWING TWO LOCATIONS MUST MATCH PRIMARY BOOT
+ 175               /
+ 176 000033* 6755  HANGGG, SDN             /SKIP IF DONE
+ 177 000034* 5054          JMP     LOAD+1  /NO, GO CHECK FOR TRANSFER READY
+ 178               /
+ 179               /  SORT OUT ERROR, SILO DONE, READ DONE
+ 180               /
+ 181 000035* 6754          SER             /SKIP IF ERROR
+ 182 000036* 7410          SKP             /IS GOOD, CHECK WHETHER READ OR SILO
+ 183 000037* 7402          HLT             /ANY ERROR IS FATAL!!
+ 184 000040* 7450          SNA             /SKIP IF READY TO SILO (AC HAS LOAD ADDR)
+ 185 000041* 5015          JMP     NEXSEC  /DONE WITH SILO (AC=0) GO TO NEXT SECTOR
+ 186 000042* 3013          DCA     XR      /USE AUTO-INCR TO LOAD CORE
+ 187 000043* 5062          JMP     OVRFLW  /GO TO LOCATIONS NOT FITTING UNDER 47
+ 188               /
+ 189               /  CODE TO EMPTY THE SILO TO CORE
+ 190               /
+ 191 000044* 6201  XFIELD, CDF     0       /FIELD FOR TRANSFER PLACED HERE
+ 192 000045* 4053          JMS     LOAD    /LOAD REMAINS FROM PRIMARY BOOT
+ 193 000046* 3413          DCA I   XR      /PLACE NEXT WORD
+ 194 000047* 5044          JMP     XFIELD  /WHEN THIS LOCATION IS PLACED, SECONDARY BOOT
+ 195               /                       /TAKES CONTROL, CONTINUE FIRST SECTOR AT 62
+ 196               /
+ 197               /  PRIMARY BOOT LOCATIONS 50-61 REMAIN INTACT
+ 198               /
+ 199               STATUS=.                /REUSE FOR TEMPORARY
+ 200               /
+ 201               /       ##  REST OF SECONDARY BOOT  ##
+ 202               /
+ 203                       RELOC   62      /SECTION LOADING 62 - 213
+ 204               /
+ 205               /  LOCATIONS NOT FITTING WITHIN 2-47 SPACE
+ 206               /
+ 207 000062* 6752  OVRFLW, XDR             /FETCH READ STATUS FOR LATER
+ 208 000063* 3050          DCA     STATUS  /TO FIGURE OUT IF A DOUBLE SIDED FLOPPY
+ 209 000064* 7326          AC2             /CODE FOR SILO OPERATION
+ 210 000065* 1061          TAD     UNIT    /UNIT AND DENSITY
+ 211 000066* 6751          LCD             /SET TO EMPTY SILO
+ 212 000067* 5044          JMP     XFIELD  /GO TO SILO UNLOADING LOOP
+ 213               /
+ 214               /
+ 215               /
+ 216               /  SINGLE DENSITY LOADING DATA
+ 217               /
+ 218 000070* 0774  DAT01,  774             /CANCEL OUT 7004 WHEN ADDED TO 70X4
+ 219 000071* 6201          CDF     0       /2ND SECTOR FOR SINGLE DENSITY, FIELD 0
+ 220 000072* 0003          3               /SECTOR 3, INTERLEAVED AT 2
+ 221 000073* 7776          1-3             /TRACK 1  (MINUS SECTOR 3)
+ 222 000074* 0112          114-1-1         /2 THRU 47 + 62 THRU 113 FOR FIRST SECTOR
+ 223               /                       /-1 FOR TRACK, -1 FOR AUTO INCR
+ 224 000075* 6201          CDF     0       /3RD SECTOR TO 7600 FIELD 0
+ 225 000076* 0005          5
+ 226 000077* 7774          1-5
+ 227 000100* 7576          7600-1-1
+ 228 000101* 6201          CDF     0       /4TH SECTOR, SECOND HALF OF PAGE
+ 229 000102* 0007          7
+ 230 000103* 7772          1-7
+ 231 000104* 7676          7700-1-1
+ 232 000105* 6211          CDF     10      /5TH SECTOR, TOP OF FIELD 1
+ 233 000106* 0021          21              /SECTOR 21
+ 234 000107* 7770          11-21           /OF TRACK 11
+ 235 000110* 7566          7600-11-1       /TO 7600
+ 236 000111* 6211          CDF     10      /6TH SECTOR, REST OF FIELD 1
+ 237 000112* 0023          23
+ 238 000113* 7766          11-23
+ 239 000114* 7666          7700-11-1
+ 240 000115* 6221          CDF     20      /7TH SECTOR, TOP OF FIELD 2
+ 241 000116* 0025          25
+ 242 000117* 7764          11-25
+ 243 000120* 7566          7600-11-1
+ 244 000121* 6221          CDF     20      /10TH SECTOR, REST OF FIELD 2
+ 245 000122* 0027          27
+ 246 000123* 7762          11-27
+ 247 000124* 7666          7700-11-1
+ 248 000125* 0016          16              /MARKER AND LITERALS TO MAKE DAT02=DAT01+40
+ 249 000126* 7623  MAGIC,  7623            /THIS WORD IN HANDLER HAS DENSITY, UNIT WORD
+ 250 000127* 7605  L7605,  7605            /STARTING ADDR FOR HANDLER
+ 251               /
+ 252               /  DOUBLE DENSITY LOADING DATA
+ 253               /
+ 254 000130* 1374  DAT02,  1374            /MAKE 400+UNIT WHEN ADDED TO 70X4
+ 255 000131* 6201          CDF     0       /2ND SECTOR TO 7600
+ 256 000132* 0004          4               /INTERLEAVE OF 3
+ 257 000133* 7775          1-4
+ 258 000134* 7576          7600-1-1
+ 259 000135* 6211          CDF     10
+ 260 000136* 0015          15
+ 261 000137* 7770          5-15
+ 262 000140* 7572          7600-5-1
+ 263 000141* 6221          CDF     20      /3RD SECTOR TO 7600 OF FIELD 2
+ 264 000142* 0020          20              /SECOND HALF OF BLOCK 66 OCTAL
+ 265 000143* 7765          5-20            /ON TRACK 5
+ 266 000144* 7572          7600-5-1
+ 267 000145* 0016          16              /MARKER TO STOP WHOLE THING, ALSO LITERAL 16
+ 268               /
+ 269               /  I/O DONE, GO TO HANDLER
+ 270               /
+ 271 000146* 7200  EBOOT,  CLA
+ 272 000147* 7000          NOP
+ 273 000150* 1050          TAD     STATUS  /FIND OUT IF DOUBLE SIDED DISK
+ 274 000151* 7012          RTR
+ 275 000152* 7210          CLA RAR
+ 276 000153* 1061          TAD     UNIT    /ENTER WITH AC=16
+ 277 000154* 3526          DCA I   MAGIC   /TO 7623 OF SYSTEM HANDLER
+ 278 000155* 5527          JMP I   L7605   /TO START UP SYSTEM
+ 279               /
+ 280               NDBOOT=.
+ 281               /
+ 282               /  CODE THAT IS LOCATION SPECIFIC HAS !! IN COMMENTS
+ 283               /
+ 284               /       ##  CODE FOR SYSTEM HANDLER  ##
+ 285               /
+ 286                       RELOC
+ 287                       *200
+ 288                       RELOC   7600
+ 289               /
+ 290               /                       /USE DATA BREAKS FOR TEMPORARIES
+ 291               /
+ 292               QUO=7750                /QUOTIENT FOR DIVIDE == TRACK
+ 293               REMD=7751               /REMAINDER FOR DIVIDE == SECTOR
+ 294               REC=7752                /CURRENT LOGICAL SECTOR NUMBER
+ 295               RETRY=7753              /RETRIES COUNT
+ 296               /
+ 297 007600* 0000          ZBLOCK  7       /REQUIRED BY BUILD
+     007601* 0000  
+     007602* 0000  
+     007603* 0000  
+     007604* 0000  
+     007605* 0000  
+     007606* 0000  
+ 298               /
+ 299               /
+ 300               /  ENTRY POINT
+ 301               /
+ 302 007607* 0261  SYS,    VERSION
+ 303 007610* 0032  L32,    32              /FALL THRU SOME LITERALS
+ 304 007611* 1734  L1734,  1734            /WHICH MAY PUT STRAY STUFF IN AC
+ 305 007612* 0003          3               /!!REQUIRED AT 7612!! TO SHOW OS8 TWO PAGE HANDLER
+ 306 007613* 7346          AC7775          /SET UP RETRY COUNTER
+ 307 007614* 3353          DCA     RETRY   /RETRIES ARE OVER ENTIRE OPERATION
+ 308 007615* 6214          RDF             /GRAB CALLER'S FIELD
+ 309 007616* 1227          TAD     LLCDF0  /MAKE CDF TO IT
+ 310 007617* 3270          DCA     RESTOR  /PUT IT BACK, GOING TO I/O ROUTINE ON PAGE 2
+ 311 007620* 5230  IOTYP,  JMP     FIRST   /GO TO ONCE ONLY CODE, LATER USED AS VARIABLE
+ 312               /                       /HAS HEAD, DENSITY, UNIT FOR I/O REQUEST
+ 313 007621* 5264          JMP     RSTART  /GO CALL SECOND PAGE, IOTYP FALLS THRU TO HERE
+ 314               /
+ 315               /  LITERALS ETC.
+ 316               /
+ 317 007622* 5000  L5000,  5000            /
+ 318               BOOTYP,                 /!!MUST BE AT 7623!! SECONDARY BOOT PUTS AT BOOT TIME
+ 319               /                       /4000 IF QUAD, 400 IF DOUBLE, AND 20 IF UNIT 1
+ 320                       IFZERO  RXTYP-1 <0>     /INITIAL VALUE MATCHES DEVICE TO ALLOW
+ 321 007623* 0400          IFZERO  RXTYP-2 <400>   /BUILD ONTO VIRGIN MEDIA
+ 322                       IFZERO  RXTYP-3 <4400>  /OTHERWISE, SECONDARY BOOT PUTS IN RIGHT STUFF
+ 323 007624* 7754  LDENSW, DENSW           /LOCATION ON SECOND PAGE
+ 324               L4110,
+ 325 007625* 4110  LM3670, 4110            /VALUE WITH TWO USES
+ 326 007626* 7746  LM32,   -32
+ 327 007627* 6201  LLCDF0, CDF     0
+ 328               /
+ 329               /  ONCE ONLY CODE
+ 330               /
+ 331 007630* 5242  FIRST,  JMP     MORE    /LEAVING ADDITIONAL ONCE-ONLY SPACE
+ 332               /
+ 333               /  FIX CDF TO 7642
+ 334               /
+ 335                       *7642           /!!CDF OR CIF MUST BE AT 7642!!
+ 336 007642* 6221  MORE,   CDF     20      /POINT TO OUR SECOND PAGE
+ 337 007643* 1223          TAD     BOOTYP  /PICK UP BOOT WORD
+ 338 007644* 7104  SNGDBL, CLL RAL         /MAKE A WORD MINUS IF DOUBLE (OR QUAD) BOOTED
+ 339 007645* 7006  SIZE,   RTL             /REUSE FOR CONSTANTS
+ 340 007646* 3244          DCA     SNGDBL  /JUST FOR CONVENIENCE, THE BIT IS IN BOOTYP ANYHOW
+ 341 007647* 1263          TAD     QL3400  /ANY LITERAL IN RANGE 3400-3757 (LINK=0 HERE)
+ 342 007650* 1223          TAD     BOOTYP  /FIGURE OUT SIZE OF MEDIA
+ 343 007651* 7720          SMA SNL CLA     /SKIP IF DOUBLE OR QUAD
+ 344 007652* 1211          TAD     L1734   /SINGLE
+ 345 007653* 1225          TAD     L4110   /S=6044, D&Q=4110
+ 346 007654* 7420          SNL             /SKIP IF QUAD, ITS SIZE ALREADY THERE
+ 347 007655* 7130          CLL CML RAR     /OTHER TWO CASES DIVIDE BY TWO
+ 348 007656* 3245          DCA     SIZE    /STORE S=7022, D=6044, Q=4110
+ 349 007657* 1244          TAD     SNGDBL  /MAKE DENSW, 7600 IF DOUBLE, 7700 IF SINGLE
+ 350 007660* 7710          SPA CLA         /SKIP IF SINGLE
+ 351 007661* 1302          TAD     L7700
+ 352 007662* 1302          TAD     L7700
+ 353 007663* 3624  QL3400, DCA I   LDENSW  /MUST LIVE ON SECOND PAGE
+ 354               /
+ 355               /  END OF ONCE-ONLY, (RE)START I/O OPERATION
+ 356               /
+ 357               RSTART,                 /AC MAY HAVE JUNK COMING IN!!
+ 358 007664* 7350          AC3777          /MAKE A WORD WITH DENSITY AND UNIT BITS ONLY
+ 359 007665* 0223          AND     BOOTYP  /FOR CONTRUCTING LCD ARGUMENTS
+ 360 007666* 3220          DCA     IOTYP   /ALSO SHUTS OFF PATH TO ONCE-ONLY CODE!
+ 361 007667* 1207          TAD     SYS     /AC HAS THE CALL ADDR
+ 362 007670* 7402  RESTOR, HLT             /SET DATA FIELD TO THAT OF CALLER
+ 363 007671* 6222          CIF     20
+ 364 007672* 5200          JMP     PAGE2
+ 365               /
+ 366               /
+ 367               /  CALL WITH AC NON0 TO DO DIVIDE
+ 368               /  CALL WITH AC ZERO TO DO I/O RETRY (WHOLE OPERATION)
+ 369               /
+ 370 007673* 0000  DIVSUB, 0
+ 371 007674* 7650          SNA CLA         /SKIP IF REALLY A DIVIDE REQUEST
+ 372 007675* 5264          JMP     RSTART  /NO, IT WAS AN ERROR RETRY!!
+ 373 007676* 3350          DCA     QUO     /CLEAR DIVIDE QUOTIENT
+ 374 007677* 1223          TAD     BOOTYP  /IS IT A TWO HEADER
+ 375 007700* 7410          SKP             /!!FAULTY USR CALL DOES JMS HERE (7700)
+ 376 007701* 7402          HLT             /HALT OUT SUCH AN OCCURRENCE!!
+ 377 007702* 7700  L7700,  SMA CLA         /SKIP IF YES
+ 378 007703* 5315          JMP     SHUNT   /NO, GO DO DIVIDE
+ 379 007704* 7100          CLL             /TO CHECK 12 BIT SIZE
+ 380 007705* 1352          TAD     REC     /WHICH RECORD ARE WE WORKING ON
+ 381 007706* 1225          TAD     LM3670  /NUMBER OF SECTORS ON FIRST SIDE
+ 382 007707* 7620          SNL CLA         /SKIP IF SECOND SIDED IT
+ 383 007710* 5315          JMP     SHUNT   /NO, JUST REGULAR
+ 384 007711* 1223          TAD     BOOTYP  /MAKE IO FUNCTION WORD WITH SECOND HEAD BIT
+ 385 007712* 1222          TAD     L5000   /CONVERTS TO 20^UNIT +1400
+ 386 007713* 3220          DCA     IOTYP
+ 387 007714* 1225          TAD     LM3670  /BUT DECREASE RECORD NUMBER
+ 388 007715* 1352  SHUNT,  TAD     REC     /THIS FOR TRACK-SECTOR
+ 389 007716* 2350  DIVLOO, ISZ     QUO     /MAIN DIVIDE LOOP
+ 390 007717* 1226          TAD     LM32    /DIVIDE BY 26 TO GET TRACK
+ 391 007720* 7500          SMA             /SKIP IF DONE
+ 392 007721* 5316          JMP     DIVLOO
+ 393 007722* 1210          TAD     L32     /REMAINDER 0-25
+ 394 007723* 3351          DCA     REMD    /USE AS TEMPORARY UNTIL FINAL VALUE
+ 395 007724* 1244          TAD     SNGDBL  /FIND OUT IF SINGLE BOOT
+ 396 007725* 7710          SPA CLA         /SKIP IF YES
+ 397 007726* 1351          TAD     REMD    /MULTIPLY BY THREE FOR DOUBLE
+ 398 007727* 1351          TAD     REMD    /AND BY TWO FOR SINGLE
+ 399 007730* 1351          TAD     REMD
+ 400 007731* 7101          CLL IAC         /LINK CLEAR FOR FINAL TEST; +1 TO START AT 1 NOT 0
+ 401 007732* 1226          TAD     LM32    /DIVIDE BY 26 TO GET SECTOR
+ 402 007733* 7540          SMA SZA         /SKIP IF DONE
+ 403 007734* 5332          JMP     .-2
+ 404 007735* 1210          TAD     L32     /RESTORE POSITIVE VALUE TO BE SECTOR
+ 405 007736* 3351          DCA     REMD    /WHEW, BUT WATCH IT, A FINAL CORRECTION COMING!
+ 406 007737* 1244          TAD     SNGDBL  /IF LINK=0 AND SINGLE: 2,4,6,8,10,12,14,16... SERIES
+ 407 007740* 7720          SMA SNL CLA     /SKIP IF NOT THE SINGLE DENS. 1,3,5,7,9,,, SERIES
+ 408 007741* 2351          ISZ     REMD    /NOW HAVE IT 2,4,6,8,10,12,14,16...
+ 409 007742* 6222          CIF     20      /POP BACK TO OTHER PAGE
+ 410 007743* 5673          JMP I   DIVSUB  /!!THIS IS IN LAST USABLE LOCATION, EXEC NEEDS 7744!!
+ 411               /
+ 412               /
+ 413               
+ 414               /
+ 415               /       ##  SECOND PAGE  ##
+ 416               /
+ 417                       RELOC
+ 418                       *400
+ 419                       RELOC   7600
+ 420               /
+ 421               /  FETCH ARGUMENTS, ETC.
+ 422               /
+ 423 007600* 3351  PAGE2,  DCA     FETCH   /ENTER WITH ARGUMENT LIST ADDR IN AC
+ 424 007601* 6214          RDF             /SAFE HERE?
+ 425 007602* 1240          TAD     LCDIF0  /SET UP EXIT TO CALLER
+ 426 007603* 3322          DCA     EXFLD
+ 427 007604* 7330          AC4000          /SET UP TO PUT R/W BIT TO LINK
+ 428 007605* 1751          TAD I   FETCH   /FIRST ARGUMENT HAS FIELD FOR TRANSFER
+ 429 007606* 0261          AND     L70     /KEEPING ONLY FIELD
+ 430 007607* 1325          TAD     LCDF0   /MAKE CDF TO TRANSFER FIELD
+ 431 007610* 3251          DCA     BUFCDF  /PLACE IN LINE FOR SILO LOOP
+ 432 007611* 7026          CML RTL         /0=WRITE, 2=READ
+ 433 007612* 3353          DCA     FN
+ 434 007613* 1751          TAD I   FETCH   /MAKE CONTROL COUNT FOR TRANSFER
+ 435 007614* 7004          RAL
+ 436 007615* 0304          AND     L7600   /COUNT OF WORDS
+ 437 007616* 7041          CIA             /0 FOR WHOLE FIELD
+ 438 007617* 3352          DCA     BC
+ 439 007620* 2351          ISZ     FETCH   /NEXT ARGUMENT
+ 440 007621* 1751          TAD I   FETCH   /BUFFER ADDRESS
+ 441 007622* 3350          DCA     BUF
+ 442 007623* 2351          ISZ     FETCH   /NEXT
+ 443 007624* 1357          TAD     L100    /CARRY WITH DENSW IF SINGLE DENSITY
+ 444 007625* 1354          TAD     DENSW   /SET TO COMPUTE SECTOR# FOR BLOCK#
+ 445 007626* 7700          SMA CLA         /SKIP IF DOUBLE, MULTIPLE BY 2
+ 446 007627* 1751          TAD I   FETCH   /SINGLE, MULTIPLY BY FOUR
+ 447 007630* 1751          TAD I   FETCH
+ 448 007631* 2351          ISZ     FETCH   /MOVING POINTER TO ERROR EXIT
+ 449 007632* 6201          CDF     0       /INDIRECT TO FIRST PAGE FOR CONSTANTS
+ 450 007633* 7104          CLL RAL         /FINAL PART OF MULTIPLY
+ 451 007634* 3764          DCA I   LREC    /SAVE SECTOR NUMBER
+ 452 007635* 1762          TAD I   LSIZE   /TOTAL SIZE OF MEDIA
+ 453 007636* 7430          SZL             /SKIP IF LEGAL BLOCK #
+ 454 007637* 5322          JMP     EXFLD   /EXIT TO CALLER WITH BLOCK # IN AC
+ 455 007640* 6203  LCDIF0, CIF CDF 0       /GO BACK TO FIRST PAGE
+ 456 007641* 4273          JMS     DIVSUB  /SET UP TRACK AND SECTOR
+ 457 007642* 1353          TAD     FN      /SPLIT READ AND WRITE
+ 458 007643* 7640          SZA CLA         /WRITE SKIPS
+ 459 007644* 5274          JMP     STREAD  /READ STARTS IN MIDDLE OF LOOP
+ 460               /                       /WRITE FALLS TO NEXT LISTING PAGE
+ 461               
+ 462               /
+ 463               /WRITE FALLS THRU TO THIS LOOP
+ 464               /
+ 465               /  TOP OF MAIN LOOP
+ 466               /
+ 467 007645* 1353  TOP,    TAD     FN      /SET SILO TO LOAD-UNLOAD
+ 468 007646* 4324          JMS     LDCMD   /COMMAND TO CONTROLLER
+ 469 007647* 1354          TAD     DENSW   /MAKE SILO LOOP COUNT, S=7700, D=7600
+ 470 007650* 3324          DCA     FLPWC   /LDCMD ENTRY SAFE TEMPORARY
+ 471 007651* 7402  BUFCDF, HLT             /CDF TO BUFFER FIELD PLACED HERE
+ 472 007652* 1750  TRLOOP, TAD I   BUF     /IN CASE WRITE, FETCH A WORD
+ 473 007653* 4331          JMS     WAIT
+ 474 007654* 7410          SKP
+ 475 007655* 5342          JMP     ERROR
+ 476 007656* 6752          XDR             /TO OR FROM AC
+ 477 007657* 3750          DCA I   BUF     /PLACE WORD FOR READ, WRITE REPLACES SAME
+ 478 007660* 2350          ISZ     BUF     /MOVE BUFFER POINTER, (MAY SKIP)
+ 479 007661* 0070  L70,    70
+ 480 007662* 2324          ISZ     FLPWC   /DONE YET
+ 481 007663* 5252          JMP     TRLOOP
+ 482 007664* 4331          JMS     WAIT
+ 483 007665* 5342          JMP     ERROR
+ 484 007666* 1354          TAD     DENSW   /ADDING 77 (SINGLE) 177 (DOUBLE)
+ 485 007667* 7040          CMA             /ONCE WE CMA, THAT IS
+ 486 007670* 1352          TAD     BC      /LOOP CONTROL TO FINISH READ
+ 487 007671* 7450          SNA
+ 488 007672* 5321          JMP     OKEX    /OK, DONE
+ 489 007673* 3352          DCA     BC      /REPLACE AND KEEP GOING
+ 490               /
+ 491               /  MIDDLE OF MAIN LOOP
+ 492               /
+ 493 007674* 1353  STREAD, TAD     FN      /READ STARTS HERE
+ 494 007675* 1355          TAD     L4      /TURN SILO COMMAND INTO READ-WRITE COMMAND
+ 495 007676* 4324          JMS     LDCMD   /I/O COMMAND TO CONTROLLER
+ 496 007677* 1765          TAD I   LREMD   /PRECOMPUTED SECTOR #; LDCMD SET FIELD TO 0
+ 497 007700* 4331          JMS     WAIT
+ 498 007701* 7410          SKP
+ 499 007702* 5342          JMP     ERROR
+ 500 007703* 6752          XDR
+ 501 007704* 7600  L7600,  7600            /CLEAR AC, AND IS LITERAL
+ 502 007705* 1763          TAD I   LQUO    /TRACK #
+ 503 007706* 4331          JMS     WAIT
+ 504 007707* 7410          SKP
+ 505 007710* 5342          JMP     ERROR
+ 506 007711* 6752          XDR             /TRACK # IS ALWAYS NON0 !!
+ 507 007712* 2764          ISZ I   LREC    /MOVE TO NEXT RECORD NUMBER
+ 508 007713* 6203  BACKER, CDF CIF 0       /GO BACK TO FIRST PAGE
+ 509 007714* 4273          JMS     DIVSUB  /FOR TRACK AND SECTOR
+ 510 007715* 4331          JMS     WAIT
+ 511 007716* 5342          JMP     ERROR
+ 512 007717* 2352          ISZ     BC      /CHECK FOR WRITE EXIT
+ 513 007720* 5245          JMP     TOP     /STILL MORE
+ 514 007721* 2351  OKEX,   ISZ     FETCH   /KICK TO OK EXIT
+ 515 007722* 7402  EXFLD,  HLT             /CDF CIF TO CALLER
+ 516 007723* 5751          JMP I   FETCH   /OUT
+ 517               
+ 518               /
+ 519               /  LDCMD  SUBROUTINE
+ 520               /
+ 521               FLPWC=.                 /ENTRY POINT A SAFE COUNT TEMPORARY
+ 522 007724* 0000  LDCMD,  0               /CALL TO GIVE COMMAND TO CONTROLLER
+ 523 007725* 6201  LCDF0,  CDF     0       /INDIRECTS BACK TO FIRST PAGE
+ 524 007726* 1760          TAD I   LIOTYP  /PUT IN UNIT, DENSITY, HEAD
+ 525 007727* 6751          LCD             /COMMAND
+ 526 007730* 5724          JMP I   LDCMD
+ 527               
+ 528 007731* 0000  WAIT,   0
+ 529 007732* 6753          STR
+ 530 007733* 7410          SKP
+ 531 007734* 5731          JMP I   WAIT
+ 532 007735* 6755          SDN
+ 533 007736* 5332          JMP     WAIT+1
+ 534 007737* 2331          ISZ     WAIT
+ 535 007740* 6754          SER
+ 536 007741* 5731          JMP I   WAIT
+ 537 007742* 6201  ERROR,  CDF 0
+ 538 007743* 7200          CLA
+ 539 007744* 2761          ISZ I   LRETRY
+ 540 007745* 5313          JMP     BACKER
+ 541 007746* 7330          AC4000
+ 542 007747* 5322          JMP     EXFLD
+ 543               
+ 544               /
+ 545               /  VARIABLES ETC.
+ 546               /
+ 547 007750* 0000  BUF,    0               /POINTER TO CALLER'S BUFFER
+ 548 007751* 0000  FETCH,  0               /POINTER TO CALL
+ 549 007752* 0000  BC,     0               /CONTROL COUNT, WORDS TO TRANSFER
+ 550 007753* 0000  FN,     0               /0 FOR WRITE, 2 FOR READ
+ 551 007754* 0000  DENSW,  0               /7700 IF SINGLE DENSITY, 7600 IF DOUBLE DENSITY
+ 552               /
+ 553               /  LITERALS
+ 554               /
+ 555 007755* 0004  L4,     4
+ 556 007756* 0016  L16,    16
+ 557 007757* 0100  L100,   100
+ 558 007760* 7620  LIOTYP, IOTYP           /POINTERS BACK TO FIRST PAGE
+ 559 007761* 7753  LRETRY, RETRY
+ 560 007762* 7645  LSIZE,  SIZE
+ 561 007763* 7750  LQUO,   QUO
+ 562 007764* 7752  LREC,   REC
+ 563 007765* 7751  LREMD,  REMD
+ 564               
+ 565               $
+AC1     7301
+AC2     7326
+AC3777  7350
+AC4000  7330
+AC6     7327
+AC7775  7346
+BACKER  7713
+BC      7752
+BOOTYP  7623
+BUF     7750
+BUFCDF  7651
+CON360  0046
+CON420  0060
+DAT01   0070
+DAT02   0130 unreferenced
+DENSW   7754
+DIVLOO  7716
+DIVSUB  7673
+EBOOT   0146
+ERROR   7742
+EXFLD   7722
+FETCH   7751
+FIRST   7630
+FLPWC   7724
+FN      7753
+HANGGG  0033 unreferenced
+IOTYP   7620
+L100    7757
+L16     7756 unreferenced
+L1734   7611
+L32     7610
+L4      7755
+L4110   7625
+L5000   7622
+L70     7661
+L7600   7704
+L7605   0127
+L7700   7702
+LCD     6751
+LCDF0   7725
+LCDIF0  7640
+LDCMD   7724
+LDENSW  7624
+LIOTYP  7760
+LITRAL  0032
+LLCDF0  7627
+LM32    7626
+LM3670  7625
+LOAD    0053
+LQUO    7763
+LREC    7764
+LREMD   7765
+LRETRY  7761
+LSIZE   7762
+MAGIC   0126
+MORE    7642
+NDBOOT  0156
+NEXSEC  0015
+OKEX    7721
+ONCE    0002
+OVRFLW  0062
+PAGE2   7600
+QL3400  7663
+QUO     7750
+READ    0020
+REC     7752
+REMD    7751
+RESTOR  7670
+RETRY   7753
+RSTART  7664
+RX1SAV  0060
+RXTYP   0002
+SDN     6755
+SER     6754
+SHUNT   7715
+SIZE    7645
+SNGDBL  7644
+START   0033
+STATUS  0050
+STBOOT  0002
+STR     6753
+STREAD  7674
+SYS     7607
+TOP     7645
+TRLOOP  7652
+UNIT    0061
+VERSIO  0261
+WAIT    7731
+XDR     6752
+XFIELD  0044
+XR      0013
+XTRA    0012 unreferenced
+YR      0014
