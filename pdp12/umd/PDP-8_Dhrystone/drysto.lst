@@ -1,2151 +1,2152 @@
-   1               /PDP-8 DHRYSTONE BY ZACHARY KIRTZ
-   2               /BASED ON DHRYSTONE BY REINHOLD P. WEICKER
-   3               
-   4               /EAE INSTRUCTIONS
-   5               MUY=7405
-   6               DVI=7407
-   7               SHL=7413
-   8               MQL=7421
-   9               MQA=7501
-  10               /DK8-EA/DK8-EC CLOCK INSTRUCTIONS
-  11               CLEI=6131       /ENABLE CLOCK INTERRUPT
-  12               CLED=6132       /DISABLE CLOCK INTERRUPT
-  13               CLSKF=6133      /SKIP ON CLOCK FLAG & CLEAR IT
-  14               
-  15               /DK8-EP/DK8-ES CLOCK INSTRUCTIONS
-  16               CLZE=6130       /CLEAR CLOCK ENABLES
-  17               CLSKP=6131      /SKIP ON CLOCK FLAGS
-  18               CLOE=6132       /LOAD CLOCK ENABLES
-  19               CLAB=6133       /LOAD CLOCK PRESET
-  20               CLEN=6134       /READ CLOCK ENABLES
-  21               CLSA=6135       /READ CLOCK STATUS
-  22               CLBA=6136       /READ CLOCK PRESET
-  23               CLCA=6137       /READ CLOCK COUNTER
-  24               
-  25               /KW12-A CLOCK INSTRUCTIONS
-  26               CLSK=6131       /SKIP ON CLOCK FLAG
-  27               CLLR=6132       /LOAD CLOCK CONTROL
-  28               CLAB=6133       /LOAD CLOCK PRESET BUFFER
-  29               CLEN=6134       /LOAD CLOCK ENABLES
-  30               CLSA=6135       /READ CLOCK STATUS
-  31               CLBA=6136       /READ CLOCK PRESET
-  32               CLCA=6137       /READ CLOCK COUNTER
-  33               
-  34               /KW12-B/KW12-C CLOCK INSTRUCTIONS
-  35               CSOF=6131       /SKIP ON CLOCK FLAG
-  36               CTOC=6132       /TURN CLOCK OFF
-  37               CTON=6134       /TURN CLOCK ON
-  38               CRUN=6135       /CTON+CSOF+ENABLE INT+CLEAR FLAG
-  39               
-  40               /IDENT VALUES
-  41               ID1=0
-  42               ID2=1
-  43               ID3=2
-  44               ID4=3
-  45               ID5=4
-  46               
-  47               /MISC DEFS
-  48               RECSZ=25        /RECORD STRUCT SIZE
-  49               STRSZ=21        /STR_30 SIZE
-  50               ARRDIM=14       /ARRAY DIMS
-  51               
-  52               *1
-  53               /INTERRUPT HANDLER
-  54 000001  5402          JMP I 2
-  55 000002  0000          0               /HANDLER ADDRESS
-  56               
-  57               *20
-  58               /MISC VARS
-  59 000020  0000  CLKTP,  0       /CLOCK TYPE
-  60                               /BIT11=CLK AVAILABLE
-  61                               /BIT0-1: CLOCK TYPE
-  62                               /00 -> DK8-EP OR DK8-ES
-  63                               /01 -> DK8-EA OR DK8-EC
-  64                               /10 -> KW12-A
-  65                               /11 -> KW12-B OR KW12-C
-  66 000021  0000  TIMEH,  0       /HIGH TIMER, INC BY INTERRUPTS
-  67 000022  0000  TIMEL,  0       /LOW TIMER, READ FROM CLK AT END
-  68 000023  0000  ISEAE,  0       /IS EAE AVAILABLE
-  69 000024  0000  RCNTH,  0       /HIGH ROUND COUNT
-  70               
-  71               /FIELD 0 GLOBAL VARIABLES
-  72 000025  0000  GINT,   0       /INT_GLOB
-  73 000026  0000  GBOOL,  0       /BOOL_GLOB
-  74 000027  0000  GCH1,   0       /CH_1_GLOB
-  75 000030  0000  GCH2,   0       /CH_2_GLOB
-  76               
-  77               /GLOBAL VARIABLE ADDRESSES
-  78 000031  3000  GPTR,   GREC    /PTR_GLOB
-  79 000032  3024  GNPTR,  GNREC   /NEXT_PTR_GLOB
-  80 000033  0025  KGINT,  GINT
-  81 000034  0026  KGBOOL, GBOOL
-  82 000035  0027  KGCH1,  GCH1
-  83 000036  0030  KGCH2,  GCH2
-  84 000037  3112  KGARR,  GARR
-  85 000040  3126  KGARR2, GARR2
-  86               
-  87               /GLOBAL CONSTANTS
-  88 000041  0000  IDENT1, ID1
-  89 000042  0001  IDENT2, ID2
-  90 000043  0002  IDENT3, ID3
-  91 000044  0003  IDENT4, ID4
-  92 000045  0004  IDENT5, ID5
-  93 000046  7700  RUNCNT, 7700    /RUN COUNT
-  94               
-  95               /MAIN LOCAL VARIABLES
-  96               /PUTTING THESE IN PZ AT LEAST FOR NOW SINCE
-  97               /IT MAKES MY LIFE EASIER, WE HAVE SPACE, AND
-  98               /IT SHOULDN'T IMPACT PERFORMANCE
-  99 000047  0000  MINT1,  0       /INT_1_LOC
- 100 000050  0000  MINT2,  0       /INT_2_LOC
- 101 000051  0000  MINT3,  0       /INT_3_LOC
- 102 000052  0000  MENUM,  0       /ENUM_LOC
- 103 000053  0000  MRIDX,  0       /RUN_INDEX
- 104               
- 105               /MAIN PROGRAM LOCAL VARIABLE POINTERS
- 106 000054  0047  KMINT1, MINT1   /INT_1_LOC PTR
- 107 000055  0051  KMINT3, MINT3   /INT_3_LOC PTR
- 108 000056  0052  KMENUM, MENUM   /ENUM_LOC PTR
- 109 000057  3051  KMSTR1, MSTR1   /STR_1_LOC PTR
- 110 000060  3071  KMSTR2, MSTR2   /STR_2_LOC PTR
- 111               /THIS PAGE CONTAINS
- 112               /MAIN FUNCTION BEGINING AND ENDING
- 113               
- 114               PAGE
- 115               
- 116               /MAIN START
- 117 000200  7402          HLT
- 118 000201  6002          IOF             /DISABLE INTERRUPTS
- 119 000202  7200          CLA
- 120 000203  6134          CTON            /ENABLE KW12-B/C IF PRESENT
- 121                                       /A CYCLE SHOULD ELAPSE BY THE
- 122                                       /TIME SETUP IS DONE, WHICH WE
- 123                                       /WILL CHECK FOR LATER
- 124                                       /CLEARS ENABLES ON KW12-A AND
- 125                                       /DK8-EP/ES, BUT THIS IS FINE
- 126 000204  7447          7447            /SWITCH TO EAE MODE A
- 127                                       /IF ON PDP-8E MODE B
- 128                                       /DOES SCA DIV OTHERWISE
- 129 000205  0000          0               /USED AS DIV OPERAND
- 130                                       /OTHERWISE, HARMLESS "AND 0"
- 131 000206  4777          JMS I (SETUP1   /SETUP EAE PATCHES,
- 132                                       /DATA FIELD, AND
- 133                                       /FIELD 0 ISR
- 134 000207  7604          CLA OSR         /GET LSW
- 135 000210  7040          CMA             /COMPLEMENT
- 136                                       /WANT TO RUN LSW+1 LOOPS
- 137                                       /AT LEAST 1 LOOP
- 138 000211  3345          DCA MLPLFT      /SAVE TO LOOP COUNTER
- 139                       JMS PUTMSG      /PRINT BEGIN MSG
+   1               FIELD 7
+   2               /PDP-8 DHRYSTONE BY ZACHARY KIRTZ
+   3               /BASED ON DHRYSTONE BY REINHOLD P. WEICKER
+   4               
+   5               /EAE INSTRUCTIONS
+   6               MUY=7405
+   7               DVI=7407
+   8               SHL=7413
+   9               MQL=7421
+  10               MQA=7501
+  11               /DK8-EA/DK8-EC CLOCK INSTRUCTIONS
+  12               CLEI=6131       /ENABLE CLOCK INTERRUPT
+  13               CLED=6132       /DISABLE CLOCK INTERRUPT
+  14               CLSKF=6133      /SKIP ON CLOCK FLAG & CLEAR IT
+  15               
+  16               /DK8-EP/DK8-ES CLOCK INSTRUCTIONS
+  17               CLZE=6130       /CLEAR CLOCK ENABLES
+  18               CLSKP=6131      /SKIP ON CLOCK FLAGS
+  19               CLOE=6132       /LOAD CLOCK ENABLES
+  20               CLAB=6133       /LOAD CLOCK PRESET
+  21               CLEN=6134       /READ CLOCK ENABLES
+  22               CLSA=6135       /READ CLOCK STATUS
+  23               CLBA=6136       /READ CLOCK PRESET
+  24               CLCA=6137       /READ CLOCK COUNTER
+  25               
+  26               /KW12-A CLOCK INSTRUCTIONS
+  27               CLSK=6131       /SKIP ON CLOCK FLAG
+  28               CLLR=6132       /LOAD CLOCK CONTROL
+  29               CLAB=6133       /LOAD CLOCK PRESET BUFFER
+  30               CLEN=6134       /LOAD CLOCK ENABLES
+  31               CLSA=6135       /READ CLOCK STATUS
+  32               CLBA=6136       /READ CLOCK PRESET
+  33               CLCA=6137       /READ CLOCK COUNTER
+  34               
+  35               /KW12-B/KW12-C CLOCK INSTRUCTIONS
+  36               CSOF=6131       /SKIP ON CLOCK FLAG
+  37               CTOC=6132       /TURN CLOCK OFF
+  38               CTON=6134       /TURN CLOCK ON
+  39               CRUN=6135       /CTON+CSOF+ENABLE INT+CLEAR FLAG
+  40               
+  41               /IDENT VALUES
+  42               ID1=0
+  43               ID2=1
+  44               ID3=2
+  45               ID4=3
+  46               ID5=4
+  47               
+  48               /MISC DEFS
+  49               RECSZ=25        /RECORD STRUCT SIZE
+  50               STRSZ=21        /STR_30 SIZE
+  51               ARRDIM=14       /ARRAY DIMS
+  52               
+  53               *1
+  54               /INTERRUPT HANDLER
+  55 070001  5402          JMP I 2
+  56 070002  0000          0               /HANDLER ADDRESS
+  57               
+  58               *20
+  59               /MISC VARS
+  60 070020  0000  CLKTP,  0       /CLOCK TYPE
+  61                               /BIT11=CLK AVAILABLE
+  62                               /BIT0-1: CLOCK TYPE
+  63                               /00 -> DK8-EP OR DK8-ES
+  64                               /01 -> DK8-EA OR DK8-EC
+  65                               /10 -> KW12-A
+  66                               /11 -> KW12-B OR KW12-C
+  67 070021  0000  TIMEH,  0       /HIGH TIMER, INC BY INTERRUPTS
+  68 070022  0000  TIMEL,  0       /LOW TIMER, READ FROM CLK AT END
+  69 070023  0000  ISEAE,  0       /IS EAE AVAILABLE
+  70 070024  0000  RCNTH,  0       /HIGH ROUND COUNT
+  71               
+  72               /FIELD 0 GLOBAL VARIABLES
+  73 070025  0000  GINT,   0       /INT_GLOB
+  74 070026  0000  GBOOL,  0       /BOOL_GLOB
+  75 070027  0000  GCH1,   0       /CH_1_GLOB
+  76 070030  0000  GCH2,   0       /CH_2_GLOB
+  77               
+  78               /GLOBAL VARIABLE ADDRESSES
+  79 070031  3000  GPTR,   GREC    /PTR_GLOB
+  80 070032  3024  GNPTR,  GNREC   /NEXT_PTR_GLOB
+  81 070033  0025  KGINT,  GINT
+  82 070034  0026  KGBOOL, GBOOL
+  83 070035  0027  KGCH1,  GCH1
+  84 070036  0030  KGCH2,  GCH2
+  85 070037  3112  KGARR,  GARR
+  86 070040  3126  KGARR2, GARR2
+  87               
+  88               /GLOBAL CONSTANTS
+  89 070041  0000  IDENT1, ID1
+  90 070042  0001  IDENT2, ID2
+  91 070043  0002  IDENT3, ID3
+  92 070044  0003  IDENT4, ID4
+  93 070045  0004  IDENT5, ID5
+  94 070046  7700  RUNCNT, 7700    /RUN COUNT
+  95               
+  96               /MAIN LOCAL VARIABLES
+  97               /PUTTING THESE IN PZ AT LEAST FOR NOW SINCE
+  98               /IT MAKES MY LIFE EASIER, WE HAVE SPACE, AND
+  99               /IT SHOULDN'T IMPACT PERFORMANCE
+ 100 070047  0000  MINT1,  0       /INT_1_LOC
+ 101 070050  0000  MINT2,  0       /INT_2_LOC
+ 102 070051  0000  MINT3,  0       /INT_3_LOC
+ 103 070052  0000  MENUM,  0       /ENUM_LOC
+ 104 070053  0000  MRIDX,  0       /RUN_INDEX
+ 105               
+ 106               /MAIN PROGRAM LOCAL VARIABLE POINTERS
+ 107 070054  0047  KMINT1, MINT1   /INT_1_LOC PTR
+ 108 070055  0051  KMINT3, MINT3   /INT_3_LOC PTR
+ 109 070056  0052  KMENUM, MENUM   /ENUM_LOC PTR
+ 110 070057  3051  KMSTR1, MSTR1   /STR_1_LOC PTR
+ 111 070060  3071  KMSTR2, MSTR2   /STR_2_LOC PTR
+ 112               /THIS PAGE CONTAINS
+ 113               /MAIN FUNCTION BEGINING AND ENDING
+ 114               
+ 115               PAGE
+ 116               
+ 117               /MAIN START
+ 118 070200  7402          HLT
+ 119 070201  6002          IOF             /DISABLE INTERRUPTS
+ 120 070202  7200          CLA
+ 121 070203  6134          CTON            /ENABLE KW12-B/C IF PRESENT
+ 122                                       /A CYCLE SHOULD ELAPSE BY THE
+ 123                                       /TIME SETUP IS DONE, WHICH WE
+ 124                                       /WILL CHECK FOR LATER
+ 125                                       /CLEARS ENABLES ON KW12-A AND
+ 126                                       /DK8-EP/ES, BUT THIS IS FINE
+ 127 070204  7447          7447            /SWITCH TO EAE MODE A
+ 128                                       /IF ON PDP-8E MODE B
+ 129                                       /DOES SCA DIV OTHERWISE
+ 130 070205  0000          0               /USED AS DIV OPERAND
+ 131                                       /OTHERWISE, HARMLESS "AND 0"
+ 132 070206  4777          JMS I (SETUP1   /SETUP EAE PATCHES,
+ 133                                       /DATA FIELD, AND
+ 134                                       /FIELD 0 ISR
+ 135 070207  7604          CLA OSR         /GET LSW
+ 136 070210  7040          CMA             /COMPLEMENT
+ 137                                       /WANT TO RUN LSW+1 LOOPS
+ 138                                       /AT LEAST 1 LOOP
+ 139 070211  3345          DCA MLPLFT      /SAVE TO LOOP COUNTER
+ 140                       JMS PUTMSG      /PRINT BEGIN MSG
 off page        	          ^
-     000212  4776  
- 140 000213  3471          PRSTRT
- 141                       JMS PUTMSG      /PRINT VERSION MSG
+     070212  4776  
+ 141 070213  3471          PRSTRT
+ 142                       JMS PUTMSG      /PRINT VERSION MSG
 off page        	          ^
-     000214  4776  
- 142 000215  3510          PRVER
- 143 000216  7604          CLA OSR         /GET COUNT AGAIN
- 144 000217  7001          IAC             /ADD 1 FOR TRUE COUNT
- 145                       JMS PUTMSI      /PRINT HIGH RUN COUNT
+     070214  4776  
+ 143 070215  3510          PRVER
+ 144 070216  7604          CLA OSR         /GET COUNT AGAIN
+ 145 070217  7001          IAC             /ADD 1 FOR TRUE COUNT
+ 146                       JMS PUTMSI      /PRINT HIGH RUN COUNT
 off page        	          ^
-     000220  4775  
- 146 000221  3517          PRRCTH
- 147 000222  1046          TAD RUNCNT      /PRINT LOW RUN COUNT
- 148                       JMS PUTMSI
+     070220  4775  
+ 147 070221  3517          PRRCTH
+ 148 070222  1046          TAD RUNCNT      /PRINT LOW RUN COUNT
+ 149                       JMS PUTMSI
 off page        	         ^
-     000223  4775  
- 149 000224  3533          PRRCTL
- 150                       JMS STCLK       /START THE CLOCK
+     070223  4775  
+ 150 070224  3533          PRRCTL
+ 151                       JMS STCLK       /START THE CLOCK
 off page        	         ^
-     000225  4774  
- 151                                       /(IF AVAILABLE)
- 152 000226  7200  MNST,   CLA
- 153 000227  1373          TAD (12         /SET ARR2[8][7]=10
- 154 000230  3747          DCA I KAR287
- 155                       JMP MLOOP       /JUMP TO MAIN LOOP
+     070225  4774  
+ 152                                       /(IF AVAILABLE)
+ 153 070226  7200  MNST,   CLA
+ 154 070227  1373          TAD (12         /SET ARR2[8][7]=10
+ 155 070230  3747          DCA I KAR287
+ 156                       JMP MLOOP       /JUMP TO MAIN LOOP
 off page        	         ^
-     000231  5772  
- 156                                       /MAIN LOOP RETURNS HERE
- 157                                       /PRINT END RESULTS
- 158 000232  2345  MNEND,  ISZ MLPLFT      /INCREMENT COUNTER
- 159 000233  5226          JMP MNST        /NOT DONE? LOOP AGAIN
- 160                       JMS SPCLK       /DONE, STOP THE CLOCK
+     070231  5772  
+ 157                                       /MAIN LOOP RETURNS HERE
+ 158                                       /PRINT END RESULTS
+ 159 070232  2345  MNEND,  ISZ MLPLFT      /INCREMENT COUNTER
+ 160 070233  5226          JMP MNST        /NOT DONE? LOOP AGAIN
+ 161                       JMS SPCLK       /DONE, STOP THE CLOCK
 off page        	         ^
-     000234  4771  
- 161 000235  7402          HLT
- 162                       JMS PUTMSG      /END MESSAGE
+     070234  4771  
+ 162 070235  7402          HLT
+ 163                       JMS PUTMSG      /END MESSAGE
 off page        	          ^
-     000236  4776  
- 163 000237  3547          PREND
- 164 000240  1023          TAD ISEAE       /PRINT EAE ENABLE
- 165                       JMS PUTMSI
+     070236  4776  
+ 164 070237  3547          PREND
+ 165 070240  1023          TAD ISEAE       /PRINT EAE ENABLE
+ 166                       JMS PUTMSI
 off page        	         ^
-     000241  4775  
- 166 000242  3557          PREAE
- 167 000243  1020          TAD CLKTP       /PRINT TIME IF HAVE CLK
- 168 000244  7650          SNA CLA
- 169 000245  5265          JMP MNENCK      /OTHERWISE SKIP IT
- 170 000246  7100          CLL
- 171 000247  1020          TAD CLKTP       /GET TYPE BITS ALONE
- 172 000250  7006          RTL; RAL        /INTO 2 LSBS
-     000251  7004  
- 173 000252  1370          TAD (CTPTBL-10  /ADD TO TABLE BASE
- 174                                       /SUB 10 TO NEGATE CLOCK
- 175                                       /EXIST BIT
- 176 000253  3004          DCA 4
- 177 000254  1404          TAD I 4 /GET STR ADDR FROM TABLE
- 178                       JMS PUTMSS
+     070241  4775  
+ 167 070242  3557          PREAE
+ 168 070243  1020          TAD CLKTP       /PRINT TIME IF HAVE CLK
+ 169 070244  7650          SNA CLA
+ 170 070245  5265          JMP MNENCK      /OTHERWISE SKIP IT
+ 171 070246  7100          CLL
+ 172 070247  1020          TAD CLKTP       /GET TYPE BITS ALONE
+ 173 070250  7006          RTL; RAL        /INTO 2 LSBS
+     070251  7004  
+ 174 070252  1370          TAD (CTPTBL-10  /ADD TO TABLE BASE
+ 175                                       /SUB 10 TO NEGATE CLOCK
+ 176                                       /EXIST BIT
+ 177 070253  3004          DCA 4
+ 178 070254  1404          TAD I 4 /GET STR ADDR FROM TABLE
+ 179                       JMS PUTMSS
 off page        	         ^
-     000255  4767  
- 179 000256  3573          PRCLTP
- 180 000257  1021          TAD TIMEH       /PRINT HIGH TIME
- 181                       JMS PUTMSI
+     070255  4767  
+ 180 070256  3573          PRCLTP
+ 181 070257  1021          TAD TIMEH       /PRINT HIGH TIME
+ 182                       JMS PUTMSI
 off page        	         ^
-     000260  4775  
- 182 000261  3607          PRCLKH
- 183 000262  1022          TAD TIMEL       /PRINT LOW TIME
- 184                       JMS PUTMSI
+     070260  4775  
+ 183 070261  3607          PRCLKH
+ 184 070262  1022          TAD TIMEL       /PRINT LOW TIME
+ 185                       JMS PUTMSI
 off page        	         ^
-     000263  4775  
- 185 000264  3623          PRCLKL
- 186 000265  1025  MNENCK, TAD GINT        /INT_GLOB MSG
- 187                       JMS PUTMSI
+     070263  4775  
+ 186 070264  3623          PRCLKL
+ 187 070265  1025  MNENCK, TAD GINT        /INT_GLOB MSG
+ 188                       JMS PUTMSI
 off page        	         ^
-     000266  4775  
- 188 000267  3637          PRGINT
- 189 000270  1026          TAD GBOOL       /BOOL_GLOB MSG
- 190                       JMS PUTMSI
+     070266  4775  
+ 189 070267  3637          PRGINT
+ 190 070270  1026          TAD GBOOL       /BOOL_GLOB MSG
+ 191                       JMS PUTMSI
 off page        	         ^
-     000271  4775  
- 191 000272  3653          PRGBOOL
- 192 000273  1027          TAD GCH1        /CH_1_GLOB MSG
- 193                       JMS PUTMSI
+     070271  4775  
+ 192 070272  3653          PRGBOOL
+ 193 070273  1027          TAD GCH1        /CH_1_GLOB MSG
+ 194                       JMS PUTMSI
 off page        	         ^
-     000274  4775  
- 194 000275  3667          PRGCH1
- 195 000276  1030          TAD GCH2        /CH_2_GLOB MSG
- 196                       JMS PUTMSI
+     070274  4775  
+ 195 070275  3667          PRGCH1
+ 196 070276  1030          TAD GCH2        /CH_2_GLOB MSG
+ 197                       JMS PUTMSI
 off page        	         ^
-     000277  4775  
- 197 000300  3703          PRGCH2
- 198 000301  1746          TAD I KAR18     /LOAD ARR[8]
- 199                       JMS PUTMSI
+     070277  4775  
+ 198 070300  3703          PRGCH2
+ 199 070301  1746          TAD I KAR18     /LOAD ARR[8]
+ 200                       JMS PUTMSI
 off page        	         ^
-     000302  4775  
- 200 000303  3717          PRARR1
- 201                                       /ARR_2_GLOB MSG; GET ARR2[8][7]
- 202 000304  1747          TAD I KAR287    /LOAD ARR[8][7]
- 203                       JMS PUTMSI
+     070302  4775  
+ 201 070303  3717          PRARR1
+ 202                                       /ARR_2_GLOB MSG; GET ARR2[8][7]
+ 203 070304  1747          TAD I KAR287    /LOAD ARR[8][7]
+ 204                       JMS PUTMSI
 off page        	         ^
-     000305  4775  
- 204 000306  3733          PRARR2
- 205 000307  1031          TAD GPTR        /PTR_GLOB MSG
- 206                       JMS PUTMSI
+     070305  4775  
+ 205 070306  3733          PRARR2
+ 206 070307  1031          TAD GPTR        /PTR_GLOB MSG
+ 207                       JMS PUTMSI
 off page        	         ^
-     000310  4775  
- 207 000311  3747          PRPTR
- 208 000312  1031          TAD GPTR        /PRINT GPTR CONTENTS
- 209                       JMS PUTREC
+     070310  4775  
+ 208 070311  3747          PRPTR
+ 209 070312  1031          TAD GPTR        /PRINT GPTR CONTENTS
+ 210                       JMS PUTREC
 off page        	         ^
-     000313  4766  
- 210 000314  1032          TAD GNPTR       /NEXT_PTR_GLOB MSG
- 211                       JMS PUTMSI
+     070313  4766  
+ 211 070314  1032          TAD GNPTR       /NEXT_PTR_GLOB MSG
+ 212                       JMS PUTMSI
 off page        	         ^
-     000315  4775  
- 212 000316  3763          PRNPTR
- 213 000317  1032          TAD GNPTR       /PRINT GNPTR CONTENTS
- 214                       JMS PUTREC
+     070315  4775  
+ 213 070316  3763          PRNPTR
+ 214 070317  1032          TAD GNPTR       /PRINT GNPTR CONTENTS
+ 215                       JMS PUTREC
 off page        	         ^
-     000320  4766  
- 215 000321  1047          TAD MINT1       /INT_1_LOC MSG
- 216                       JMS PUTMSI
+     070320  4766  
+ 216 070321  1047          TAD MINT1       /INT_1_LOC MSG
+ 217                       JMS PUTMSI
 off page        	         ^
-     000322  4775  
- 217 000323  4073          PRLIT1
- 218 000324  1050          TAD MINT2       /INT_2_LOC MSG
- 219                       JMS PUTMSI
+     070322  4775  
+ 218 070323  4073          PRLIT1
+ 219 070324  1050          TAD MINT2       /INT_2_LOC MSG
+ 220                       JMS PUTMSI
 off page        	         ^
-     000325  4775  
- 220 000326  4107          PRLIT2
- 221 000327  1051          TAD MINT3       /INT_3_LOC MSG
- 222                       JMS PUTMSI
+     070325  4775  
+ 221 070326  4107          PRLIT2
+ 222 070327  1051          TAD MINT3       /INT_3_LOC MSG
+ 223                       JMS PUTMSI
 off page        	         ^
-     000330  4775  
- 223 000331  4123          PRLIT3
- 224 000332  1052          TAD MENUM       /ENUM_LOC MSG
- 225                       JMS PUTMSI
+     070330  4775  
+ 224 070331  4123          PRLIT3
+ 225 070332  1052          TAD MENUM       /ENUM_LOC MSG
+ 226                       JMS PUTMSI
 off page        	         ^
-     000333  4775  
- 226 000334  4137          PRLENM
- 227 000335  1057          TAD KMSTR1      /STR_1_LOC MSG
- 228                       JMS PUTMSS
+     070333  4775  
+ 227 070334  4137          PRLENM
+ 228 070335  1057          TAD KMSTR1      /STR_1_LOC MSG
+ 229                       JMS PUTMSS
 off page        	         ^
-     000336  4767  
- 229 000337  4153          PRLST1
- 230 000340  1060          TAD KMSTR2      /STR_2_LOC MSG
- 231                       JMS PUTMSS
+     070336  4767  
+ 230 070337  4153          PRLST1
+ 231 070340  1060          TAD KMSTR2      /STR_2_LOC MSG
+ 232                       JMS PUTMSS
 off page        	         ^
-     000341  4767  
- 232 000342  4167          PRLST2
- 233 000343  7402          HLT
- 234 000344  5750          JMP I KEXIT     /RETURN TO OS/8 MONITOR
- 235               
- 236               /LOCAL VARIABLES
- 237 000345  0000  MLPLFT, 0               /LOOP COUNT
- 238               
- 239               /LOCAL CONSTANTS
- 240 000346  3122  KAR18,  GARR+10         /ARR1[8]
- 241 000347  3275  KAR287, ARRDIM^10+GARR2+7       /ARR2[8][7] ADDR
- 242 000350  7600  KEXIT,  7600
- 243               
- 244               /THIS PAGE CONTAINS:
- 245               /EAE PATCH ROUTINE, DATA FIELD SETUP, AND
- 246               /FIELD 0 ISR SETUP (WHEN EXECUTING OUT OF NON-FIELD 0)
- 247               
- 248 000366  1722  PAGE
-     000367  1711  
-     000370  4260  
-     000371  0674  
-     000372  1000  
-     000373  0012  
-     000374  0600  
-     000375  1700  
-     000376  1671  
-     000377  0400  
- 249               
- 250 000400  0000  SETUP1, 0
- 251               /FIRST, IF WE'RE NOT RUNNING OUT OF FIELD 0,
- 252               /PLACE A ISR STUB IN FIELD 0 TO JUMP TO OUR FIELD'S ISR
- 253 000401  7200          CLA
- 254 000402  6224          RIF             /IN IF0?
- 255 000403  7450          SNA
- 256 000404  5227          JMP S1CDF       /YUP, SKIP TO CDF SETUP
- 257 000405  1216          TAD S1KCDF      /SETUP COPY CDF
- 258 000406  3214          DCA S1ISRL
- 259 000407  1377          TAD (F0ISR2-1   /SETUP SRC AND DEST LOCATIONS
- 260 000410  3010          DCA 10
- 261 000411  3011          DCA 11
- 262 000412  1376          TAD (-F0ISZ     /ISR SIZE
- 263 000413  3012          DCA 12
- 264 000414  7402  S1ISRL, HLT             /BECOMES CDF TO IF
- 265 000415  1410          TAD I 10        /LOAD WORD
- 266 000416  6201  S1KCDF, CDF 0
- 267 000417  3411          DCA I 11        /STORE IT
- 268 000420  2012          ISZ 12          /INC COUNTER
- 269 000421  5214          JMP S1ISRL      /NOT DONE? LOOP
- 270 000422  1214          TAD S1ISRL      /1ST INST IS CDF TO HERE
- 271 000423  3775          DCA I (F0ISR-F0ISR+1
- 272 000424  6224          RIF             /LATER IS A CIF TO THIS IF
- 273 000425  1374          TAD (CIF
- 274 000426  3773          DCA I (F0ICIF-F0ISR+1
- 275               /CREATE + EXECUTE CDF INSTRUCTION TO SWITCH DF TO IF
- 276 000427  6224  S1CDF,  RIF             /CONSTRUCT CDF INST
- 277 000430  1216          TAD S1KCDF
- 278 000431  3232          DCA .+1
- 279 000432  0000          0               /BECOMES CDF
- 280               /APPLY EAE PATCHES
- 281 000433  7305          CLL CLA IAC RAL /MUL 2X2
- 282 000434  7425          MQL MUY
- 283 000435  0002          0002            /"AND Z 2" IF MUY DOESN'T WORK
- 284 000436  7200          CLA             /SEPARATE CLA AND MQA SO
- 285                                       /SO GROUP 1 CLA IS USED
- 286 000437  3023          DCA ISEAE       /CLEAR FLG WHILE AC=0
- 287 000440  7501          MQA             /GET RESULT
- 288 000441  1372          TAD (-4         /CHECK IF 4
- 289               /       SKP CLA
- 290 000442  7640          CLA SZA
- 291 000443  5246          JMP PECK
- 292 000444  2023          ISZ ISEAE       /SET EAE FLAG
- 293 000445  1371          TAD (ENEPA-DISEPA
- 294                                       /SETUP FOR AC=ENEPA
- 295                                       /WILL BECOME ENEAE
- 296                                       /WITH NEXT INST
- 297 000446  1370  PECK,   TAD (DISEPA-1   /SET DISABLE (OR EN) PATCH
- 298                                       /ADDRESS
- 299 000447  3010          DCA 10
- 300               PELO,
- 301 000450  1410          TAD I 10        /LOAD ADDR
- 302 000451  7450          SNA             /IS 0?
- 303 000452  5600          JMP I SETUP1    /RETURN IF YES
- 304 000453  3004          DCA 4           /SAVE TO TEMP
- 305 000454  1410          TAD I 10        /LOAD DATA
- 306 000455  3404          DCA I 4         /STORE WORD
- 307 000456  5250          JMP PELO        /LOOP BACK
- 308               
- 309               /THIS PAGE CONTAINS:
- 310               /CLOCK START, STOP, AND INTERRUPT HANDLING ROUTINES
- 311               
- 312 000570  3354  PAGE
-     000571  7771  
-     000572  7774  
-     000573  0006  
-     000574  6202  
-     000575  0001  
-     000576  7756  
-     000577  3363  
- 313               
- 314               /BEGIN RUNNING A CLOCK IF AVAILABLE
- 315               /CURRENTLY THIS SUPPORTS:
- 316               /       PDP-12 WITH KW12-A
- 317               /       PDP-12 WITH KW12-B OR KW12-C
- 318               /       PDP-8E WITH DK8-ES OR DK8-EP
- 319               /       PDP-8E WITH DK8-EA OR DK8-EC
- 320 000600  0000  STCLK,  0
- 321 000601  7300          CLA CLL
- 322 000602  4345          JMS IS12        /ARE WE A '12?
- 323 000603  7420          SNL             /YES? CHECK FOR KW12-B/C
- 324 000604  5210          JMP CKNOKB      /NO KW12-B/C
- 325 000605  6135          CRUN            /FLAG SHOULD BE UP BY NOW.
- 326                                       /IS IT?
- 327 000606  7410          SKP             /NOPE. NO KW12.
- 328 000607  5254          JMP FIXCLK      /YUP. FIXED KW12-B/C PRESENT
- 329 000610  6132  CKNOKB, CLLR            /CLEAR CLOCK MODE
- 330 000611  7200          CLA             /AC=0
- 331 000612  6133          CLAB            /CHECK IF WE HAVE A
- 332                                       /CLOCK BY SETTING + READING
- 333                                       /THE CLK BUF PRESET REG
- 334                                       /ADDITIONALLY, THIS IS CLSK ON
- 335                                       /DK8-EA/EC CLOCKS, SO IF THIS
- 336                                       /SKIPS, WE HAVE A DK8-EA/EC
- 337 000613  7410          SKP             /DIDN'T SKIP, NO DK8-EA/EC
- 338 000614  5255          JMP FIXCLK+1    /SKIP, JUMP TO FIXED CLK SETUP
- 339                                       /FOR DK8-EA/EC
- 340                                       /LINK WILL/MUST BE 0 AT
- 341                                       /THIS JUMP (NOT A '12)
- 342 000615  7240          CLA CMA         /SET NONZERO AC (=7777)
- 343 000616  6136          CLBA            /READ IT BACK
- 344 000617  7640          CLA SZA         /AC=NONZERO IF PRESENT
- 345 000620  5600          JMP I STCLK     /NO? RETURN
- 346 000621  6133          CLAB            /CLEAR BUF PRESET REG
- 347 000622  6132          CLLR            /CLEAR CONTROL REGISTER
- 348 000623  7430          SZL             /ARE WE ON A '12?
- 349 000624  7211          CLA IAC RAR     /YES? SET TOP BIT
- 350                                       /WHILE KEEPING LINK INTACT
- 351                                       /TO INDICATE WE'RE A '12
- 352 000625  7001          IAC             /SET BOTTOM BIT TO
- 353                                       /INDICATE WE HAVE A CLK
- 354 000626  3020          DCA CLKTP       /SAVE CLOCK TYPE
- 355 000627  6132          CLLR            /CLEAR MODE AND RATE
- 356 000630  7200          CLA
- 357 000631  1271          TAD CLKPAR+1    /(THIS IS 100)
- 358                                       /ENABLE OVERFLW INTERRUPT
- 359 000632  7430          SZL             /ON PDP-12
- 360 000633  6134          CLEN
- 361 000634  7204          CLA RAL         /MOVE LINK TO LOW BIT
- 362 000635  1377          TAD (CLKPAR-1   /GET CLK PARAMS ADDR
- 363 000636  3010          DCA 10          /SAVE THEM
- 364 000637  1410          TAD I 10        /LOAD FIRST PARAM
- 365 000640  2010          ISZ 10          /SKIP PAST ANOTHER
- 366 000641  6132          CLLR            /SET MODE 1 TO CLEAR EVERYTHING
- 367 000642  6135          CLSA            /GET STATUS TO CLEAR EVENTS
- 368 000643  7200          CLA
- 369 000644  1410          TAD I 10        /GET NEXT PARAM
- 370 000645  6132          CLLR            /SET MODE 0 AND 100HZ
- 371 000646  7200          CLA
- 372 000647  1376          TAD (CKIKD      /SET INTERRUPT ADDR
- 373 000650  3002          DCA 2           /TO KW12/DK8ES HANDLER
- 374 000651  6135          CLSA            /CLEAR EVENTS (AGAIN)
- 375                                       /ON KW12-A WE SOMETIMES
- 376                                       /HAVE A FLAG SET HERE
- 377 000652  6001          ION             /ENABLE INTERRUPTS
- 378 000653  5600          JMP I STCLK
- 379               
- 380               /KW12-B/C AND DK8-EA/EC FIXED RATE CLOCK SETUP
- 381 000654  7331  FIXCLK, CLA STL IAC RAR /KW12-B ENTRY, SET KW12 BIT
- 382                                       /BIT IN CLOCK TYPE AND
- 383                                       /SET LINK FOR LATER
- 384 000655  1375          TAD (2001       /DK8 ENTRY, SETUP CLOCK TYPE
- 385                                       /TYPE=FIXED RATE&AVAILABLE
- 386 000656  3020          DCA CLKTP       /SAVE CLOCK TYPE
- 387 000657  7006          RTL             /SHIFT LINK TO AC BIT10
- 388                                       /AC=2 IF USING KW12
- 389 000660  1374          TAD (CLSKF      /SETUP CLK SKIP INST
- 390                                       /CLSK IF DK8, CRUN IF KW12
- 391 000661  3322          DCA CKIBS       /SAVE AS INT HNDLR SKIP
- 392 000662  1373          TAD (CKIKDB     /SET ISR ADDRESS
- 393 000663  3002          DCA 2
- 394 000664  6135          CRUN            /ENABLE INTERRUPTS FOR KW12
- 395 000665  6131          CLEI            /AND FOR DK8
- 396 000666  6001          ION             /ENABLE INTERRUPTS
- 397 000667  5600          JMP I STCLK     /RETURN
- 398               
- 399               /CLOCK PARAMS
- 400               CLKPAR,         /SET MODE 1
- 401 000670  1000          1000    /DK8ES
- 402 000671  0100          0100    /KW12A
- 403                               /SET MODE 0 AT 100HZ
- 404                               /AND ENABLE INTERRUPTS FOR 8/E
- 405 000672  0240          0240    /DK8ES
- 406 000673  5000          5000    /KW12S
- 407               
- 408               /STOP THE CLOCK AND READ LOW TIME INTO TIMEL.
- 409               /THIS IS INDEPENDENT OF CLOCK TYPE.
- 410 000674  0000  SPCLK,  0
- 411 000675  7200          CLA
- 412 000676  6002          IOF             /DISABLE INTERRUPTS
- 413 000677  1020          TAD CLKTP       /READ CLOCK TYPE
- 414 000700  7006          RTL             /CHECK FIXED BIT (BIT1)
- 415 000701  7430          SZL             /RETURN IF FIXED CLOCK
- 416 000702  5674          JMP I SPCLK
- 417 000703  6137          CLCA            /GET CURR TIME
- 418 000704  3022          DCA TIMEL
- 419 000705  6132          CLLR            /STOP THE CLOCK
- 420 000706  5674          JMP I SPCLK
- 421               
- 422               /INTERRUPT HANDLER FOR KW12-A AND DK8ES CLOCKS
- 423 000707  0000  CKIAC,  0       /AC STORAGE
- 424 000710  3307  CKIKD,  DCA CKIAC       /SAVE AC
- 425 000711  6131          CLSK            /IS IT A CLOCK INTERRUPT?
- 426 000712  5333          JMP CKIALT      /NO?? WHAT IS IT??
- 427 000713  6135          CLSA            /YES. CLEAR EVENT AND
- 428               CKIDN,                  /INTERRUPT EXIT
- 429                                       /ASSUMES LINK UNTOUCHED
- 430 000714  2021          ISZ TIMEH       /INC HIGH TIME
- 431 000715  7200          CLA
- 432 000716  1307          TAD CKIAC       /WE'RE DONE, GET AC BACK
- 433 000717  6001          ION             /RE-ENABLE INTERRUPTS
- 434 000720  5400          JMP I 0         /AND RETURN
- 435               
- 436               /KW12-B/KW12-C AND DK8-EA/DK8-EC FIXED RATE CLOCK ISR
- 437 000721  3307  CKIKDB, DCA CKIAC       /SAVE AC
- 438 000722  7402  CKIBS,  HLT             /WILL BE CLEI FOR DK8
- 439                                       /OR CRUN FOR KW12
- 440                                       /CHECKING IF CLK FLAG IS UP
- 441 000723  5333          JMP CKIALT      /NOT CLOCK??
- 442 000724  6131          CLEI            /START CLOCK ON DK8, NOTHING
- 443                                       /ON KW12 (IN THEORY...)
- 444 000725  7000          NOP             /IN CASE KW12 SKIPS
- 445 000726  2022          ISZ TIMEL       /INC LOW TIME
- 446 000727  7410          SKP
- 447 000730  2021          ISZ TIMEH       /INC HIGH TIME ON LOW OVRFLW
- 448 000731  7000          NOP             /UH-OH
- 449 000732  5315          JMP CKIDN+1     /WE'RE DONE
- 450               
- 451               /NON-CLOCK INTERRUPT ROUTINE
- 452 000733  6031  CKIALT, KSF             /TTY MAYBE?
- 453 000734  5341          JMP CKIINV      /NO??? IDK ANYMORE
- 454 000735  6031  CKIALP, KSF             /CLEAR FLAG UNTIL EMPTY
- 455 000736  5315          JMP CKIDN+1     /WE'RE DONE, RETURN
- 456 000737  6032          KCC
- 457 000740  5335          JMP CKIALP
- 458               
- 459               /INVALID INTERRUPT SOURCE ROUTINE
- 460               CKIINV, JMS PUTMSG      /IT'S OVER
+     070341  4767  
+ 233 070342  4167          PRLST2
+ 234 070343  7402          HLT
+ 235 070344  5750          JMP I KEXIT     /RETURN TO OS/8 MONITOR
+ 236               
+ 237               /LOCAL VARIABLES
+ 238 070345  0000  MLPLFT, 0               /LOOP COUNT
+ 239               
+ 240               /LOCAL CONSTANTS
+ 241 070346  3122  KAR18,  GARR+10         /ARR1[8]
+ 242 070347  3275  KAR287, ARRDIM^10+GARR2+7       /ARR2[8][7] ADDR
+ 243 070350  7600  KEXIT,  7600
+ 244               
+ 245               /THIS PAGE CONTAINS:
+ 246               /EAE PATCH ROUTINE, DATA FIELD SETUP, AND
+ 247               /FIELD 0 ISR SETUP (WHEN EXECUTING OUT OF NON-FIELD 0)
+ 248               
+ 249 070366  1722  PAGE
+     070367  1711  
+     070370  4260  
+     070371  0674  
+     070372  1000  
+     070373  0012  
+     070374  0600  
+     070375  1700  
+     070376  1671  
+     070377  0400  
+ 250               
+ 251 070400  0000  SETUP1, 0
+ 252               /FIRST, IF WE'RE NOT RUNNING OUT OF FIELD 0,
+ 253               /PLACE A ISR STUB IN FIELD 0 TO JUMP TO OUR FIELD'S ISR
+ 254 070401  7200          CLA
+ 255 070402  6224          RIF             /IN IF0?
+ 256 070403  7450          SNA
+ 257 070404  5227          JMP S1CDF       /YUP, SKIP TO CDF SETUP
+ 258 070405  1216          TAD S1KCDF      /SETUP COPY CDF
+ 259 070406  3214          DCA S1ISRL
+ 260 070407  1377          TAD (F0ISR2-1   /SETUP SRC AND DEST LOCATIONS
+ 261 070410  3010          DCA 10
+ 262 070411  3011          DCA 11
+ 263 070412  1376          TAD (-F0ISZ     /ISR SIZE
+ 264 070413  3012          DCA 12
+ 265 070414  7402  S1ISRL, HLT             /BECOMES CDF TO IF
+ 266 070415  1410          TAD I 10        /LOAD WORD
+ 267 070416  6201  S1KCDF, CDF 0
+ 268 070417  3411          DCA I 11        /STORE IT
+ 269 070420  2012          ISZ 12          /INC COUNTER
+ 270 070421  5214          JMP S1ISRL      /NOT DONE? LOOP
+ 271 070422  1214          TAD S1ISRL      /1ST INST IS CDF TO HERE
+ 272 070423  3775          DCA I (F0ISR-F0ISR+1
+ 273 070424  6224          RIF             /LATER IS A CIF TO THIS IF
+ 274 070425  1374          TAD (CIF
+ 275 070426  3773          DCA I (F0ICIF-F0ISR+1
+ 276               /CREATE + EXECUTE CDF INSTRUCTION TO SWITCH DF TO IF
+ 277 070427  6224  S1CDF,  RIF             /CONSTRUCT CDF INST
+ 278 070430  1216          TAD S1KCDF
+ 279 070431  3232          DCA .+1
+ 280 070432  0000          0               /BECOMES CDF
+ 281               /APPLY EAE PATCHES
+ 282 070433  7305          CLL CLA IAC RAL /MUL 2X2
+ 283 070434  7425          MQL MUY
+ 284 070435  0002          0002            /"AND Z 2" IF MUY DOESN'T WORK
+ 285 070436  7200          CLA             /SEPARATE CLA AND MQA SO
+ 286                                       /SO GROUP 1 CLA IS USED
+ 287 070437  3023          DCA ISEAE       /CLEAR FLG WHILE AC=0
+ 288 070440  7501          MQA             /GET RESULT
+ 289 070441  1372          TAD (-4         /CHECK IF 4
+ 290               /       SKP CLA
+ 291 070442  7640          CLA SZA
+ 292 070443  5246          JMP PECK
+ 293 070444  2023          ISZ ISEAE       /SET EAE FLAG
+ 294 070445  1371          TAD (ENEPA-DISEPA
+ 295                                       /SETUP FOR AC=ENEPA
+ 296                                       /WILL BECOME ENEAE
+ 297                                       /WITH NEXT INST
+ 298 070446  1370  PECK,   TAD (DISEPA-1   /SET DISABLE (OR EN) PATCH
+ 299                                       /ADDRESS
+ 300 070447  3010          DCA 10
+ 301               PELO,
+ 302 070450  1410          TAD I 10        /LOAD ADDR
+ 303 070451  7450          SNA             /IS 0?
+ 304 070452  5600          JMP I SETUP1    /RETURN IF YES
+ 305 070453  3004          DCA 4           /SAVE TO TEMP
+ 306 070454  1410          TAD I 10        /LOAD DATA
+ 307 070455  3404          DCA I 4         /STORE WORD
+ 308 070456  5250          JMP PELO        /LOOP BACK
+ 309               
+ 310               /THIS PAGE CONTAINS:
+ 311               /CLOCK START, STOP, AND INTERRUPT HANDLING ROUTINES
+ 312               
+ 313 070570  3354  PAGE
+     070571  7771  
+     070572  7774  
+     070573  0006  
+     070574  6202  
+     070575  0001  
+     070576  7756  
+     070577  3363  
+ 314               
+ 315               /BEGIN RUNNING A CLOCK IF AVAILABLE
+ 316               /CURRENTLY THIS SUPPORTS:
+ 317               /       PDP-12 WITH KW12-A
+ 318               /       PDP-12 WITH KW12-B OR KW12-C
+ 319               /       PDP-8E WITH DK8-ES OR DK8-EP
+ 320               /       PDP-8E WITH DK8-EA OR DK8-EC
+ 321 070600  0000  STCLK,  0
+ 322 070601  7300          CLA CLL
+ 323 070602  4345          JMS IS12        /ARE WE A '12?
+ 324 070603  7420          SNL             /YES? CHECK FOR KW12-B/C
+ 325 070604  5210          JMP CKNOKB      /NO KW12-B/C
+ 326 070605  6135          CRUN            /FLAG SHOULD BE UP BY NOW.
+ 327                                       /IS IT?
+ 328 070606  7410          SKP             /NOPE. NO KW12.
+ 329 070607  5254          JMP FIXCLK      /YUP. FIXED KW12-B/C PRESENT
+ 330 070610  6132  CKNOKB, CLLR            /CLEAR CLOCK MODE
+ 331 070611  7200          CLA             /AC=0
+ 332 070612  6133          CLAB            /CHECK IF WE HAVE A
+ 333                                       /CLOCK BY SETTING + READING
+ 334                                       /THE CLK BUF PRESET REG
+ 335                                       /ADDITIONALLY, THIS IS CLSK ON
+ 336                                       /DK8-EA/EC CLOCKS, SO IF THIS
+ 337                                       /SKIPS, WE HAVE A DK8-EA/EC
+ 338 070613  7410          SKP             /DIDN'T SKIP, NO DK8-EA/EC
+ 339 070614  5255          JMP FIXCLK+1    /SKIP, JUMP TO FIXED CLK SETUP
+ 340                                       /FOR DK8-EA/EC
+ 341                                       /LINK WILL/MUST BE 0 AT
+ 342                                       /THIS JUMP (NOT A '12)
+ 343 070615  7240          CLA CMA         /SET NONZERO AC (=7777)
+ 344 070616  6136          CLBA            /READ IT BACK
+ 345 070617  7640          CLA SZA         /AC=NONZERO IF PRESENT
+ 346 070620  5600          JMP I STCLK     /NO? RETURN
+ 347 070621  6133          CLAB            /CLEAR BUF PRESET REG
+ 348 070622  6132          CLLR            /CLEAR CONTROL REGISTER
+ 349 070623  7430          SZL             /ARE WE ON A '12?
+ 350 070624  7211          CLA IAC RAR     /YES? SET TOP BIT
+ 351                                       /WHILE KEEPING LINK INTACT
+ 352                                       /TO INDICATE WE'RE A '12
+ 353 070625  7001          IAC             /SET BOTTOM BIT TO
+ 354                                       /INDICATE WE HAVE A CLK
+ 355 070626  3020          DCA CLKTP       /SAVE CLOCK TYPE
+ 356 070627  6132          CLLR            /CLEAR MODE AND RATE
+ 357 070630  7200          CLA
+ 358 070631  1271          TAD CLKPAR+1    /(THIS IS 100)
+ 359                                       /ENABLE OVERFLW INTERRUPT
+ 360 070632  7430          SZL             /ON PDP-12
+ 361 070633  6134          CLEN
+ 362 070634  7204          CLA RAL         /MOVE LINK TO LOW BIT
+ 363 070635  1377          TAD (CLKPAR-1   /GET CLK PARAMS ADDR
+ 364 070636  3010          DCA 10          /SAVE THEM
+ 365 070637  1410          TAD I 10        /LOAD FIRST PARAM
+ 366 070640  2010          ISZ 10          /SKIP PAST ANOTHER
+ 367 070641  6132          CLLR            /SET MODE 1 TO CLEAR EVERYTHING
+ 368 070642  6135          CLSA            /GET STATUS TO CLEAR EVENTS
+ 369 070643  7200          CLA
+ 370 070644  1410          TAD I 10        /GET NEXT PARAM
+ 371 070645  6132          CLLR            /SET MODE 0 AND 100HZ
+ 372 070646  7200          CLA
+ 373 070647  1376          TAD (CKIKD      /SET INTERRUPT ADDR
+ 374 070650  3002          DCA 2           /TO KW12/DK8ES HANDLER
+ 375 070651  6135          CLSA            /CLEAR EVENTS (AGAIN)
+ 376                                       /ON KW12-A WE SOMETIMES
+ 377                                       /HAVE A FLAG SET HERE
+ 378 070652  6001          ION             /ENABLE INTERRUPTS
+ 379 070653  5600          JMP I STCLK
+ 380               
+ 381               /KW12-B/C AND DK8-EA/EC FIXED RATE CLOCK SETUP
+ 382 070654  7331  FIXCLK, CLA STL IAC RAR /KW12-B ENTRY, SET KW12 BIT
+ 383                                       /BIT IN CLOCK TYPE AND
+ 384                                       /SET LINK FOR LATER
+ 385 070655  1375          TAD (2001       /DK8 ENTRY, SETUP CLOCK TYPE
+ 386                                       /TYPE=FIXED RATE&AVAILABLE
+ 387 070656  3020          DCA CLKTP       /SAVE CLOCK TYPE
+ 388 070657  7006          RTL             /SHIFT LINK TO AC BIT10
+ 389                                       /AC=2 IF USING KW12
+ 390 070660  1374          TAD (CLSKF      /SETUP CLK SKIP INST
+ 391                                       /CLSK IF DK8, CRUN IF KW12
+ 392 070661  3322          DCA CKIBS       /SAVE AS INT HNDLR SKIP
+ 393 070662  1373          TAD (CKIKDB     /SET ISR ADDRESS
+ 394 070663  3002          DCA 2
+ 395 070664  6135          CRUN            /ENABLE INTERRUPTS FOR KW12
+ 396 070665  6131          CLEI            /AND FOR DK8
+ 397 070666  6001          ION             /ENABLE INTERRUPTS
+ 398 070667  5600          JMP I STCLK     /RETURN
+ 399               
+ 400               /CLOCK PARAMS
+ 401               CLKPAR,         /SET MODE 1
+ 402 070670  1000          1000    /DK8ES
+ 403 070671  0100          0100    /KW12A
+ 404                               /SET MODE 0 AT 100HZ
+ 405                               /AND ENABLE INTERRUPTS FOR 8/E
+ 406 070672  0240          0240    /DK8ES
+ 407 070673  5000          5000    /KW12S
+ 408               
+ 409               /STOP THE CLOCK AND READ LOW TIME INTO TIMEL.
+ 410               /THIS IS INDEPENDENT OF CLOCK TYPE.
+ 411 070674  0000  SPCLK,  0
+ 412 070675  7200          CLA
+ 413 070676  6002          IOF             /DISABLE INTERRUPTS
+ 414 070677  1020          TAD CLKTP       /READ CLOCK TYPE
+ 415 070700  7006          RTL             /CHECK FIXED BIT (BIT1)
+ 416 070701  7430          SZL             /RETURN IF FIXED CLOCK
+ 417 070702  5674          JMP I SPCLK
+ 418 070703  6137          CLCA            /GET CURR TIME
+ 419 070704  3022          DCA TIMEL
+ 420 070705  6132          CLLR            /STOP THE CLOCK
+ 421 070706  5674          JMP I SPCLK
+ 422               
+ 423               /INTERRUPT HANDLER FOR KW12-A AND DK8ES CLOCKS
+ 424 070707  0000  CKIAC,  0       /AC STORAGE
+ 425 070710  3307  CKIKD,  DCA CKIAC       /SAVE AC
+ 426 070711  6131          CLSK            /IS IT A CLOCK INTERRUPT?
+ 427 070712  5333          JMP CKIALT      /NO?? WHAT IS IT??
+ 428 070713  6135          CLSA            /YES. CLEAR EVENT AND
+ 429               CKIDN,                  /INTERRUPT EXIT
+ 430                                       /ASSUMES LINK UNTOUCHED
+ 431 070714  2021          ISZ TIMEH       /INC HIGH TIME
+ 432 070715  7200          CLA
+ 433 070716  1307          TAD CKIAC       /WE'RE DONE, GET AC BACK
+ 434 070717  6001          ION             /RE-ENABLE INTERRUPTS
+ 435 070720  5400          JMP I 0         /AND RETURN
+ 436               
+ 437               /KW12-B/KW12-C AND DK8-EA/DK8-EC FIXED RATE CLOCK ISR
+ 438 070721  3307  CKIKDB, DCA CKIAC       /SAVE AC
+ 439 070722  7402  CKIBS,  HLT             /WILL BE CLEI FOR DK8
+ 440                                       /OR CRUN FOR KW12
+ 441                                       /CHECKING IF CLK FLAG IS UP
+ 442 070723  5333          JMP CKIALT      /NOT CLOCK??
+ 443 070724  6131          CLEI            /START CLOCK ON DK8, NOTHING
+ 444                                       /ON KW12 (IN THEORY...)
+ 445 070725  7000          NOP             /IN CASE KW12 SKIPS
+ 446 070726  2022          ISZ TIMEL       /INC LOW TIME
+ 447 070727  7410          SKP
+ 448 070730  2021          ISZ TIMEH       /INC HIGH TIME ON LOW OVRFLW
+ 449 070731  7000          NOP             /UH-OH
+ 450 070732  5315          JMP CKIDN+1     /WE'RE DONE
+ 451               
+ 452               /NON-CLOCK INTERRUPT ROUTINE
+ 453 070733  6031  CKIALT, KSF             /TTY MAYBE?
+ 454 070734  5341          JMP CKIINV      /NO??? IDK ANYMORE
+ 455 070735  6031  CKIALP, KSF             /CLEAR FLAG UNTIL EMPTY
+ 456 070736  5315          JMP CKIDN+1     /WE'RE DONE, RETURN
+ 457 070737  6032          KCC
+ 458 070740  5335          JMP CKIALP
+ 459               
+ 460               /INVALID INTERRUPT SOURCE ROUTINE
+ 461               CKIINV, JMS PUTMSG      /IT'S OVER
 off page               	          ^
-     000741  4772  
- 461 000742  3446          PRIVIT          /PRINT INVALID INTERRUPT
- 462 000743  7402          HLT             /HALT FOREVER
- 463 000744  5343          JMP .-1
- 464               
- 465               /DETECT IF WE'RE RUNNING ON A PDP-12
- 466               /RESULT[LINK]   IS RUNNING ON '12
- 467 000745  0000  IS12,   0
- 468 000746  7300          CLL CLA         /CLEAR AC
- 469 000747  6141          6141            /TO LINC MODE
- 470 000750  0017          0017            /COMPLEMENT AC
- 471                                       /"AND 17" IF NOT '12
- 472 000751  0002          0002            /BACK TO PDP8 MODE
- 473                                       /"AND 2" IF NOT '12
- 474 000752  7001          IAC             /INC BY 1
- 475 000753  7670          CLA SZL SNA     /IF ON A '12, AC=0
- 476                                       /AND LINK=1
- 477 000754  5745          JMP I IS12      /RETURN NOW IF ON '12
- 478 000755  7100          CLL             /CLEAR LINK TO INDICATE
- 479                                       /NOT '12
- 480 000756  5745          JMP I IS12      /RETURN
- 481               
- 482               /THIS PAGE CONTAINS:
- 483               /MAIN FUNCTION LOOP
- 484               
- 485 000772  1671  PAGE
-     000773  0721  
-     000774  6133  
-     000775  2001  
-     000776  0710  
-     000777  0667  
- 486               
- 487               /MAIN LOOP
- 488 001000  7200  MLOOP,  CLA             /SET ROUND COUNTER TO 0
- 489 001001  3053          DCA MRIDX
- 490 001002  1053  MLPSRT, TAD MRIDX       /CHECK RIDX!=RUNCNT
- 491 001003  7041          CIA
- 492 001004  1046          TAD RUNCNT
- 493 001005  7450          SNA             /BREAK IF NOT
- 494                       JMP MNEND       /JUMP TO END
+     070741  4772  
+ 462 070742  3446          PRIVIT          /PRINT INVALID INTERRUPT
+ 463 070743  7402          HLT             /HALT FOREVER
+ 464 070744  5343          JMP .-1
+ 465               
+ 466               /DETECT IF WE'RE RUNNING ON A PDP-12
+ 467               /RESULT[LINK]   IS RUNNING ON '12
+ 468 070745  0000  IS12,   0
+ 469 070746  7300          CLL CLA         /CLEAR AC
+ 470 070747  6141          6141            /TO LINC MODE
+ 471 070750  0017          0017            /COMPLEMENT AC
+ 472                                       /"AND 17" IF NOT '12
+ 473 070751  0002          0002            /BACK TO PDP8 MODE
+ 474                                       /"AND 2" IF NOT '12
+ 475 070752  7001          IAC             /INC BY 1
+ 476 070753  7670          CLA SZL SNA     /IF ON A '12, AC=0
+ 477                                       /AND LINK=1
+ 478 070754  5745          JMP I IS12      /RETURN NOW IF ON '12
+ 479 070755  7100          CLL             /CLEAR LINK TO INDICATE
+ 480                                       /NOT '12
+ 481 070756  5745          JMP I IS12      /RETURN
+ 482               
+ 483               /THIS PAGE CONTAINS:
+ 484               /MAIN FUNCTION LOOP
+ 485               
+ 486 070772  1671  PAGE
+     070773  0721  
+     070774  6133  
+     070775  2001  
+     070776  0710  
+     070777  0667  
+ 487               
+ 488               /MAIN LOOP
+ 489 071000  7200  MLOOP,  CLA             /SET ROUND COUNTER TO 0
+ 490 071001  3053          DCA MRIDX
+ 491 071002  1053  MLPSRT, TAD MRIDX       /CHECK RIDX!=RUNCNT
+ 492 071003  7041          CIA
+ 493 071004  1046          TAD RUNCNT
+ 494 071005  7450          SNA             /BREAK IF NOT
+ 495                       JMP MNEND       /JUMP TO END
 off page        	         ^
-     001006  5777  
- 495                       JMS PROC5       /CALL PROC5
+     071006  5777  
+ 496                       JMS PROC5       /CALL PROC5
 off page        	         ^
-     001007  4776  
- 496                       JMS PROC4       /CALL PROC4
+     071007  4776  
+ 497                       JMS PROC4       /CALL PROC4
 off page        	         ^
-     001010  4775  
- 497 001011  7325          CLA STL IAC RAL /MINT2=3 (AND MINT1=2, BUT
- 498 001012  3050          DCA MINT2       /WE DON'T WORRY ABOUT THAT NOW
- 499 001013  1374          TAD (DPSTR2     /COPY DPSTR2 TO MSTR2
- 500 001014  3004          DCA 4           /USING STRCPY
- 501 001015  1060          TAD KMSTR2
- 502                       JMS STRCPY
+     071010  4775  
+ 498 071011  7325          CLA STL IAC RAL /MINT2=3 (AND MINT1=2, BUT
+ 499 071012  3050          DCA MINT2       /WE DON'T WORRY ABOUT THAT NOW
+ 500 071013  1374          TAD (DPSTR2     /COPY DPSTR2 TO MSTR2
+ 501 071014  3004          DCA 4           /USING STRCPY
+ 502 071015  1060          TAD KMSTR2
+ 503                       JMS STRCPY
 off page        	         ^
-     001016  4773  
- 503 001017  7201          CLA IAC         /SET MENUM TO IDENT2 (1)
- 504 001020  3052          DCA MENUM
- 505 001021  1060          TAD KMSTR2      /CALL FUNC2 WITH STR1,STR2
- 506 001022  3004          DCA 4
- 507 001023  1057          TAD KMSTR1
- 508                       JMS FUNC2
+     071016  4773  
+ 504 071017  7201          CLA IAC         /SET MENUM TO IDENT2 (1)
+ 505 071020  3052          DCA MENUM
+ 506 071021  1060          TAD KMSTR2      /CALL FUNC2 WITH STR1,STR2
+ 507 071022  3004          DCA 4
+ 508 071023  1057          TAD KMSTR1
+ 509                       JMS FUNC2
 off page        	        ^
-     001024  4772  
- 509 001025  7224          CLA CML RAL     /INV RES AND SHIFT TO AC
- 510 001026  3026          DCA GBOOL       /SAVE TO GBOOL
- 511                       JMS MLPL1       /RUN FIRST LOOP
+     071024  4772  
+ 510 071025  7224          CLA CML RAL     /INV RES AND SHIFT TO AC
+ 511 071026  3026          DCA GBOOL       /SAVE TO GBOOL
+ 512                       JMS MLPL1       /RUN FIRST LOOP
 off page        	         ^
-     001027  4771  
- 512 001030  1040          TAD KGARR2      /PUT ARR2 ADDR IN PARAM[6]
- 513 001031  3006          DCA 6
- 514 001032  1037          TAD KGARR       /PUT ARR ADDR IN PARAM[5]
- 515 001033  3005          DCA 5
- 516 001034  1051          TAD MINT3       /PUT MINT3 IN PARAM[4]
- 517 001035  3004          DCA 4
- 518 001036  7325          CLA STL IAC RAL /PUT MINT1 (CUR 3) IN PARAM[AC]
- 519                       JMS PROC8       /CALL PROC8
+     071027  4771  
+ 513 071030  1040          TAD KGARR2      /PUT ARR2 ADDR IN PARAM[6]
+ 514 071031  3006          DCA 6
+ 515 071032  1037          TAD KGARR       /PUT ARR ADDR IN PARAM[5]
+ 516 071033  3005          DCA 5
+ 517 071034  1051          TAD MINT3       /PUT MINT3 IN PARAM[4]
+ 518 071035  3004          DCA 4
+ 519 071036  7325          CLA STL IAC RAL /PUT MINT1 (CUR 3) IN PARAM[AC]
+ 520                       JMS PROC8       /CALL PROC8
 off page        	         ^
-     001037  4770  
- 520 001040  1031          TAD GPTR        /CALL PROC1 WITH GPTR
- 521                       JMS PROC1
+     071037  4770  
+ 521 071040  1031          TAD GPTR        /CALL PROC1 WITH GPTR
+ 522                       JMS PROC1
 off page        	        ^
-     001041  4767  
- 522                       JMS MLPL2       /PERFORM SECOND SUB LOOP
+     071041  4767  
+ 523                       JMS MLPL2       /PERFORM SECOND SUB LOOP
 off page        	         ^
-     001042  4766  
- 523 001043  1050          TAD MINT2
- 524 001044  7104          CLL RAL         /MUL BY MINT1 (CUR 3); MUL BY 2
- 525 001045  1050          TAD MINT2       /ADD ANOTHER
- 526 001046  3050          DCA MINT2       /SAVE IT
- 527 001047  7402  MLPP1B, HLT             /PATCH 1 JUMP
- 528                                       /REPLACED BY A JUMP TO
- 529                                       /MLPP1H IF EAE IS DETECTED
- 530                                       /OR MLPP1S IF NOT
- 531 001050  3047  MLPP1E, DCA MINT1       /SAVE IT
- 532 001051  1051          TAD MINT3       /MINT2=7*(MINT2-MINT3)-MINT1
- 533 001052  7041          CIA             /MINT2-MINT3
- 534 001053  1050          TAD MINT2
- 535 001054  7402  MLPP2B, HLT             /PATCH 1 JUMP
- 536                                       /REPLACED BY A JUMP TO
- 537                                       /MLPP2H IF EAE IS DETECTED
- 538                                       /OR MLPP2S IF NOT
- 539 001055  3050  MLPP2E, DCA MINT2       /SAVE IT
- 540 001056  1054          TAD KMINT1      /CALL PROC2 WITH MINT1 ADDR
- 541                       JMS PROC2
+     071042  4766  
+ 524 071043  1050          TAD MINT2
+ 525 071044  7104          CLL RAL         /MUL BY MINT1 (CUR 3); MUL BY 2
+ 526 071045  1050          TAD MINT2       /ADD ANOTHER
+ 527 071046  3050          DCA MINT2       /SAVE IT
+ 528 071047  7402  MLPP1B, HLT             /PATCH 1 JUMP
+ 529                                       /REPLACED BY A JUMP TO
+ 530                                       /MLPP1H IF EAE IS DETECTED
+ 531                                       /OR MLPP1S IF NOT
+ 532 071050  3047  MLPP1E, DCA MINT1       /SAVE IT
+ 533 071051  1051          TAD MINT3       /MINT2=7*(MINT2-MINT3)-MINT1
+ 534 071052  7041          CIA             /MINT2-MINT3
+ 535 071053  1050          TAD MINT2
+ 536 071054  7402  MLPP2B, HLT             /PATCH 1 JUMP
+ 537                                       /REPLACED BY A JUMP TO
+ 538                                       /MLPP2H IF EAE IS DETECTED
+ 539                                       /OR MLPP2S IF NOT
+ 540 071055  3050  MLPP2E, DCA MINT2       /SAVE IT
+ 541 071056  1054          TAD KMINT1      /CALL PROC2 WITH MINT1 ADDR
+ 542                       JMS PROC2
 off page        	        ^
-     001057  4765  
- 542 001060  2053          ISZ MRIDX       /INCREMENT RUN INDEX
- 543 001061  5202          JMP MLPSRT      /LOOP BACK AROUND
- 544               
- 545               /EAE ACCELERATED DIVISION
- 546               /OF MINT2 BY MINT3
- 547               /THIS IS USED IF EAE IS DETECTED ON STARTUP
- 548 001062  1051  MLPP1H, TAD MINT3       /SET DIVISOR TO MINT3
- 549 001063  3266          DCA MLPP1T
- 550 001064  1050          TAD MINT2       /GET MINT2 BACK
- 551 001065  7427          MQL DVI         /MINT1=MINT2/MINT3
- 552 001066  0000  MLPP1T, 0               /DIV OPERAND
- 553                                       /ALSO USED AS TEMP
- 554 001067  7701          CLA MQA         /NE: TAD MLPSDB
- 555 001070  5250          JMP MLPP1E      /JUMP BACK TO MAIN LOOP
- 556               
- 557               /EAE ACCELERATED MULTIPLY ROUTINE
- 558               /MULTIPLIES (MINT2-MINT3) BY 7 THEN SUBTRACTS MINT1.
- 559               /THIS IS USED IF EAE IS DETECTED DURING STARTUP
- 560 001071  7425  MLPP2H, MQL MUY
- 561 001072  0007          7
- 562 001073  7701          CLA MQA         /-(MINT1-X)==X-MINT1
- 563 001074  7041          CIA
- 564 001075  1047          TAD MINT1
- 565 001076  7041          CIA
- 566 001077  5255          JMP MLPP2E      /JUMP BACK MAIN LOOP
- 567               
- 568               /EAE-LESS (SOFTWARE) DIVISION OF
- 569               /MINT2 BY MINT3 USING ONLY ADDITION/SUBTRACTION
- 570               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP.
- 571 001100  3266  MLPP1S, DCA MLPP1T      /CLEAR COUNTER
- 572 001101  1050          TAD MINT2       /REGET MINT2
- 573 001102  7041          CIA             /NEGATE
- 574               MLPP1L,                 /SUB LOOP
- 575 001103  1051          TAD MINT3       /SUB ANOTHER
- 576 001104  7500          SMA             /CHECK IF DONE (AC IS POSITIVE)
- 577 001105  5310          JMP MLPP1F      /JUMP TO END IF YES
- 578 001106  2266          ISZ MLPP1T      /INC COUNTER
- 579 001107  5303          JMP MLPP1L      /LOOP BACK AROUND
- 580 001110  7200  MLPP1F, CLA             /DIV END
- 581 001111  1266          TAD MLPP1T      /GET RESULT
- 582 001112  5250          JMP MLPP1E      /JMP BACK TO MAIN LOOP
- 583               
- 584               /EAE-LESS MULTIPLY ROUTINE
- 585               /MULTIPLIES (MINT2 - MINT3) BY 7 THEN SUBTRACTS MINT1.
- 586               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP.
- 587 001113  7104  MLPP2S, CLL RAL         /BY 2
- 588 001114  7104          CLL RAL         /BY 4
- 589 001115  7104          CLL RAL         /BY 8
- 590 001116  1051          TAD MINT3       /ADD ANOTHER MINT2
- 591 001117  7041          CIA             /USE THE FACT THAT
- 592                                       /X-Y == -(-X+Y) TO SAVE
- 593                                       /ON SOME STORES/LOADS
- 594 001120  1050          TAD MINT2       /ADD MINT3 (SUB MINT3)
- 595 001121  1047          TAD MINT1       /ADD MINT1 (SUB MINT1)
- 596 001122  7041          CIA             /NEGATE FOR PROPER VALUE
- 597 001123  5255          JMP MLPP2E      /JUMP BACK TO MAIN LOOP
- 598               
- 599               /THIS PAGE CONTAINS
- 600               /MAIN LOOP SUB LOOP ROUTINES
- 601               /MLPL1 & MLPL2
- 602               
- 603 001165  2000  PAGE
-     001166  1213  
-     001167  2403  
-     001170  2040  
-     001171  1200  
-     001172  2602  
-     001173  1457  
-     001174  3406  
-     001175  2014  
-     001176  2026  
-     001177  0232  
- 604               
- 605               /MAIN LOOP FIRST SUB LOOP
- 606 001200  0000  MLPL1,  0
- 607 001201  1377          TAD (7          /MINT3 IS 7 AT THIS POINT
- 608 001202  3051          DCA MINT3       /SET MINT3 TO THE RESULT
- 609 001203  1055          TAD KMINT3      /LOAD MINT3 ADDR AS PARAM[5]
- 610 001204  3005          DCA 5
- 611 001205  7325          CLA STL IAC RAL /LOAD MINT2 (3) AS PARAM[4]
- 612 001206  3004          DCA 4
- 613 001207  7205          CLA IAC RAL     /LOAD MINT1 (2) AS PARAM[AC]
- 614                       JMS PROC7       /CALL PROC7
+     071057  4765  
+ 543 071060  2053          ISZ MRIDX       /INCREMENT RUN INDEX
+ 544 071061  5202          JMP MLPSRT      /LOOP BACK AROUND
+ 545               
+ 546               /EAE ACCELERATED DIVISION
+ 547               /OF MINT2 BY MINT3
+ 548               /THIS IS USED IF EAE IS DETECTED ON STARTUP
+ 549 071062  1051  MLPP1H, TAD MINT3       /SET DIVISOR TO MINT3
+ 550 071063  3266          DCA MLPP1T
+ 551 071064  1050          TAD MINT2       /GET MINT2 BACK
+ 552 071065  7427          MQL DVI         /MINT1=MINT2/MINT3
+ 553 071066  0000  MLPP1T, 0               /DIV OPERAND
+ 554                                       /ALSO USED AS TEMP
+ 555 071067  7701          CLA MQA         /NE: TAD MLPSDB
+ 556 071070  5250          JMP MLPP1E      /JUMP BACK TO MAIN LOOP
+ 557               
+ 558               /EAE ACCELERATED MULTIPLY ROUTINE
+ 559               /MULTIPLIES (MINT2-MINT3) BY 7 THEN SUBTRACTS MINT1.
+ 560               /THIS IS USED IF EAE IS DETECTED DURING STARTUP
+ 561 071071  7425  MLPP2H, MQL MUY
+ 562 071072  0007          7
+ 563 071073  7701          CLA MQA         /-(MINT1-X)==X-MINT1
+ 564 071074  7041          CIA
+ 565 071075  1047          TAD MINT1
+ 566 071076  7041          CIA
+ 567 071077  5255          JMP MLPP2E      /JUMP BACK MAIN LOOP
+ 568               
+ 569               /EAE-LESS (SOFTWARE) DIVISION OF
+ 570               /MINT2 BY MINT3 USING ONLY ADDITION/SUBTRACTION
+ 571               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP.
+ 572 071100  3266  MLPP1S, DCA MLPP1T      /CLEAR COUNTER
+ 573 071101  1050          TAD MINT2       /REGET MINT2
+ 574 071102  7041          CIA             /NEGATE
+ 575               MLPP1L,                 /SUB LOOP
+ 576 071103  1051          TAD MINT3       /SUB ANOTHER
+ 577 071104  7500          SMA             /CHECK IF DONE (AC IS POSITIVE)
+ 578 071105  5310          JMP MLPP1F      /JUMP TO END IF YES
+ 579 071106  2266          ISZ MLPP1T      /INC COUNTER
+ 580 071107  5303          JMP MLPP1L      /LOOP BACK AROUND
+ 581 071110  7200  MLPP1F, CLA             /DIV END
+ 582 071111  1266          TAD MLPP1T      /GET RESULT
+ 583 071112  5250          JMP MLPP1E      /JMP BACK TO MAIN LOOP
+ 584               
+ 585               /EAE-LESS MULTIPLY ROUTINE
+ 586               /MULTIPLIES (MINT2 - MINT3) BY 7 THEN SUBTRACTS MINT1.
+ 587               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP.
+ 588 071113  7104  MLPP2S, CLL RAL         /BY 2
+ 589 071114  7104          CLL RAL         /BY 4
+ 590 071115  7104          CLL RAL         /BY 8
+ 591 071116  1051          TAD MINT3       /ADD ANOTHER MINT2
+ 592 071117  7041          CIA             /USE THE FACT THAT
+ 593                                       /X-Y == -(-X+Y) TO SAVE
+ 594                                       /ON SOME STORES/LOADS
+ 595 071120  1050          TAD MINT2       /ADD MINT3 (SUB MINT3)
+ 596 071121  1047          TAD MINT1       /ADD MINT1 (SUB MINT1)
+ 597 071122  7041          CIA             /NEGATE FOR PROPER VALUE
+ 598 071123  5255          JMP MLPP2E      /JUMP BACK TO MAIN LOOP
+ 599               
+ 600               /THIS PAGE CONTAINS
+ 601               /MAIN LOOP SUB LOOP ROUTINES
+ 602               /MLPL1 & MLPL2
+ 603               
+ 604 071165  2000  PAGE
+     071166  1213  
+     071167  2403  
+     071170  2040  
+     071171  1200  
+     071172  2602  
+     071173  1457  
+     071174  3406  
+     071175  2014  
+     071176  2026  
+     071177  0232  
+ 605               
+ 606               /MAIN LOOP FIRST SUB LOOP
+ 607 071200  0000  MLPL1,  0
+ 608 071201  1377          TAD (7          /MINT3 IS 7 AT THIS POINT
+ 609 071202  3051          DCA MINT3       /SET MINT3 TO THE RESULT
+ 610 071203  1055          TAD KMINT3      /LOAD MINT3 ADDR AS PARAM[5]
+ 611 071204  3005          DCA 5
+ 612 071205  7325          CLA STL IAC RAL /LOAD MINT2 (3) AS PARAM[4]
+ 613 071206  3004          DCA 4
+ 614 071207  7205          CLA IAC RAL     /LOAD MINT1 (2) AS PARAM[AC]
+ 615                       JMS PROC7       /CALL PROC7
 off page        	         ^
-     001210  4776  
- 615 001211  5600          JMP I MLPL1
- 616               
- 617               /MAIN LOOP SECOND SUB LOOP
- 618 001212  0000  MLPL2I, 0       /LOOP INDEX
- 619 001213  0000  MLPL2,  0
- 620 001214  7201          CLA IAC         /SET INDEX TO 'A' (1)
- 621 001215  3212          DCA MLPL2I
- 622 001216  1212  MLPL2S, TAD MLPL2I      /CHECK INDEX<=GCH2
- 623 001217  7041          CIA
- 624 001220  1030          TAD GCH2
- 625 001221  7710          SPA CLA         /BREAK OUT IF NOT
- 626 001222  5613          JMP I MLPL2
- 627 001223  7325          CLA STL IAC RAL /PUT 'C' (3) IN PARAM[1]
- 628 001224  3004          DCA 4
- 629 001225  1212          TAD MLPL2I      /PUT INDEX IN PARAM[AC]
- 630                       JMS FUNC1       /CALL FUNC1
+     071210  4776  
+ 616 071211  5600          JMP I MLPL1
+ 617               
+ 618               /MAIN LOOP SECOND SUB LOOP
+ 619 071212  0000  MLPL2I, 0       /LOOP INDEX
+ 620 071213  0000  MLPL2,  0
+ 621 071214  7201          CLA IAC         /SET INDEX TO 'A' (1)
+ 622 071215  3212          DCA MLPL2I
+ 623 071216  1212  MLPL2S, TAD MLPL2I      /CHECK INDEX<=GCH2
+ 624 071217  7041          CIA
+ 625 071220  1030          TAD GCH2
+ 626 071221  7710          SPA CLA         /BREAK OUT IF NOT
+ 627 071222  5613          JMP I MLPL2
+ 628 071223  7325          CLA STL IAC RAL /PUT 'C' (3) IN PARAM[1]
+ 629 071224  3004          DCA 4
+ 630 071225  1212          TAD MLPL2I      /PUT INDEX IN PARAM[AC]
+ 631                       JMS FUNC1       /CALL FUNC1
 off page        	         ^
-     001226  4775  
- 631 001227  7041          CIA             /CHECK IF RESULT==MENUM
- 632 001230  1052          TAD MENUM
- 633 001231  7640          SZA CLA         /LOOP BACK IF NOT
- 634 001232  5246          JMP MLPL2L      /LOOP BACK IF NOT
- 635 001233  1056          TAD KMENUM      /PUT MENUM ADDR IN PARAM[14
- 636 001234  3004          DCA 4
- 637                       /TAD IDENT1     /PUT IDENT1 IN PARAM[AC]
- 638                       JMS PROC6       /CALL PROC6
+     071226  4775  
+ 632 071227  7041          CIA             /CHECK IF RESULT==MENUM
+ 633 071230  1052          TAD MENUM
+ 634 071231  7640          SZA CLA         /LOOP BACK IF NOT
+ 635 071232  5246          JMP MLPL2L      /LOOP BACK IF NOT
+ 636 071233  1056          TAD KMENUM      /PUT MENUM ADDR IN PARAM[14
+ 637 071234  3004          DCA 4
+ 638                       /TAD IDENT1     /PUT IDENT1 IN PARAM[AC]
+ 639                       JMS PROC6       /CALL PROC6
 off page        	         ^
-     001235  4774  
- 639 001236  1373          TAD (DPSTR3     /COPY DPSTR3 TO MSTR2
- 640 001237  3004          DCA 4
- 641 001240  1060          TAD KMSTR2
- 642                       JMS STRCPY
+     071235  4774  
+ 640 071236  1373          TAD (DPSTR3     /COPY DPSTR3 TO MSTR2
+ 641 071237  3004          DCA 4
+ 642 071240  1060          TAD KMSTR2
+ 643                       JMS STRCPY
 off page        	         ^
-     001241  4772  
- 643 001242  1053          TAD MRIDX       /SET MINT2 & GINT TO INDEX
- 644 001243  3050          DCA MINT2
- 645 001244  1053          TAD MRIDX
- 646 001245  3025          DCA GINT
- 647 001246  2212  MLPL2L, ISZ MLPL2I      /INCREMENT INDEX
- 648 001247  5216          JMP MLPL2S      /LOOP BACK AROUND
- 649               /THIS PAGE CONTAINS:
- 650               /CHRCMP, STRCMP
- 651               /MEMCPY, STRCPY
- 652 001372  1457  PAGE
-     001373  3426  
-     001374  2236  
-     001375  2200  
-     001376  2033  
-     001377  0007  
- 653               
- 654               /CHARACTER COMPARE FUNCTION
- 655               /THIS IS USED BY STRING COMPARE
- 656               /PARAM[AC]      FIRST CHAR
- 657               /PARAM[CCMP]    SECOND CHAR
- 658               /RESULT[AC]     DIFFERENCE
- 659 001400  0000  CCMP,   0       /SECOND CHAR ARG
- 660 001401  0000  CHRCMP, 0
- 661 001402  0377          AND (77         /ONLY WANT 2ND HALF
- 662 001403  3272          DCA MEMCPY      /STORE IN SCRATCH
- 663 001404  1200          TAD CCMP        /LOAD 2ND CHR TO AC
- 664 001405  0377          AND (77         /ONLY WANT 2ND HALF
- 665 001406  7041          CIA             /NEGATE 2ND CHR AND CLR LINK
- 666 001407  1272          TAD MEMCPY      /SUB 2ND FROM 1ST
- 667 001410  5601          JMP I CHRCMP
- 668               
- 669               /STRING COMPARE FUNCTION
- 670               /PARAM[AC]      FIRST STRING
- 671               /PARAM[4]       SECOND STRING
- 672               /RESULT[AC]     DIFFERENCE
- 673               SCMPS1=10               /FIRST STRING
- 674               SCMPS2=11               /SECOND STRING
- 675 001411  0000  STRCMP, 0
- 676 001412  1376          TAD (-1         /DEC BY ONE FOR AUTOIDX
- 677 001413  3010          DCA SCMPS1      /STORE 1ST TO SCRATCH
- 678 001414  7040          CMA
- 679 001415  1004          TAD 4           /MOVE 2ND
- 680 001416  3011          DCA SCMPS2
- 681 001417  1411  SCMPLP, TAD I SCMPS2    /LOAD 1ST HALF OF 2ND STR
- 682 001420  7141          CIA CLL         /SUB WORD FROM 1ST FROM 2ND
- 683 001421  1410          TAD I SCMPS1    /LOAD 1ST HALF OF 1ST STR
- 684                                       /LINK WILL BE SET AT THIS
- 685                                       /POINT IF BOTH ARE SAME
- 686 001422  7640          CLA SZA         /ARE THEY THE SAME?
- 687 001423  5231          JMP SCMPLC      /NO? JUMP TO LONG CHECK
- 688 001424  1410          TAD I SCMPS1    /IS 2ND HALF 0?
- 689 001425  0377          AND (77
- 690 001426  7640          SZA CLA
- 691 001427  5217          JMP SCMPLP      /NO? LOOP BACK AGAIN
- 692 001430  5611          JMP I STRCMP    /YES? RETURN
- 693                                       /LINK WILL BE SET FROM TAD
- 694               
- 695               SCMPLC,                 /LONG CHECK
- 696                                       /CHECK EACH HALF WORD
- 697 001431  1011          TAD SCMPS2      /COPY TO NON-AUTOIDX
- 698 001432  3257          DCA STRCPY      /REUSE STRCPY RET ADDR
- 699 001433  1010          TAD SCMPS1
- 700 001434  3004          DCA 4
- 701 001435  1657          TAD I STRCPY    /1ST HALF OF 2ND
- 702 001436  7012          RTR;RTR;RTR
-     001437  7012  
-     001440  7012  
- 703 001441  3200          DCA CCMP
- 704 001442  1404          TAD I 4         /1ST HALF OF 1ST
- 705 001443  7012          RTR;RTR;RTR
-     001444  7012  
-     001445  7012  
- 706 001446  4201          JMS CHRCMP      /COMPARE CHARS
- 707 001447  7440          SZA             /RETURN IF DIFF
- 708 001450  5255          JMP SCMPRE      /JUMP TO END
- 709 001451  1657          TAD I STRCPY    /2ND HALF OF 2ND
- 710 001452  3200          DCA CCMP
- 711 001453  1404          TAD I 4         /2ND HALF OF 1ST
- 712 001454  4201          JMS CHRCMP      /COMPARE CHARS;RES WILL BE DIFF
- 713 001455  7100  SCMPRE, CLL             /CLEAR LINK/EQUAL FLAG
- 714 001456  5611          JMP I STRCMP    /RETURN
- 715               
- 716               /STRING COPY FUNCTION
- 717               /PARAM[AC]      DST
- 718               /PARAM[4]       SRC
- 719               SCPYSR=11               /SOURCE ADDRESS
- 720               SCPYDS=10               /DESTINATION ADDRESS
- 721 001457  0000  STRCPY, 0
- 722 001460  1376          TAD (-1         /SUB 1 FROM EACH
- 723 001461  3010          DCA 10          /AND PUT IN AUTOIDX
- 724 001462  1404  SCPYLP, TAD I 4         /LOAD A WORD
- 725 001463  3410          DCA I 10        /SAVE AT DST
- 726 001464  1404          TAD I 4
- 727 001465  2004          ISZ 4           /INCREMENT SRC
- 728 001466  0377          AND (77         /CHECK IF 2ND HALF IS ZERO
- 729 001467  7650          SNA CLA         /RETURN IF IT IS
- 730 001470  5657          JMP I STRCPY    /RETURN
- 731 001471  5262          JMP SCPYLP      /OTHERWISE, LOOP AGAIN
- 732               
- 733               /MEMORY COPY FUNCTION
- 734               /PARAM[AC]      DST
- 735               /PARAM[4]       SRC
- 736               /PARAM[5]       LENGTH
- 737               MCPYLN=5                /LENGTH
- 738               MCPYDS=10               /SOURCE ADDRESS
- 739               MCPYSR=11               /DESTINATION ADDRESS
- 740 001472  0000  MEMCPY, 0
- 741 001473  1376          TAD (-1         /SUB 1 FROM EACH
- 742 001474  3010          DCA MCPYDS      /AND PUT IN AUTOIDX
- 743 001475  7240          CLA CMA         /AC=-1
- 744 001476  1004          TAD 4
- 745 001477  3011          DCA MCPYSR
- 746 001500  1005          TAD MCPYLN      /NEGATE LENGTH, SUB 1
- 747 001501  7040          CMA
- 748 001502  3005          DCA MCPYLN
- 749 001503  2005  MCPYLP, ISZ MCPYLN      /INC COUNT, CHECK IF DONE
- 750 001504  5306          JMP .+2         /SKIP RETURN
- 751 001505  5311          JMP MCPYEN      /JUMP TO END
- 752 001506  1411          TAD I MCPYSR    /READ A WORD
- 753 001507  3410          DCA I MCPYDS    /SAVE TO DST
- 754 001510  5303          JMP MCPYLP      /LOOP BACK AROUND
- 755 001511  7200  MCPYEN, CLA             /CLEAR AC FOR CALLER
- 756 001512  5672          JMP I MEMCPY    /RETURN
- 757               
- 758               /THIS PAGE CONTAINS:
- 759               /PUTC, PUTCHR, PUTSTR
- 760               /PUTOCT, PUTNL, PUTMSG
- 761               /PUTMSI, PUTMSS, PUTREC
- 762               
- 763 001576  7777  PAGE
-     001577  0077  
- 764               
- 765               /PRINT CHAR IMPLEMENTATION
- 766               /PARAM[AC]      CHAR
- 767               /RESULT[AC]     UNCHANGED
- 768 001600  0000  PUTC,   0
- 769 001601  6046          TLS             /SEND CHAR
- 770 001602  6041          TSF             /WAIT FOR PRINT FINISH
- 771 001603  5202          JMP .-1
- 772 001604  6042          TCF             /CLEAR FLAG SO WE DON'T
- 773                                       /CAUSE AN INTERRUPT
- 774 001605  5600          JMP I PUTC      /RETURN
- 775               
- 776               /PRINT CHARACTER FUNCTION
- 777               /PARAM[AC]      CHARACTER
- 778               /RESULT[AC]     8BIT CHAR
- 779 001606  0000  PUTCHR, 0
- 780 001607  0377          AND (77         /ONLY WANT 1ST HALF
- 781 001610  7450          SNA             /RETURN IF ZERO
- 782 001611  5606          JMP I PUTCHR
- 783 001612  1376          TAD (-40        /CONVERT FROM 6BIT
- 784 001613  7510          SPA             /ASCII TO 8BIT ASCII
- 785 001614  1375          TAD (100        /(ALPHA CHAR)
- 786 001615  1374          TAD (240
- 787 001616  4200          JMS PUTC        /ACTUALLY SEND CHAR
- 788 001617  5606          JMP I PUTCHR
- 789               
- 790               /PRINT STRING FUNCTION
- 791               /PARAM[AC]      STRING ADDRESS
- 792               /USES POCTTM AS STORAGE FOR THE STRING POINTER
- 793               PSTRP=PUTOCT
- 794 001620  0000  PUTSTR, 0
- 795 001621  3237          DCA PSTRP       /SAVE ADDRESS
- 796 001622  1637  PSTRLP, TAD I PSTRP     /GET CHAR
- 797 001623  7012          RTR;RTR;RTR     /GET FIRST HALF
-     001624  7012  
-     001625  7012  
- 798 001626  4206          JMS PUTCHR      /PRINT CHR
- 799 001627  7650          SNA CLA         /RETURN IF ZERO
- 800 001630  5620          JMP I PUTSTR    /(NULL CHR WAS PROVIDED)
- 801 001631  1637          TAD I PSTRP
- 802 001632  2237          ISZ PSTRP       /INCREMENT POINTER
- 803 001633  4206          JMS PUTCHR      /PRINT CHR
- 804 001634  7650          SNA CLA         /RETURN IF ZERO
- 805 001635  5620          JMP I PUTSTR
- 806 001636  5222          JMP PSTRLP      /LOOP BACK AROUND
- 807               
- 808               /PRINT OCTAL NUMBER
- 809               /PARAM[AC]      NUMBER TO PRINT
- 810               POCTCT=PUTMSG           /PRINTED COUNT
- 811               POCTTM=PUTNL            /TEMP
- 812 001637  0000  PUTOCT, 0
- 813 001640  7004          RAL             /SHIFT OVER 1
- 814 001641  3260          DCA POCTTM      /SAVE NUMBER
- 815 001642  1373          TAD (-4         /SET COUNTER TO -4
- 816 001643  3271          DCA POCTCT
- 817 001644  7200  POCTLP, CLA
- 818 001645  1260          TAD POCTTM      /GET CURR NUMBER
- 819 001646  7006          RTL             /SHIFT NEXT THREE INTO 1ST
- 820 001647  7004          RAL
- 821 001650  3260          DCA POCTTM      /SAVE FOR LATER
- 822 001651  1260          TAD POCTTM
- 823 001652  0372          AND (7          /MASK OFF BOTTOM
- 824 001653  1371          TAD (260        /ADD '0' TO GET ASCII CHAR
- 825 001654  4200          JMS PUTC        /PRINT CHAR
- 826 001655  2271          ISZ POCTCT      /CHECK HOW MANY LEFT
- 827 001656  5244          JMP POCTLP      /LOOP BACK AROUND
- 828 001657  5637          JMP I PUTOCT    /RETURN
- 829               
- 830               /SEND NEWLINE CHARACTER
- 831 001660  0000  PUTNL,  0
- 832 001661  7200          CLA
- 833 001662  1370          TAD (215        /PRINT CR
- 834 001663  4200          JMS PUTC
- 835 001664  7200          CLA
- 836 001665  1367          TAD (212        /SEND LF
- 837 001666  4200          JMS PUTC
- 838 001667  7200          CLA             /CLEAR AC FOR CALLER
- 839 001670  5660          JMP I PUTNL     /RETURN
- 840               
- 841               /PRINT A MESSAGE
- 842               /PARAM[CALL+1]  MESSAGE INDEX
- 843 001671  0000  PUTMSG, 0
- 844 001672  7200          CLA
- 845 001673  1671          TAD I PUTMSG    /GET STR ADDR
- 846 001674  4220          JMS PUTSTR      /PRINT STRING
- 847 001675  4260          JMS PUTNL       /PRINT A NEWLINE
- 848 001676  2271          ISZ PUTMSG      /INCREMENT RETURN ADDR
- 849 001677  5671          JMP I PUTMSG    /RETURN
- 850               
- 851               /PRINT A MESSAGE FOLLOWED BY AN OCTAL NUMBER
- 852               /PARAM[CALL+1]  MESSAGE INDEX
- 853               /PARAM[AC]      OCTAL VALUE
- 854               /USES PUTNL AS TEMP STORAGE FOR THE OCTAL VALUE
- 855 001700  0000  PUTMSI, 0
- 856 001701  3260          DCA PUTNL       /SAVE OCT VAL
- 857 001702  1700          TAD I PUTMSI    /GET STR ADDR
- 858 001703  4220          JMS PUTSTR      /PRINT STRING
- 859 001704  1260          TAD PUTNL       /LOAD OCT VALUE
- 860 001705  4237          JMS PUTOCT      /PRINT IT
- 861 001706  4260          JMS PUTNL       /PRINT A NEWLINE
- 862 001707  2300          ISZ PUTMSI      /INCREMENT RETURN ADDR
- 863 001710  5700          JMP I PUTMSI    /RETURN
- 864               
- 865               /PRINT A MESSAGE STRING FOLLOWED BY ANOTHER STRING
- 866               /PARAM[CALL+1]  MESSAGE STRING
- 867               /PARAM[AC]      STRING
- 868               /USES PUTNL AS TEMP STORAGE FOR STR POINTER
- 869 001711  0000  PUTMSS, 0
- 870 001712  3260          DCA PUTNL       /SAVE STRING
- 871 001713  1711          TAD I PUTMSS    /GET MSG STR ADDR
- 872 001714  4220          JMS PUTSTR      /PRINT MSG STRING
- 873 001715  1260          TAD PUTNL       /LOAD SECOND STR
- 874 001716  4220          JMS PUTSTR      /PRINT SECOND STRING
- 875 001717  4260          JMS PUTNL       /PRINT NEWLINE
- 876 001720  2311          ISZ PUTMSS      /INCREMENT RETURN ADDR
- 877 001721  5711          JMP I PUTMSS    /RETURN
- 878               
- 879               /PRINT DHRYSTONE RECORD CONTENTS
- 880               /PARAM[AC]      RECORD ADDRESS
- 881               PRECRC=11               /RECORD ADDRESS
- 882 001722  0000  PUTREC, 0
- 883 001723  1366          TAD (-1
- 884 001724  3011          DCA PRECRC      /PUT REC ADDR IN AUTOIDX
- 885 001725  1411          TAD I PRECRC    /PTR_COMP MSG
- 886 001726  4300          JMS PUTMSI
- 887 001727  3777          PRCPTR
- 888 001730  1411          TAD I PRECRC    /DISCR MSG
- 889 001731  4300          JMS PUTMSI
- 890 001732  4013          PRDISC
- 891 001733  1411          TAD I PRECRC    /ENUM_COMP MSG
- 892 001734  4300          JMS PUTMSI
- 893 001735  4027          PRCENM
- 894 001736  1411          TAD I PRECRC    /INT_COMP MSG
- 895 001737  4300          JMS PUTMSI
- 896 001740  4043          PRCINT
- 897 001741  1011          TAD PRECRC      /STR_COMP MSG
- 898 001742  7001          IAC
- 899 001743  4311          JMS PUTMSS
- 900 001744  4057          PRCSTR
- 901 001745  5722          JMP I PUTREC    /RETURN
- 902               /THIS PAGE CONTAINS:
- 903               /PROC2, PROC4, PROC5
- 904               /PROC7, & PROC8
- 905 001766  7777  PAGE
-     001767  0212  
-     001770  0215  
-     001771  0260  
-     001772  0007  
-     001773  7774  
-     001774  0240  
-     001775  0100  
-     001776  7740  
-     001777  0077  
- 906               
- 907               /DHRYSTONE PROC_2 FUNCTION
- 908               /PARAM[AC]      INT ADDRESS
- 909               P2INTP=PROC4            /INT ADDRESS
- 910 002000  0000  PROC2,  0
- 911 002001  3214          DCA P2INTP      /SAVE ADDR
- 912 002002  7240          CLA CMA         /SET AC=-1
- 913 002003  1027          TAD GCH1        /CHECK GCH1=='A'
- 914 002004  7640          SZA CLA
- 915 002005  5600          JMP I PROC2     /RETURN IF NOT
- 916 002006  1025          TAD GINT        /*PINT=*PINT+10-1-GINT
- 917 002007  7041          CIA             /OR *PINT=*PINT+9-GINT
- 918 002010  1377          TAD (11
- 919 002011  1614          TAD I P2INTP
- 920 002012  3614          DCA I P2INTP
- 921 002013  5600  P2END,  JMP I PROC2
- 922               
- 923               /DHRYSTONE PROC_4 FUNCTION
- 924 002014  0000  PROC4,  0
- 925 002015  7240          CLA CMA         /CHECK IF GCH1 IS 'A' (1)
- 926 002016  1027          TAD GCH1
- 927 002017  7650          SNA CLA         /AC = GBOOL == 'A'
- 928 002020  7001          IAC             /SET TRUE
- 929 002021  7440          SZA             /SET GBOOL TO LBOOL IF LBOOL=1
- 930 002022  3026          DCA GBOOL       /BASICALLY GBOOL=GBOOL OR LBOOL
- 931 002023  7326          CLA STL RTL     /SET GCH2 TO 'B' (2)
- 932 002024  3030          DCA GCH2
- 933 002025  5614          JMP I PROC4     /RETURN
- 934               
- 935               /DHRYSTONE PROC_5 FUNCTION
- 936 002026  0000  PROC5,  0
- 937 002027  7201          CLA IAC         /SET GCH1 TO 'A' (1)
- 938 002030  3027          DCA GCH1
- 939 002031  3026          DCA GBOOL       /SET GBOOL TO FALSE
- 940 002032  5626          JMP I PROC5     /RETURN
- 941               
- 942               /DHRYSTONE PROC_7 FUNCTION
- 943               /PARAM[AC]      INT1
- 944               /PARAM[4]       INT2
- 945               /PARAM[5]       INTPTR
- 946 002033  0000  PROC7,  0
- 947 002034  1376          TAD (2          /ADD 2 TO INT1 TO GET INTLOC
- 948 002035  1004          TAD 4           /ADD INT2
- 949 002036  3405          DCA I 5         /SAVE RESULT TO INTPTR
- 950 002037  5633          JMP I PROC7
- 951               
- 952               /DHRYSTONE PROC_8 FUNCTION
- 953               /PARAM[AC]      INT1
- 954               /PARAM[4]       INT2
- 955               /PARAM[5]       50 ARRAY ADDR
- 956               /PARAM[6]       50X50 ARRAY ADDR
- 957               P8INT2=4                /INT2 PARAM
- 958               P8ARR1=5                /ARRAY1 PARAM
- 959               P8ARR2=6                /ARRAY2 PARAM
- 960               P8LINT=PROC4            /LOCAL INT
- 961               P8TMP1=PROC5            /TEMP STORAGE 1
- 962 002040  0000  PROC8,  0
- 963 002041  1375          TAD (5          /ADD 5 TO INT1 FOR LINT
- 964 002042  3214          DCA P8LINT      /SAVE TO SCRATCH
- 965 002043  1214          TAD P8LINT      /GET ADDR OF ARR1[LINT]
- 966 002044  1005          TAD P8ARR1
- 967 002045  3005          DCA P8ARR1      /OVERWRITE ARR1 ADDR
- 968 002046  1004          TAD P8INT2      /SAVE INT2 TO ARR1
- 969 002047  3405          DCA I P8ARR1
- 970 002050  2005          ISZ P8ARR1      /ARR1[LINT+1] TOO
- 971 002051  1004          TAD P8INT2
- 972 002052  3405          DCA I P8ARR1    /SAVE ARR1[LINT+1]=ARR1[LINT]
- 973 002053  1005          TAD P8ARR1      /GET ADDR OF ARR1[LINT+2]
- 974 002054  1376          TAD (2
- 975 002055  3005          DCA P8ARR1
- 976 002056  1214          TAD P8LINT      /SET TO LINT
- 977 002057  3405          DCA I P8ARR1
- 978 002060  7402  P8P1B,  HLT             /PATCH START
- 979                                       /REPLACED BY A JUMP TO
- 980                                       /P8P1H IF EAE IS DETECTED
- 981                                       /OR P8P1S IF NOT
- 982 002061  1214  P8P1E,  TAD P8LINT      /ADD LINT FOR ARR2[LINT][LINT]
- 983 002062  1006          TAD P8ARR2
- 984 002063  3226          DCA P8TMP1      /PUT IN TMP1
- 985 002064  1214          TAD P8LINT      /STORE LINT AT ARR2[LINT][LINT]
- 986 002065  3626          DCA I P8TMP1
- 987 002066  2226          ISZ P8TMP1      /AND ARR2[LINT][LINT+1]
- 988 002067  1214          TAD P8LINT
- 989 002070  3626          DCA I P8TMP1
- 990 002071  7344          STA CLL RAL     /INCREMENT ARR2[LINT][LINT-1]
- 991 002072  1226          TAD P8TMP1      /SUB 2 FROM ARR2[LINT][LINT+1]
- 992 002073  3226          DCA P8TMP1
- 993 002074  2626          ISZ I P8TMP1    /INCREMENT BY ONE
- 994 002075  1226          TAD P8TMP1
- 995 002076  1374          TAD (ARRDIM^3+1
- 996 002077  3226          DCA P8TMP1
- 997 002100  1004          TAD P8INT2      /ARR1[LINT] IS INT2
- 998 002101  3626          DCA I P8TMP1    /SAVE TO ARR2[LINT+3][LINT]
- 999 002102  1375          TAD (5          /SET GINT TO 5
-1000 002103  3025          DCA GINT
-1001 002104  5640          JMP I PROC8     /RETURN
-1002               
-1003               /EAE ACCELERATION RETRIEVAL OF
-1004               /ARR2[LINT][0]
-1005               /THIS IS USED IF EAE IS DETECTED DURING STARTUP
-1006 002105  1214  P8P1H,  TAD P8LINT
-1007 002106  7425          MQL MUY         /CALC ARR2[LINT] OFFSET
-1008 002107  0014          ARRDIM
-1009 002110  7701          CLA MQA         /ADD ARR2 BASE TO OFFSET
-1010 002111  5261          JMP P8P1E       /JUMP TO TO CORE PROC8
-1011               
-1012               /EAE-LESS IMPLEMENTATION FOR RETRIEVING
-1013               /ARR2[LINT][0]
-1014               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP
-1015 002112  0000  P8P1T,  0
-1016 002113  1214  P8P1S,  TAD P8LINT      /GET LINT
-1017 002114  7006          RTL             /MUL BY 4
-1018 002115  3312          DCA P8P1T       /SAVE TO TEMP
-1019 002116  1312          TAD P8P1T       /GET IT BACK
-1020 002117  7004          RAL             /BY 8
-1021 002120  1312          TAD P8P1T       /ADD BY 4 FOR BY 12
-1022 002121  5261          JMP P8P1E       /RETURN
-1023               /THIS PAGE CONTAINS:
-1024               /FUNC1, FUNC3, PROC3, PROC6
-1025 002174  0045  PAGE
-     002175  0005  
-     002176  0002  
-     002177  0011  
-1026               
-1027               /DHRYSTONE FUNC_1 FUNCTION
-1028               /PARAM[AC]      CHAR1
-1029               /PARAM[4]       CHAR2
-1030               /RESULT[AC]     ENUM VALUE
-1031               F1CH2=4         /CHAR2 PARAM
-1032 002200  0000  FUNC1,  0
-1033 002201  7041          CIA             /CHECK CHAR1!=CHAR2
-1034 002202  1004          TAD F1CH2
-1035 002203  7640          SZA CLA         /RETURN IDENT1 IF YES
-1036 002204  5600          JMP I FUNC1
-1037 002205  1004          TAD F1CH2       /OTHERWISE SET GCH1=CHR1(=CHR2)
-1038 002206  3027          DCA GCH1        /AND RETURN IDENT2
-1039 002207  7001          IAC             /IDENT2=1
-1040 002210  5600          JMP I FUNC1     /RETURN
-1041               
-1042               /DHRYSTONE FUNC_3 FUNCTION
-1043               /PARAM[AC]      ENUM VALUE
-1044               /RESULT[AC]     BOOL VALUE
-1045 002211  0000  FUNC3,  0
-1046 002212  1377          TAD (-ID3       /CHECK IF ENM==IDENT3;AC=-2
-1047 002213  7640          SZA CLA         /RETURN FALSE IF NOT
-1048 002214  5611          JMP I FUNC3     /RETURN FALSE
-1049 002215  7001          IAC             /SET AC TO TRUE (1)
-1050 002216  5611          JMP I FUNC3     /RETURN
-1051               
-1052               /DHRYSTONE PROC_3 FUNCTION
-1053               /PARAM[AC]      RECORD PTR ADDRESS
-1054               P3TMP=FUNC1
-1055               P3TMP2=FUNC3
-1056 002217  0000  PROC3,  0
-1057 002220  3200          DCA P3TMP       /SAVE TO SCRATCH
-1058 002221  1031          TAD GPTR        /CHECK IF GPTR IS NULL
-1059 002222  7650          SNA CLA
-1060 002223  5226          JMP P3CP7       /GO DIRECTLY TO P7 CALL
-1061 002224  1431          TAD I GPTR      /GET GPTR->PTR_COMP
-1062 002225  3600          DCA I P3TMP     /ASSIGN TO PROVIDED PTR
-1063 002226  1025  P3CP7,  TAD GINT        /PLACE GINT IN PARAM[4]
-1064 002227  3004          DCA 4
-1065 002230  7325          CLA STL IAC RAL /PLACE GPTR->VAR1.INT_COMP
-1066 002231  1031          TAD GPTR        /ADDR IN PARAM[5]
-1067 002232  3005          DCA 5
-1068 002233  1376          TAD (12         /PLACE 10 IN PARAM[AC]
-1069                       JMS PROC7       /CALL PROC7
+     071241  4772  
+ 644 071242  1053          TAD MRIDX       /SET MINT2 & GINT TO INDEX
+ 645 071243  3050          DCA MINT2
+ 646 071244  1053          TAD MRIDX
+ 647 071245  3025          DCA GINT
+ 648 071246  2212  MLPL2L, ISZ MLPL2I      /INCREMENT INDEX
+ 649 071247  5216          JMP MLPL2S      /LOOP BACK AROUND
+ 650               /THIS PAGE CONTAINS:
+ 651               /CHRCMP, STRCMP
+ 652               /MEMCPY, STRCPY
+ 653 071372  1457  PAGE
+     071373  3426  
+     071374  2236  
+     071375  2200  
+     071376  2033  
+     071377  0007  
+ 654               
+ 655               /CHARACTER COMPARE FUNCTION
+ 656               /THIS IS USED BY STRING COMPARE
+ 657               /PARAM[AC]      FIRST CHAR
+ 658               /PARAM[CCMP]    SECOND CHAR
+ 659               /RESULT[AC]     DIFFERENCE
+ 660 071400  0000  CCMP,   0       /SECOND CHAR ARG
+ 661 071401  0000  CHRCMP, 0
+ 662 071402  0377          AND (77         /ONLY WANT 2ND HALF
+ 663 071403  3272          DCA MEMCPY      /STORE IN SCRATCH
+ 664 071404  1200          TAD CCMP        /LOAD 2ND CHR TO AC
+ 665 071405  0377          AND (77         /ONLY WANT 2ND HALF
+ 666 071406  7041          CIA             /NEGATE 2ND CHR AND CLR LINK
+ 667 071407  1272          TAD MEMCPY      /SUB 2ND FROM 1ST
+ 668 071410  5601          JMP I CHRCMP
+ 669               
+ 670               /STRING COMPARE FUNCTION
+ 671               /PARAM[AC]      FIRST STRING
+ 672               /PARAM[4]       SECOND STRING
+ 673               /RESULT[AC]     DIFFERENCE
+ 674               SCMPS1=10               /FIRST STRING
+ 675               SCMPS2=11               /SECOND STRING
+ 676 071411  0000  STRCMP, 0
+ 677 071412  1376          TAD (-1         /DEC BY ONE FOR AUTOIDX
+ 678 071413  3010          DCA SCMPS1      /STORE 1ST TO SCRATCH
+ 679 071414  7040          CMA
+ 680 071415  1004          TAD 4           /MOVE 2ND
+ 681 071416  3011          DCA SCMPS2
+ 682 071417  1411  SCMPLP, TAD I SCMPS2    /LOAD 1ST HALF OF 2ND STR
+ 683 071420  7141          CIA CLL         /SUB WORD FROM 1ST FROM 2ND
+ 684 071421  1410          TAD I SCMPS1    /LOAD 1ST HALF OF 1ST STR
+ 685                                       /LINK WILL BE SET AT THIS
+ 686                                       /POINT IF BOTH ARE SAME
+ 687 071422  7640          CLA SZA         /ARE THEY THE SAME?
+ 688 071423  5231          JMP SCMPLC      /NO? JUMP TO LONG CHECK
+ 689 071424  1410          TAD I SCMPS1    /IS 2ND HALF 0?
+ 690 071425  0377          AND (77
+ 691 071426  7640          SZA CLA
+ 692 071427  5217          JMP SCMPLP      /NO? LOOP BACK AGAIN
+ 693 071430  5611          JMP I STRCMP    /YES? RETURN
+ 694                                       /LINK WILL BE SET FROM TAD
+ 695               
+ 696               SCMPLC,                 /LONG CHECK
+ 697                                       /CHECK EACH HALF WORD
+ 698 071431  1011          TAD SCMPS2      /COPY TO NON-AUTOIDX
+ 699 071432  3257          DCA STRCPY      /REUSE STRCPY RET ADDR
+ 700 071433  1010          TAD SCMPS1
+ 701 071434  3004          DCA 4
+ 702 071435  1657          TAD I STRCPY    /1ST HALF OF 2ND
+ 703 071436  7012          RTR;RTR;RTR
+     071437  7012  
+     071440  7012  
+ 704 071441  3200          DCA CCMP
+ 705 071442  1404          TAD I 4         /1ST HALF OF 1ST
+ 706 071443  7012          RTR;RTR;RTR
+     071444  7012  
+     071445  7012  
+ 707 071446  4201          JMS CHRCMP      /COMPARE CHARS
+ 708 071447  7440          SZA             /RETURN IF DIFF
+ 709 071450  5255          JMP SCMPRE      /JUMP TO END
+ 710 071451  1657          TAD I STRCPY    /2ND HALF OF 2ND
+ 711 071452  3200          DCA CCMP
+ 712 071453  1404          TAD I 4         /2ND HALF OF 1ST
+ 713 071454  4201          JMS CHRCMP      /COMPARE CHARS;RES WILL BE DIFF
+ 714 071455  7100  SCMPRE, CLL             /CLEAR LINK/EQUAL FLAG
+ 715 071456  5611          JMP I STRCMP    /RETURN
+ 716               
+ 717               /STRING COPY FUNCTION
+ 718               /PARAM[AC]      DST
+ 719               /PARAM[4]       SRC
+ 720               SCPYSR=11               /SOURCE ADDRESS
+ 721               SCPYDS=10               /DESTINATION ADDRESS
+ 722 071457  0000  STRCPY, 0
+ 723 071460  1376          TAD (-1         /SUB 1 FROM EACH
+ 724 071461  3010          DCA 10          /AND PUT IN AUTOIDX
+ 725 071462  1404  SCPYLP, TAD I 4         /LOAD A WORD
+ 726 071463  3410          DCA I 10        /SAVE AT DST
+ 727 071464  1404          TAD I 4
+ 728 071465  2004          ISZ 4           /INCREMENT SRC
+ 729 071466  0377          AND (77         /CHECK IF 2ND HALF IS ZERO
+ 730 071467  7650          SNA CLA         /RETURN IF IT IS
+ 731 071470  5657          JMP I STRCPY    /RETURN
+ 732 071471  5262          JMP SCPYLP      /OTHERWISE, LOOP AGAIN
+ 733               
+ 734               /MEMORY COPY FUNCTION
+ 735               /PARAM[AC]      DST
+ 736               /PARAM[4]       SRC
+ 737               /PARAM[5]       LENGTH
+ 738               MCPYLN=5                /LENGTH
+ 739               MCPYDS=10               /SOURCE ADDRESS
+ 740               MCPYSR=11               /DESTINATION ADDRESS
+ 741 071472  0000  MEMCPY, 0
+ 742 071473  1376          TAD (-1         /SUB 1 FROM EACH
+ 743 071474  3010          DCA MCPYDS      /AND PUT IN AUTOIDX
+ 744 071475  7240          CLA CMA         /AC=-1
+ 745 071476  1004          TAD 4
+ 746 071477  3011          DCA MCPYSR
+ 747 071500  1005          TAD MCPYLN      /NEGATE LENGTH, SUB 1
+ 748 071501  7040          CMA
+ 749 071502  3005          DCA MCPYLN
+ 750 071503  2005  MCPYLP, ISZ MCPYLN      /INC COUNT, CHECK IF DONE
+ 751 071504  5306          JMP .+2         /SKIP RETURN
+ 752 071505  5311          JMP MCPYEN      /JUMP TO END
+ 753 071506  1411          TAD I MCPYSR    /READ A WORD
+ 754 071507  3410          DCA I MCPYDS    /SAVE TO DST
+ 755 071510  5303          JMP MCPYLP      /LOOP BACK AROUND
+ 756 071511  7200  MCPYEN, CLA             /CLEAR AC FOR CALLER
+ 757 071512  5672          JMP I MEMCPY    /RETURN
+ 758               
+ 759               /THIS PAGE CONTAINS:
+ 760               /PUTC, PUTCHR, PUTSTR
+ 761               /PUTOCT, PUTNL, PUTMSG
+ 762               /PUTMSI, PUTMSS, PUTREC
+ 763               
+ 764 071576  7777  PAGE
+     071577  0077  
+ 765               
+ 766               /PRINT CHAR IMPLEMENTATION
+ 767               /PARAM[AC]      CHAR
+ 768               /RESULT[AC]     UNCHANGED
+ 769 071600  0000  PUTC,   0
+ 770 071601  6046          TLS             /SEND CHAR
+ 771 071602  6041          TSF             /WAIT FOR PRINT FINISH
+ 772 071603  5202          JMP .-1
+ 773 071604  6042          TCF             /CLEAR FLAG SO WE DON'T
+ 774                                       /CAUSE AN INTERRUPT
+ 775 071605  5600          JMP I PUTC      /RETURN
+ 776               
+ 777               /PRINT CHARACTER FUNCTION
+ 778               /PARAM[AC]      CHARACTER
+ 779               /RESULT[AC]     8BIT CHAR
+ 780 071606  0000  PUTCHR, 0
+ 781 071607  0377          AND (77         /ONLY WANT 1ST HALF
+ 782 071610  7450          SNA             /RETURN IF ZERO
+ 783 071611  5606          JMP I PUTCHR
+ 784 071612  1376          TAD (-40        /CONVERT FROM 6BIT
+ 785 071613  7510          SPA             /ASCII TO 8BIT ASCII
+ 786 071614  1375          TAD (100        /(ALPHA CHAR)
+ 787 071615  1374          TAD (240
+ 788 071616  4200          JMS PUTC        /ACTUALLY SEND CHAR
+ 789 071617  5606          JMP I PUTCHR
+ 790               
+ 791               /PRINT STRING FUNCTION
+ 792               /PARAM[AC]      STRING ADDRESS
+ 793               /USES POCTTM AS STORAGE FOR THE STRING POINTER
+ 794               PSTRP=PUTOCT
+ 795 071620  0000  PUTSTR, 0
+ 796 071621  3237          DCA PSTRP       /SAVE ADDRESS
+ 797 071622  1637  PSTRLP, TAD I PSTRP     /GET CHAR
+ 798 071623  7012          RTR;RTR;RTR     /GET FIRST HALF
+     071624  7012  
+     071625  7012  
+ 799 071626  4206          JMS PUTCHR      /PRINT CHR
+ 800 071627  7650          SNA CLA         /RETURN IF ZERO
+ 801 071630  5620          JMP I PUTSTR    /(NULL CHR WAS PROVIDED)
+ 802 071631  1637          TAD I PSTRP
+ 803 071632  2237          ISZ PSTRP       /INCREMENT POINTER
+ 804 071633  4206          JMS PUTCHR      /PRINT CHR
+ 805 071634  7650          SNA CLA         /RETURN IF ZERO
+ 806 071635  5620          JMP I PUTSTR
+ 807 071636  5222          JMP PSTRLP      /LOOP BACK AROUND
+ 808               
+ 809               /PRINT OCTAL NUMBER
+ 810               /PARAM[AC]      NUMBER TO PRINT
+ 811               POCTCT=PUTMSG           /PRINTED COUNT
+ 812               POCTTM=PUTNL            /TEMP
+ 813 071637  0000  PUTOCT, 0
+ 814 071640  7004          RAL             /SHIFT OVER 1
+ 815 071641  3260          DCA POCTTM      /SAVE NUMBER
+ 816 071642  1373          TAD (-4         /SET COUNTER TO -4
+ 817 071643  3271          DCA POCTCT
+ 818 071644  7200  POCTLP, CLA
+ 819 071645  1260          TAD POCTTM      /GET CURR NUMBER
+ 820 071646  7006          RTL             /SHIFT NEXT THREE INTO 1ST
+ 821 071647  7004          RAL
+ 822 071650  3260          DCA POCTTM      /SAVE FOR LATER
+ 823 071651  1260          TAD POCTTM
+ 824 071652  0372          AND (7          /MASK OFF BOTTOM
+ 825 071653  1371          TAD (260        /ADD '0' TO GET ASCII CHAR
+ 826 071654  4200          JMS PUTC        /PRINT CHAR
+ 827 071655  2271          ISZ POCTCT      /CHECK HOW MANY LEFT
+ 828 071656  5244          JMP POCTLP      /LOOP BACK AROUND
+ 829 071657  5637          JMP I PUTOCT    /RETURN
+ 830               
+ 831               /SEND NEWLINE CHARACTER
+ 832 071660  0000  PUTNL,  0
+ 833 071661  7200          CLA
+ 834 071662  1370          TAD (215        /PRINT CR
+ 835 071663  4200          JMS PUTC
+ 836 071664  7200          CLA
+ 837 071665  1367          TAD (212        /SEND LF
+ 838 071666  4200          JMS PUTC
+ 839 071667  7200          CLA             /CLEAR AC FOR CALLER
+ 840 071670  5660          JMP I PUTNL     /RETURN
+ 841               
+ 842               /PRINT A MESSAGE
+ 843               /PARAM[CALL+1]  MESSAGE INDEX
+ 844 071671  0000  PUTMSG, 0
+ 845 071672  7200          CLA
+ 846 071673  1671          TAD I PUTMSG    /GET STR ADDR
+ 847 071674  4220          JMS PUTSTR      /PRINT STRING
+ 848 071675  4260          JMS PUTNL       /PRINT A NEWLINE
+ 849 071676  2271          ISZ PUTMSG      /INCREMENT RETURN ADDR
+ 850 071677  5671          JMP I PUTMSG    /RETURN
+ 851               
+ 852               /PRINT A MESSAGE FOLLOWED BY AN OCTAL NUMBER
+ 853               /PARAM[CALL+1]  MESSAGE INDEX
+ 854               /PARAM[AC]      OCTAL VALUE
+ 855               /USES PUTNL AS TEMP STORAGE FOR THE OCTAL VALUE
+ 856 071700  0000  PUTMSI, 0
+ 857 071701  3260          DCA PUTNL       /SAVE OCT VAL
+ 858 071702  1700          TAD I PUTMSI    /GET STR ADDR
+ 859 071703  4220          JMS PUTSTR      /PRINT STRING
+ 860 071704  1260          TAD PUTNL       /LOAD OCT VALUE
+ 861 071705  4237          JMS PUTOCT      /PRINT IT
+ 862 071706  4260          JMS PUTNL       /PRINT A NEWLINE
+ 863 071707  2300          ISZ PUTMSI      /INCREMENT RETURN ADDR
+ 864 071710  5700          JMP I PUTMSI    /RETURN
+ 865               
+ 866               /PRINT A MESSAGE STRING FOLLOWED BY ANOTHER STRING
+ 867               /PARAM[CALL+1]  MESSAGE STRING
+ 868               /PARAM[AC]      STRING
+ 869               /USES PUTNL AS TEMP STORAGE FOR STR POINTER
+ 870 071711  0000  PUTMSS, 0
+ 871 071712  3260          DCA PUTNL       /SAVE STRING
+ 872 071713  1711          TAD I PUTMSS    /GET MSG STR ADDR
+ 873 071714  4220          JMS PUTSTR      /PRINT MSG STRING
+ 874 071715  1260          TAD PUTNL       /LOAD SECOND STR
+ 875 071716  4220          JMS PUTSTR      /PRINT SECOND STRING
+ 876 071717  4260          JMS PUTNL       /PRINT NEWLINE
+ 877 071720  2311          ISZ PUTMSS      /INCREMENT RETURN ADDR
+ 878 071721  5711          JMP I PUTMSS    /RETURN
+ 879               
+ 880               /PRINT DHRYSTONE RECORD CONTENTS
+ 881               /PARAM[AC]      RECORD ADDRESS
+ 882               PRECRC=11               /RECORD ADDRESS
+ 883 071722  0000  PUTREC, 0
+ 884 071723  1366          TAD (-1
+ 885 071724  3011          DCA PRECRC      /PUT REC ADDR IN AUTOIDX
+ 886 071725  1411          TAD I PRECRC    /PTR_COMP MSG
+ 887 071726  4300          JMS PUTMSI
+ 888 071727  3777          PRCPTR
+ 889 071730  1411          TAD I PRECRC    /DISCR MSG
+ 890 071731  4300          JMS PUTMSI
+ 891 071732  4013          PRDISC
+ 892 071733  1411          TAD I PRECRC    /ENUM_COMP MSG
+ 893 071734  4300          JMS PUTMSI
+ 894 071735  4027          PRCENM
+ 895 071736  1411          TAD I PRECRC    /INT_COMP MSG
+ 896 071737  4300          JMS PUTMSI
+ 897 071740  4043          PRCINT
+ 898 071741  1011          TAD PRECRC      /STR_COMP MSG
+ 899 071742  7001          IAC
+ 900 071743  4311          JMS PUTMSS
+ 901 071744  4057          PRCSTR
+ 902 071745  5722          JMP I PUTREC    /RETURN
+ 903               /THIS PAGE CONTAINS:
+ 904               /PROC2, PROC4, PROC5
+ 905               /PROC7, & PROC8
+ 906 071766  7777  PAGE
+     071767  0212  
+     071770  0215  
+     071771  0260  
+     071772  0007  
+     071773  7774  
+     071774  0240  
+     071775  0100  
+     071776  7740  
+     071777  0077  
+ 907               
+ 908               /DHRYSTONE PROC_2 FUNCTION
+ 909               /PARAM[AC]      INT ADDRESS
+ 910               P2INTP=PROC4            /INT ADDRESS
+ 911 072000  0000  PROC2,  0
+ 912 072001  3214          DCA P2INTP      /SAVE ADDR
+ 913 072002  7240          CLA CMA         /SET AC=-1
+ 914 072003  1027          TAD GCH1        /CHECK GCH1=='A'
+ 915 072004  7640          SZA CLA
+ 916 072005  5600          JMP I PROC2     /RETURN IF NOT
+ 917 072006  1025          TAD GINT        /*PINT=*PINT+10-1-GINT
+ 918 072007  7041          CIA             /OR *PINT=*PINT+9-GINT
+ 919 072010  1377          TAD (11
+ 920 072011  1614          TAD I P2INTP
+ 921 072012  3614          DCA I P2INTP
+ 922 072013  5600  P2END,  JMP I PROC2
+ 923               
+ 924               /DHRYSTONE PROC_4 FUNCTION
+ 925 072014  0000  PROC4,  0
+ 926 072015  7240          CLA CMA         /CHECK IF GCH1 IS 'A' (1)
+ 927 072016  1027          TAD GCH1
+ 928 072017  7650          SNA CLA         /AC = GBOOL == 'A'
+ 929 072020  7001          IAC             /SET TRUE
+ 930 072021  7440          SZA             /SET GBOOL TO LBOOL IF LBOOL=1
+ 931 072022  3026          DCA GBOOL       /BASICALLY GBOOL=GBOOL OR LBOOL
+ 932 072023  7326          CLA STL RTL     /SET GCH2 TO 'B' (2)
+ 933 072024  3030          DCA GCH2
+ 934 072025  5614          JMP I PROC4     /RETURN
+ 935               
+ 936               /DHRYSTONE PROC_5 FUNCTION
+ 937 072026  0000  PROC5,  0
+ 938 072027  7201          CLA IAC         /SET GCH1 TO 'A' (1)
+ 939 072030  3027          DCA GCH1
+ 940 072031  3026          DCA GBOOL       /SET GBOOL TO FALSE
+ 941 072032  5626          JMP I PROC5     /RETURN
+ 942               
+ 943               /DHRYSTONE PROC_7 FUNCTION
+ 944               /PARAM[AC]      INT1
+ 945               /PARAM[4]       INT2
+ 946               /PARAM[5]       INTPTR
+ 947 072033  0000  PROC7,  0
+ 948 072034  1376          TAD (2          /ADD 2 TO INT1 TO GET INTLOC
+ 949 072035  1004          TAD 4           /ADD INT2
+ 950 072036  3405          DCA I 5         /SAVE RESULT TO INTPTR
+ 951 072037  5633          JMP I PROC7
+ 952               
+ 953               /DHRYSTONE PROC_8 FUNCTION
+ 954               /PARAM[AC]      INT1
+ 955               /PARAM[4]       INT2
+ 956               /PARAM[5]       50 ARRAY ADDR
+ 957               /PARAM[6]       50X50 ARRAY ADDR
+ 958               P8INT2=4                /INT2 PARAM
+ 959               P8ARR1=5                /ARRAY1 PARAM
+ 960               P8ARR2=6                /ARRAY2 PARAM
+ 961               P8LINT=PROC4            /LOCAL INT
+ 962               P8TMP1=PROC5            /TEMP STORAGE 1
+ 963 072040  0000  PROC8,  0
+ 964 072041  1375          TAD (5          /ADD 5 TO INT1 FOR LINT
+ 965 072042  3214          DCA P8LINT      /SAVE TO SCRATCH
+ 966 072043  1214          TAD P8LINT      /GET ADDR OF ARR1[LINT]
+ 967 072044  1005          TAD P8ARR1
+ 968 072045  3005          DCA P8ARR1      /OVERWRITE ARR1 ADDR
+ 969 072046  1004          TAD P8INT2      /SAVE INT2 TO ARR1
+ 970 072047  3405          DCA I P8ARR1
+ 971 072050  2005          ISZ P8ARR1      /ARR1[LINT+1] TOO
+ 972 072051  1004          TAD P8INT2
+ 973 072052  3405          DCA I P8ARR1    /SAVE ARR1[LINT+1]=ARR1[LINT]
+ 974 072053  1005          TAD P8ARR1      /GET ADDR OF ARR1[LINT+2]
+ 975 072054  1376          TAD (2
+ 976 072055  3005          DCA P8ARR1
+ 977 072056  1214          TAD P8LINT      /SET TO LINT
+ 978 072057  3405          DCA I P8ARR1
+ 979 072060  7402  P8P1B,  HLT             /PATCH START
+ 980                                       /REPLACED BY A JUMP TO
+ 981                                       /P8P1H IF EAE IS DETECTED
+ 982                                       /OR P8P1S IF NOT
+ 983 072061  1214  P8P1E,  TAD P8LINT      /ADD LINT FOR ARR2[LINT][LINT]
+ 984 072062  1006          TAD P8ARR2
+ 985 072063  3226          DCA P8TMP1      /PUT IN TMP1
+ 986 072064  1214          TAD P8LINT      /STORE LINT AT ARR2[LINT][LINT]
+ 987 072065  3626          DCA I P8TMP1
+ 988 072066  2226          ISZ P8TMP1      /AND ARR2[LINT][LINT+1]
+ 989 072067  1214          TAD P8LINT
+ 990 072070  3626          DCA I P8TMP1
+ 991 072071  7344          STA CLL RAL     /INCREMENT ARR2[LINT][LINT-1]
+ 992 072072  1226          TAD P8TMP1      /SUB 2 FROM ARR2[LINT][LINT+1]
+ 993 072073  3226          DCA P8TMP1
+ 994 072074  2626          ISZ I P8TMP1    /INCREMENT BY ONE
+ 995 072075  1226          TAD P8TMP1
+ 996 072076  1374          TAD (ARRDIM^3+1
+ 997 072077  3226          DCA P8TMP1
+ 998 072100  1004          TAD P8INT2      /ARR1[LINT] IS INT2
+ 999 072101  3626          DCA I P8TMP1    /SAVE TO ARR2[LINT+3][LINT]
+1000 072102  1375          TAD (5          /SET GINT TO 5
+1001 072103  3025          DCA GINT
+1002 072104  5640          JMP I PROC8     /RETURN
+1003               
+1004               /EAE ACCELERATION RETRIEVAL OF
+1005               /ARR2[LINT][0]
+1006               /THIS IS USED IF EAE IS DETECTED DURING STARTUP
+1007 072105  1214  P8P1H,  TAD P8LINT
+1008 072106  7425          MQL MUY         /CALC ARR2[LINT] OFFSET
+1009 072107  0014          ARRDIM
+1010 072110  7701          CLA MQA         /ADD ARR2 BASE TO OFFSET
+1011 072111  5261          JMP P8P1E       /JUMP TO TO CORE PROC8
+1012               
+1013               /EAE-LESS IMPLEMENTATION FOR RETRIEVING
+1014               /ARR2[LINT][0]
+1015               /THIS IS USED IF EAE IS NOT DETECTED DURING STARTUP
+1016 072112  0000  P8P1T,  0
+1017 072113  1214  P8P1S,  TAD P8LINT      /GET LINT
+1018 072114  7006          RTL             /MUL BY 4
+1019 072115  3312          DCA P8P1T       /SAVE TO TEMP
+1020 072116  1312          TAD P8P1T       /GET IT BACK
+1021 072117  7004          RAL             /BY 8
+1022 072120  1312          TAD P8P1T       /ADD BY 4 FOR BY 12
+1023 072121  5261          JMP P8P1E       /RETURN
+1024               /THIS PAGE CONTAINS:
+1025               /FUNC1, FUNC3, PROC3, PROC6
+1026 072174  0045  PAGE
+     072175  0005  
+     072176  0002  
+     072177  0011  
+1027               
+1028               /DHRYSTONE FUNC_1 FUNCTION
+1029               /PARAM[AC]      CHAR1
+1030               /PARAM[4]       CHAR2
+1031               /RESULT[AC]     ENUM VALUE
+1032               F1CH2=4         /CHAR2 PARAM
+1033 072200  0000  FUNC1,  0
+1034 072201  7041          CIA             /CHECK CHAR1!=CHAR2
+1035 072202  1004          TAD F1CH2
+1036 072203  7640          SZA CLA         /RETURN IDENT1 IF YES
+1037 072204  5600          JMP I FUNC1
+1038 072205  1004          TAD F1CH2       /OTHERWISE SET GCH1=CHR1(=CHR2)
+1039 072206  3027          DCA GCH1        /AND RETURN IDENT2
+1040 072207  7001          IAC             /IDENT2=1
+1041 072210  5600          JMP I FUNC1     /RETURN
+1042               
+1043               /DHRYSTONE FUNC_3 FUNCTION
+1044               /PARAM[AC]      ENUM VALUE
+1045               /RESULT[AC]     BOOL VALUE
+1046 072211  0000  FUNC3,  0
+1047 072212  1377          TAD (-ID3       /CHECK IF ENM==IDENT3;AC=-2
+1048 072213  7640          SZA CLA         /RETURN FALSE IF NOT
+1049 072214  5611          JMP I FUNC3     /RETURN FALSE
+1050 072215  7001          IAC             /SET AC TO TRUE (1)
+1051 072216  5611          JMP I FUNC3     /RETURN
+1052               
+1053               /DHRYSTONE PROC_3 FUNCTION
+1054               /PARAM[AC]      RECORD PTR ADDRESS
+1055               P3TMP=FUNC1
+1056               P3TMP2=FUNC3
+1057 072217  0000  PROC3,  0
+1058 072220  3200          DCA P3TMP       /SAVE TO SCRATCH
+1059 072221  1031          TAD GPTR        /CHECK IF GPTR IS NULL
+1060 072222  7650          SNA CLA
+1061 072223  5226          JMP P3CP7       /GO DIRECTLY TO P7 CALL
+1062 072224  1431          TAD I GPTR      /GET GPTR->PTR_COMP
+1063 072225  3600          DCA I P3TMP     /ASSIGN TO PROVIDED PTR
+1064 072226  1025  P3CP7,  TAD GINT        /PLACE GINT IN PARAM[4]
+1065 072227  3004          DCA 4
+1066 072230  7325          CLA STL IAC RAL /PLACE GPTR->VAR1.INT_COMP
+1067 072231  1031          TAD GPTR        /ADDR IN PARAM[5]
+1068 072232  3005          DCA 5
+1069 072233  1376          TAD (12         /PLACE 10 IN PARAM[AC]
+1070                       JMS PROC7       /CALL PROC7
 off page        	         ^
-     002234  4775  
-1070 002235  5617          JMP I PROC3     /RETURN
-1071               
-1072               /DHRYSTONE PROC_6 FUNCTION
-1073               /PARAM[AC]      ENUM VALUE
-1074               /PARAM[4]       ENUM ADDRESS
-1075               P6ENAD=PROC3            /ENUM ADDRESS PARAM
-1076               P6ENVL=FUNC1            /ENUM VALUE PARAM
-1077 002236  0000  PROC6,  0
-1078 002237  3200          DCA P6ENVL      /SAVE ENUM VAL
-1079 002240  1004          TAD 4           /SAVE ENUM ADDR
-1080 002241  3217          DCA P6ENAD
-1081 002242  1200          TAD P6ENVL      /STORE ENUM VAL AT ADDR
-1082 002243  3617          DCA I P6ENAD
-1083 002244  1200          TAD P6ENVL      /PLACE ENUM VAL IN PAR[AC]
-1084 002245  4211          JMS FUNC3       /CALL FUNC3
-1085 002246  7640          SZA CLA         /SET ENUM ADDR TO IDENT4
-1086 002247  5252          JMP P6F3FL      /IF FUNC3 RET FALSE
-1087 002250  7325          CLA STL IAC RAL /AC=IDENT4=3
-1088 002251  3617          DCA I P6ENAD
-1089 002252  1256  P6F3FL, TAD P6JTBI      /GENERATE JUMP TABLE
-1090 002253  1200          TAD P6ENVL      /ENTRY JMP INSTRUCTION
-1091 002254  3255          DCA .+1         /STORE AT NEXT ADDRESS
-1092 002255  0000          0000            /WILL BECOME A JMP INTO JTBL
-1093 002256  5257  P6JTBI, JMP P6JTBL      /JUMP TABLE
-1094 002257  5264  P6JTBL, JMP P6CSI1      /IDENT1
-1095 002260  5265          JMP P6CSI2      /IDENT2
-1096 002261  5272          JMP P6CSI3      /IDENT3
-1097 002262  5274          JMP P6CSI4      /IDENT4
-1098 002263  5276          JMP P6CSI5      /IDENT5
-1099               /P6CSI1,        TAD IDENT1      /CASE: IDENT1
-1100 002264  5277  P6CSI1, JMP P6CSEN      /STORE ENM VAL TO ADDR
-1101                                       /JUMP TO SWITCH END
-1102 002265  1374  P6CSI2, TAD (-144       /CASE: IDENT2
-1103 002266  1025          TAD GINT        /CHECK GINT > 100
-1104 002267  7710          SPA CLA
-1105 002270  7325          CLA STL IAC RAL /NO, SET IDENT4
-1106 002271  5277          JMP P6CSEN      /JUMP TO END
-1107 002272  7001  P6CSI3, IAC             /CASE: IDENT3; ADR->IDENT2
-1108 002273  5277          JMP P6CSEN      /JUMP TO END
-1109 002274  1617  P6CSI4, TAD I P6ENAD    /CASE: IDENT4; KEEP CURR VAL
-1110 002275  5277          JMP P6CSEN      /JUMP TO END
-1111 002276  7326  P6CSI5, CLA STL RTL     /CASE: IDENT5; ADR->IDENT3
-1112 002277  3617  P6CSEN, DCA I P6ENAD    /SAVE VALUE TO ADDR
-1113 002300  5636          JMP I PROC6     /RETURN
-1114               
-1115               /THIS PAGE CONTAINS
-1116               /PROC1 AND FUNC2
-1117               
-1118 002374  7634  PAGE
-     002375  2033  
-     002376  0012  
-     002377  7776  
-1119               
-1120               /DHRYSTON PROC_1 FUNCTION
-1121               /PARAM[AC]      RECORD PTR
-1122 002400  0000  P1PTR,  0               /FIRST RECORD ADDRESS
-1123 002401  0000  P1NR,   0               /NEXT RECORD ADDRESS
-1124 002402  0000  P1NPCI, 0               /NEXT_REC->INT_COMP ADDR
-1125 002403  0000  PROC1,  0
-1126 002404  3200          DCA P1PTR
-1127 002405  1600          TAD I P1PTR     /LOAD RECORD->PTR_COMP
-1128 002406  3201          DCA P1NR        /SAVE IT
-1129 002407  1031          TAD GPTR        /SET GPTR AS MEMCPY SRC
-1130 002410  3004          DCA 4
-1131 002411  1377          TAD (RECSZ      /SET MEMCPY LEN/PAR[4]
-1132 002412  3005          DCA 5
-1133 002413  1201          TAD P1NR        /SET NEXT REC AS DST (AC)
-1134                       JMS MEMCPY      /CALL MEMCPY
+     072234  4775  
+1071 072235  5617          JMP I PROC3     /RETURN
+1072               
+1073               /DHRYSTONE PROC_6 FUNCTION
+1074               /PARAM[AC]      ENUM VALUE
+1075               /PARAM[4]       ENUM ADDRESS
+1076               P6ENAD=PROC3            /ENUM ADDRESS PARAM
+1077               P6ENVL=FUNC1            /ENUM VALUE PARAM
+1078 072236  0000  PROC6,  0
+1079 072237  3200          DCA P6ENVL      /SAVE ENUM VAL
+1080 072240  1004          TAD 4           /SAVE ENUM ADDR
+1081 072241  3217          DCA P6ENAD
+1082 072242  1200          TAD P6ENVL      /STORE ENUM VAL AT ADDR
+1083 072243  3617          DCA I P6ENAD
+1084 072244  1200          TAD P6ENVL      /PLACE ENUM VAL IN PAR[AC]
+1085 072245  4211          JMS FUNC3       /CALL FUNC3
+1086 072246  7640          SZA CLA         /SET ENUM ADDR TO IDENT4
+1087 072247  5252          JMP P6F3FL      /IF FUNC3 RET FALSE
+1088 072250  7325          CLA STL IAC RAL /AC=IDENT4=3
+1089 072251  3617          DCA I P6ENAD
+1090 072252  1256  P6F3FL, TAD P6JTBI      /GENERATE JUMP TABLE
+1091 072253  1200          TAD P6ENVL      /ENTRY JMP INSTRUCTION
+1092 072254  3255          DCA .+1         /STORE AT NEXT ADDRESS
+1093 072255  0000          0000            /WILL BECOME A JMP INTO JTBL
+1094 072256  5257  P6JTBI, JMP P6JTBL      /JUMP TABLE
+1095 072257  5264  P6JTBL, JMP P6CSI1      /IDENT1
+1096 072260  5265          JMP P6CSI2      /IDENT2
+1097 072261  5272          JMP P6CSI3      /IDENT3
+1098 072262  5274          JMP P6CSI4      /IDENT4
+1099 072263  5276          JMP P6CSI5      /IDENT5
+1100               /P6CSI1,        TAD IDENT1      /CASE: IDENT1
+1101 072264  5277  P6CSI1, JMP P6CSEN      /STORE ENM VAL TO ADDR
+1102                                       /JUMP TO SWITCH END
+1103 072265  1374  P6CSI2, TAD (-144       /CASE: IDENT2
+1104 072266  1025          TAD GINT        /CHECK GINT > 100
+1105 072267  7710          SPA CLA
+1106 072270  7325          CLA STL IAC RAL /NO, SET IDENT4
+1107 072271  5277          JMP P6CSEN      /JUMP TO END
+1108 072272  7001  P6CSI3, IAC             /CASE: IDENT3; ADR->IDENT2
+1109 072273  5277          JMP P6CSEN      /JUMP TO END
+1110 072274  1617  P6CSI4, TAD I P6ENAD    /CASE: IDENT4; KEEP CURR VAL
+1111 072275  5277          JMP P6CSEN      /JUMP TO END
+1112 072276  7326  P6CSI5, CLA STL RTL     /CASE: IDENT5; ADR->IDENT3
+1113 072277  3617  P6CSEN, DCA I P6ENAD    /SAVE VALUE TO ADDR
+1114 072300  5636          JMP I PROC6     /RETURN
+1115               
+1116               /THIS PAGE CONTAINS
+1117               /PROC1 AND FUNC2
+1118               
+1119 072374  7634  PAGE
+     072375  2033  
+     072376  0012  
+     072377  7776  
+1120               
+1121               /DHRYSTON PROC_1 FUNCTION
+1122               /PARAM[AC]      RECORD PTR
+1123 072400  0000  P1PTR,  0               /FIRST RECORD ADDRESS
+1124 072401  0000  P1NR,   0               /NEXT RECORD ADDRESS
+1125 072402  0000  P1NPCI, 0               /NEXT_REC->INT_COMP ADDR
+1126 072403  0000  PROC1,  0
+1127 072404  3200          DCA P1PTR
+1128 072405  1600          TAD I P1PTR     /LOAD RECORD->PTR_COMP
+1129 072406  3201          DCA P1NR        /SAVE IT
+1130 072407  1031          TAD GPTR        /SET GPTR AS MEMCPY SRC
+1131 072410  3004          DCA 4
+1132 072411  1377          TAD (RECSZ      /SET MEMCPY LEN/PAR[4]
+1133 072412  3005          DCA 5
+1134 072413  1201          TAD P1NR        /SET NEXT REC AS DST (AC)
+1135                       JMS MEMCPY      /CALL MEMCPY
 off page        	          ^
-     002414  4776  
-1135 002415  7325          CLA STL IAC RAL /GET ADR OF PTR->INT_COMP
-1136 002416  1200          TAD P1PTR       /ABOVE:AC=3
-1137 002417  3005          DCA 5           /SAVE TO PTR->INT_COMP ADDR
-1138 002420  1375          TAD (5          /WRITE 5 TO PTR->INT_COMP
-1139 002421  3405          DCA I 5
-1140 002422  7325          CLA STL IAC RAL /NR->INT_COMP = PTR->INT_COMP
-1141 002423  1201          TAD P1NR        /ABOVE:AC=3
-1142 002424  3202          DCA P1NPCI
-1143 002425  1375          TAD (5
-1144 002426  3602          DCA I P1NPCI
-1145 002427  1201          TAD P1NR        /NR->PTR_COMP = PTR->PTR_COMP
-1146 002430  3601          DCA I P1NR
-1147 002431  1201          TAD P1NR        /CALL PROC3 W/ ADDR OF
-1148                       JMS PROC3       /NR->PTR_COMP
+     072414  4776  
+1136 072415  7325          CLA STL IAC RAL /GET ADR OF PTR->INT_COMP
+1137 072416  1200          TAD P1PTR       /ABOVE:AC=3
+1138 072417  3005          DCA 5           /SAVE TO PTR->INT_COMP ADDR
+1139 072420  1375          TAD (5          /WRITE 5 TO PTR->INT_COMP
+1140 072421  3405          DCA I 5
+1141 072422  7325          CLA STL IAC RAL /NR->INT_COMP = PTR->INT_COMP
+1142 072423  1201          TAD P1NR        /ABOVE:AC=3
+1143 072424  3202          DCA P1NPCI
+1144 072425  1375          TAD (5
+1145 072426  3602          DCA I P1NPCI
+1146 072427  1201          TAD P1NR        /NR->PTR_COMP = PTR->PTR_COMP
+1147 072430  3601          DCA I P1NR
+1148 072431  1201          TAD P1NR        /CALL PROC3 W/ ADDR OF
+1149                       JMS PROC3       /NR->PTR_COMP
 off page        	         ^
-     002432  4774  
-1149 002433  2201          ISZ P1NR        /CHECK NR->DISCR==IDENT1
-1150 002434  1601          TAD I P1NR      /LOAD NR->DISCR
-1151 002435  7640          SZA CLA         /CHECK IF IDENT1 (0)
-1152 002436  5265          JMP P1DNEQ
-1153 002437  7327          CLA STL IAC RTL /AC=6
-1154 002440  3602          DCA I P1NPCI
-1155 002441  1201          TAD P1NR        /SET PARAM[4]=
-1156 002442  7001          IAC             /ADR(NR->ENUM_COMP)
-1157 002443  3004          DCA 4
-1158 002444  7326          CLA STL RTL     /SET AC=PTR->ENUM_COMP
-1159 002445  1200          TAD P1PTR       /ABOVE:AC=2
-1160 002446  3005          DCA 5
-1161 002447  1405          TAD I 5
-1162                       JMS PROC6       /CALL PROC6
+     072432  4774  
+1150 072433  2201          ISZ P1NR        /CHECK NR->DISCR==IDENT1
+1151 072434  1601          TAD I P1NR      /LOAD NR->DISCR
+1152 072435  7640          SZA CLA         /CHECK IF IDENT1 (0)
+1153 072436  5265          JMP P1DNEQ
+1154 072437  7327          CLA STL IAC RTL /AC=6
+1155 072440  3602          DCA I P1NPCI
+1156 072441  1201          TAD P1NR        /SET PARAM[4]=
+1157 072442  7001          IAC             /ADR(NR->ENUM_COMP)
+1158 072443  3004          DCA 4
+1159 072444  7326          CLA STL RTL     /SET AC=PTR->ENUM_COMP
+1160 072445  1200          TAD P1PTR       /ABOVE:AC=2
+1161 072446  3005          DCA 5
+1162 072447  1405          TAD I 5
+1163                       JMS PROC6       /CALL PROC6
 off page        	         ^
-     002450  4773  
-1163 002451  7240          CLA CMA         /AC=-1
-1164 002452  1201          TAD P1NR
-1165 002453  3004          DCA 4
-1166 002454  1431          TAD I GPTR      /SET NR->PTR_COMP=
-1167 002455  3404          DCA I 4         /GPTR->PTR_COM
-1168 002456  1202          TAD P1NPCI      /SET PARAM[5]=
-1169 002457  3005          DCA 5           /ADR(NR->INT_COMP)
-1170 002460  1372          TAD (12         /SET PARAM[4]=10
-1171 002461  3004          DCA 4
-1172 002462  1602          TAD I P1NPCI    /PARAM[AC]=NR->INT_COMP
-1173                       JMS PROC7       /CALL PROC7
+     072450  4773  
+1164 072451  7240          CLA CMA         /AC=-1
+1165 072452  1201          TAD P1NR
+1166 072453  3004          DCA 4
+1167 072454  1431          TAD I GPTR      /SET NR->PTR_COMP=
+1168 072455  3404          DCA I 4         /GPTR->PTR_COM
+1169 072456  1202          TAD P1NPCI      /SET PARAM[5]=
+1170 072457  3005          DCA 5           /ADR(NR->INT_COMP)
+1171 072460  1372          TAD (12         /SET PARAM[4]=10
+1172 072461  3004          DCA 4
+1173 072462  1602          TAD I P1NPCI    /PARAM[AC]=NR->INT_COMP
+1174                       JMS PROC7       /CALL PROC7
 off page        	         ^
-     002463  4771  
-1174 002464  5603          JMP I PROC1     /RETURN
-1175 002465  1600  P1DNEQ, TAD I P1PTR     /SET SRC TO PTR->NEXT
-1176 002466  3004          DCA 4
-1177 002467  1377          TAD (RECSZ      /SET SIZE TO REC SIZE
-1178 002470  3005          DCA 5
-1179 002471  1200          TAD P1PTR       /SET DST TO PTR
-1180                       JMS MEMCPY      /CALL MEMCPY
+     072463  4771  
+1175 072464  5603          JMP I PROC1     /RETURN
+1176 072465  1600  P1DNEQ, TAD I P1PTR     /SET SRC TO PTR->NEXT
+1177 072466  3004          DCA 4
+1178 072467  1377          TAD (RECSZ      /SET SIZE TO REC SIZE
+1179 072470  3005          DCA 5
+1180 072471  1200          TAD P1PTR       /SET DST TO PTR
+1181                       JMS MEMCPY      /CALL MEMCPY
 off page        	          ^
-     002472  4776  
-1181 002473  5603          JMP I PROC1     /RETURN
-1182               
-1183               /THIS PAGE CONTAINS:
-1184               /FUNC2
-1185               
-1186 002571  2033  PAGE
-     002572  0012  
-     002573  2236  
-     002574  2217  
-     002575  0005  
-     002576  1472  
-     002577  0025  
-1187               
-1188               /DHRYSTONE FUNC_2 FUNCTION
-1189               /PARAM[AC]      FIRST STRING PTR
-1190               /PARAM[4]       SECOND STRING PTR
-1191               /RESULT[LINK]   BOOL VALUE
-1192 002600  0000  F2STR1, 0               /FIRST STRING
-1193 002601  0000  F2STR2, 0               /SECOND STRING
-1194 002602  0000  FUNC2,  0
-1195 002603  3200          DCA F2STR1      /SAVE BOTH STRINGS
-1196 002604  1004          TAD 4           /COPY 2ND ADDR
-1197 002605  3201          DCA F2STR2
-1198 002606  1201  F2LOOP, TAD F2STR2      /GET 3RD CHAR FROM STR2
-1199 002607  7001          IAC
-1200 002610  3005          DCA 5
-1201 002611  1405          TAD I 5
-1202 002612  0377          AND (77
-1203 002613  3004          DCA 4
-1204 002614  1200          TAD F2STR1      /GET 2ND CHAR FROM STR1
-1205 002615  7001          IAC
-1206 002616  3005          DCA 5
-1207 002617  1405          TAD I 5
-1208 002620  7012          RTR;RTR;RTR
-     002621  7012  
-     002622  7012  
-1209 002623  0377          AND (77
-1210                       JMS FUNC1       /CALL FUNC1
+     072472  4776  
+1182 072473  5603          JMP I PROC1     /RETURN
+1183               
+1184               /THIS PAGE CONTAINS:
+1185               /FUNC2
+1186               
+1187 072571  2033  PAGE
+     072572  0012  
+     072573  2236  
+     072574  2217  
+     072575  0005  
+     072576  1472  
+     072577  0025  
+1188               
+1189               /DHRYSTONE FUNC_2 FUNCTION
+1190               /PARAM[AC]      FIRST STRING PTR
+1191               /PARAM[4]       SECOND STRING PTR
+1192               /RESULT[LINK]   BOOL VALUE
+1193 072600  0000  F2STR1, 0               /FIRST STRING
+1194 072601  0000  F2STR2, 0               /SECOND STRING
+1195 072602  0000  FUNC2,  0
+1196 072603  3200          DCA F2STR1      /SAVE BOTH STRINGS
+1197 072604  1004          TAD 4           /COPY 2ND ADDR
+1198 072605  3201          DCA F2STR2
+1199 072606  1201  F2LOOP, TAD F2STR2      /GET 3RD CHAR FROM STR2
+1200 072607  7001          IAC
+1201 072610  3005          DCA 5
+1202 072611  1405          TAD I 5
+1203 072612  0377          AND (77
+1204 072613  3004          DCA 4
+1205 072614  1200          TAD F2STR1      /GET 2ND CHAR FROM STR1
+1206 072615  7001          IAC
+1207 072616  3005          DCA 5
+1208 072617  1405          TAD I 5
+1209 072620  7012          RTR;RTR;RTR
+     072621  7012  
+     072622  7012  
+1210 072623  0377          AND (77
+1211                       JMS FUNC1       /CALL FUNC1
 off page        	         ^
-     002624  4776  
-1211 002625  7640          SZA CLA         /IF RES!=IDENT1 (0), LOOP BACK
-1212 002626  5206          JMP F2LOOP
-1213 002627  1201          TAD F2STR2      /LOAD STR2 AS STR2;LOOP END
-1214 002630  3004          DCA 4
-1215 002631  1200          TAD F2STR1      /LOAD STR1 AS STR1
-1216                       JMS STRCMP      /CALL STRCMP
+     072624  4776  
+1212 072625  7640          SZA CLA         /IF RES!=IDENT1 (0), LOOP BACK
+1213 072626  5206          JMP F2LOOP
+1214 072627  1201          TAD F2STR2      /LOAD STR2 AS STR2;LOOP END
+1215 072630  3004          DCA 4
+1216 072631  1200          TAD F2STR1      /LOAD STR1 AS STR1
+1217                       JMS STRCMP      /CALL STRCMP
 off page        	          ^
-     002632  4775  
-1217 002633  7710          SPA CLA         /RET FALSE FROM STRCMP
-1218 002634  5602          JMP I FUNC2
-1219 002635  1374          TAD (12         /SET GINT TO 10 (LINT+1+7)
-1220 002636  3025          DCA GINT
-1221 002637  5602          JMP I FUNC2     /RETURN;LINK=1 FROM STRCMP
-1222               /FIELD 0 "HEAP" VARIABLES
-1223               
-1224 002774  0012  PAGE
-     002775  1411  
-     002776  2200  
-     002777  0077  
-1225               
-1226               /RECORD STRUCT DATA
-1227 003000  3024  GREC,   GNREC   /PTR_COMP
-1228 003001  0000          ID1     /DISCR
-1229 003002  0002          ID3     /ENUM_COMP
-1230 003003  0050          50      /INT_COMP == 40
-1231                               /STR_2_COMP
-1232 003004  0410          TEXT \DHRYSTONE PROGRAM, SOME STRING\
-     003005  2231  
-     003006  2324  
-     003007  1716  
-     003010  0540  
-     003011  2022  
-     003012  1707  
-     003013  2201  
-     003014  1554  
-     003015  4023  
-     003016  1715  
-     003017  0540  
-     003020  2324  
-     003021  2211  
-     003022  1607  
-     003023  0000  
-1233               
-1234 003024  0000  GNREC,  ZBLOCK RECSZ
-     003025  0000  
-     003026  0000  
-     003027  0000  
-     003030  0000  
-     003031  0000  
-     003032  0000  
-     003033  0000  
-     003034  0000  
-     003035  0000  
-     003036  0000  
-     003037  0000  
-     003040  0000  
-     003041  0000  
-     003042  0000  
-     003043  0000  
-     003044  0000  
-     003045  0000  
-     003046  0000  
-     003047  0000  
-     003050  0000  
-1235               
-1236               /MAIN FUNCTION LOCAL STRINGS
-1237                               /LEN IS STRSZ
-1238 003051  0410  MSTR1,  TEXT \DHRYSTONE PROGRAM, 1'ST STRING\
-     003052  2231  
-     003053  2324  
-     003054  1716  
-     003055  0540  
-     003056  2022  
-     003057  1707  
-     003060  2201  
-     003061  1554  
-     003062  4061  
-     003063  4723  
-     003064  2440  
-     003065  2324  
-     003066  2211  
-     003067  1607  
-     003070  0000  
-1239 003071  0000  MSTR2,  ZBLOCK STRSZ
-     003072  0000  
-     003073  0000  
-     003074  0000  
-     003075  0000  
-     003076  0000  
-     003077  0000  
-     003100  0000  
-     003101  0000  
-     003102  0000  
-     003103  0000  
-     003104  0000  
-     003105  0000  
-     003106  0000  
-     003107  0000  
-     003110  0000  
-     003111  0000  
-1240               
-1241               /GLOBAL ARRAYS
-1242 003112  0000  GARR,   ZBLOCK ARRDIM   /12 LENGTH ARRAY
-     003113  0000  
-     003114  0000  
-     003115  0000  
-     003116  0000  
-     003117  0000  
-     003120  0000  
-     003121  0000  
-     003122  0000  
-     003123  0000  
-     003124  0000  
-     003125  0000  
-1243                                       /12 BY 12 ARRAY/MATRIX
-1244 003126  0000  GARR2,  ZBLOCK ARRDIM^ARRDIM
-     003127  0000  
-     003130  0000  
-     003131  0000  
-     003132  0000  
-     003133  0000  
-     003134  0000  
-     003135  0000  
-     003136  0000  
-     003137  0000  
-     003140  0000  
-     003141  0000  
-     003142  0000  
-     003143  0000  
-     003144  0000  
-     003145  0000  
-     003146  0000  
-     003147  0000  
-     003150  0000  
-     003151  0000  
-     003152  0000  
-     003153  0000  
-     003154  0000  
-     003155  0000  
-     003156  0000  
-     003157  0000  
-     003160  0000  
-     003161  0000  
-     003162  0000  
-     003163  0000  
-     003164  0000  
-     003165  0000  
-     003166  0000  
-     003167  0000  
-     003170  0000  
-     003171  0000  
-     003172  0000  
-     003173  0000  
-     003174  0000  
-     003175  0000  
-     003176  0000  
-     003177  0000  
-     003200  0000  
-     003201  0000  
-     003202  0000  
-     003203  0000  
-     003204  0000  
-     003205  0000  
-     003206  0000  
-     003207  0000  
-     003210  0000  
-     003211  0000  
-     003212  0000  
-     003213  0000  
-     003214  0000  
-     003215  0000  
-     003216  0000  
-     003217  0000  
-     003220  0000  
-     003221  0000  
-     003222  0000  
-     003223  0000  
-     003224  0000  
-     003225  0000  
-     003226  0000  
-     003227  0000  
-     003230  0000  
-     003231  0000  
-     003232  0000  
-     003233  0000  
-     003234  0000  
-     003235  0000  
-     003236  0000  
-     003237  0000  
-     003240  0000  
-     003241  0000  
-     003242  0000  
-     003243  0000  
-     003244  0000  
-     003245  0000  
-     003246  0000  
-     003247  0000  
-     003250  0000  
-     003251  0000  
-     003252  0000  
-     003253  0000  
-     003254  0000  
-     003255  0000  
-     003256  0000  
-     003257  0000  
-     003260  0000  
-     003261  0000  
-     003262  0000  
-     003263  0000  
-     003264  0000  
-     003265  0000  
-     003266  0000  
-     003267  0000  
-     003270  0000  
-     003271  0000  
-     003272  0000  
-     003273  0000  
-     003274  0000  
-     003275  0000  
-     003276  0000  
-     003277  0000  
-     003300  0000  
-     003301  0000  
-     003302  0000  
-     003303  0000  
-     003304  0000  
-     003305  0000  
-     003306  0000  
-     003307  0000  
-     003310  0000  
-     003311  0000  
-     003312  0000  
-     003313  0000  
-     003314  0000  
-     003315  0000  
-     003316  0000  
-     003317  0000  
-     003320  0000  
-     003321  0000  
-     003322  0000  
-     003323  0000  
-     003324  0000  
-     003325  0000  
-     003326  0000  
-     003327  0000  
-     003330  0000  
-     003331  0000  
-     003332  0000  
-     003333  0000  
-     003334  0000  
-     003335  0000  
-     003336  0000  
-     003337  0000  
-     003340  0000  
-     003341  0000  
-     003342  0000  
-     003343  0000  
-     003344  0000  
-     003345  0000  
-1245               
-1246               /ENABLE EAE OFFSETS & PATCHES
-1247               ENEPA,  /MAIN LOOP FIRST PATCH
-1248                       /FOR DIVIDE
-1249                       RELOC MLPP1B
-1250 001047* 1047          MLPP1B;         JMP MLPP1H
-     001050* 5262  
-1251                       /MAIN LOOP SECOND PATCH
-1252                       /FOR MULTIPLY
-1253                       RELOC MLPP2B
-1254 001054* 1054          MLPP2B;         JMP MLPP2H
-     001055* 5271  
-1255                       /PROC8 PATCH
-1256                       /FOR MULTIPLY
-1257                       RELOC P8P1B
-1258 002060* 2060          P8P1B;          JMP P8P1H
-     002061* 5305  
-1259                       /TERMINATOR
-1260                       RELOC
-1261 003354  0000          0
-1262               
-1263               /DISABLE EAE OFFSETS & PATCHES
-1264               DISEPA, /MAIN LOOP FIRST PATCH
-1265                       /FOR DIVIDE
-1266                       RELOC MLPP1B
-1267 001047* 1047          MLPP1B;         JMP MLPP1S
-     001050* 5300  
-1268                       /MAIN LOOP SECOND PATCH
-1269                       /FOR MULTIPLY
-1270                       RELOC MLPP2B
-1271 001054* 1054          MLPP2B;         JMP MLPP2S
-     001055* 5313  
-1272                       /PROC8 PATCH
-1273                       /FOR MULTIPLY
-1274                       RELOC P8P1B
-1275 002060* 2060          P8P1B;          JMP P8P1S
-     002061* 5313  
-1276                       /TERMINATOR
-1277                       RELOC
-1278 003363  0000          0
-1279               
-1280               F0ISZ=22        /10 WORDS
-1281               F0ISR2,
-1282               RELOC 1
-1283 000001* 7402  F0ISR,  HLT             /BECOMES CDF TO MAIN FLD
-1284 000002* 3020          DCA F0IWRK      /SAVE AC
-1285 000003* 1000          TAD 0           /LOAD RET ADDR
-1286 000004* 3421          DCA I F0IWRK+1  /SAVE TO MAIN IF LOC 0
-1287 000005* 1020          TAD F0IWRK      /RESTORE AC
-1288 000006* 7402  F0ICIF, HLT             /BECOMES CIF TO MAIN FLD
-1289 000007* 5422          JMP I F0IWRK+2  /JUMP TO MAIN FIELD ISR
-1290 000010* 0000          ZBLOCK 10
-     000011* 0000  
-     000012* 0000  
-     000013* 0000  
-     000014* 0000  
-     000015* 0000  
-     000016* 0000  
-     000017* 0000  
-1291 000020* 0000  F0IWRK, 0               /AC STORAGE
-1292 000021* 0000          0               /ISR RET ADDR
-1293 000022* 0001          1               /ISR ENTRY ADDR
-1294               RELOC
-1295               
-1296               /USED IN MAIN LOOP
-1297 003406  0410  DPSTR2, TEXT \DHRYSTONE PROGRAM, 2'ND STRING\
-     003407  2231  
-     003410  2324  
-     003411  1716  
-     003412  0540  
-     003413  2022  
-     003414  1707  
-     003415  2201  
-     003416  1554  
-     003417  4062  
-     003420  4716  
-     003421  0440  
-     003422  2324  
-     003423  2211  
-     003424  1607  
-     003425  0000  
-1298 003426  0410  DPSTR3, TEXT \DHRYSTONE PROGRAM, 3'RD STRING\
-     003427  2231  
-     003430  2324  
-     003431  1716  
-     003432  0540  
-     003433  2022  
-     003434  1707  
-     003435  2201  
-     003436  1554  
-     003437  4063  
-     003440  4722  
-     003441  0440  
-     003442  2324  
-     003443  2211  
-     003444  1607  
-     003445  0000  
-1299               
-1300               /INVALID INTERRUPT STRING
-1301 003446  1116  PRIVIT, TEXT \INVALID INTERRUPT DETECTED! ABORTING\
-     003447  2601  
-     003450  1411  
-     003451  0440  
-     003452  1116  
-     003453  2405  
-     003454  2222  
-     003455  2520  
-     003456  2440  
-     003457  0405  
-     003460  2405  
-     003461  0324  
-     003462  0504  
-     003463  4140  
-     003464  0102  
-     003465  1722  
-     003466  2411  
-     003467  1607  
-     003470  0000  
-1302               
-1303               /BEGIN STRINGS
-1304 003471  0410  PRSTRT, TEXT \DHRYSTONE BENCHMARK FOR PDP-8\
-     003472  2231  
-     003473  2324  
-     003474  1716  
-     003475  0540  
-     003476  0205  
-     003477  1603  
-     003500  1015  
-     003501  0122  
-     003502  1340  
-     003503  0617  
-     003504  2240  
-     003505  2004  
-     003506  2055  
-     003507  7000  
-1305 003510  2605  PRVER,  TEXT \VERSION 2.1.0\
-     003511  2223  
-     003512  1117  
-     003513  1640  
-     003514  6256  
-     003515  6156  
-     003516  6000  
-1306 003517  2217  PRRCTH, TEXT \ROUND COUNT (HIGH):    \
-     003520  2516  
-     003521  0440  
-     003522  0317  
-     003523  2516  
-     003524  2440  
-     003525  5010  
-     003526  1107  
-     003527  1051  
-     003530  7240  
-     003531  4040  
-     003532  4000  
-1307 003533  2217  PRRCTL, TEXT \ROUND COUNT (LOW):     \
-     003534  2516  
-     003535  0440  
-     003536  0317  
-     003537  2516  
-     003540  2440  
-     003541  5014  
-     003542  1727  
-     003543  5172  
-     003544  4040  
-     003545  4040  
-     003546  4000  
-1308               
-1309               /RESULT STRINGS
-1310 003547  0530  PREND,  TEXT \EXECUTION ENDS\
-     003550  0503  
-     003551  2524  
-     003552  1117  
-     003553  1640  
-     003554  0516  
-     003555  0423  
-     003556  0000  
-1311 003557  0501  PREAE,  TEXT \EAE ENABLED:           \
-     003560  0540  
-     003561  0516  
-     003562  0102  
-     003563  1405  
-     003564  0472  
-     003565  4040  
-     003566  4040  
-     003567  4040  
-     003570  4040  
-     003571  4040  
-     003572  4000  
-1312 003573  0314  PRCLTP, TEXT \CLOCK TYPE:            \
-     003574  1703  
-     003575  1340  
-     003576  2431  
-     003577  2005  
-     003600  7240  
-     003601  4040  
-     003602  4040  
-     003603  4040  
-     003604  4040  
-     003605  4040  
-     003606  4000  
-1313 003607  2411  PRCLKH, TEXT \TIMER (HIGH):          \
-     003610  1505  
-     003611  2240  
-     003612  5010  
-     003613  1107  
-     003614  1051  
-     003615  7240  
-     003616  4040  
-     003617  4040  
-     003620  4040  
-     003621  4040  
-     003622  4000  
-1314 003623  2411  PRCLKL, TEXT \TIMER (LOW):           \
-     003624  1505  
-     003625  2240  
-     003626  5014  
-     003627  1727  
-     003630  5172  
-     003631  4040  
-     003632  4040  
-     003633  4040  
-     003634  4040  
-     003635  4040  
-     003636  4000  
-1315 003637  1116  PRGINT, TEXT \INT_GLOB (GINT):       \
-     003640  2437  
-     003641  0714  
-     003642  1702  
-     003643  4050  
-     003644  0711  
-     003645  1624  
-     003646  5172  
-     003647  4040  
-     003650  4040  
-     003651  4040  
-     003652  4000  
-1316 003653  0217  PRGBOO, TEXT \BOOL_GLOB (BOOL):      \
-     003654  1714  
-     003655  3707  
-     003656  1417  
-     003657  0240  
-     003660  5002  
-     003661  1717  
-     003662  1451  
-     003663  7240  
-     003664  4040  
-     003665  4040  
-     003666  4000  
-1317 003667  0310  PRGCH1, TEXT \CH_1_GLOB (GCH1):      \
-     003670  3761  
-     003671  3707  
-     003672  1417  
-     003673  0240  
-     003674  5007  
-     003675  0310  
-     003676  6151  
-     003677  7240  
-     003700  4040  
-     003701  4040  
-     003702  4000  
-1318 003703  0310  PRGCH2, TEXT \CH_2_GLOB (GCH2):      \
-     003704  3762  
-     003705  3707  
-     003706  1417  
-     003707  0240  
-     003710  5007  
-     003711  0310  
-     003712  6251  
-     003713  7240  
-     003714  4040  
-     003715  4040  
-     003716  4000  
-1319 003717  0122  PRARR1, TEXT \ARR_1_GLOB (ARR1):     \
-     003720  2237  
-     003721  6137  
-     003722  0714  
-     003723  1702  
-     003724  4050  
-     003725  0122  
-     003726  2261  
-     003727  5172  
-     003730  4040  
-     003731  4040  
-     003732  4000  
-1320 003733  0122  PRARR2, TEXT \ARR_2_GLOB (ARR2):     \
-     003734  2237  
-     003735  6237  
-     003736  0714  
-     003737  1702  
-     003740  4050  
-     003741  0122  
-     003742  2262  
-     003743  5172  
-     003744  4040  
-     003745  4040  
-     003746  4000  
-1321 003747  2024  PRPTR,  TEXT \PTR_GLOB (GPTR):       \
-     003750  2237  
-     003751  0714  
-     003752  1702  
-     003753  4050  
-     003754  0720  
-     003755  2422  
-     003756  5172  
-     003757  4040  
-     003760  4040  
-     003761  4040  
-     003762  4000  
-1322 003763  1605  PRNPTR, TEXT \NEXT_PTR_GLOB (NGPTR): \
-     003764  3024  
-     003765  3720  
-     003766  2422  
-     003767  3707  
-     003770  1417  
-     003771  0240  
-     003772  5016  
-     003773  0720  
-     003774  2422  
-     003775  5172  
-     003776  4000  
-1323 003777  4040  PRCPTR, TEXT \  PTR_COMP:            \
-     004000  2024  
-     004001  2237  
-     004002  0317  
-     004003  1520  
-     004004  7240  
-     004005  4040  
-     004006  4040  
-     004007  4040  
-     004010  4040  
-     004011  4040  
-     004012  4000  
-1324 004013  4040  PRDISC, TEXT \  DISCR:               \
-     004014  0411  
-     004015  2303  
-     004016  2272  
-     004017  4040  
-     004020  4040  
-     004021  4040  
-     004022  4040  
-     004023  4040  
-     004024  4040  
-     004025  4040  
-     004026  4000  
-1325 004027  4040  PRCENM, TEXT \  ENUM_COMP:           \
-     004030  0516  
-     004031  2515  
-     004032  3703  
-     004033  1715  
-     004034  2072  
-     004035  4040  
-     004036  4040  
-     004037  4040  
-     004040  4040  
-     004041  4040  
-     004042  4000  
-1326 004043  4040  PRCINT, TEXT \  INT_COMP:            \
-     004044  1116  
-     004045  2437  
-     004046  0317  
-     004047  1520  
-     004050  7240  
-     004051  4040  
-     004052  4040  
-     004053  4040  
-     004054  4040  
-     004055  4040  
-     004056  4000  
-1327 004057  4040  PRCSTR, TEXT \  STR_COMP:            \
-     004060  2324  
-     004061  2237  
-     004062  0317  
-     004063  1520  
-     004064  7240  
-     004065  4040  
-     004066  4040  
-     004067  4040  
-     004070  4040  
-     004071  4040  
-     004072  4000  
-1328 004073  1116  PRLIT1, TEXT \INT_1_LOC (MINT1):     \
-     004074  2437  
-     004075  6137  
-     004076  1417  
-     004077  0340  
-     004100  5015  
-     004101  1116  
-     004102  2461  
-     004103  5172  
-     004104  4040  
-     004105  4040  
-     004106  4000  
-1329 004107  1116  PRLIT2, TEXT \INT_2_LOC (MINT2):     \
-     004110  2437  
-     004111  6237  
-     004112  1417  
-     004113  0340  
-     004114  5015  
-     004115  1116  
-     004116  2462  
-     004117  5172  
-     004120  4040  
-     004121  4040  
-     004122  4000  
-1330 004123  1116  PRLIT3, TEXT \INT_3_LOC (MINT3):     \
-     004124  2437  
-     004125  6337  
-     004126  1417  
-     004127  0340  
-     004130  5015  
-     004131  1116  
-     004132  2463  
-     004133  5172  
-     004134  4040  
-     004135  4040  
-     004136  4000  
-1331 004137  0516  PRLENM, TEXT \ENUM_LOC (MENUM):      \
-     004140  2515  
-     004141  3714  
-     004142  1703  
-     004143  4050  
-     004144  1505  
-     004145  1625  
-     004146  1551  
-     004147  7240  
-     004150  4040  
-     004151  4040  
-     004152  4000  
-1332 004153  2324  PRLST1, TEXT \STR_1_LOC (MSTR1):     \
-     004154  2237  
-     004155  6137  
-     004156  1417  
-     004157  0340  
-     004160  5015  
-     004161  2324  
-     004162  2261  
-     004163  5172  
-     004164  4040  
-     004165  4040  
-     004166  4000  
-1333 004167  2324  PRLST2, TEXT \STR_2_LOC (MSTR2):     \
-     004170  2237  
-     004171  6237  
-     004172  1417  
-     004173  0340  
-     004174  5015  
-     004175  2324  
-     004176  2262  
-     004177  5172  
-     004200  4040  
-     004201  4040  
-     004202  4000  
-1334               
-1335 004203  0413  PRCTDS,        TEXT \DK8-EP OR DK8-ES (100HZ)\
-     004204  7055  
-     004205  0520  
-     004206  4017  
-     004207  2240  
-     004210  0413  
-     004211  7055  
-     004212  0523  
-     004213  4050  
-     004214  6160  
-     004215  6010  
-     004216  3251  
-     004217  0000  
-1336 004220  0413  PRCTDA,        TEXT \DK8-EA OR DK8-EC (FREQ UNKNOWN)\
-     004221  7055  
-     004222  0501  
-     004223  4017  
-     004224  2240  
-     004225  0413  
-     004226  7055  
-     004227  0503  
-     004230  4050  
-     004231  0622  
-     004232  0521  
-     004233  4025  
-     004234  1613  
-     004235  1617  
-     004236  2716  
-     004237  5100  
-1337 004240  1327  PRCTKA,        TEXT \KW12-A (100HZ)\
-     004241  6162  
-     004242  5501  
-     004243  4050  
-     004244  6160  
-     004245  6010  
-     004246  3251  
-     004247  0000  
-1338 004250  1327  PRCTKB,        TEXT \KW12-B OR KW12-C (FREQ UNKNONW)\
-     004251  6162  
-     004252  5502  
-     004253  4017  
-     004254  2240  
-     004255  1327  
-     004256  6162  
-     004257  5503  
-     004260  4050  
-     004261  0622  
-     004262  0521  
-     004263  4025  
-     004264  1613  
-     004265  1617  
-     004266  1627  
-     004267  5100  
-1339               
-1340 004270  4203  CTPTBL,        PRCTDS  /DK8-EP OR DK8-ES
-1341 004271  4220          PRCTDA  /DK8-EA OR DK8-EC
-1342 004272  4240          PRCTKA  /KW12-A
-1343 004273  4250          PRCTKB  /KW12-B OR KW12-C
-1344               $
+     072632  4775  
+1218 072633  7710          SPA CLA         /RET FALSE FROM STRCMP
+1219 072634  5602          JMP I FUNC2
+1220 072635  1374          TAD (12         /SET GINT TO 10 (LINT+1+7)
+1221 072636  3025          DCA GINT
+1222 072637  5602          JMP I FUNC2     /RETURN;LINK=1 FROM STRCMP
+1223               /FIELD 0 "HEAP" VARIABLES
+1224               
+1225 072774  0012  PAGE
+     072775  1411  
+     072776  2200  
+     072777  0077  
+1226               
+1227               /RECORD STRUCT DATA
+1228 073000  3024  GREC,   GNREC   /PTR_COMP
+1229 073001  0000          ID1     /DISCR
+1230 073002  0002          ID3     /ENUM_COMP
+1231 073003  0050          50      /INT_COMP == 40
+1232                               /STR_2_COMP
+1233 073004  0410          TEXT \DHRYSTONE PROGRAM, SOME STRING\
+     073005  2231  
+     073006  2324  
+     073007  1716  
+     073010  0540  
+     073011  2022  
+     073012  1707  
+     073013  2201  
+     073014  1554  
+     073015  4023  
+     073016  1715  
+     073017  0540  
+     073020  2324  
+     073021  2211  
+     073022  1607  
+     073023  0000  
+1234               
+1235 073024  0000  GNREC,  ZBLOCK RECSZ
+     073025  0000  
+     073026  0000  
+     073027  0000  
+     073030  0000  
+     073031  0000  
+     073032  0000  
+     073033  0000  
+     073034  0000  
+     073035  0000  
+     073036  0000  
+     073037  0000  
+     073040  0000  
+     073041  0000  
+     073042  0000  
+     073043  0000  
+     073044  0000  
+     073045  0000  
+     073046  0000  
+     073047  0000  
+     073050  0000  
+1236               
+1237               /MAIN FUNCTION LOCAL STRINGS
+1238                               /LEN IS STRSZ
+1239 073051  0410  MSTR1,  TEXT \DHRYSTONE PROGRAM, 1'ST STRING\
+     073052  2231  
+     073053  2324  
+     073054  1716  
+     073055  0540  
+     073056  2022  
+     073057  1707  
+     073060  2201  
+     073061  1554  
+     073062  4061  
+     073063  4723  
+     073064  2440  
+     073065  2324  
+     073066  2211  
+     073067  1607  
+     073070  0000  
+1240 073071  0000  MSTR2,  ZBLOCK STRSZ
+     073072  0000  
+     073073  0000  
+     073074  0000  
+     073075  0000  
+     073076  0000  
+     073077  0000  
+     073100  0000  
+     073101  0000  
+     073102  0000  
+     073103  0000  
+     073104  0000  
+     073105  0000  
+     073106  0000  
+     073107  0000  
+     073110  0000  
+     073111  0000  
+1241               
+1242               /GLOBAL ARRAYS
+1243 073112  0000  GARR,   ZBLOCK ARRDIM   /12 LENGTH ARRAY
+     073113  0000  
+     073114  0000  
+     073115  0000  
+     073116  0000  
+     073117  0000  
+     073120  0000  
+     073121  0000  
+     073122  0000  
+     073123  0000  
+     073124  0000  
+     073125  0000  
+1244                                       /12 BY 12 ARRAY/MATRIX
+1245 073126  0000  GARR2,  ZBLOCK ARRDIM^ARRDIM
+     073127  0000  
+     073130  0000  
+     073131  0000  
+     073132  0000  
+     073133  0000  
+     073134  0000  
+     073135  0000  
+     073136  0000  
+     073137  0000  
+     073140  0000  
+     073141  0000  
+     073142  0000  
+     073143  0000  
+     073144  0000  
+     073145  0000  
+     073146  0000  
+     073147  0000  
+     073150  0000  
+     073151  0000  
+     073152  0000  
+     073153  0000  
+     073154  0000  
+     073155  0000  
+     073156  0000  
+     073157  0000  
+     073160  0000  
+     073161  0000  
+     073162  0000  
+     073163  0000  
+     073164  0000  
+     073165  0000  
+     073166  0000  
+     073167  0000  
+     073170  0000  
+     073171  0000  
+     073172  0000  
+     073173  0000  
+     073174  0000  
+     073175  0000  
+     073176  0000  
+     073177  0000  
+     073200  0000  
+     073201  0000  
+     073202  0000  
+     073203  0000  
+     073204  0000  
+     073205  0000  
+     073206  0000  
+     073207  0000  
+     073210  0000  
+     073211  0000  
+     073212  0000  
+     073213  0000  
+     073214  0000  
+     073215  0000  
+     073216  0000  
+     073217  0000  
+     073220  0000  
+     073221  0000  
+     073222  0000  
+     073223  0000  
+     073224  0000  
+     073225  0000  
+     073226  0000  
+     073227  0000  
+     073230  0000  
+     073231  0000  
+     073232  0000  
+     073233  0000  
+     073234  0000  
+     073235  0000  
+     073236  0000  
+     073237  0000  
+     073240  0000  
+     073241  0000  
+     073242  0000  
+     073243  0000  
+     073244  0000  
+     073245  0000  
+     073246  0000  
+     073247  0000  
+     073250  0000  
+     073251  0000  
+     073252  0000  
+     073253  0000  
+     073254  0000  
+     073255  0000  
+     073256  0000  
+     073257  0000  
+     073260  0000  
+     073261  0000  
+     073262  0000  
+     073263  0000  
+     073264  0000  
+     073265  0000  
+     073266  0000  
+     073267  0000  
+     073270  0000  
+     073271  0000  
+     073272  0000  
+     073273  0000  
+     073274  0000  
+     073275  0000  
+     073276  0000  
+     073277  0000  
+     073300  0000  
+     073301  0000  
+     073302  0000  
+     073303  0000  
+     073304  0000  
+     073305  0000  
+     073306  0000  
+     073307  0000  
+     073310  0000  
+     073311  0000  
+     073312  0000  
+     073313  0000  
+     073314  0000  
+     073315  0000  
+     073316  0000  
+     073317  0000  
+     073320  0000  
+     073321  0000  
+     073322  0000  
+     073323  0000  
+     073324  0000  
+     073325  0000  
+     073326  0000  
+     073327  0000  
+     073330  0000  
+     073331  0000  
+     073332  0000  
+     073333  0000  
+     073334  0000  
+     073335  0000  
+     073336  0000  
+     073337  0000  
+     073340  0000  
+     073341  0000  
+     073342  0000  
+     073343  0000  
+     073344  0000  
+     073345  0000  
+1246               
+1247               /ENABLE EAE OFFSETS & PATCHES
+1248               ENEPA,  /MAIN LOOP FIRST PATCH
+1249                       /FOR DIVIDE
+1250                       RELOC MLPP1B
+1251 071047* 1047          MLPP1B;         JMP MLPP1H
+     071050* 5262  
+1252                       /MAIN LOOP SECOND PATCH
+1253                       /FOR MULTIPLY
+1254                       RELOC MLPP2B
+1255 071054* 1054          MLPP2B;         JMP MLPP2H
+     071055* 5271  
+1256                       /PROC8 PATCH
+1257                       /FOR MULTIPLY
+1258                       RELOC P8P1B
+1259 072060* 2060          P8P1B;          JMP P8P1H
+     072061* 5305  
+1260                       /TERMINATOR
+1261                       RELOC
+1262 073354  0000          0
+1263               
+1264               /DISABLE EAE OFFSETS & PATCHES
+1265               DISEPA, /MAIN LOOP FIRST PATCH
+1266                       /FOR DIVIDE
+1267                       RELOC MLPP1B
+1268 071047* 1047          MLPP1B;         JMP MLPP1S
+     071050* 5300  
+1269                       /MAIN LOOP SECOND PATCH
+1270                       /FOR MULTIPLY
+1271                       RELOC MLPP2B
+1272 071054* 1054          MLPP2B;         JMP MLPP2S
+     071055* 5313  
+1273                       /PROC8 PATCH
+1274                       /FOR MULTIPLY
+1275                       RELOC P8P1B
+1276 072060* 2060          P8P1B;          JMP P8P1S
+     072061* 5313  
+1277                       /TERMINATOR
+1278                       RELOC
+1279 073363  0000          0
+1280               
+1281               F0ISZ=22        /10 WORDS
+1282               F0ISR2,
+1283               RELOC 1
+1284 070001* 7402  F0ISR,  HLT             /BECOMES CDF TO MAIN FLD
+1285 070002* 3020          DCA F0IWRK      /SAVE AC
+1286 070003* 1000          TAD 0           /LOAD RET ADDR
+1287 070004* 3421          DCA I F0IWRK+1  /SAVE TO MAIN IF LOC 0
+1288 070005* 1020          TAD F0IWRK      /RESTORE AC
+1289 070006* 7402  F0ICIF, HLT             /BECOMES CIF TO MAIN FLD
+1290 070007* 5422          JMP I F0IWRK+2  /JUMP TO MAIN FIELD ISR
+1291 070010* 0000          ZBLOCK 10
+     070011* 0000  
+     070012* 0000  
+     070013* 0000  
+     070014* 0000  
+     070015* 0000  
+     070016* 0000  
+     070017* 0000  
+1292 070020* 0000  F0IWRK, 0               /AC STORAGE
+1293 070021* 0000          0               /ISR RET ADDR
+1294 070022* 0001          1               /ISR ENTRY ADDR
+1295               RELOC
+1296               
+1297               /USED IN MAIN LOOP
+1298 073406  0410  DPSTR2, TEXT \DHRYSTONE PROGRAM, 2'ND STRING\
+     073407  2231  
+     073410  2324  
+     073411  1716  
+     073412  0540  
+     073413  2022  
+     073414  1707  
+     073415  2201  
+     073416  1554  
+     073417  4062  
+     073420  4716  
+     073421  0440  
+     073422  2324  
+     073423  2211  
+     073424  1607  
+     073425  0000  
+1299 073426  0410  DPSTR3, TEXT \DHRYSTONE PROGRAM, 3'RD STRING\
+     073427  2231  
+     073430  2324  
+     073431  1716  
+     073432  0540  
+     073433  2022  
+     073434  1707  
+     073435  2201  
+     073436  1554  
+     073437  4063  
+     073440  4722  
+     073441  0440  
+     073442  2324  
+     073443  2211  
+     073444  1607  
+     073445  0000  
+1300               
+1301               /INVALID INTERRUPT STRING
+1302 073446  1116  PRIVIT, TEXT \INVALID INTERRUPT DETECTED! ABORTING\
+     073447  2601  
+     073450  1411  
+     073451  0440  
+     073452  1116  
+     073453  2405  
+     073454  2222  
+     073455  2520  
+     073456  2440  
+     073457  0405  
+     073460  2405  
+     073461  0324  
+     073462  0504  
+     073463  4140  
+     073464  0102  
+     073465  1722  
+     073466  2411  
+     073467  1607  
+     073470  0000  
+1303               
+1304               /BEGIN STRINGS
+1305 073471  0410  PRSTRT, TEXT \DHRYSTONE BENCHMARK FOR PDP-8\
+     073472  2231  
+     073473  2324  
+     073474  1716  
+     073475  0540  
+     073476  0205  
+     073477  1603  
+     073500  1015  
+     073501  0122  
+     073502  1340  
+     073503  0617  
+     073504  2240  
+     073505  2004  
+     073506  2055  
+     073507  7000  
+1306 073510  2605  PRVER,  TEXT \VERSION 2.1.0\
+     073511  2223  
+     073512  1117  
+     073513  1640  
+     073514  6256  
+     073515  6156  
+     073516  6000  
+1307 073517  2217  PRRCTH, TEXT \ROUND COUNT (HIGH):    \
+     073520  2516  
+     073521  0440  
+     073522  0317  
+     073523  2516  
+     073524  2440  
+     073525  5010  
+     073526  1107  
+     073527  1051  
+     073530  7240  
+     073531  4040  
+     073532  4000  
+1308 073533  2217  PRRCTL, TEXT \ROUND COUNT (LOW):     \
+     073534  2516  
+     073535  0440  
+     073536  0317  
+     073537  2516  
+     073540  2440  
+     073541  5014  
+     073542  1727  
+     073543  5172  
+     073544  4040  
+     073545  4040  
+     073546  4000  
+1309               
+1310               /RESULT STRINGS
+1311 073547  0530  PREND,  TEXT \EXECUTION ENDS\
+     073550  0503  
+     073551  2524  
+     073552  1117  
+     073553  1640  
+     073554  0516  
+     073555  0423  
+     073556  0000  
+1312 073557  0501  PREAE,  TEXT \EAE ENABLED:           \
+     073560  0540  
+     073561  0516  
+     073562  0102  
+     073563  1405  
+     073564  0472  
+     073565  4040  
+     073566  4040  
+     073567  4040  
+     073570  4040  
+     073571  4040  
+     073572  4000  
+1313 073573  0314  PRCLTP, TEXT \CLOCK TYPE:            \
+     073574  1703  
+     073575  1340  
+     073576  2431  
+     073577  2005  
+     073600  7240  
+     073601  4040  
+     073602  4040  
+     073603  4040  
+     073604  4040  
+     073605  4040  
+     073606  4000  
+1314 073607  2411  PRCLKH, TEXT \TIMER (HIGH):          \
+     073610  1505  
+     073611  2240  
+     073612  5010  
+     073613  1107  
+     073614  1051  
+     073615  7240  
+     073616  4040  
+     073617  4040  
+     073620  4040  
+     073621  4040  
+     073622  4000  
+1315 073623  2411  PRCLKL, TEXT \TIMER (LOW):           \
+     073624  1505  
+     073625  2240  
+     073626  5014  
+     073627  1727  
+     073630  5172  
+     073631  4040  
+     073632  4040  
+     073633  4040  
+     073634  4040  
+     073635  4040  
+     073636  4000  
+1316 073637  1116  PRGINT, TEXT \INT_GLOB (GINT):       \
+     073640  2437  
+     073641  0714  
+     073642  1702  
+     073643  4050  
+     073644  0711  
+     073645  1624  
+     073646  5172  
+     073647  4040  
+     073650  4040  
+     073651  4040  
+     073652  4000  
+1317 073653  0217  PRGBOO, TEXT \BOOL_GLOB (BOOL):      \
+     073654  1714  
+     073655  3707  
+     073656  1417  
+     073657  0240  
+     073660  5002  
+     073661  1717  
+     073662  1451  
+     073663  7240  
+     073664  4040  
+     073665  4040  
+     073666  4000  
+1318 073667  0310  PRGCH1, TEXT \CH_1_GLOB (GCH1):      \
+     073670  3761  
+     073671  3707  
+     073672  1417  
+     073673  0240  
+     073674  5007  
+     073675  0310  
+     073676  6151  
+     073677  7240  
+     073700  4040  
+     073701  4040  
+     073702  4000  
+1319 073703  0310  PRGCH2, TEXT \CH_2_GLOB (GCH2):      \
+     073704  3762  
+     073705  3707  
+     073706  1417  
+     073707  0240  
+     073710  5007  
+     073711  0310  
+     073712  6251  
+     073713  7240  
+     073714  4040  
+     073715  4040  
+     073716  4000  
+1320 073717  0122  PRARR1, TEXT \ARR_1_GLOB (ARR1):     \
+     073720  2237  
+     073721  6137  
+     073722  0714  
+     073723  1702  
+     073724  4050  
+     073725  0122  
+     073726  2261  
+     073727  5172  
+     073730  4040  
+     073731  4040  
+     073732  4000  
+1321 073733  0122  PRARR2, TEXT \ARR_2_GLOB (ARR2):     \
+     073734  2237  
+     073735  6237  
+     073736  0714  
+     073737  1702  
+     073740  4050  
+     073741  0122  
+     073742  2262  
+     073743  5172  
+     073744  4040  
+     073745  4040  
+     073746  4000  
+1322 073747  2024  PRPTR,  TEXT \PTR_GLOB (GPTR):       \
+     073750  2237  
+     073751  0714  
+     073752  1702  
+     073753  4050  
+     073754  0720  
+     073755  2422  
+     073756  5172  
+     073757  4040  
+     073760  4040  
+     073761  4040  
+     073762  4000  
+1323 073763  1605  PRNPTR, TEXT \NEXT_PTR_GLOB (NGPTR): \
+     073764  3024  
+     073765  3720  
+     073766  2422  
+     073767  3707  
+     073770  1417  
+     073771  0240  
+     073772  5016  
+     073773  0720  
+     073774  2422  
+     073775  5172  
+     073776  4000  
+1324 073777  4040  PRCPTR, TEXT \  PTR_COMP:            \
+     074000  2024  
+     074001  2237  
+     074002  0317  
+     074003  1520  
+     074004  7240  
+     074005  4040  
+     074006  4040  
+     074007  4040  
+     074010  4040  
+     074011  4040  
+     074012  4000  
+1325 074013  4040  PRDISC, TEXT \  DISCR:               \
+     074014  0411  
+     074015  2303  
+     074016  2272  
+     074017  4040  
+     074020  4040  
+     074021  4040  
+     074022  4040  
+     074023  4040  
+     074024  4040  
+     074025  4040  
+     074026  4000  
+1326 074027  4040  PRCENM, TEXT \  ENUM_COMP:           \
+     074030  0516  
+     074031  2515  
+     074032  3703  
+     074033  1715  
+     074034  2072  
+     074035  4040  
+     074036  4040  
+     074037  4040  
+     074040  4040  
+     074041  4040  
+     074042  4000  
+1327 074043  4040  PRCINT, TEXT \  INT_COMP:            \
+     074044  1116  
+     074045  2437  
+     074046  0317  
+     074047  1520  
+     074050  7240  
+     074051  4040  
+     074052  4040  
+     074053  4040  
+     074054  4040  
+     074055  4040  
+     074056  4000  
+1328 074057  4040  PRCSTR, TEXT \  STR_COMP:            \
+     074060  2324  
+     074061  2237  
+     074062  0317  
+     074063  1520  
+     074064  7240  
+     074065  4040  
+     074066  4040  
+     074067  4040  
+     074070  4040  
+     074071  4040  
+     074072  4000  
+1329 074073  1116  PRLIT1, TEXT \INT_1_LOC (MINT1):     \
+     074074  2437  
+     074075  6137  
+     074076  1417  
+     074077  0340  
+     074100  5015  
+     074101  1116  
+     074102  2461  
+     074103  5172  
+     074104  4040  
+     074105  4040  
+     074106  4000  
+1330 074107  1116  PRLIT2, TEXT \INT_2_LOC (MINT2):     \
+     074110  2437  
+     074111  6237  
+     074112  1417  
+     074113  0340  
+     074114  5015  
+     074115  1116  
+     074116  2462  
+     074117  5172  
+     074120  4040  
+     074121  4040  
+     074122  4000  
+1331 074123  1116  PRLIT3, TEXT \INT_3_LOC (MINT3):     \
+     074124  2437  
+     074125  6337  
+     074126  1417  
+     074127  0340  
+     074130  5015  
+     074131  1116  
+     074132  2463  
+     074133  5172  
+     074134  4040  
+     074135  4040  
+     074136  4000  
+1332 074137  0516  PRLENM, TEXT \ENUM_LOC (MENUM):      \
+     074140  2515  
+     074141  3714  
+     074142  1703  
+     074143  4050  
+     074144  1505  
+     074145  1625  
+     074146  1551  
+     074147  7240  
+     074150  4040  
+     074151  4040  
+     074152  4000  
+1333 074153  2324  PRLST1, TEXT \STR_1_LOC (MSTR1):     \
+     074154  2237  
+     074155  6137  
+     074156  1417  
+     074157  0340  
+     074160  5015  
+     074161  2324  
+     074162  2261  
+     074163  5172  
+     074164  4040  
+     074165  4040  
+     074166  4000  
+1334 074167  2324  PRLST2, TEXT \STR_2_LOC (MSTR2):     \
+     074170  2237  
+     074171  6237  
+     074172  1417  
+     074173  0340  
+     074174  5015  
+     074175  2324  
+     074176  2262  
+     074177  5172  
+     074200  4040  
+     074201  4040  
+     074202  4000  
+1335               
+1336 074203  0413  PRCTDS,        TEXT \DK8-EP OR DK8-ES (100HZ)\
+     074204  7055  
+     074205  0520  
+     074206  4017  
+     074207  2240  
+     074210  0413  
+     074211  7055  
+     074212  0523  
+     074213  4050  
+     074214  6160  
+     074215  6010  
+     074216  3251  
+     074217  0000  
+1337 074220  0413  PRCTDA,        TEXT \DK8-EA OR DK8-EC (FREQ UNKNOWN)\
+     074221  7055  
+     074222  0501  
+     074223  4017  
+     074224  2240  
+     074225  0413  
+     074226  7055  
+     074227  0503  
+     074230  4050  
+     074231  0622  
+     074232  0521  
+     074233  4025  
+     074234  1613  
+     074235  1617  
+     074236  2716  
+     074237  5100  
+1338 074240  1327  PRCTKA,        TEXT \KW12-A (100HZ)\
+     074241  6162  
+     074242  5501  
+     074243  4050  
+     074244  6160  
+     074245  6010  
+     074246  3251  
+     074247  0000  
+1339 074250  1327  PRCTKB,        TEXT \KW12-B OR KW12-C (FREQ UNKNONW)\
+     074251  6162  
+     074252  5502  
+     074253  4017  
+     074254  2240  
+     074255  1327  
+     074256  6162  
+     074257  5503  
+     074260  4050  
+     074261  0622  
+     074262  0521  
+     074263  4025  
+     074264  1613  
+     074265  1617  
+     074266  1627  
+     074267  5100  
+1340               
+1341 074270  4203  CTPTBL,        PRCTDS  /DK8-EP OR DK8-ES
+1342 074271  4220          PRCTDA  /DK8-EA OR DK8-EC
+1343 074272  4240          PRCTKA  /KW12-A
+1344 074273  4250          PRCTKB  /KW12-B OR KW12-C
+1345               $
 end of file     ^
 
 ARRDIM  0014

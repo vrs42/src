@@ -33,13 +33,3 @@ C DISPLAY HISTOGRAM ON SCOPE UNTIL SENSE SWITCH #0 IS RAISED
         IF (ISNS(0)) 20,20,30
 30      GOTO 1
         END
-
-
-
-
-
-
-
-
-
-*
