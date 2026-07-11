@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-$SVNURL="https://svn.so-much-stuff.com/svn/trunk/pdp8/src/decus";
+#$SVNURL="https://svn.so-much-stuff.com/svn/trunk/pdp8/src/decus";
+$SVNURL="/pdp8/trunk/pdp8/src/decus";
 
 #open(INPUT, "Descriptions") || die "Descriptions: $!";
 #while (<INPUT>) {
