@@ -1,0 +1,115 @@
+   1               DSKP=   6741
+   2               DCLR=   6742
+   3               DLAG=   6743
+   4               DLCA=   6744
+   5               DRST=   6745
+   6               DLDC=   6746
+   7               
+   8               BSW=    7002
+   9               CAF=    6007
+  10               
+  11                       *23
+  12               /This is where we fire up the booting.
+  13 000023  6007  BOOTIT, CAF
+  14 000024  1032          TAD RKCMD       /Get the unit number bits
+  15 000025  6746          DLDC            /Load the RK8E command register
+  16 000026  6743          DLAG            /Load block number and go
+  17 000027  7300          CLA CLL 
+  18 000030  1032          TAD RKCMD       /Spin with command in AC
+  19 000031  5031  L00031, JMP L00031      /Spinwait
+  20 000032  0000  RKCMD,  0000            /Unit number & RK8E command
+  21               
+  22                       *200
+  23 000200  4241  START,  JMS MESAGE      /Print prompt
+  24 000201  0220          MESG1
+  25 000202  4241          JMS MESAGE
+  26 000203  0234          MESG2
+  27 000204  6031          KSF             /Get input character
+  28 000205  5204          JMP .-1
+  29 000206  6036          KRB
+  30 000207  6046          TLS             /Echo it
+  31 000210  6041          TSF 
+  32 000211  5210          JMP .-1
+  33 000212  1377          TAD (-260       /Convert to integer
+  34 000213  7004          RAL             /Shift into place
+  35 000214  0376          AND (6
+  36 000215  3032          DCA RKCMD       /Save for later
+  37 000216  5617          JMP I .+1       /Branch to bootstrap
+  38 000217  0023          BOOTIT
+  39 000220  2213  MESG1,  TEXT    "RK05 MULTIPLE BOOTSTRAP"
+     000221  6065  
+     000222  4015  
+     000223  2514  
+     000224  2411  
+     000225  2014  
+     000226  0540  
+     000227  0217  
+     000230  1724  
+     000231  2324  
+     000232  2201  
+     000233  2000  
+  40 000234  2516  MESG2,  TEXT    "UNIT#?"
+     000235  1124  
+     000236  4377  
+     000237  0000  
+  41 000240  0000          0
+  42               /Subroutine to print TEXT message
+  43 000241  0000  MESAGE, .-.
+  44 000242  7300          CLA CLL 
+  45 000243  1641          TAD I MESAGE    /Get argument
+  46 000244  3317          DCA MESGP       /Save it for later
+  47 000245  2241          ISZ MESAGE      /Always skip return
+  48 000246  1375          TAD (212        /Type a line-feed
+  49 000247  4311          JMS TYPE
+  50 000250  1374          TAD (215        /And a carriage-return
+  51 000251  4311          JMS TYPE
+  52 000252  1717  MESLP,  TAD I MESGP     /Get parameter
+  53 000253  2317          ISZ MESGP       /Bump pointer
+  54 000254  3321          DCA MESGW       /Save it
+  55 000255  1321          TAD MESGW       /Get characters
+  56 000256  7002          BSW
+  57 000257  0373          AND (77
+  58 000260  7450          SNA 
+  59 000261  5641          JMP I MESAGE    /Finished message
+  60 000262  4271          JMS PRT6B       /Print character
+  61 000263  1321          TAD MESGW       /Get saved word
+  62 000264  0373          AND (77         /Get other half
+  63 000265  7450          SNA 
+  64 000266  5641          JMP I MESAGE    /Return if finished
+  65 000267  4271          JMS PRT6B       /Print character
+  66 000270  5252          JMP MESLP       /Keep going
+  67               /Convert to ASCII and print the character
+  68 000271  0000  PRT6B,  0
+  69 000272  3320          DCA CHAR6       /Save the sixbit
+  70 000273  1320          TAD CHAR6       /Get it back
+  71 000274  1372          TAD (-40        /Is it a letter?
+  72 000275  7500          SMA 
+  73 000276  5304          JMP PRT6P       /No
+  74 000277  7300          CLA CLL 
+  75 000300  1320          TAD CHAR6       /Get the sixbit
+  76 000301  1371          TAD (300        /Convert to ASCII, mark parity
+  77 000302  4311          JMS TYPE        /Print it
+  78 000303  5671          JMP I PRT6B     /Return to caller
+  79 000304  7300  PRT6P,  CLA CLL         /Not a letter
+  80 000305  1320          TAD CHAR6       /Get the sixbit
+  81 000306  1370          TAD (200        /Convert to ASCII, mark parity
+  82 000307  4311          JMS TYPE        /Print it
+  83 000310  5671          JMP I PRT6B     /Return to caller
+  84               /Type the character as is
+  85 000311  0000  TYPE,   0
+  86 000312  6046          TLS
+  87 000313  6041          TSF 
+  88 000314  5313          JMP .-1
+  89 000315  7300          CLA CLL 
+  90 000316  5711          JMP I TYPE
+  91 000317  0000  MESGP,  0               /Pointer into message
+  92 000320  0000  CHAR6,  0               /Current 6bit character
+  93 000321  0000  MESGW,  0               /Current 6bit word
+  94 000370  0200  $
+     000371  0300  
+     000372  7740  
+     000373  0077  
+     000374  0215  
+     000375  0212  
+     000376  0006  
+     000377  7520  

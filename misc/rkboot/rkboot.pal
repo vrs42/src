@@ -1,0 +1,94 @@
+DSKP=	6741
+DCLR=	6742
+DLAG=	6743
+DLCA=	6744
+DRST=	6745
+DLDC=	6746
+
+BSW=	7002
+CAF=	6007
+
+	*23
+/This is where we fire up the booting.
+BOOTIT,	CAF
+	TAD RKCMD	/Get the unit number bits
+	DLDC		/Load the RK8E command register
+	DLAG		/Load block number and go
+	CLA CLL 
+	TAD RKCMD	/Spin with command in AC
+L00031,	JMP L00031	/Spinwait
+RKCMD,	0000		/Unit number & RK8E command
+
+	*200
+START,	JMS MESAGE	/Print prompt
+	MESG1
+	JMS MESAGE
+	MESG2
+	KSF 		/Get input character
+	JMP .-1
+	KRB
+	TLS		/Echo it
+	TSF 
+	JMP .-1
+	TAD (-260	/Convert to integer
+	RAL		/Shift into place
+	AND (6
+	DCA RKCMD	/Save for later
+	JMP I .+1	/Branch to bootstrap
+	BOOTIT
+MESG1,	TEXT	"RK05 MULTIPLE BOOTSTRAP"
+MESG2,	TEXT	"UNIT#?"
+	0
+/Subroutine to print TEXT message
+MESAGE,	.-.
+	CLA CLL 
+	TAD I MESAGE	/Get argument
+	DCA MESGP	/Save it for later
+	ISZ MESAGE	/Always skip return
+	TAD (212	/Type a line-feed
+	JMS TYPE
+	TAD (215	/And a carriage-return
+	JMS TYPE
+MESLP,	TAD I MESGP	/Get parameter
+	ISZ MESGP	/Bump pointer
+	DCA MESGW	/Save it
+	TAD MESGW	/Get characters
+	BSW
+	AND (77
+	SNA 
+	JMP I MESAGE	/Finished message
+	JMS PRT6B	/Print character
+	TAD MESGW	/Get saved word
+	AND (77		/Get other half
+	SNA 
+	JMP I MESAGE	/Return if finished
+	JMS PRT6B	/Print character
+	JMP MESLP	/Keep going
+/Convert to ASCII and print the character
+PRT6B,	0
+	DCA CHAR6	/Save the sixbit
+	TAD CHAR6	/Get it back
+	TAD (-40	/Is it a letter?
+	SMA 
+	JMP PRT6P	/No
+	CLA CLL 
+	TAD CHAR6	/Get the sixbit
+	TAD (300	/Convert to ASCII, mark parity
+	JMS TYPE	/Print it
+	JMP I PRT6B	/Return to caller
+PRT6P,	CLA CLL 	/Not a letter
+	TAD CHAR6	/Get the sixbit
+	TAD (200	/Convert to ASCII, mark parity
+	JMS TYPE	/Print it
+	JMP I PRT6B	/Return to caller
+/Type the character as is
+TYPE,	0
+	TLS
+	TSF 
+	JMP .-1
+	CLA CLL 
+	JMP I TYPE
+MESGP,	0		/Pointer into message
+CHAR6,	0		/Current 6bit character
+MESGW,	0		/Current 6bit word
+$
