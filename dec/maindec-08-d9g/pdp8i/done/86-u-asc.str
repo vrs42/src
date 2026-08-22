@@ -1,0 +1,83 @@
+
+*7400
+ODUM,     CLA
+          OSR                   /GET LOWER LIMIT
+          DCA LOCK
+          HLT
+          OSR                   /GET UPPER LIMIT
+          CMA
+          TAD LOCK
+          DCA LIM               /INITIALIZE RANGE COUNTER
+          JMP .+3
+DUM2,     ISZ LPCN              /END OF LINE
+          JMP DUM3
+          TAD CONS+3            /-3
+          DCA LPCN              /RESET ITEM COUNTER
+          JMS CRLF              /CARR. RET. AND LINE FEED
+          TAD LOCK
+          JMS I PRIN            /INTER-COM. TO PNUM
+          TAD CONS+3            /-3
+          DCA CRLF
+          TAD CONS+2            /240 (SPACE)
+          JMS TYPN
+          ISZ CRLF
+          JMP .-3
+DUM3,     CLA
+          TAD I LOCK
+          JMS I PRIN            /INTER-COM. TO PNUM
+          TAD CONS+2            /240 (SPACE)
+          JMS TYPN
+          ISZ LOCK              /INDEX LOCATION POINTER
+          ISZ LIM               /END OF RANGE
+          JMP DUM2
+          JMS CRLF
+          HLT
+          JMP ODUM              /GO AGAIN
+TYPN,     0                     /TYPE CHARACTER SUBROUTINE
+          TLS
+          TSF
+          JMP .-1
+          CLA
+          JMP I TYPN
+CRLF,     0                     /CR AND LF SUBROUTINE
+          CLA
+          TAD CONS+1            /215 (CARR. RET.)
+          JMS TYPN
+          TAD CONS              /212 (LINE FEED)
+          JMS TYPN
+          JMP I CRLF
+LOCK,     0
+LIM,      0
+LPCN,     0
+PRIN,     PNUM                  /INTER-COM. TO PNUM
+CONS,     212                   /CONSTANTS
+          215
+          240
+          7774
+PNUM,     0                     /PRINT NUMBER SUBROUTINE
+          DCA PTEM
+          TAD PCON              /774
+          DCA DCN               /INITIALIZE DIGIT COUNTER
+          TAD PTEM
+          RAL
+PNU2,     RAL
+          RTL
+          DCA PTEM
+          TAD PTEM
+          AND PCON+1            /7
+          TAD PCON+2            /260
+          JMS I TDIT            /TYPN (TYPE A DIGIT)
+          TAD PTEM
+          ISZ DCN
+          JMP PNU2
+          CLA
+          JMP I PNUM
+DCN,      0                     /DIGIT COUNTER
+PTEM,     0
+TDIT,     TYPN
+PCON,     7774                  /CONSTANTS
+          7
+          260
+
+$
+*U*7+
