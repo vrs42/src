@@ -1,0 +1,3931 @@
+   1               /       FOCAL.ZZM
+   2               
+   3               
+   4               
+   5               
+   6               
+   7               /                               F  O  C  A  L
+   8               
+   9               
+  10               
+  11               
+  12               
+  13               
+  14               
+  15               
+  16               
+  17               
+  18               
+  19               
+  20               /               T H E    F O R M U L A    C A L C U L A T O R
+  21               
+  22               
+  23               
+  24               
+  25               
+  26               
+  27               /       FOR FORMULATING ON-LINE CALCULATIONS IN ALGEBRAIC LANGUAGE
+  28               
+  29               /       ON THE FOLLOWING D.E.C. COMPUTERS:
+  30               
+  31               /       5, 8, 8/I, 8/S, 8/L, LINC-8, LAB-8, TSS-8, PDP-12
+  32               
+  33               
+  34               
+  35               
+  36               
+  37               
+  38               
+  39               /       SOURCE RECREATION, TIDYING UP BY:
+  40               
+  41               /       CHARLES J. LASNER P?S NY
+  42               
+  43               /       LAST EDIT:      08-APR-1987     23:00:00        CJL
+  44               
+  45               
+  46               
+  47               
+  48               
+  49               
+  50               
+  51               
+  52               
+  53               
+  54               
+  55               /         F O C A L     AND     F L O A T
+  56               
+  57               
+  58               
+  59               
+  60               
+  61               /       COPYRIGHT@ 1969 BY
+  62               
+  63               /       DIGITAL EQUIPMENT CORPORATION
+  64               
+  65               /       FOCAL IS A REGISTERED
+  66               /       TRADEMARK OF
+  67               /       DIGITAL EQUIPMENT CORPORATION
+  68               
+  69               /       ALL RIGHTS RESERVED
+  70               
+  71               /       3RD REVISION
+  72                      FIXMRI  AND=    0000    /ACTUAL MEMORY REFERENCE INSTRUCTIONS
+  73                       FIXMRI  TAD=    1000
+  74                       FIXMRI  ISZ=    2000
+  75                       FIXMRI  DCA=    3000
+  76                       FIXMRI  JMS=    4000
+  77                       FIXMRI  JMP=    5000
+  78                       FIXMRI  FPOW=   5000    /PSEUDO-FLOATING POINT INSTRUCTIONS.
+  79                       FIXMRI  FADD=   1000
+  80                       FIXMRI  FSUB=   2000
+  81                       FIXMRI  FMUL=   4000
+  82                       FIXMRI  FDIV=   3000
+  83                       FIXMRI  FGET=   0000
+  84                       FIXMRI  FPUT=   6000
+  85               
+  86                       FNOR=   7000
+  87                       FEXT=   0000
+  88                       FXIT=   0000
+  89                       FINT=   JMS I   7
+  90                       NOP=    7000
+  91                       CLA=    7200
+  92                       CLL=    7100
+  93                       CMA=    7040
+  94                       RAL=    7004
+  95                       CML=    7020
+  96                       RAR=    7010
+  97                       RTR=    7012
+  98                       RTL=    7006
+  99                       IAC=    7001
+ 100                       SMA=    7500
+ 101                       SZA=    7440
+ 102                       SPA=    7510
+ 103                       SNA=    7450
+ 104                       SNL=    7420
+ 105                       SZL=    7430
+ 106                       SKP=    7410
+ 107                       HLT=    7402
+ 108                       CIA=    7041
+ 109                       ION=    6001
+ 110                       IOF=    6002
+ 111                       KSF=    6031
+ 112                       KRB=    6036
+ 113                       TSF=    6041
+ 114                       TCF=    6042
+ 115                       TPC=    6044
+ 116                       TLS=    6046
+ 117                       PLS=    6026
+ 118                       RSF=    6011
+ 119                       RRB=    6012
+ 120                       RFC=    6014
+ 121                       SMP=    6101
+ 122                       RMF=    6244
+ 123               /      * FOCAL * - BY RICK MERRILL - FOR THE FAMILY OF 8.
+ 124               
+ 125               /       MISCELLANEOUS ITEMS
+ 126               
+ 127                       *1
+ 128               
+ 129 000001  5403          JMP I   .+2             /INTERRUPT PROCESSOR ENTRY.
+ 130 000002  5403          JMP I   .+1             /(USED BY PDP-5)
+ 131 000003  2603          INTRPT
+ 132               
+ 133 000004  0004  DDTJR,  DDTJR                   /USED FOR DEBUGGING
+ 134 000005  0013  P13,    13                      /CONSTANT
+ 135 000006  0100  C100,   100                     /CONSTANT
+ 136               
+ 137                       T=      00              /TEXT FIELD NO.
+ 138                       P=      00              /PROGRAM FIELD NO.
+ 139                       CDF=    7000            /(X-MEM) - OPR
+ 140               
+ 141 000007  6400          FPNT                    /ADDRESS OF FLOATING POINT INTERPRETER (LOC *7)
+ 142               
+ 143               /       AUTO-INDEX REGISTERS - (START OF SAVE BY QUAD)
+ 144               
+ 145 000010  0000  AXIN,   0                       /STORAGE INDEX (LOC *10)
+ 146 000011  0000  XRT,    0                       /EXTRA XR
+ 147 000012  0000  XRT2,   0                       /EXTRA XR
+ 148 000013  4370  PDLXR,  BEGIN-1                 /PUSHDOWN LIST INDEX REGISTER.
+ 149 000014  3117  FLTXR,  IOBUF-1                 /XR FOR FLOATING POINT
+ 150 000015  0000  FLTXR2, 0                       /EXTRA FOR F.P.
+ 151 000016  7402  TELSW,  HLT                     /TELETYPE IN PROGRESS SWITCH
+ 152               
+ 153                       TEXTP=.                 /TEXT POINTERS (LOC *17)
+ 154               
+ 155 000017  3215  AXOUT,  FRSTX                   /OUTPUT INDEX
+ 156 000020  0000  XCT,    0                       /UNPACK SWITCH
+ 157 000021  0000  GTEM,   0                       /UNPACK STORAGE
+ 158 000022  2407  PC,     FLTZER                  /PROGRAM COUNTER
+ 159               
+ 160 000023  0000  THISLN, 0                       /LINE POINTER FROM 'FINDLN'
+ 161 000024  0000  THISOP, 0                       /CURRENT 'EVAL' OPERATION
+ 162 000025  0000  LASTLN, 0                       /BACK POINTER FROM 'FINDLN'
+ 163 000026  0001  DEBGSW, 1                       /DEBUG SWITCH  ; NON-ZERO FOR LITERAL.
+ 164 000027  0000  PACKST, 0                       /RUBOUT PROTECTION
+ 165 000030  0000  PT1,    0                       /VARIABLE POINTER
+ 166 000031  3217  LASTV,  BUFBEG                  /ADDRESS OF LAST VARIABLE
+ 167 000032  0000  T1,     0                       /TEMPORARY REGISTER - MAIN
+ 168 000033  0000  T3,     0                       /TEMP REGISTER FOR OUTPUT
+ 169 000034  0000  INBUF,  0                       /KEYBOARD INPUT BUFFER
+ 170 000035  4370  BOTTOM, BEGIN-1                 /LAST LOCATION CURRENTLY AVAILABLE IN FIELD ZERO **
+ 171 000036  0000  INSUB,  0                       /0= GETC; #0 = READC
+ 172 000037  0000  HINBUF, 0                       /HIGH SPEED INPUT BUFFER
+ 173               
+ 174               /       *40 = FLOATING POINT
+ 175                      *54
+ 176               
+ 177               /       VARIABLES   -   INITIALIZED FOR THE DIALOGUE
+ 178               
+ 179 000054  0000  SORTCN, 0                       /NUMBER IN TABLE FROM SORTC
+ 180 000055  0000  LASTOP, 0                       /LAST OPERATION FOR EVAL
+ 181               
+ 182                       EFOP=   .               /FUNCTION CODE.
+ 183               
+ 184 000056  0000  ATSW,   0                       /ASK-TYPE SWITCH
+ 185 000057  7760  CNTR,   -20                     /DELETE AND ERROR COUNTER (USED BY F.P. ALSO)
+ 186               
+ 187                       STARTV= .               /=END FOR 8K
+ 188               
+ 189 000060  3217  BUFR,   BUFBEG                  /NEXT LOCATION IN BUFFER = LAST LOCATION OF TEXT.
+ 190               
+ 191 000061  1354  ADD,    OUTL                    /CHAR. BUF. IN.  (DEBUG AIDS. SEE BELOW.)
+ 192 000062  2414  XCTIN,  I33                     /PACK SWITCH
+ 193 000063  2676  OUTDEV, XOUTL                   /POINTER TO OUT. SUB.   (OUTL)-FOR DEBUGGING
+ 194 000064  2666  INDEV,  XI33                    /POINTER TO IN. SUB.    (I33)-FOR DEBUGGING
+ 195               
+ 196 000065  0001  NAGSW,  0001                    /NOT ALL AND/OR GROUP SWITCH (4000=ONE; 1=ALL;
+ 197                                               /0=GROUP); (0000)-FOR TSS-8
+ 198 000066  0215  CHAR,   "M&237                  /THE MOST IMPORTANT REGISTER
+ 199 000067  0000  LINENO, 0000                    /LINE NUMBER READ BY GETLN; (0400)-FOR TSS-8
+ 200 000070  0005  GINC,   WORDS+2                 /=6 FOR 4-WORD - CONSTANT
+ 201               
+ 202 000071  0000  T2,     0                       /TEMP REGISTER - FOR NEW INST. ROUTINES.
+ 203               
+ 204               
+ 205               
+ 206               /       FOR DEBUGGING, SET OUTL AND I33 INTO OUTDEV AND INDEV;
+ 207               /       ALSO PATCH THE ERROR ROUTINE = FOUR
+ 208               /       PATCHES PLUS TWO FOR THE HIGH SPEED READER.
+ 209               
+ 210               
+ 211                       LIST6=  .               /INPUT LIST FOR "SFOUND".
+ 212               
+ 213 000072  0214          "L&237                  /F.F.
+ 214 000073  0207          "G&237                  /BELL
+ 215               
+ 216                       LIST7=  .
+ 217               
+ 218 000074  0203          "C&237                  /CONTROL-C FOR DEBUGGING AND TSS8
+ 219 000075  0337  P337,   "^+1                    /LEFT ARR
+ 220 000076  0212  CLF,    "J&237                  /L.F.
+ 221               
+ 222                       LIST3=  .               /EXCRETION LIST
+ 223               
+ 224 000077  0215  CCR,    "M&237                  /LIST BRANCHER.
+ 225 000100  7402  DMPSW,  HLT                     /(SEARCH CHARACTER)-VARIABLE; =0000 FOR TRACE ON.
+ 226               
+ 227               
+ 228               /       THE REST OF PAGE ZERO IS PURE TO THE MULTI-USER SYSTEM
+ 229                      M100=   .
+ 230               
+ 231 000101  7700  P7700,  7700                    /LEFT MASK
+ 232 000102  0256  PER,    ".                      /PERIOD
+ 233 000103  7701  M77,    -77                     /EXTEND CODE TEST
+ 234 000104  7600  P7600,  7600                    /GROUP MASK
+ 235 000105  7760  M20,    -20                     /CONSTANT
+ 236 000106  0177  P177,   177                     /STEP MASK
+ 237 000107  0017  P17,    17                      /BCD MASK
+ 238 000110  0277  P277,   "?                      /"?"
+ 239 000111  7776  M2,     -2                      /CONSTANT
+ 240 000112  7477  MINUSA, -"A                     /CONSTANT
+ 241 000113  0260  C260,   "0                      /ASCII FOR ZERO
+ 242 000114  7540  M240,   -"                      /SPACE TEST
+ 243 000115  7522  MPER,   -".                     /PERIOD TEST
+ 244 000116  7563  MCR,    -"M!100                 /C.R. TEST
+ 245 000117  7775  MFLT,   -WORDS                  /= -4 FOR 4-WORD
+ 246 000120  7773  M5,     -5                      /PAREN TEST
+ 247 000121  7767  M11,    -11                     /PAREN TEST
+ 248 000122  0077  P77,    77                      /RIGHT MASK
+ 249 000123  0200  C200,   200                     /CONSTANTS
+ 250 000124  4000  P4000,  4000                    /NAGSW TEST CONSTANT (FOR PDP-5)
+ 251               
+ 252 000125  2030  FLARGP, FLARG                   /DATA ADDRESS
+ 253 000126  2155  PTCH,   CHIN                    /GENERAL CHARACTER INPUT ROUTINE.
+ 254 000127  5715  DOUBLE, MULT2                   /MULTIPLY FLAC BY 2
+ 255 000130  6000  FOUTPUT,FLOUTP                  /FLOATING OUTPUT
+ 256 000131  6200  FINPUT, FLINTP                  /FLOATING INPUT
+ 257 000132  3140  COMBUF, COMEIN                  /COMMAND BUFFER START
+ 258 000133  3206  CFRS,   FRST                    /ADDRESS OF DUMMY LINE.
+ 259 000134  3140  END,    COMEIN                  /FIRST LOCATION USED IN 8K.
+ 260 000135  3217  ENDT,   BUFBEG                  /START OF STORAGE AREA **
+ 261 000136  2017  EFUN3I, EFUN3                   /FUNCTION RETURN
+ 262 000137  2407  CFRSX,  FLTZER                  /POINTER TO ZERO DATA
+ 263               
+ 264               
+ 265               /       'FINPUT' USES CHAR AND GETC OR READC TO DEVELOP 
+ 266               /       A NUMBER WHICH IS THEN STORED VIA PT1.
+ 267               
+ 268                       WORDS=  3               /OR 4
+ 269               /      NEW INSTRUCTIONS:
+ 270               
+ 271 000140  0521          PUSHJ=  JMS I   .;XPUSHJ/RECURSIVE SUBROUTINE CALL
+ 272                       POPA=   TAD I   PDLXR   /RESTORE AC
+ 273               
+ 274 000141  1565          POPJ=   JMP I   .;XPOPJ /SUBROUTINE RETURN
+ 275 000142  0477          PUSHA=  JMS I   .;XPUSHA/SAVE AC
+ 276 000143  0534          PUSHF=  JMS I   .;PD2   /SAVE GROUP OF DATA
+ 277 000144  0554          POPF=   JMS I   .;PD3   /RESTORE GROUP
+ 278 000145  2274          GETC=   JMS I   .;UTRA  /UNPACK A CHARACTER
+ 279 000146  2502          PACKC=  JMS I   .;PACBUF/PACK A CHARACTER
+ 280 000147  1314          SORTJ=  JMS I   .;SORTB /SORT AND BRANCH ON AC OR CHAR
+ 281 000150  0721          SORTC=  JMS I   .;XSORTC/SORT CHAR
+ 282 000151  2465          PRINTC= JMS I   .;OUT   /PRINT AC OR CHAR
+ 283 000152  2155  RDIV,   READC=  JMS I   .;CHIN  /READ DATA INTO CHAR AND PRINT IT
+ 284 000153  2425          PRNTLN= JMS I   .;XPRNT /PRINT C(LINENO)
+ 285 000154  0302          GETLN=  JMS I   .;XGETLN/UNPACK AND FORM A LINENUMBER
+ 286 000155  2242          FINDLN= JMS I   .;XFIND /SEARCH FOR A GIVEN LINE
+ 287 000156  2360          ENDLN=  JMS I   .;XENDLN/INSERT LINE POINTERS
+ 288 000157  0413          RTL6=   JMS I   .;XRTL6 /ROTATE LEFT SIX
+ 289 000160  1517          SPNOR=  JMS I   .;XSPNOR/IGNORE SPACES AND LEADING ZEROS
+ 290 000161  1533          TESTN=  JMS I   .;XTESTN/PERIOD; OTHER; NUMBER
+ 291 000162  2035          TSTLPR= JMS I   .;LPRTST/SKIP IF 5<SORTCN<= 11 (I.E. AN L-PAR)
+ 292 000163  0744          TSTGRP= JMS I   .;GRPTST/SKIP IF G(AC) = G(LINENO)
+ 293 000164  0700          TESTC=  JMS I   .;XTESTC/TERM; NUMBER; FUNCTION; LETTER- AND IGNORE SPACES.
+ 294 000165  2062  PSIN,   DELETE= JMS I   .;XDELET/REMOVE OLD TEXT LINE
+ 295                       ERROR2= JMS I   .;      /EXCESS SOMETHING ERROR
+ 296               
+ 297                       ERROR3= JMS I   .;      /MISCELLANEOUS ERROR
+ 298               
+ 299 000166  2726          ERROR4= JMS I   .;ERR2  /FORMAT ERROR
+ 300               /       USED BY 8K
+ 301               /      FOCAL'S COMMAND/INPUT DRIVER
+ 302               
+ 303                       *176
+ 304               
+ 305 000176  4371          BEGIN                   /BECOMES (RECOVR+1) **
+ 306               
+ 307 000177  7610  START,  SKP CLA                 /PROGRAM START FROM SELF
+ 308 000200  5576          JMP I   .-2             /CONSOLE START: SW=200
+ 309 000201  1137          TAD     CFRSX           /(PC) => 0
+ 310 000202  3022          DCA     PC              /FOR COMMAND MODE
+ 311 000203  7001          IAC                     /USE ONE IN THE AC TO
+ 312 000204  3100          DCA     DMPSW           /INIT UNPACK AND TRACE SWITCH
+ 313 000205  3026          DCA     DEBGSW          /ENABLE TRACE FOR INPUT OF (?)
+ 314 000206  1226          TAD     COMBOT          /PROTECT COMMAND BUFFER
+ 315 000207  3013          DCA     PDLXR           /NO PATCH TEST
+ 316 000210  1225          TAD     CSTAR           /ANNOUNCE PRESENCE
+ 317 000211  4551          PRINTC                  /BY TYPING THE LEAD-IN CHARACTER
+ 318 000212  1132  IBAR,   TAD     COMBUF          /INITIALIZE COMMAND BUFFER
+ 319 000213  3010          DCA     AXIN            /FOR UNPACKING
+ 320 000214  3062          DCA     XCTIN
+ 321 000215  1132          TAD     COMBUF          /RUBOUT PROTECTION
+ 322 000216  3027          DCA     PACKST
+ 323 000217  4552  IGNOR,  READC                   /READ COMMAND STRING
+ 324 000220  4547          SORTJ
+ 325 000221  0073          LIST7-1
+ 326 000222  0474          INLIST-LIST7
+ 327 000223  4546          PACKC                   /SAVE STRING CHARACTER.
+ 328 000224  5217          JMP     IGNOR
+ 329               
+ 330 000225  0252  CSTAR,  "*                      /ACKNOWLEDGE CHARACTER
+ 331 000226  3220  COMBOT, COMEOUT+12              /END OF COMMAND BUFFER, LESS PROTECTION COUNT.
+ 332               /      COMMAND/INPUT PROCESSOR
+ 333               
+ 334 000227  4546  IRETN,  PACKC                   /START TO PACK C.R.
+ 335 000230  4546          PACKC                   /FINISH C.R.
+ 336 000231  1132          TAD     COMBUF          /INITIALIZE "TEXTP"
+ 337 000232  3017  GONE,   DCA     AXOUT           /SETUP CURRENT LINE
+ 338 000233  3020          DCA     XCT
+ 339 000234  4545          GETC                    /READ FIRST CHARACTER.
+ 340 000235  1035          TAD     BOTTOM          /INIT PUSH-DOWN-LIST
+ 341 000236  3013          DCA     PDLXR
+ 342 000237  4560          SPNOR                   /IGNORE LEADING BLANKS
+ 343 000240  4561          TESTN                   /DOES THE LINE BEGIN WITH 1-9?
+ 344 000241  5362          JMP     GZERR           /PERIOD =ILLEGAL GROUP ZERO USAGE
+ 345 000242  5271          JMP     INPUTX          /NO
+ 346 000243  2026          ISZ     DEBGSW          /YES, DISABLE TRACE FOR REPACKING
+ 347 000244  4554          GETLN                   /READ THIS LINE NUMBER
+ 348 000245  1124          TAD     P4000           /TEST FOR SINGLE LINE.
+ 349 000246  1065          TAD     NAGSW
+ 350 000247  7640          SZA CLA
+ 351 000250  4566          ERROR3                  /ILLEGAL LINE NUMBER ON INPUT
+ 352 000251  1060          TAD     BUFR            /SET POINTERS
+ 353 000252  3010          DCA     AXIN
+ 354 000253  3062          DCA     XCTIN
+ 355 000254  1067          TAD     LINENO          /SAVE LINE #
+ 356 000255  3410          DCA I   AXIN            /(X-MEM)
+ 357 000256  4560          SPNOR                   /IGNORE SPACES AFTER LINE NUMBER
+ 358 000257  7410          SKP
+ 359 000260  4545          GETC                    /READ 1ST AFTER LINENO TERMINATOR.
+ 360 000261  4546  SRETN,  PACKC                   /SAVE TEXT AND RESTORE DATA FIELD
+ 361 000262  1066          TAD     CHAR            /TEST FOR END OF INPUT STRING
+ 362 000263  1116          TAD     MCR
+ 363 000264  7640          SZA CLA
+ 364 000265  5260          JMP     .-5
+ 365 000266  4565          DELETE                  /REMOVE OLD LINE, IF ANY.
+ 366 000267  4556          ENDLN                   /INSERT NEW LINE
+ 367 000270  5177          JMP     START           /POINTERS MUST BE REINITIALIZED
+ 368               
+ 369 000271  4540  INPUTX, PUSHJ                   /PROCESS IMMEDIATE COMMAND.
+ 370 000272  0611          PROC
+ 371 000273  1422          TAD I   PC              /CHECK NEXT LINE (X-MEM)
+ 372 000274  7450          SNA                     /END OF PROGRAM? 
+ 373 000275  5177          JMP     START           /YES
+ 374 000276  3022          DCA     PC              /SAVE NEW LINE NO.
+ 375 000277  1022          TAD     PC              /START NEW LINE
+ 376 000300  7001          IAC
+ 377 000301  5232          JMP     GONE            /PROCESS OTHER COMMANDS
+ 378               
+ 379               /       TEXT LINE BUFFER FORMAT*
+ 380               
+ 381               /       #1 : POINTER OR ZERO IN LAST
+ 382               /       #2 : LINENO
+ 383               /       #3 - #N+1 : TEXT
+ 384               /       #N : C.R.
+ 385               /      LINE NUMBER FORMATION
+ 386               
+ 387 000302  0000  XGETLN, 0                       /DEVELOP I.D. - "GETLN"
+ 388 000303  4560          SPNOR                   /IGNORE LEADING SPACES.
+ 389 000304  1066          TAD     CHAR            /"ALL" IS A SPECIAL ARGUMENT.
+ 390 000305  1112          TAD     MINUSA
+ 391 000306  7650          SNA CLA
+ 392 000307  5322          JMP     TESTA
+ 393 000310  3036          DCA     INSUB           /CALL 'GETC' FROM 'INPUT' VIA 'DECON'
+ 394 000311  4771          JMS I   LCON            /(DECONV - IN FLOAT.)
+ 395 000312  1047          TAD     FLAC+3          /GROUP TOO LARGE?
+ 396 000313  0372          AND     P7740
+ 397 000314  1046          TAD     FLAC+2
+ 398 000315  7640          SZA CLA
+ 399 000316  4566          ERROR2                  /GROUP NUMBER TOO LARGE
+ 400 000317  1047          TAD     FLAC+3
+ 401 000320  4557          RTL6
+ 402 000321  7004          RAL
+ 403 000322  3067  TESTA,  DCA     LINENO
+ 404 000323  4561          TESTN                   /TEST3
+ 405 000324  4545          GETC                    /READ STEP NUMBER.
+ 406 000325  4561          TESTN                   /TEST4, OTHER
+ 407 000326  5340          JMP     GERR            /DOUBLE PERIODS
+ 408 000327  5352          JMP     GEXIT           /OTHER
+ 409 000330  1054          TAD     SORTCN          /NUMBER
+ 410 000331  7106          CLL RTL
+ 411 000332  1054          TAD     SORTCN
+ 412 000333  7004          RAL
+ 413 000334  1067          TAD     LINENO
+ 414 000335  3067          DCA     LINENO
+ 415 000336  4545          GETC                    /READ SECOND STEP NUMBER.
+ 416 000337  4561          TESTN                   /TEST4, OTHER
+ 417 000340  4566  GERR,   ERROR4                  /DOUBLE PERIODS
+ 418 000341  5352          JMP     GEXIT           /OTHER
+ 419 000342  1054          TAD     SORTCN          /NUMBER
+ 420 000343  1067          TAD     LINENO
+ 421 000344  3067          DCA     LINENO
+ 422 000345  4545          GETC                    /TEST FOR CORRECT TERMINATOR
+ 423 000346  4561          TESTN                   /CHECK SIZE
+ 424 000347  5340          JMP     GERR            /.
+ 425 000350  7410          SKP
+ 426 000351  4566          ERROR2                  /TOO LARGE A LINE NUMBER.
+ 427 000352  7100  GEXIT, CLL                     /CLEAR LINK BIT
+ 428 000353  1067          TAD     LINENO          /TEST FOR GROUP NUMBER.
+ 429 000354  0104          AND     P7600
+ 430 000355  7640          SZA CLA
+ 431 000356  7020          CML
+ 432 000357  1067          TAD     LINENO
+ 433 000360  0106          AND     P177            /REPARE "NAGSW"
+ 434 000361  7460          SNL SZA
+ 435 000362  4566  GZERR,  ERROR2                  /0.X = ERROR: ILLEGAL LINE NUMBER.
+ 436 000363  7640          SZA CLA
+ 437 000364  1373          TAD     P2000
+ 438 000365  7020          CML 
+ 439 000366  7004          RAL
+ 440 000367  3065          DCA     NAGSW
+ 441 000370  5702          JMP I   XGETLN
+ 442               
+ 443 000371  5600  LCON,   DECONV
+ 444 000372  7740  P7740,  7740
+ 445 000373  2000  P2000,  2000
+ 446               
+ 447               /       RANGE OF ACCEPTIBLE LINE NUMBERS = 1.01 TO 31.99
+ 448               /       NAGSW:
+ 449               
+ 450               /       GROUP=0000
+ 451               /       LINE=4000
+ 452               /       ALL=0001
+ 453               
+ 454               /       LIST OF FUNCTION ADDRESSES. (NAMES ARE IN "FNTABL")
+ 455               
+ 456                       FNTABF= .
+ 457               
+ 458 000374  2014          XABS                    /ABS    -ABSOLUTE VALUE
+ 459 000375  2010          XSGN                    /SGN    -SIGN PART
+ 460 000376  1160          XINT                    /ITR    -INTEGER PART
+ 461 000377  1142          XDYS                    /DIS    -DISPLAY AND INTENSIFY
+ 462 000400  1553          XRAN                    /RAN    -RANDOM NUMBER
+ 463 000401  1343          XADC                    /ADC    -READ ANALOG TO DIGITAL CONVERTER
+ 464 000402  5000          ARTN                    /ATN    -
+ 465 000403  4620          FEXP                    /EXP    -EXPONENTIAL FUNCTIONS
+ 466 000404  5040          FLOG                    /LOG    -
+ 467 000405  5205          FSIN                    /SIN    -TRIG FUNCTIONS
+ 468 000406  5200          FCOS                    /COS    -
+ 469 000407  7400          XSQRT                   /SQT    -SQUARE ROOT
+ 470 000410  2725          ERROR5                  /NEW    -USER DEFINED FUNCTIONS
+ 471 000411  2725          ERROR5                  /COM    -
+ 472 000412  2725          ERROR5                  /X      -
+ 473               
+ 474 000413  0000  XRTL6,  0                       /ROTATE AC LEFT SIX - "RTL6"
+ 475 000414  7106          CLL RTL
+ 476 000415  7006          RTL
+ 477 000416  7006          RTL
+ 478 000417  5613          JMP I   XRTL6
+ 479               /      RECURSIVE OPERATE, EXECUTE, OR CALL 
+ 480               
+ 481 000420  4554  DO,     GETLN                   /EXECUTE ONE LINE, A GROUP, OR ALL
+ 482 000421  1022          TAD     PC              /SAVE ADDRESS
+ 483 000422  4542          PUSHA                   /OF CURRENT LINE
+ 484 000423  4543          PUSHF                   /SAVE REST OF THIS LINE
+ 485 000424  0017          TEXTP                   /ADDRESS OF TEXT POINTERS
+ 486 000425  4543  DGRP,   PUSHF                   /SAVE NAGSW; CHAR; AND LINENO.
+ 487 000426  0065          NAGSW
+ 488 000427  1065          TAD     NAGSW           /CHECK DATA FROM GETLN.
+ 489 000430  7710          SPA CLA                 /SKIP IF GROUP OR ALL
+ 490 000431  5263          JMP     DOONE           /DO ONE LINE
+ 491 000432  4555          FINDLN                  /INIT FOR GROUP AND SET THISLN
+ 492 000433  7000          NOP
+ 493 000434  1023          TAD     THISLN          /TEST FOR GOOD GROUP NUMBER.
+ 494 000435  3011          DCA     XRT
+ 495 000436  1411          TAD I   XRT             /(X-MEM)
+ 496 000437  4563          TSTGRP
+ 497 000440  4566          ERROR2                  /NO SUCH GROUP NUMBER
+ 498 000441  4540  DGRP1,  PUSHJ                   /EXECUTE OBJECT LINE AND SET PC.
+ 499 000442  0606          PROCESS-2
+ 500 000443  4544          POPF                    /RESTORE THE DATA
+ 501 000444  0065          NAGSW
+ 502 000445  1422          TAD I   PC              /CHECK FOR END OF TEXT (X-MEM)
+ 503 000446  7450          SNA
+ 504 000447  5271          JMP     DCONT           /ALL DONE
+ 505 000450  7001          IAC
+ 506 000451  3030          DCA     PT1             /SAVE POINTER TO LINENO
+ 507 000452  1065          TAD     NAGSW           /CHECK FOR GROUP
+ 508 000453  7740          SMA SZA CLA
+ 509 000454  5260          JMP     .+4             /DO ALL
+ 510 000455  1430          TAD I   PT1             /TEST GROUP (X-MEM)
+ 511 000456  4563          TSTGRP
+ 512 000457  5271          JMP     DCONT           /NOT IN GROUP
+ 513 000460  1430          TAD I   PT1             /READ NEXT LINE NO. (X-MEM)
+ 514 000461  3067          DCA     LINENO
+ 515 000462  5225          JMP     DGRP            /CONTINUE THE SUBROUTINE
+ 516               
+ 517 000463  4555  DOONE,  FINDLN                  /FIND THE LINE
+ 518 000464  4566          ERROR2                  /NO SUCH LINE NUMBER
+ 519 000465  4540          PUSHJ                   /EXECUTE IT
+ 520 000466  0610          PROCESS
+ 521 000467  4544          POPF                    /RESTORE CHAR
+ 522 000470  0065          NAGSW
+ 523 000471  4544  DCONT,  POPF                    /RESTORE TEXT POINTERS
+ 524 000472  0017          TEXTP
+ 525 000473  1413          POPA                    /RESTORE ADDRESS OF CURRENT LINE.
+ 526 000474  3022          DCA     PC
+ 527 000475  5676          JMP I   .+1;    PROC    /CONTINUE PROCESSING THIS LINE.
+     000476  0611  
+ 528               /      PUSHDOWN LIST CONTROLS
+ 529               
+ 530 000477  0000  XPUSHA, 0                       /PUSHDOWN THE AC - "PUSHA"
+ 531 000500  3071          DCA     T2              /BACKUP POINTER
+ 532 000501  7040          CMA                     /AND THEN
+ 533 000502  4310          JMS     PCHK            /CHECK CORE USAGE
+ 534 000503  1071          TAD     T2              /OK
+ 535 000504  3413          DCA I   PDLXR           /PUSH DOWN LIST POINTER
+ 536 000505  7040          CMA                     /BACKUP AGAIN
+ 537 000506  4310          JMS     PCHK
+ 538 000507  5677          JMP I   XPUSHA
+ 539               
+ 540 000510  0000  PCHK,   0
+ 541 000511  1013          TAD     PDLXR           /INC IN AC
+ 542 000512  3013          DCA     PDLXR
+ 543 000513  1013          TAD     PDLXR
+ 544 000514  7141          CLL CIA
+ 545 000515  1031          TAD     LASTV
+ 546 000516  7630          SZL CLA 
+ 547 000517  4566          ERROR3                  /STORAGE FILLED BY PUSH-DOWN LIST
+ 548 000520  5710          JMP I   PCHK
+ 549               
+ 550 000521  0000  XPUSHJ, 0                       /RECURSIVE SUBROUTINE CALL - "PUSHJ"
+ 551 000522  1721          TAD I   XPUSHJ
+ 552 000523  3071          DCA     T2              /SAVE SUBR. ADDR.
+ 553 000524  7040          CMA
+ 554 000525  4310          JMS     PCHK
+ 555 000526  1321          TAD     XPUSHJ
+ 556 000527  7001          IAC
+ 557 000530  3413          DCA I   PDLXR           /SAVE RETURN
+ 558 000531  7040          CMA
+ 559 000532  4310          JMS     PCHK
+ 560 000533  5471          JMP I   T2              /TRANSFER CONTROL
+ 561               
+ 562 000534  0000  PD2,    0                       /SAVE A FLOATING POINT NUMBER - "PUSHF"
+ 563 000535  7240          CLA CMA                 /COMPUTE VARIABLE ADDR
+ 564 000536  1734          TAD I   .-2
+ 565 000537  3011          DCA     XRT
+ 566 000540  2334          ISZ     PD2             /FIX RETURN
+ 567 000541  1117          TAD     MFLT            /COMPUTE PUSH. POINTER
+ 568 000542  4310          JMS     PCHK
+ 569 000543  1117          TAD     MFLT
+ 570 000544  3071          DCA     T2
+ 571 000545  1411          TAD I   XRT
+ 572 000546  3413          DCA I   PDLXR
+ 573 000547  2071          ISZ     T2
+ 574 000550  5345          JMP     .-3
+ 575 000551  1117          TAD     MFLT            /RESET POINTER
+ 576 000552  4310          JMS     PCHK
+ 577 000553  5734          JMP I   PD2
+ 578 000554  0000  PD3,   0                       /RESTORE A FLOATING POINT NUMBER - "POPF"
+ 579 000555  7240          CLA CMA                 /GET VAR. ADDR.
+ 580 000556  1754          TAD I   PD3
+ 581 000557  2354          ISZ     PD3
+ 582 000560  3011          DCA     XRT
+ 583 000561  1117          TAD     MFLT
+ 584 000562  3071          DCA     T2
+ 585 000563  1413          TAD I   PDLXR           /MOVE
+ 586 000564  3411          DCA I   XRT
+ 587 000565  2071          ISZ     T2
+ 588 000566  5363          JMP     .-3
+ 589 000567  5754          JMP I   PD3             /EXIT
+ 590               
+ 591                       INLIST= .               /INPUT CONTROL CHARACTERS
+ 592               
+ 593 000570  2740          RECOVR                  /C.C. = BREAK
+ 594 000571  0212          IBAR                    /B.A. = RESTART
+ 595 000572  0217          IGNOR                   /L.F. = IGNORE
+ 596 000573  0227          IRETN                   /C.R. = TERMINATE STRING
+ 597               
+ 598 000574  1075  FLIST2, FLIMIT                  /,=STANDARD
+ 599 000575  1137          FINFIN                  /;=SHORT
+ 600 000576  2725          ERROR5                  /CR=DUMB
+ 601               
+ 602 000577  1065  FLIST1, FINCR                   /,=STANDARD FORMAT
+ 603 000600  0610          PROCESS                 /;=SET; PLUS ,..
+ 604 000601  0614          PC1                     /C.R.=SET COMMAND.
+ 605               
+ 606 000602  7472  MF,     -"F                     /USED BY TESTC
+ 607               /      PRIMARY CONTROL AND TRANSFER
+ 608               
+ 609 000603  4554  GOTO,   GETLN                   /READ THE LINE NUMBER REQUESTED
+ 610 000604  4555          FINDLN                  /LOCATE IT AND RESET TEXTP
+ 611 000605  4566          ERROR2                  /NOT THERE
+ 612 000606  1023          TAD     THISLN          /SET PC
+ 613 000607  3022          DCA     PC
+ 614 000610  4545  PROCESS,GETC                    /TEST FOR END OF LINE
+ 615 000611  1066  PROC,   TAD     CHAR            /FIRST CHARACTER READY = USE PROC
+ 616 000612  1116          TAD     MCR
+ 617 000613  7650          SNA CLA
+ 618 000614  5541  PC1,    POPJ                    /EXIT "PROCESS"
+ 619 000615  4550          SORTC                   /IGNORE "SPACE", ",", AND ";".
+ 620 000616  1376          GLIST-1
+ 621 000617  5210          JMP     PROCESS
+ 622 000620  1066          TAD     CHAR            /SAVE COMMAND CHARACTER
+ 623 000621  0075          AND     P337            /EXECUTE LOWER CASE ALSO
+ 624 000622  4542          PUSHA
+ 625 000623  4545          GETC                    /GO TO TERMINATOR
+ 626 000624  4550          SORTC
+ 627 000625  1376          GLIST-1
+ 628 000626  7410          SKP
+ 629 000627  5223          JMP     .-4
+ 630 000630  1413          POPA
+ 631 000631  4547          SORTJ                   /GO DO COMMAND
+ 632 000632  0773          COMLST-1
+ 633 000633  0167          COMGO-COMLST
+ 634 000634  4566          ERROR2                  /ILLEGAL COMMAND
+ 635               
+ 636                       COMMENT=PC1             /ALSO IS CONTINUE
+ 637               
+ 638               /      OUTPUT COMMAND TEXT
+ 639               
+ 640 000635  4554  WRITE,  GETLN                   /SET LINENO
+ 641 000636  2026          ISZ     DEBGSW          /DISABLE TRACE
+ 642 000637  4555          FINDLN                  /SEARCH FOR LINE NUMBER
+ 643 000640  5267          JMP     WTESTG          /NOT THERE OR GROUP
+ 644 000641  1067          TAD     LINENO
+ 645 000642  7640          SZA CLA
+ 646 000643  4553          PRNTLN                  /PRINT LINE NUMBER AND A SPACE.
+ 647 000644  4545          GETC
+ 648 000645  4551          PRINTC                  /PRINT TEXT OF A LINE.
+ 649 000646  1066          TAD     CHAR
+ 650 000647  1116          TAD     MCR
+ 651 000650  7640          SZA CLA                 /SKIP IF END OF LINE
+ 652 000651  5244          JMP     .-5
+ 653 000652  1423          TAD I   THISLN          /TEST FOR END OF TEXT (X-MEM)
+ 654 000653  7450  WTEST2, SNA
+ 655 000654  5271          JMP     WX-2            /EXIT; DO NEXT INDIRECT LINE.
+ 656 000655  7001          IAC
+ 657 000656  3030          DCA     PT1             /SAVE POINTER TO LINENO OF NEXT
+ 658 000657  1065          TAD     NAGSW
+ 659 000660  7700          SMA CLA
+ 660 000661  1430          TAD I   PT1             /(X-MEM)
+ 661 000662  4563          TSTGRP                  /TRY NEXT LINENO FOR GROUP.
+ 662 000663  5273          JMP     WX
+ 663 000664  1430  WALL,   TAD I   PT1             /SET LINENO (X-MEM)
+ 664 000665  3067          DCA     LINENO
+ 665 000666  5237          JMP     WRITE+2
+ 666               
+ 667 000667  1023  WTESTG, TAD     THISLN          /INIT GROUP PRINTOUT
+ 668 000670  5253          JMP     WTEST2
+ 669               
+ 670 000671  3026          DCA     DEBGSW
+ 671 000672  5541          POPJ
+ 672               
+ 673 000673  1065  WX,     TAD     NAGSW
+ 674 000674  7750          SPA SNA CLA             /SKIP IF ALL
+ 675 000675  5271          JMP     WX-2
+ 676 000676  4551          PRINTC                  /PRINT C.R. AGAIN
+ 677 000677  5264          JMP     WALL
+ 678 000700  0000  XTESTC,        0                       /TEST THE NATURE OF THE NEXT ALPHANUMERIC - "TESTC"
+ 679 000701  4560          SPNOR                   /IGNORE SPACES
+ 680 000702  4550          SORTC                   /TEST THE VARIABLE TERMINATORS
+ 681 000703  1767          TERMS-1
+ 682 000704  5700          JMP I   XTESTC          /YES - SORTCN IS SET
+ 683 000705  1066          TAD     CHAR            /NO
+ 684 000706  2300          ISZ     XTESTC
+ 685 000707  1202          TAD     MF
+ 686 000710  7650          SNA CLA                 /TEST FOR "F"
+ 687 000711  5317          JMP     XT3
+ 688 000712  4561          TESTN
+ 689 000713  5700          JMP I   XTESTC          /.
+ 690 000714  7410          SKP                     /OTHER
+ 691 000715  5700          JMP I   XTESTC          /NUMBER
+ 692 000716  2300          ISZ     XTESTC
+ 693 000717  2300  XT3,    ISZ     XTESTC          /RETURNS:T; N; F; A
+ 694 000720  5700          JMP I   XTESTC
+ 695               
+ 696 000721  0000  XSORTC, 0                       /SORT CHAR AGAINST TABLE - "SORTC"
+ 697 000722  1721          TAD I   XSORTC
+ 698 000723  3012          DCA     XRT2            /1ST ARG IS LIST-1
+ 699 000724  1412          TAD I   XRT2
+ 700 000725  7510          SPA                     /LIST IS ENDED BY A NEGATIVE NUMBER
+ 701 000726  5340          JMP     SEXC            /2AND EXIT = NOT IN LIST
+ 702 000727  7041          CIA
+ 703 000730  1066          TAD     CHAR
+ 704 000731  7640          SZA CLA                 /COMPARE
+ 705 000732  5324          JMP     .-6
+ 706 000733  1721          TAD I   XSORTC          /COMPUTE INCREMENT : 0 - N
+ 707 000734  7040          CMA
+ 708 000735  1012          TAD     XRT2
+ 709 000736  3054          DCA     SORTCN
+ 710 000737  7410          SKP                     /1ST EXIT = YES
+ 711 000740  2321  SEXC,   ISZ     XSORTC
+ 712 000741  2321          ISZ     XSORTC
+ 713 000742  7300          CLA CLL
+ 714 000743  5721          JMP I   XSORTC
+ 715 000744  0000  GRPTST,        0                       /AC VS LINENO - "TSTGRP"
+ 716 000745  0104          AND     P7600
+ 717 000746  7041          CIA
+ 718 000747  3071          DCA     T2
+ 719 000750  1067          TAD     LINENO
+ 720 000751  0104          AND     P7600
+ 721 000752  1071          TAD     T2
+ 722 000753  7650          SNA CLA
+ 723 000754  2344          ISZ     GRPTST
+ 724 000755  5744          JMP I   GRPTST
+ 725               
+ 726               /       INPUT FROM TEXT OR KEYBOARD;
+ 727               /       IF BACK-ARROW, RESTART INPUT
+ 728               
+ 729 000756  0000  INPUT,  0                       /INPUT A CHARACTER
+ 730 000757  1036          TAD     INSUB           /NON-ZERO FOR KEYBOARD
+ 731 000760  7640          SZA CLA
+ 732 000761  5364          JMP     .+3
+ 733 000762  4545          GETC
+ 734 000763  5756          JMP I   INPUT
+ 735 000764  4552          READC
+ 736 000765  4547          SORTJ
+ 737 000766  6776          SPECIAL-1
+ 738 000767  3402          INFIX-SPECIAL
+ 739 000770  5756          JMP I   INPUT
+ 740               
+ 741 000771  1035  ILIST,  IF1                     /,
+ 742 000772  0610          PROCESS                 /;
+ 743 000773  0614          PC1                     /CR
+ 744               
+ 745               /                                ENGLISH-FRENCH
+ 746                       COMLST= .               /COMMAND DECODING LIST
+ 747               
+ 748 000774  0323          "S                      /SET    - ORGANIZE
+ 749 000775  0306          "F                      /FOR    - QUAND
+ 750 000776  0311          "I                      /IF     - SI
+ 751 000777  0304          "D                      /DO     - FAIZ
+ 752 001000  0307          "G                      /GOTO   - VA
+ 753 001001  0303          "C                      /COMMENT- COMMENTE
+ 754 001002  0301          "A                      /ASK    - DEMANDE
+ 755 001003  0324          "T                      /TYPE   - TAPE
+ 756 001004  0314          "L                      /LIBRARY- ENTREPOSE
+ 757 001005  0305          "E                      /ERASE  - BIFFE
+ 758 001006  0327          "W                      /WRITE  - INSCRIS
+ 759 001007  0315          "M                      /MODIFY - MODIFIE
+ 760 001010  0321          "Q                      /QUIT   - ARRETE
+ 761 001011  0322          "R                      /RETURN - RETOURNE
+ 762 001012  0212          "*-40                   /(ASTERISK)=EXPANDABLE COMMAND
+ 763               
+ 764               /       THIS COMMAND LIST IS SPEED OPTIMIZED.
+ 765               /      CONDITIONAL TRANSFER PROCESS.
+ 766               
+ 767 001013  4564  IF,     TESTC                   /IGNORE SPACES AND TEST
+ 768 001014  4637          JMS I   IECALL          /T
+ 769 001015  2013          ISZ     PDLXR           /N-DUMP THE (EFOP)
+ 770 001016  4640          JMS I   IPART           /F-CHECK FOR PAREN MATCH
+ 771 001017  1111          TAD     M2              /A
+ 772 001020  3032          DCA     T1
+ 773 001021  1045          TAD     FLAC+1          /TEST -, 0, +
+ 774 001022  7510          SPA
+ 775 001023  2032          ISZ     T1              /N-TO   -1, -2, -3
+ 776 001024  7750          SPA SNA CLA
+ 777 001025  2032  IF3,    ISZ     T1              /COUNT COMMAS
+ 778 001026  7410          SKP
+ 779 001027  5767          JMP I   COMGO+4         /TRANSFER
+ 780 001030  4547          SORTJ                   /SEARCH TEXT UNTIL ,;C.R.
+ 781 001031  1377          TLIST-1
+ 782 001032  7371          ILIST-TLIST
+ 783 001033  4545          GETC
+ 784 001034  5230          JMP     .-4
+ 785 001035  4545  IF1,    GETC                    /MOVE PAST COMMA 
+ 786 001036  5225          JMP     IF3
+ 787               
+ 788 001037  1601  IECALL, ECALL
+ 789 001040  2047  IPART,  PARTEST
+ 790               /      LOOP CONTROL STATEMENT
+ 791               
+ 792                       SET=    .               /SUBSET OF "FOR".
+ 793               
+ 794 001041  4540  FOR,    PUSHJ                   /LOOPS, ETC.
+ 795 001042  1403          GETARG                  /LOOK FOR "=" NEXT
+ 796 001043  4560          SPNOR                   /IGNORE SPACES
+ 797 001044  1066          TAD     CHAR
+ 798 001045  1335          TAD     MEQ
+ 799 001046  7440          SZA
+ 800 001047  4566          ERROR4                  /LEFT OF "=" IN ERROR: 'FOR' OR 'SET'
+ 801 001050  1030          TAD     PT1
+ 802 001051  4542          PUSHA                   /SAVE POINTER TO VARIABLE
+ 803 001052  4540          PUSHJ
+ 804 001053  1612          EVAL-1                  /GET INITIAL VALUE EXPRESSION
+ 805 001054  1413          POPA
+ 806 001055  3030          DCA     PT1
+ 807 001056  4407          FINT                    /INITIALIZE NOW.
+ 808 001057  6430          FPUT I  PT1
+ 809 001060  0000          FXIT
+ 810 001061  4547          SORTJ                   /TEST LAST CHAR FROM "EVAL"
+ 811 001062  1377          TLIST-1
+ 812 001063  7177          FLIST1-TLIST
+ 813 001064  4566          ERROR4                  /EXCESS R-PAR
+ 814               
+ 815 001065  1030  FINCR,  TAD     PT1             /SAVE VARIABLE ADDRESS *
+ 816 001066  4542          PUSHA
+ 817 001067  4540          PUSHJ                   /EVALUATE THE INCREMENT,IF ANY.
+ 818 001070  1612          EVAL-1
+ 819 001071  4547          SORTJ                   /TEST TERMINATORS
+ 820 001072  1377          TLIST-1
+ 821 001073  7174          FLIST2-TLIST
+ 822 001074  4566          ERROR4                  /ILLEGAL TERMINATOR IN 'FOR'
+ 823               
+ 824 001075  4543  FLIMIT, PUSHF                   /SAVE THE INCREMENT.    *
+ 825 001076  2030          FLARG
+ 826 001077  4540          PUSHJ                   /GET THE LIMIT (NO ERROR DETECTION AFTER LIMIT)
+ 827 001100  1612          EVAL-1
+ 828 001101  4543  FCONT,  PUSHF                   /SAVE THE LIMIT *
+ 829 001102  2030          FLARG
+ 830 001103  4543          PUSHF                   /SAVE TEXT OF OBJECT STATEMENTS
+ 831 001104  0017          TEXTP
+ 832 001105  4540          PUSHJ                   /DO THE OBJECT STATEMENTS
+ 833 001106  0610          PROCESS
+ 834 001107  4544          POPF                    /RESTORE REMAINING TEXT.
+ 835 001110  0017          TEXTP
+ 836 001111  4544          POPF                    /GET LIMIT
+ 837 001112  2030          FLARG
+ 838 001113  4544          POPF                    /GET INCREMENT
+ 839 001114  7470          ITER1
+ 840 001115  1413          POPA                    /GET VARIABLE ADDRESS
+ 841 001116  3030          DCA     PT1
+ 842 001117  4407         FINT                    /INCREMENT AND TEST
+ 843 001120  0430          FGET I  PT1             /LOAD THE VARIABLE
+ 844 001121  1733          FADD I  FINKP           /INCREMENT IT
+ 845 001122  6430          FPUT I  PT1             /CHANGE IT
+ 846 001123  2525          FSUB I  FLARGP          /TEST IT
+ 847 001124  0000          FXIT
+ 848 001125  1045          TAD     FLAC+1
+ 849 001126  7740          SMA SZA CLA
+ 850 001127  5541          POPJ                    /END OF LOOP
+ 851 001130  1030          TAD     PT1
+ 852 001131  4542          PUSHA                   /SAVE ADDRESS *
+ 853 001132  4543          PUSHF                   /SAVE INCREMENT AGAIN *
+ 854 001133  7470  FINKP,  ITER1
+ 855 001134  5301          JMP     FCONT
+ 856               
+ 857 001135  7503  MEQ,    -"=
+ 858 001136  7524  MCOM,   -",
+ 859               
+ 860 001137  4543  FINFIN, PUSHF                   /SET INCREMENT TO ONE.
+ 861 001140  2405          FLTONE
+ 862 001141  5301          JMP     FCONT
+ 863               
+ 864               /       SET AND INTENSIFY THE POINT: FDIS(X,Y)
+ 865               
+ 866 001142  4453  XDYS,   JMS I   INTEGER         /RETURN=INTEGER VALUE OF Y.
+ 867 001143  4542          PUSHA
+ 868 001144  1066          TAD     CHAR
+ 869 001145  1336          TAD     MCOM
+ 870 001146  7640          SZA CLA
+ 871 001147  4566          ERROR3                  /ARG MISSING
+ 872 001150  4540          PUSHJ
+ 873 001151  1612          EVAL-1
+ 874 001152  4453          JMS I   INTEGER
+ 875 001153  6063          6063                    /DYL
+ 876 001154  7200          CLA
+ 877 001155  1413          POPA
+ 878 001156  6057          6057                    /DXL DIX
+ 879 001157  7410          SKP
+ 880               
+ 881               /       TAKE THE INTEGER PART
+ 882               
+ 883 001160  4453  XINT,   JMS I   INTEGER         /(FIX)
+ 884 001161  7200          CLA
+ 885 001162  5536          JMP I   EFUN3I
+ 886                      COMGO=  .               /COMMAND ROUTINE ADDRESSES
+ 887               
+ 888 001163  1041          SET
+ 889 001164  1041          FOR
+ 890 001165  1013          IF
+ 891 001166  0420          DO
+ 892 001167  0603          GOTO                    /(REFERENCED)
+ 893 001170  0614          COMMENT
+ 894 001171  1202          ASK
+ 895 001172  1203          TYPE
+ 896 001173  7503          LIBRARY
+ 897 001174  2204          ERASE
+ 898 001175  0635          WRITE
+ 899 001176  1256          MODIFY
+ 900 001177  0177          START                   /RETURN TO COMMAND MODE VIA 'QUIT'
+ 901 001200  1563          RETRN
+ 902 001201  6361          HSPX                    /ACTIVATE THE HIGH SPEED READER
+ 903               
+ 904               
+ 905               
+ 906               
+ 907               
+ 908               /       INPUT-OUTPUT STATEMENTS
+ 909               
+ 910 001202  7240  ASK,    CLA CMA                 /REMEMBER WHICH CALL.
+ 911 001203  3056  TYPE,   DCA     ATSW
+ 912 001204  3026  TASK,   DCA     DEBGSW          /RE-ENABLE THE TRACE
+ 913 001205  4547          SORTJ                   /SPECIAL CHARACTER? 
+ 914 001206  1371          ALIST-1
+ 915 001207  0176          ATLIST-ALIST
+ 916 001210  2056          ISZ     ATSW            /TEST QUOTE SWITCH
+ 917 001211  5226          JMP     TYPE2
+ 918 001212  4540          PUSHJ                   /DO ASK; SETUP PT1
+ 919 001213  1403          GETARG
+ 920 001214  1066          TAD     CHAR            /SAVE IN-LINE CHARACTER.
+ 921 001215  4542          PUSHA
+ 922 001216  1255          TAD     COL             /TYPE COLON
+ 923 001217  4551          PRINTC                  /(CLA)- TO SUPRESS ":"
+ 924 001220  2036          ISZ     INSUB           /INDICATE 'READC'
+ 925 001221  7001          IAC                     /POINT PAST CHAR
+ 926 001222  4531          JMS I   FINPUT          /READ DATA AND SAVE
+ 927 001223  1413          POPA                    /RE-TEST LAST TERMINATOR
+ 928 001224  3066          DCA     CHAR
+ 929 001225  5202          JMP     ASK             /CONTINUE PROCESSING
+ 930               
+ 931 001226  4540  TYPE2,  PUSHJ                   /DO TYPE
+ 932 001227  1613          EVAL
+ 933 001230  4530          JMS I   FOUTPUT         /PRINT
+ 934 001231  5203          JMP     TYPE
+ 935 001232  2026  TQUOT, ISZ     DEBGSW          /DISABLE TRACE
+ 936 001233  4545          GETC                    /TYPE LITERALS
+ 937 001234  4547          SORTJ
+ 938 001235  1403          TLIST2-1
+ 939 001236  0773          TLIST3-TLIST2
+ 940 001237  4551          PRINTC
+ 941 001240  5233          JMP     TQUOT+1
+ 942               
+ 943 001241  4545  TINTR,  GETC                    /PASS PERCENT SIGN
+ 944 001242  4554          GETLN                   /READ FORMAT CONTROL: "%7.03"
+ 945 001243  1067          TAD     LINENO
+ 946 001244  3052          DCA     FISW            /SAVE FORMAT CODE
+ 947 001245  5204          JMP     TASK
+ 948               
+ 949 001246  1077  TCRLF2, TAD     CCR             /SPLAT=CR ALONE
+ 950 001247  4463          JMS I   OUTDEV
+ 951 001250  7040          CMA                     /NON-PRINTING DELAY FOR CR
+ 952 001251  1077  TCRLF,  TAD     CCR             /EXCLAMATION POINT=CR, LF.
+ 953 001252  4551          PRINTC
+ 954 001253  4545  TASK4,  GETC                    /MOVE TO NEXT CHARACTER
+ 955 001254  5204          JMP     TASK
+ 956               
+ 957 001255  0272  COL,    ":                      /":"
+ 958               
+ 959               
+ 960               
+ 961               /       IF DEBGSW= 0: ENABLE FLIP-FLOP "DMPSW"
+ 962               /                 #0: DISABLE AND RETURN ALL"?" ' S.
+ 963               /       IF DMPSW=  0: TRACE ON, IF ENABLED
+ 964               /                 #0: TRACE OFF
+ 965               /       IF BOTH=   0: PRINT TRACE.
+ 966               /      SEARCH ROUTINES
+ 967               
+ 968 001256  4554  MODIFY, GETLN                   /READ LINE NO.
+ 969 001257  4555          FINDLN                  /LOOK IT UP NOW.
+ 970 001260  4566          ERROR2                  /NOT THERE = BAD COMMAND UNLESS ZERO.
+ 971 001261  1060          TAD     BUFR            /SET POINTERS
+ 972 001262  3010          DCA     AXIN            /FOR INPUT
+ 973 001263  3062          DCA     XCTIN
+ 974 001264  1067          TAD     LINENO          /COPY THE SAME LINE NUMBER.
+ 975 001265  3410          DCA I   AXIN            /(X-MEM)
+ 976 001266  1010          TAD     AXIN            /SAVE START OF NEW LINE
+ 977 001267  3027          DCA     PACKST
+ 978 001270  4464  SCONT,  JMS I   INDEV           /READ THE TELETYPE INPUT SILENTLY.
+ 979 001271  3100          DCA     LIST3+1         /SAVE SEARCH CHARACTER
+ 980 001272  2026          ISZ     DEBGSW          /NO BREAKS.
+ 981 001273  4545  SCHAR,  GETC                    /TYPE+TEST-F.F.
+ 982 001274  4551          PRINTC                  /PLAYBACK THE TEXT
+ 983 001275  4547          SORTJ                   /LOOK FOR MATCH
+ 984 001276  0076          LIST3-1
+ 985 001277  1271          LISTGO-LIST3
+ 986 001300  4546          PACKC                   /SAVE NEW LINE.
+ 987 001301  5273          JMP     SCHAR
+ 988               
+ 989 001302  1060  SBAR,   TAD     BUFR            /RESTART-B.A.
+ 990 001303  7001          IAC
+ 991 001304  3010          DCA     AXIN            /SET POINTERS
+ 992 001305  3062          DCA     XCTIN
+ 993 001306  4552  SFOUND, READC                   /READ FROM KEYBOARD
+ 994 001307  4547          SORTJ                   /TEST
+ 995 001310  0071          LIST6-1
+ 996 001311  1271          SRNLST-LIST6
+ 997 001312  4546  SGOT,   PACKC                   /PACK CHAR.
+ 998 001313  5306          JMP     SFOUND          /MORE
+ 999 001314  0000  SORTB, 0                       /SORT AND BRANCH ROUTINE. - "SORTJ"
+1000 001315  7450          SNA
+1001 001316  1066          TAD     CHAR            /ASSUME CHAR IF AC=0
+1002 001317  7041          CIA
+1003 001320  3071          DCA     T2              /SAVE SORT ITEM
+1004 001321  1714          TAD I   SORTB           /FIRST ARG IS LIST LESS ONE
+1005 001322  2314          ISZ     SORTB           /2AND IS INTRA-LIST LENGTH
+1006 001323  3012          DCA     XRT2
+1007 001324  1412          TAD I   XRT2
+1008 001325  7510          SPA                     /**LISTS ENDED BY NEGATIVE NUMBERS**
+1009 001326  5340          JMP     SEX             /READ EXIT
+1010 001327  1071          TAD     T2              /FIND ADDRESS
+1011 001330  7640          SZA CLA
+1012 001331  5324          JMP     .-5
+1013 001332  1012          TAD     XRT2            /MATCH FOUND.
+1014 001333  1714          TAD I   SORTB
+1015 001334  3071          DCA     T2
+1016 001335  1471          TAD I   T2
+1017 001336  3071          DCA     T2              /DEBUG : AC = ADDRESS
+1018 001337  5471          JMP I   T2
+1019               
+1020 001340  2314  SEX,    ISZ     SORTB           /MATCH NOT FOUND.
+1021 001341  7300          CLA CLL
+1022 001342  5714          JMP I   SORTB
+1023               
+1024               
+1025               
+1026               /       ANALOGUE TO DIGITAL CONVERSION FOR AX08
+1027               
+1028 001343  4453  XADC,   JMS I   INTEGER
+1029 001344  7000          NOP                     /(IOF)-FOR OTHER BRANDS
+1030 001345  6375          6375                    /ACMX ADCV
+1031 001346  6332          6332                    /SKAD
+1032 001347  5346          JMP     .-1
+1033 001350  6362          6362                    /RADC
+1034 001351  3046          DCA     FLAC+2
+1035 001352  6001          ION
+1036 001353  5536          JMP I   EFUN3I
+1037 001354  0000  OUTL,  0                       /SLOW OUTPUT FOR ODT SYNCRONIZATION
+1038 001355  6046          TLS                     /AND FOR H.S. PUNCH
+1039 001356  6026          PLS
+1040 001357  6041          TSF                     /IOT FOR SLOWEST DEVICE
+1041 001360  5357          JMP     .-1
+1042 001361  7200          CLA
+1043 001362  5754          JMP I   OUTL
+1044               
+1045               
+1046               
+1047               
+1048                       SRNLST= .               /'MODIFY' CONTROL CHARACTER TABLE
+1049               
+1050 001363  1273          SCHAR                   /F.F. = CONTINUE
+1051 001364  1270          SCONT                   /BELL = CHANGE SEARCH CHARACTER
+1052 001365  2740          RECOVR                  /C.C. = BREAK
+1053 001366  1302          SBAR                    /B.A. = RESTART
+1054 001367  1271          SCONT+1                 /L.F. = FINISH THE LINE AS BEFORE.
+1055               
+1056                       LISTGO= .
+1057               
+1058 001370  0261          SRETN                   /C.R. = END THE LINE HERE AS IS.
+1059 001371  1312          SGOT                    /CHAR = SEARCH CHARACTER
+1060               
+1061               
+1062               
+1063               
+1064               
+1065                       ALIST=  .               /ASK/TYPE LIST OF CONTROLS.
+1066               
+1067 001372  0245          "%                      /%
+1068 001373  0242          ""                      /"
+1069 001374  0241          "!                      /!
+1070 001375  0243          "#                      /#
+1071 001376  0244          "$                      /$
+1072               
+1073                       GLIST=  .
+1074               
+1075 001377  0240          "                       /SPACE
+1076                       TLIST=  .
+1077               
+1078 001400  0254          ",                      /,
+1079 001401  0273          ";                      /;
+1080 001402  0215          "M&237                  /C.R.
+1081               
+1082               /       THIS LIST IS ENDED BY 'TESTC'.
+1083               /      FIND OR ENTER A VARIABLE IN THE LIST.
+1084               
+1085 001403  4564  GETARG, TESTC                   /FIRST LETTER OF ARG
+1086 001404  0242  TLIST2, ""                      /"
+1087 001405  0215          "M&237                  /C.R. - FUNCTION OR NUMBER IS NOT AN ARG.
+1088 001406  4566          ERROR4                  /BAD ARGUMENT IN 'FOR', 'SET', OR 'ASK'
+1089 001407  3062  GETVAR, DCA     XCTIN           /PACK INTO ADD.
+1090 001410  4546          PACKC
+1091 001411  4545          GETC                    /SECOND LETTER
+1092 001412  4550          SORTC                   /TERMINATOR?
+1093 001413  1767          TERMS-1
+1094 001414  5226          JMP     GSERCH          /YES
+1095 001415  1066          TAD     CHAR            /NO
+1096 001416  0122          AND     P77             /SAVE 2AND LETTER OF NAME
+1097 001417  1061          TAD     ADD
+1098 001420  3061          DCA     ADD
+1099 001421  4545          GETC                    /IGNORE THE REST
+1100 001422  4550          SORTC
+1101 001423  1767          TERMS-1
+1102 001424  5226          JMP     GSERCH
+1103 001425  5221          JMP     .-4
+1104               
+1105 001426  4562  GSERCH, TSTLPR                  /LOOK FOR SUBSCRIPT VIA SORTCN
+1106 001427  5237          JMP     GS1             /NOT SUBSCRIPTED BY L-PAR.
+1107 001430  1061          TAD     ADD             /SAVE NAME
+1108 001431  3056          DCA     EFOP            /FOR RECURSIVE AND ERROR CHECK
+1109 001432  4660          JMS I   GECALL          /TO EVAL
+1110 001433  1413          POPA
+1111 001434  3061          DCA     ADD             /RESTORE NAME
+1112 001435  4657          JMS I   PTEST           /TEST PAREN MATCH, ETC.
+1113 001436  4453          JMS I   INTEGER         /CONVERT TO 12-BIT NUMBER.
+1114 001437  3317  GS1,    DCA     SUBS            /SAVE SUBSCRIPT
+1115 001440  1060          TAD     STARTV          /SEARCH FOR VARIABLE(CHANGE FOR X-MEM)
+1116 001441  3030  GS3,    DCA     PT1
+1117 001442  1030          TAD     PT1
+1118 001443  7041          CIA
+1119 001444  1031          TAD     LASTV           /TEST FOR END OF LIST
+1120 001445  7750          SPA SNA CLA
+1121 001446  5261          JMP     GS2             /END SEARCH
+1122 001447  1430          TAD I   PT1             /GET TABLE ENTRY
+1123 001450  7041          CIA
+1124 001451  1061          TAD     ADD
+1125 001452  7650          SNA CLA
+1126 001453  5305          JMP     GFND1           /FOUND XX
+1127 001454  1030  GS4,    TAD     PT1             /TRY NEXT ONE
+1128 001455  1070          TAD     GINC
+1129 001456  5241          JMP     GS3
+1130               
+1131 001457  2047  PTEST,  PARTEST
+1132 001460  1601  GECALL, ECALL
+1133 001461  1031  GS2,   TAD     LASTV           /ADD THE VARIABLE
+1134 001462  1005          TAD     P13             /TEST STORAGE LIMITS
+1135 001463  7141          CLL CIA
+1136 001464  1013          TAD     PDLXR
+1137 001465  7620          SNL CLA
+1138 001466  4566          ERROR3
+1139 001467  1031          TAD     LASTV           /UPDATE THE LIST.
+1140 001470  1070          TAD     GINC
+1141 001471  3031          DCA     LASTV
+1142 001472  1061          TAD     ADD             /SAVE NAME
+1143 001473  3430          DCA I   PT1
+1144 001474  2030          ISZ     PT1             /SAVE SUBSCRIPT
+1145 001475  1317          TAD     SUBS
+1146 001476  3430          DCA I   PT1
+1147 001477  2030          ISZ     PT1             /SET PT1
+1148 001500  4407          FINT
+1149 001501  0537          FGET I  CFRSX
+1150 001502  6430          FPUT I  PT1
+1151 001503  0000          FXIT
+1152 001504  5541          POPJ                    /EXIT
+1153               
+1154 001505  1030  GFND1,  TAD     PT1             /FOUND SAME
+1155 001506  3011          DCA     XRT             /TEST SUBSCRIPTS
+1156 001507  1411          TAD I   XRT
+1157 001510  7041          CIA
+1158 001511  1317          TAD     SUBS
+1159 001512  7640          SZA CLA
+1160 001513  5254          JMP     GS4             /WRONG SUBSCRIPT
+1161 001514  2030          ISZ     PT1             /SET POINTER TO DATA
+1162 001515  2030          ISZ     PT1
+1163 001516  5541          POPJ
+1164                      SUBS=   .
+1165               
+1166 001517  0000  XSPNOR, 0                       /IGNORE LEADING SPACES - "SPNOR"
+1167 001520  1066          TAD     CHAR
+1168 001521  1114          TAD     M240
+1169 001522  7640          SZA CLA
+1170 001523  5717          JMP I   XSPNOR
+1171 001524  4545          GETC
+1172 001525  5320          JMP     XSPNOR+1
+1173               
+1174               
+1175 001526  7520  M260,   -"0
+1176 001527  7507  M271,   -"9
+1177               
+1178               
+1179               
+1180 001530  0000  RANO,   0000                    /RANDOM NUMBER STORAGE!
+1181 001531  2000          2000
+1182 001532  0000          0000
+1183               
+1184 001533  0000  XTESTN, 0                       /RETURNS: .; OTHER; NUMBER - "TESTN"
+1185 001534  1066          TAD     CHAR
+1186 001535  1115          TAD     MPER
+1187 001536  7640          SZA CLA
+1188 001537  2333          ISZ     XTESTN
+1189 001540  1066          TAD     CHAR
+1190 001541  1326          TAD     M260
+1191 001542  3054          DCA     SORTCN          /SAVE VALUE OF THE NUMBER
+1192 001543  1054          TAD     SORTCN          /TEST IF REALLY A DIGIT.
+1193 001544  7710          SPA CLA
+1194 001545  5733          JMP I   XTESTN
+1195 001546  1066          TAD     CHAR
+1196 001547  1327          TAD     M271
+1197 001550  7750          SPA SNA CLA
+1198 001551  2333          ISZ     XTESTN          /IF A NUMBER
+1199 001552  5733          JMP I   XTESTN
+1200               
+1201 001553  4407  XRAN,   FINT                    /PSEUDO-RANDOM NUMBER GENERATOR.
+1202 001554  1330          FADD    RANO            /ADD RUNNING RESULT TO THE ARGUMENT, IF ANY.
+1203 001555  4350          FMUL    .-5             /BLAST THE ARGUMENT
+1204 001556  6330          FPUT    RANO
+1205 001557  0000          FXIT
+1206 001560  3330          DCA     RANO            /CONVERT TO .5 THROUGH .999
+1207 001561  3044          DCA     FLAC            /SAME AS RETURN
+1208 001562  5536          JMP I   EFUN3I
+1209               /      EXIT FROM A "DO" SUBROUTINE
+1210               
+1211 001563  1137  RETRN,  TAD     CFRSX           /(PC) => 0
+1212 001564  3022          DCA     PC
+1213 001565  1413  XPOPJ,  TAD I   PDLXR           /RECURSIVE EXIT - "POPJ"
+1214 001566  3071          DCA     T2
+1215 001567  5471          JMP I   T2
+1216               
+1217               
+1218               
+1219                       ATLIST= .               /ASK-TYPE CONTROL CHARACTER TABLE
+1220               
+1221 001570  1241          TINTR                   /% - FORMAT DELIMITER
+1222 001571  1232          TQUOT                   /" - LITERAL DELIMITER
+1223 001572  1251          TCRLF                   /! - CARRIAGE RETURN AND LINE FEED
+1224 001573  1246          TCRLF2                  /# - CARRIAGE RETURN ONLY
+1225 001574  3052          TDUMP                   /$ - DUMP THE SYMBOL TABLE CONTENTS
+1226 001575  1253          TASK4                   /SP- TERMINATOR FOR NAMES
+1227 001576  1253          TASK4                   /, - TERMINATOR FOR EXPRESSIONS
+1228 001577  0610          PROCESS                 /; - TERMINATOR FOR COMMANDS
+1229 001600  0614          PC1                     /C.R. - TERMINATOR FOR STRINGS
+1230               
+1231               /       $ - FOR 'TDUMP' TERMINATES THE COMMAND.
+1232               /      EVALUATE AN EXPRESSION WHICH
+1233               /       TERMINATES WITH AN R-PAR,; OR C.R. AND
+1234               /       LEAVE THE RESULT IN FLAC AND IN FLARG.
+1235               
+1236 001601  0000  ECALL,  0                       /RECURSIVE CALL TO "EVAL"
+1237 001602  1054          TAD     SORTCN          /SAVE 'SORTCN','LASTOP',AND 'EFOP'
+1238 001603  4542          PUSHA
+1239 001604  1055          TAD     LASTOP
+1240 001605  4542          PUSHA
+1241 001606  1056          TAD     EFOP            /SAVE FUNCTION CODE.
+1242 001607  4542          PUSHA
+1243 001610  1201          TAD     ECALL           /RETURN TO CALLING
+1244 001611  4542          PUSHA                   /ADDRESS AFTER NEXT POPJ
+1245               
+1246 001612  4545          GETC                    /MOVE PAST EXTRA CHARACTER
+1247 001613  3055  EVAL,   DCA     LASTOP          /EVALUATION CONTROLLER (CHECKPOINT?)
+1248 001614  4564          TESTC                   /TEST CHARACTER AND IGNORE SPACES
+1249 001615  5227          JMP     ETERM1          /TERMINATOR
+1250 001616  5332          JMP     ENUM            /NUMBER
+1251 001617  5343          JMP     EFUN            /FUNCTION
+1252 001620  4540          PUSHJ                   /LETTER OF VARIABLE
+1253 001621  1407          GETVAR                  /FIND OR CREATE VARIABLE; ALSO SET PT1.
+1254 001622  4564  OPNEXT, TESTC                   /PT1=>ARG
+1255 001623  5244          JMP ETERMN              /T
+1256 001624  0212  ECHOLST,"J&237                  /N-ERROR IN FORMAT
+1257 001625  0377          0377                    /F
+1258 001626  4566          ERROR4                  /L - MISSING OPERATOR
+1259               
+1260 001627  1137  ETERM1, TAD     CFRSX           /SET PT1.
+1261 001630  3030          DCA     PT1             /TO POINT TO ZERO
+1262 001631  1111          TAD     M2              /TEST FOR UNARY OPERATIONS
+1263 001632  1054          TAD     SORTCN
+1264 001633  7450          SNA
+1265 001634  5247          JMP     ETERM           /CREATE DUMMY FOR UNARY MINUS
+1266 001635  7001          IAC
+1267 001636  7650          SNA CLA
+1268 001637  5323          JMP     ARGNXT          /IGNORE UNARY PLUS
+1269 001640  1054          TAD     SORTCN          /TEST FOR NULL PARENS.
+1270 001641  1121          TAD     M11
+1271 001642  7710          SPA CLA
+1272 001643  5363          JMP     ELPAR           /MIGHT BE AN L-PAR.
+1273 001644  4562  ETERMN, TSTLPR
+1274 001645  7410          SKP
+1275 001646  4566          ERROR4                  /OPERATOR MISSING BEFORE PAREN
+1276 001647  1054  ETERM,  TAD     SORTCN          /SET FROM "TESTC"-"SORTC"
+1277 001650  3024          DCA     THISOP
+1278 001651  1024          TAD     THISOP
+1279 001652  1121          TAD     M11
+1280 001653  7700          SMA CLA                 /END?
+1281 001654  3024          DCA     THISOP          /"THISOP" EQUIV. TO END OF EXP.
+1282 001655  1024  ETERM2,        TAD     THISOP          /COMPARE PRIORITIES
+1283 001656  7041          CIA
+1284 001657  1055          TAD     LASTOP
+1285 001660  7710          SPA CLA
+1286 001661  5310          JMP     EPAR            /CONTINUE
+1287 001662  1055          TAD     LASTOP          /FIND OPERATION
+1288 001663  7112          CLL RTR
+1289 001664  7012          RTR
+1290 001665  1331          TAD     OPTABL
+1291 001666  3274          DCA     FLOP
+1292 001667  1055          TAD     LASTOP
+1293 001670  7640          SZA CLA                 /TEST FOR END OF DATA INTO FLOATING AC.
+1294 001671  4544          POPF                    /GET LAST DATA
+1295 001672  0044          FLAC
+1296 001673  4407          FINT
+1297 001674  0000  FLOP,   00                      /(FLOPR I PT1)+-*/
+1298 001675  6525          FPUT I  FLARGP          /SAVE RESULT
+1299 001676  0000          FXIT
+1300 001677  1125          TAD     FLARGP
+1301 001700  3030          DCA     PT1
+1302 001701  1024          TAD     THISOP
+1303 001702  1055          TAD     LASTOP          /=0?
+1304 001703  7650          SNA CLA
+1305 001704  5541          POPJ                    /EXIT "EVAL"
+1306 001705  1413          POPA                    /GET PRIOR OP
+1307 001706  3055          DCA     LASTOP
+1308 001707  5255          JMP     ETERM2          /COMPARE THIS OP
+1309               
+1310 001710  4562  EPAR,   TSTLPR                  /TEST FOR SUB-EXPRESSION
+1311 001711  7410          SKP
+1312 001712  5365          JMP     EPAR2           /GO EVALUATE EXPRESSION
+1313 001713  1055          TAD     LASTOP          /CONTINUE READING THE EXPRESSION
+1314 001714  4542          PUSHA                   /SAVE "LASTOP".
+1315 001715  1030          TAD     PT1
+1316 001716  3320          DCA     .+2
+1317 001717  4543          PUSHF                   /SAVE LAST ARGUMENT
+1318 001720  0000          00
+1319 001721  1024          TAD     THISOP          /MORE TO COME
+1320 001722  3055          DCA     LASTOP
+1321 001723  4545  ARGNXT, GETC                    /READ 1ST CHAR OF AN ARG.
+1322 001724  4564          TESTC                   /DO SPECIAL CHECK
+1323 001725  5363          JMP     ELPAR           /COULD BE LEFT PAREN
+1324 001726  5332          JMP     ENUM            /N
+1325 001727  5343          JMP     EFUN            /F
+1326 001730  5220          JMP     OPNEXT-2        /L
+1327               
+1328 001731  0430  OPTABL, FGET I  PT1             /BASE FOR OPERATION COMPUTATION
+1329 001732  4543  ENUM,  PUSHF                   /TO PROCESS A NUMBER, SAVE AC
+1330 001733  0044          FLAC
+1331 001734  1125          TAD     FLARGP          /SET POINTER AS FOR A VARIABLE.
+1332 001735  3030          DCA     PT1
+1333 001736  3036          DCA     INSUB           /POINT TO 'GETC' AND USE CHAR
+1334 001737  4531          JMS I   FINPUT          /READ TEXT NUMBER => (PT1)
+1335 001740  4544          POPF                    /RESTORE THE AC
+1336 001741  0044          FLAC
+1337 001742  5222          JMP     OPNEXT          /CONTINUE
+1338               
+1339 001743  3056  EFUN,   DCA     EFOP            /SET CODE
+1340 001744  4545          GETC                    /READ FUNCTION NAME.(1, 2, OR 3 LETTERS)
+1341 001745  4550          SORTC                   /LOOK FOR TERMINATION CHARACTER.
+1342 001746  1767          TERMS-1
+1343 001747  5354          JMP     EFUN2           /YES
+1344 001750  1056          TAD     EFOP            /NO
+1345 001751  7104          CLL RAL                 /MISH-MASH HASH CODE
+1346 001752  1066          TAD     CHAR
+1347 001753  5343          JMP     EFUN
+1348               
+1349 001754  4562  EFUN2,  TSTLPR
+1350 001755  4566          ERROR4                  /MUST BE FOLLOWED BY PARENS TO SET ARGUMENT
+1351 001756  4201          JMS     ECALL           /CALL "EVAL" TO COMPUTE ARGUMENT
+1352 001757  1413          POPA                    /BRANCH ON FUNCTION CODE; RETURN VIA EFUN3I.
+1353 001760  4547          SORTJ
+1354 001761  2164          FNTABL-1
+1355 001762  6207          FNTABF-FNTABL
+1356 001763  4562  ELPAR,  TSTLPR                  /LEFT PAREN OR FELL THROUGH FUNCTION TABLE
+1357 001764  4566          ERROR4                  /DOUBLE OPERATORS OR ILLEGAL FUNCTION NAME.
+1358 001765  4201  EPAR2,  JMS     ECALL           /EVALUATE NESTED EXPRESSION
+1359 001766  2013          ISZ     PDLXR           /DUMP EXTRA ARG.
+1360 001767  5536          JMP I   EFUN3I
+1361                      TERMS=  .               /TERMINATOR TABLE FOR 'EVAL' AND 'GETVAR'
+1362               
+1363 001770  0240          "                       /SPACE  0
+1364 001771  0253          "+                      /+      1
+1365 001772  0255          "-                      /-      2
+1366 001773  0257          "/                      //      3
+1367 001774  0252          "*                      /*      4
+1368 001775  0336          "^                      /UP ARR 5
+1369 001776  0250          "(                      /(      6 L-PARS
+1370 001777  0333          "[                      /[      7
+1371 002000  0274          "<                      /<      10
+1372 002001  0251          ")                      /)      11 R-PARS
+1373 002002  0335          "]                      /]      12
+1374 002003  0276          ">                      />      13
+1375 002004  0254          ",                      /,      14
+1376 002005  0273          ";                      /;      15
+1377 002006  0215          "M&237                  /C.R.   16
+1378 002007  0275          "=                      /= TO END GETARG FROM 'SET'
+1379               
+1380               /       TWO MINOR FUNCTIONS
+1381               
+1382               
+1383 002010  4543  XSGN,   PUSHF                   /TAKE SIGN*1 OF FLARG
+1384 002011  2405          FLTONE
+1385 002012  4544          POPF
+1386 002013  0044          FLAC
+1387 002014  1231  XABS,   TAD     FLARG+1         /TAKE ABSOLUTE VALUE OF FLAC
+1388 002015  7710          SPA CLA                 /SKIP TO CONTINUE
+1389 002016  4451          JMS I   MINSKI          /NEGATE THE FLOATING AC
+1390               
+1391               /       CONTINUATION OF FUNCTION CALLS.
+1392               
+1393 002017  4407  EFUN3,  FINT
+1394 002020  7000          FNOR                    /NORMALIZE FUNCTION RETURN
+1395 002021  6230          FPUT    FLARG           /SAVE FUNCTION VALUE
+1396 002022  0000          FXIT
+1397 002023  1125          TAD     FLARGP          /SET POINTER
+1398 002024  3030          DCA     PT1
+1399 002025  4247          JMS     PARTEST
+1400 002026  5627          JMP I   .+1;    OPNEXT  /FUNCTION RETURN IS OK
+     002027  1622  
+1401 002030  0000  FLARG, 0                       /DATA TEMPORARY STORAGE
+1402 002031  0000          0
+1403 002032  0000          0
+1404 002033  0000          0
+1405               
+1406 002034  0003  P3,     3
+1407               
+1408 002035  0000  LPRTST, 0                       /SKIP IF LEFT PAREN. - 'TSTLPR'
+1409 002036  1054          TAD     SORTCN
+1410 002037  1121          TAD     M11
+1411 002040  7700          SMA CLA
+1412 002041  5635          JMP I   LPRTST
+1413 002042  1054          TAD     SORTCN
+1414 002043  1120          TAD     M5
+1415 002044  7740          SMA SZA CLA
+1416 002045  2235          ISZ     LPRTST
+1417 002046  5635          JMP I   LPRTST
+1418               
+1419 002047  0000  PARTEST,0                       /TEST THE PAREN MATCHINGS
+1420 002050  1413          POPA                    /RESTORE LAST OPERATION
+1421 002051  3055          DCA     LASTOP
+1422 002052  1234          TAD     P3              /+3 TO COMPARE CODES
+1423 002053  1413          POPA                    /GET LAST PAREN CODE.
+1424 002054  7041          CIA                     /CHECK FOR PAREN MATCH.
+1425 002055  1054          TAD     SORTCN          /(STILL SET FROM THE LAST "EVAL")
+1426 002056  7640          SZA CLA                 /SKIP IF MATCH  
+1427 002057  4566          ERROR4                  /PAREN ERROR
+1428 002060  4545          GETC                    /MOVE PAST R-PAR
+1429 002061  5647          JMP I   PARTEST
+1430               /      THE DELETE A LINE ROUTINE
+1431               
+1432 002062  0000  XDELETE,0                       /UNCHAIN A LINE AND RECOVER THE SPACE.
+1433 002063  6002          IOF                     /PROTECT POINTER CHANGES FROM INTERRUPTIONS
+1434 002064  4555          FINDLN                  /SETS "THISLN" AND "LASTLN".
+1435 002065  5662          JMP I   XDELETE         /ALREADY GONE 
+1436 002066  2026          ISZ     DEBGSW          /DISABLE TRACE
+1437 002067  4545          GETC                    /MEASURE LENGTH
+1438 002070  1066          TAD     CHAR
+1439 002071  1116          TAD     MCR
+1440 002072  7640          SZA CLA
+1441 002073  5267          JMP     .-4
+1442 002074  1017          TAD     AXOUT           /SAVE LAST ADDRESS
+1443 002075  7040          CMA
+1444 002076  1023          TAD     THISLN
+1445 002077  3057          DCA     CNTR            /LENGTH < 0
+1446 002100  1133          TAD     CFRS            /IT IS ILLEGAL TO DELETE THE FIRST LINE
+1447 002101  7041          CIA
+1448 002102  1023          TAD     THISLN
+1449 002103  7650          SNA CLA
+1450 002104  5177          JMP     START           /JUST IGNORE SUCH COMMANDS
+1451 002105  7000          CDF     T               /CHANGE DATA FIELD TO TEXT.(X-MEM)
+1452 002106  1423          TAD I   THISLN          /DISCONNECT
+1453 002107  3425          DCA I   LASTLN
+1454 002110  1133          TAD     CFRS            /START LIST AT TOP
+1455 002111  3071  DOK,    DCA     T2              /EXAMINATION ADDRESS
+1456 002112  1471          TAD I   T2              /GET THE NEXT ADDR.
+1457 002113  7450          SNA                     /TEST FOR END
+1458 002114  5327          JMP     DONE            /YES-WRAP UP ALL.
+1459 002115  3032          DCA     T1              /SAVE NEXT ADDRESS.
+1460 002116  1023          TAD     THISLN          /COMPARE LINE POSITIONS
+1461 002117  7141          CLL CIA
+1462 002120  1032          TAD     T1
+1463 002121  7630          SZL CLA                 /SKIP IF THISLN > X
+1464 002122  1057          TAD     CNTR            /CHANGE (X) TO ACCOUNT FOR
+1465 002123  1032          TAD     T1              /GARBAGE COLLECTION.
+1466 002124  3471          DCA I   T2
+1467 002125  1032          TAD     T1              /GET NEXT
+1468 002126  5311          JMP     DOK
+1469               /      GARBAGE COLLECTION
+1470               
+1471 002127  7040  DONE,   CMA                     /BACKUP L FOR XR
+1472 002130  1023          TAD     THISLN
+1473 002131  3011          DCA     XRT
+1474 002132  1057          TAD     CNTR            /SETUP END OF HOSE
+1475 002133  7040          CMA
+1476 002134  1023          TAD     THISLN
+1477 002135  3012          DCA     XRT2
+1478 002136  1057          TAD     CNTR            /CORRECT END OF BUFFER POINTER.
+1479 002137  1060          TAD     BUFR
+1480 002140  3060          DCA     BUFR
+1481 002141  1010          TAD     AXIN            /COMPUTE COUNT
+1482 002142  7040          CMA
+1483 002143  1012          TAD     XRT2
+1484 002144  3032          DCA     T1
+1485 002145  1010          TAD     AXIN
+1486 002146  1057          TAD     CNTR
+1487 002147  3010          DCA     AXIN
+1488 002150  1412          TAD I   XRT2            /SIPHON LOWER PART.
+1489 002151  3411          DCA I   XRT
+1490 002152  2032          ISZ     T1
+1491 002153  5350          JMP     .-3
+1492 002154  5263          JMP     XDELETE+1       /RESET 'LASTLN', 'THISLN', AND DATA FIELD.
+1493               
+1494               
+1495 002155  0000  CHIN,   0                       /READ IN A CHARACTER SUBR. - "READC"
+1496 002156  4464          JMS I   INDEV
+1497 002157  3066          DCA     CHAR
+1498 002160  4550          SORTC                   /LINEFEED OR RUBOUT?
+1499 002161  1623          ECHOLST-1
+1500 002162  5755          JMP I   CHIN            /YES
+1501 002163  4551          PRINTC                  /ECHO THE INPUT
+1502 002164  5755          JMP I   CHIN
+1503               
+1504               
+1505                       FNTABL= .
+1506               
+1507 002165  2533          "A^2+"B^2+"S            /ABS
+1508 002166  2650          "S^2+"G^2+"N            /SGN
+1509 002167  2636          "I^2+"T^2+"R            /ITR
+1510 002170  2565          "D^2+"I^2+"S            /DIS
+1511 002171  2630          "R^2+"A^2+"N            /RAN
+1512 002172  2517          "A^2+"D^2+"C            /ADC
+1513 002173  2572          "A^2+"T^2+"N            /ATN
+1514 002174  2624          "E^2+"X^2+"P            /EXP
+1515 002175  2625          "L^2+"O^2+"G            /LOG
+1516 002176  2654          "S^2+"I^2+"N            /SIN    LIST OF CODED FUNCTION NAMES
+1517 002177  2575          "C^2+"O^2+"S            /COS
+1518 002200  2702          "S^2+"Q^2+"T            /SQT
+1519 002201  2631          "N^2+"E^2+"W            /NEW
+1520 002202  2567          "C^2+"O^2+"M            /COM
+1521 002203  0330          "X                      /X
+1522               /      ERASE SINGLE LINES, GROUPS, OR VARIABLES
+1523               
+1524 002204  4564  ERASE,  TESTC                   /TEST THE SECOND WORD, IF ANY.
+1525 002205  5237          JMP     ERVX            /ERASE VARIABLES
+1526 002206  5222          JMP     ERL             /LINES OR GROUPS
+1527 002207  5213          JMP     .+4             /ERROR
+1528 002210  1066          TAD     CHAR            /ALL TEXT
+1529 002211  1112          TAD     MINUSA
+1530 002212  7440          SZA
+1531 002213  4566          ERROR3                  /BAD ARG FOR ERASE.
+1532 002214  1135  ERT,    TAD     ENDT            /ERASE ALL TEXT **
+1533 002215  3060          DCA     BUFR
+1534 002216  3533          DCA I   CFRS            /(X-MEM)
+1535 002217  1060  ERV,    TAD     STARTV          /ERASE VARIABLES **
+1536 002220  3031          DCA     LASTV
+1537 002221  5177          JMP     START           /POINTERS MAY BE DIFFERENT NOW.
+1538               
+1539 002222  4554  ERL,    GETLN                   /ERASE LINES.
+1540 002223  1060          TAD     BUFR            /PROTECT REST OF TEXT.
+1541 002224  3010          DCA     AXIN
+1542 002225  4565  ERG,    DELETE                  /EXTRACT ONE LINE
+1543 002226  2023          ISZ     THISLN
+1544 002227  1065          TAD     NAGSW
+1545 002230  7700          SMA CLA
+1546 002231  1423          TAD I   THISLN          /(X-MEM)
+1547 002232  4563          TSTGRP                  /SKIP IF G(AC) = G(LINENO)
+1548 002233  5217          JMP     ERV
+1549 002234  1423          TAD I   THISLN          /(X-MEM)
+1550 002235  3067          DCA     LINENO
+1551 002236  5225          JMP     ERG
+1552               
+1553 002237  1060  ERVX,   TAD     STARTV          /INIT VARIABLES MAY BE INDIRECT COMMAND
+1554 002240  3031          DCA     LASTV
+1555 002241  5541          POPJ
+1556               /      ROUTINE CALLED VIA "FINDLN":
+1557               
+1558               /       SEARCH FOR A GIVEN LINE I.D. =[ "LINENO" ]
+1559               /       1ST RETURN IF NOT FOUND,
+1560               /       2AND IF FOUND.
+1561               /       "THISLN" = FOUND LINE OR NEXT LARGER.
+1562               /       "LASTLN" = LESSER AND/OR LAST.
+1563               /       "TEXTP" IS SET.
+1564               
+1565 002242  0000  XFIND,  0
+1566 002243  1133          TAD     CFRS            /INITIALIZE POINTERS TO FIRST LINE
+1567 002244  3025          DCA     LASTLN
+1568 002245  1133          TAD     CFRS
+1569 002246  3023  FINDN,  DCA     THISLN          /SAVE THIS ONE
+1570 002247  1023          TAD     THISLN
+1571 002250  3011          DCA     XRT
+1572 002251  1067          TAD     LINENO
+1573 002252  7141          CLL CMA IAC             /CLEAR LINK AND NEGATE LINENO.
+1574 002253  1411          TAD I   XRT             /LINENO=0 WILL ALSO BE FOUND(X-MEM)
+1575 002254  7450          SNA
+1576 002255  5266          JMP     FEND3-1         /FOUND IT.
+1577 002256  7630          SZL CLA
+1578 002257  5267          JMP     FEND3           /PAST IT.
+1579 002260  1023          TAD     THISLN          /MOVE POINTERS
+1580 002261  3025          DCA     LASTLN
+1581 002262  1423          TAD I   THISLN          /END OF TEXT? (X-MEM)
+1582 002263  7440          SZA
+1583 002264  5246          JMP     FINDN           /NOT YET
+1584 002265  7410          SKP
+1585 002266  2242          ISZ     XFIND           /2ND EXIT = FOUND
+1586 002267  1023  FEND3,  TAD     THISLN          /1ST RETURN = NOT FOUND
+1587 002270  7001          IAC
+1588 002271  3017          DCA     AXOUT           /SET "TEXTP".
+1589 002272  3020          DCA     XCT
+1590 002273  5642          JMP I   XFIND
+1591               
+1592 002274  0000  UTRA,   0                       /UNPACK CHARACTER. - "GETC"
+1593 002275  4330          JMS     GET1
+1594 002276  7710  UTE,    SPA CLA                 /NORM & EXTEND
+1595 002277  1006          TAD     C100            /300-337 & 340-376
+1596 002300  1357          TAD     M137            /240-276 & 200-236
+1597 002301  1066          TAD     CHAR
+1598 002302  7450          SNA
+1599 002303  5316          JMP     UTX             /"?" FOUND
+1600 002304  1075          TAD     P337
+1601 002305  3066  UTQ,    DCA     CHAR
+1602 002306  1026          TAD     DEBGSW
+1603 002307  1100          TAD     DMPSW
+1604 002310  7650          SNA CLA                 /PRINT ONLY IF BOTH ARE ZERO.
+1605 002311  4551          PRINTC
+1606 002312  5674          JMP I   UTRA
+1607               
+1608 002313  4330  EXTR,   JMS     GET1
+1609 002314  7040          CMA
+1610 002315  5276          JMP     UTE
+1611 002316  1026  UTX,   TAD     DEBGSW          /TEST FOR TRACE-ENABLED
+1612 002317  7640          SZA CLA
+1613 002320  5326          JMP     .+6
+1614 002321  1100          TAD     DMPSW           /FLIP THE TRACE FLOP
+1615 002322  7650          SNA CLA
+1616 002323  7001          IAC
+1617 002324  3100          DCA     DMPSW
+1618 002325  5275          JMP     UTRA+1          /GET NEXT CHARACTER INSTEAD.
+1619               
+1620 002326  1110          TAD     P277            /TRACE DISABLED = RETURN "?"
+1621 002327  5305          JMP     UTQ
+1622               
+1623 002330  0000  GET1,   0                       /UNPACK 6-BITS
+1624 002331  2020          ISZ     XCT             /STARTS=0
+1625 002332  5345          JMP     GET3
+1626 002333  1021          TAD     GTEM
+1627 002334  0122  GEND,   AND     P77
+1628 002335  3066          DCA     CHAR            /SAVE
+1629 002336  1066          TAD     CHAR
+1630 002337  1103          TAD     M77
+1631 002340  7650          SNA CLA
+1632 002341  5313          JMP     EXTR            /EXTENDED
+1633 002342  1066          TAD     CHAR
+1634 002343  1356          TAD     M40
+1635 002344  5730          JMP I   GET1
+1636               
+1637 002345  1417  GET3,   TAD I   AXOUT           /(X-MEM)
+1638 002346  3021          DCA     GTEM
+1639 002347  7040          CMA
+1640 002350  3020          DCA     XCT
+1641 002351  1021          TAD     GTEM
+1642 002352  7112          CLL RTR
+1643 002353  7012          RTR
+1644 002354  7012          RTR
+1645 002355  5334          JMP     GEND
+1646               
+1647 002356  7740  M40,    -40
+1648 002357  7641  M137,   -137
+1649 002360  0000  XENDLN,        0                       /TERMINATE THE BUFFERED LINE - "ENDLN"
+1650 002361  7000          CDF     T               /(X-MEM)
+1651 002362  1425          TAD I   LASTLN          /SAVE OLD POINTER
+1652 002363  3460          DCA I   BUFR
+1653 002364  1060          TAD     BUFR            /POINT TO NEW LAST LINE
+1654 002365  3425          DCA I   LASTLN
+1655 002366  1061          TAD     ADD             /CHECK FOR EXTRA INFO
+1656 002367  7440          SZA 
+1657 002370  3410          DCA I   AXIN
+1658 002371  1010          TAD     AXIN            /COMPUTE NEW END OF BUFFER
+1659 002372  7001          IAC
+1660 002373  3060          DCA     BUFR
+1661 002374  1060          TAD     STARTV          /RESET VARIABLE LIST (X-MEM)
+1662 002375  3031          DCA     LASTV
+1663 002376  5760          JMP I   XENDLN
+1664               
+1665               
+1666               
+1667                       TLIST3= .               /LITERAL TERMINATORS
+1668               
+1669 002377  1253          TASK4                   /"
+1670 002400  0614          PC1                     /C.R. = AUTOMATIC QUOTE MATCH
+1671               
+1672               
+1673                       INFIX=  .               /DATA CONTROL CHARACTERS
+1674               
+1675 002401  6202          FLINTP+2                /LEFT ARROW     = KILL
+1676 002402  0757          INPUT+1                 /RUBOUT         = IGNORE
+1677 002403  0757          INPUT+1                 /L.F.           = IGNORE
+1678 002404  6250          ENDFI+5                 /ALT MODE       = EXIT
+1679               
+1680 002405  0001  FLTONE, 0001                    /(NO RELATIVE REFERENCES)
+1681 002406  2000          2000
+1682 002407  0000  FLTZER, 0000
+1683 002410  0000          0000
+1684 002411  0000          0000
+1685 002412  0000          0000
+1686 002413  7766  M12,    -12                     /DECIMAL CONVERSION FACTOR FOR "PRNT"
+1687               
+1688               
+1689 002414  0000  I33,    0                       /NO-INTERRUPT INPUT ROUTINE
+1690 002415  6031          KSF
+1691 002416  5215          JMP     .-1
+1692 002417  6036          KRB
+1693 002420  0106          AND     P177            /IGNORE PARITY BIT
+1694 002421  7450          SNA
+1695 002422  5215          JMP     .-5
+1696 002423  1123          TAD     C200
+1697 002424  5614          JMP I   I33
+1698 002425  0000  XPRNT, 0                       /PRINT A LINE NUMBER - "PRNTLN"
+1699 002426  1067          TAD     LINENO
+1700 002427  4557          RTL6
+1701 002430  0122          AND     P77
+1702 002431  4242          JMS     PRNT            /TWO DIGIT "PART" NUMBER
+1703 002432  1102          TAD     PER
+1704 002433  4551          PRINTC                  /PERIOD FOR SEPARATION
+1705 002434  1067          TAD     LINENO
+1706 002435  4242          JMS     PRNT            /TWO DIGIT "STEP" NUMBER.
+1707 002436  1356          TAD     M140
+1708 002437  3066          DCA     CHAR            /SAVE SPACE IN CHAR.
+1709 002440  4551          PRINTC                  /PRINT TRAILING SPACE
+1710 002441  5625          JMP I   XPRNT
+1711               
+1712                       VAL=    T1
+1713               
+1714 002442  0000  PRNT,   0                       /PRINT TWO DECIMAL DIGITS
+1715 002443  0106          AND     P177
+1716 002444  3032          DCA     VAL
+1717 002445  1113          TAD     C260
+1718 002446  3033          DCA     T3
+1719 002447  5252          JMP     .+3
+1720 002450  2033          ISZ     T3
+1721 002451  3032  XYZ,    DCA     VAL
+1722 002452  1032          TAD     VAL
+1723 002453  1213          TAD     M12
+1724 002454  7500          SMA
+1725 002455  5250          JMP     XYZ-1
+1726 002456  7200          CLA
+1727 002457  1033          TAD     T3
+1728 002460  4551          PRINTC
+1729 002461  1032          TAD     VAL
+1730 002462  1113          TAD     C260
+1731 002463  4551          PRINTC
+1732 002464  5642          JMP I   PRNT
+1733               
+1734 002465  0000  OUT,    0                       /OUTPUT A CHARACTER - "PRINTC"
+1735 002466  7450          SNA                     /USE (AC) OR (CHAR)
+1736 002467  1066          TAD     CHAR
+1737 002470  1116          TAD     MCR
+1738 002471  7450          SNA
+1739 002472  5276          JMP     OUTCR
+1740 002473  1077          TAD     CCR
+1741 002474  4463          JMS I   OUTDEV
+1742 002475  5665  OUTX,   JMP I   OUT
+1743               
+1744 002476  1077  OUTCR,  TAD     CCR
+1745 002477  4463          JMS I   OUTDEV
+1746 002500  1076          TAD     CLF
+1747 002501  5274          JMP     OUTX-1
+1748 002502  0000  PACBUF,        0                       /PACK A CHARACTER - "PACKC"
+1749 002503  1110          TAD     P277
+1750 002504  7041          CIA
+1751 002505  1066          TAD     CHAR
+1752 002506  7450          SNA                     /CHANGE 277 TO 337
+1753 002507  1352          TAD     P40
+1754 002510  1101          TAD     M100
+1755 002511  7450          SNA                     /TEST FOR RUBOUT.
+1756 002512  5755          JMP I   RUBIT
+1757 002513  1353          TAD     P377
+1758 002514  3071          DCA     T2              /SAVE INPUT ITEM
+1759 002515  1071          TAD     T2              /SO THAT QUESTION DOESN'T MAKE
+1760 002516  0354          AND     C140            /CHAR LOOK LIKE A LEFT-ARROW
+1761 002517  1356          TAD     M140
+1762 002520  7440          SZA                     /DATA WORD.
+1763 002521  1354          TAD     C140
+1764 002522  7650          SNA CLA
+1765 002523  5332          JMP     ESCA            /340-377 AND 200-237
+1766 002524  1071  PA1,    TAD     T2              /240-337
+1767 002525  0122          AND     P77
+1768 002526  7440          SZA                     /IGNORE 300
+1769 002527  4335          JMS     PCK1
+1770 002530  7000  PACX,   CDF     P               /(X-MEM)
+1771 002531  5702          JMP I   PACBUF
+1772               
+1773 002532  1122  ESCA,   TAD     P77
+1774 002533  4335          JMS     PCK1
+1775 002534  5324          JMP     PA1
+1776               
+1777 002535  0000  PCK1,   0
+1778 002536  2062          ISZ     XCTIN           /=0 TO START
+1779 002537  5357          JMP     ROT
+1780 002540  1061          TAD     ADD
+1781 002541  3410          DCA I   AXIN            /(X-MEM)
+1782 002542  3061          DCA     ADD             /CLEAR PACKING WORD
+1783 002543  1013          TAD     PDLXR           /CHECK FOR OVERFLOW
+1784 002544  7141          CLL CMA IAC
+1785 002545  1005          TAD     P13             /RESERVATIONS FOR PUSH-DOWN LIST
+1786 002546  1010          TAD     AXIN
+1787 002547  7620          SNL CLA
+1788 002550  5735          JMP I   PCK1
+1789 002551  4566          ERROR2                  /FULL BUFFER
+1790               
+1791 002552  0040  P40,    40
+1792 002553  0377  P377,   377
+1793 002554  0140  C140,   140
+1794 002555  3004  RUBIT,  RUB1
+1795 002556  7640  M140,   -140
+1796               
+1797 002557  4557  ROT,    RTL6                    /(EAE)
+1798 002560  3061          DCA     ADD
+1799 002561  7040          CMA
+1800 002562  3062          DCA     XCTIN
+1801 002563  5735          JMP I   PCK1            /REST OF PAGE USED BY 8K
+1802                      PAGE
+1803               
+1804               /       INTERRUPT PROCESSOR.
+1805               
+1806 002600  0000  SAVAC,  0                       /CONTENTS OF AC
+1807 002601  0000  SAVLK,  0                       /CONTENTS OF LINK
+1808 002602  7575  MBREAK, -203                    /CONTROL-C
+1809               
+1810 002603  3200  INTRPT, DCA     SAVAC           /SAVE WORKING DATA
+1811 002604  7010          RAR
+1812 002605  3201          DCA     SAVLK
+1813 002606  6041          TSF                     /GIVE OUTPUT PRIORITY
+1814 002607  5225          JMP     KINT
+1815 002610  6042          TCF
+1816 002611  3016          DCA     TELSW           /TURN OFF THE IN-PROGRESS FLAG.
+1817 002612  1665          TAD I   OPTRI
+1818 002613  7450          SNA
+1819 002614  5225          JMP     KINT            /DONE
+1820 002615  6044          TPC                     /TYPE NEXT.
+1821 002616  3016          DCA     TELSW           /CLEAR AC AND TURN ON THE FLAG.
+1822 002617  3665          DCA I   OPTRI           /ZERO OUT THE DATA AREA
+1823 002620  1265          TAD     OPTRI
+1824 002621  7001          IAC
+1825 002622  0107          AND     P17
+1826 002623  1263          TAD     OPTR0
+1827 002624  3265          DCA     OPTRI
+1828 002625  6031  KINT,   KSF                     /CHECK FOR KEYBOARD FIRST
+1829 002626  5246          JMP     EXIT
+1830 002627  6036          KRB                     /READ BUFFER AND CLEAR FLAG TO FETCH NEXT
+1831 002630  0106          AND     P177            /IGNORE BLANK AND L-T AND PARITY BIT.
+1832 002631  7450          SNA
+1833 002632  5246          JMP     EXIT
+1834 002633  1123          TAD     C200
+1835 002634  3262          DCA     SIN
+1836 002635  1262          TAD     SIN
+1837 002636  1202          TAD     MBREAK          /MANUAL STOP?
+1838 002637  7650          SNA CLA
+1839 002640  5340          JMP     RECOVR
+1840 002641  1034          TAD     INBUF           /ANY SPACE?
+1841 002642  7640          SZA CLA
+1842 002643  4566          ERROR2                  /WILL WAIT FOR OUTPUT BUFFER
+1843 002644  1262          TAD     SIN
+1844 002645  3034          DCA     INBUF           /SAVE INPUT
+1845 002646  6011  EXIT,   RSF                     /TEST H.S. READER FLAG
+1846 002647  5252          JMP     .+3
+1847 002650  6012          RRB                     /READ BUFFER AND CLEAR FLAG
+1848 002651  3037          DCA     HINBUF          /SAVE CHARACTER
+1849 002652  6244          RMF                     /RESTORE MEMORY FIELD.
+1850 002653  6101          SMP                     /(THESE TWO COULD PATCH TO OTHER PDP-8 DEVICES)
+1851 002654  7000          NOP                     /ONLY POSSIBLE HALT = PARITY ERROR IN 8/S ONLY.
+1852 002655  1201          TAD     SAVLK
+1853 002656  7104          CLL RAL
+1854 002657  1200          TAD     SAVAC
+1855 002660  6001          ION
+1856 002661  5400  EXITJ,  JMP I   0               /MODIFIED FOR PDP-5
+1857 002662  0000  SIN,   0
+1858 002663  3120  OPTR0,  IOBUF                   /OUTPUT POINTERS
+1859 002664  3120  OPTRO,  IOBUF                   /VARS
+1860 002665  3120  OPTRI,  IOBUF
+1861               
+1862 002666  0000  XI33,   0                       /VIA (INDEV)
+1863 002667  1034          TAD     INBUF           /ANY INPUT?
+1864 002670  7550          SPA SNA
+1865 002671  5267          JMP     .-2             /NO = WAIT
+1866 002672  3276          DCA     XOUTL
+1867 002673  3034          DCA     INBUF           /CLEAR INPUT BUFFER
+1868 002674  1276          TAD     XOUTL
+1869 002675  5666          JMP I   XI33
+1870               
+1871 002676  0000  XOUTL,  0                       /VIA (OUTDEV)
+1872 002677  3266          DCA     XI33            /SAVE CURRENT CHARACTER.
+1873 002700  6001          ION                     /BE SURE INTERRUPT IS ON.
+1874 002701  1664          TAD I   OPTRO           /ANY ROOM?
+1875 002702  7640          SZA CLA                 /A CHARACTER IS NON-ZERO
+1876 002703  5301          JMP     .-2             /NO = WAIT.
+1877 002704  6002          IOF
+1878 002705  1016          TAD     TELSW           /IN PROGRESS?
+1879 002706  7640          SZA CLA
+1880 002707  5314          JMP     .+5
+1881 002710  1266          TAD     XI33            /NO
+1882 002711  6046          TLS                     /TYPE CHARACTER.
+1883 002712  3016          DCA     TELSW           /SET IN-PROGRESS FLAG.
+1884 002713  5323          JMP     .+10            /RETURN
+1885 002714  1266          TAD     XI33            /SEND DATA
+1886 002715  3664          DCA I   OPTRO
+1887 002716  1264          TAD     OPTRO           /SET POINTERS
+1888 002717  7001          IAC
+1889 002720  0107          AND     P17
+1890 002721  1263          TAD     OPTR0
+1891 002722  3264          DCA     OPTRO
+1892 002723  6001          ION
+1893 002724  5676          JMP I   XOUTL
+1894               /      ERROR RECOVERY PROCEEDURE
+1895               
+1896 002725  3326  ERROR5, DCA     .+1             /ERROR CALLED FROM A TABLE
+1897 002726  0000  ERR2,   0                       /LIMIT EXCEEDED
+1898 002727  7240          CLA CMA                 /COMPUTE CALLING ADDRESS (ALSO "SPACE")
+1899 002730  1326          TAD     ERR2            /AND USE IT AS ERROR NUMBER.
+1900 002731  3067          DCA     LINENO          /SAVE ERROR CODE.
+1901 002732  6001          ION                     /(JMP .+4) - FOR DEBUGGING
+1902 002733  1016          TAD     TELSW           /WAIT FOR OUTPUT TO FINISH
+1903 002734  7640          SZA CLA
+1904 002735  5333          JMP     .-2
+1905 002736  6002          IOF                     /DISABLE INTERRUPT FOR INITIALIZATIONS
+1906 002737  5342          JMP     .+3
+1907 002740  1123  RECOVR, TAD     C200
+1908 002741  3067          DCA     LINENO          /SAVE ERROR NUMBER
+1909 002742  2016          ISZ     TELSW           /TURN ON IN-PROGRESS SWITCH
+1910 002743  1105          TAD     M20             /SETUP INIT COUNT
+1911 002744  3057          DCA     CNTR
+1912 002745  7040          CMA
+1913 002746  1263          TAD     OPTR0
+1914 002747  3010          DCA     AXIN            /INIT I/O BUFFERS.
+1915 002750  7000          CDF     P               /(X-MEM RESET)
+1916 002751  3410          DCA I   AXIN
+1917 002752  2057          ISZ     CNTR
+1918 002753  5351          JMP     .-2
+1919 002754  3034          DCA     INBUF           /INIT KEY-BUFR.
+1920 002755  1263          TAD     OPTR0           /INIT TTY POINTERS.
+1921 002756  3265          DCA     OPTRI
+1922 002757  1263          TAD     OPTR0
+1923 002760  3264          DCA     OPTRO
+1924 002761  7040  RECOVX, CMA                     /PREPARE A STOP BIT FOR TTY
+1925 002762  6046          TLS                     /AND RAISE FLAG. (NOP) - FOR DEBUGGING
+1926 002763  1101          TAD     P7700           /MAKE A "?".
+1927 002764  4551          PRINTC                  /AND TURN ON THE INTERRUPT
+1928 002765  4553          PRNTLN                  /PRINT ERROR NUMBER AND,
+1929 002766  2022          ISZ     PC
+1930 002767  1422          TAD I   PC              /UNLESS IT IS ZERO, (X-MEM)
+1931 002770  7450          SNA
+1932 002771  5377          JMP     .+6
+1933 002772  3067          DCA     LINENO
+1934 002773  1101          TAD     P7700           /PRINT ATSIGN
+1935 002774  4551          PRINTC
+1936 002775  4551          PRINTC                  /PRINT SPACE AGAIN AND
+1937 002776  4553          PRNTLN                  /PRINT LINE OF ERROR.
+1938 002777  1077          TAD     CCR
+1939 003000  4551          PRINTC
+1940 003001  1126          TAD     PTCH            /RESET "READC"
+1941 003002  3152          DCA     RDIV            /IF AN ERROR OCCURS.
+1942 003003  5177          JMP     START           /INTERRUPT WILL BE RE-ENABLED SOON.
+1943               /      CHRACTER REMOVAL ROUTINE
+1944               
+1945 003004  1062  RUB1,   TAD     XCTIN           /RUBOUT ONE LETTER
+1946 003005  7640          SZA CLA
+1947 003006  5214          JMP     .+6
+1948 003007  1010          TAD     AXIN
+1949 003010  7041          CIA
+1950 003011  1027          TAD     PACKST
+1951 003012  7700          SMA CLA                 /TEST NULL LINE
+1952 003013  5641          JMP I   RUB5
+1953 003014  1251          TAD     SPLAT           /FOR A RUBOUT ACKNOWLEDGEMENT
+1954 003015  4551          PRINTC
+1955 003016  1010          TAD     AXIN
+1956 003017  3071          DCA     T2
+1957 003020  7000          CDF     T               /(X-MEM)
+1958 003021  2062          ISZ     XCTIN           /TEST HALF
+1959 003022  5242          JMP     RUB2
+1960 003023  1471          TAD I   T2              /"ADD" IS FULL.
+1961 003024  0122          AND     P77
+1962 003025  1103          TAD     M77
+1963 003026  7640          SZA CLA                 /TEST FOR EXTEND
+1964 003027  5237          JMP     RUB4
+1965 003030  7040  RUB3,   CMA                     /SET SWITCH
+1966 003031  3062          DCA     XCTIN
+1967 003032  7040          CMA                     /BACKUP POINTER
+1968 003033  1010          TAD     AXIN
+1969 003034  3010          DCA     AXIN
+1970 003035  1471          TAD I   T2              /RESET ADD
+1971 003036  0101          AND     P7700
+1972 003037  3061  RUB4,   DCA     ADD
+1973 003040  5641          JMP I   RUB5
+1974               
+1975 003041  2530  RUB5,   PACX
+1976               
+1977 003042  1471  RUB2,   TAD I   T2              /CHECK FOR EXTENDED
+1978 003043  0101          AND     P7700
+1979 003044  1006          TAD     C100
+1980 003045  7640          SZA CLA
+1981 003046  5230          JMP     RUB3
+1982 003047  3471          DCA I   T2              /SAVE CORRECTION
+1983 003050  5231          JMP     RUB3+1
+1984               
+1985 003051  0334  SPLAT,  334
+1986               /      SYMBOL TABLE TYPEOUT ROUTINE
+1987               
+1988 003052  1060  TDUMP,  TAD     STARTV          /INIT POINTER FOR SYMBOL DUMP.(X-MEM)
+1989 003053  3030          DCA     PT1
+1990 003054  1031          TAD     LASTV           /TEST FOR END OF LIST
+1991 003055  7041          CIA
+1992 003056  1030          TAD     PT1
+1993 003057  7650          SNA CLA
+1994 003060  5541          POPJ
+1995 003061  1430          TAD I   PT1             /GET THE VARIABLE
+1996 003062  3316          DCA     OP+1            /(DCA I (4)-FOR(X-MEM)):SAVE NAME
+1997 003063  1315          TAD     OP              /SETUP UNPACK POINTERS
+1998 003064  3017          DCA     AXOUT
+1999 003065  3020          DCA     XCT
+2000 003066  4545          GETC                    /READ AND PRINT "XX("
+2001 003067  4551          PRINTC
+2002 003070  4545          GETC
+2003 003071  4551          PRINTC
+2004 003072  4545          GETC
+2005 003073  4551          PRINTC
+2006 003074  2030          ISZ     PT1
+2007 003075  1430          TAD I   PT1             /PRINT SUBSCRIPT TO 99
+2008 003076  4714          JMS I   PRNT2
+2009 003077  4545          GETC                    /PRINT ")"
+2010 003100  4551          PRINTC
+2011 003101  2030          ISZ     PT1
+2012 003102  4407          FINT                    /PICK UP VALUE
+2013 003103  0430          FGET I  PT1
+2014 003104  0000          FXIT
+2015 003105  4530          JMS I   FOUTPUT         /PRINT VALUE
+2016 003106  1077          TAD     CCR
+2017 003107  4551          PRINTC
+2018 003110  1070          TAD     GINC
+2019 003111  1111          TAD     M2
+2020 003112  1030          TAD     PT1
+2021 003113  5253          JMP     TDUMP+1
+2022               
+2023 003114  2442  PRNT2,  PRNT
+2024 003115  3115  OP,     .                       / (X-MEM)
+2025 003116  0000          0000                    / (X-MEM)
+2026 003117  5051          "(^100+")-200           /(THESE GO IN 10005 FOR X-MEM)
+2027               /      OUTPUT CHARACTER BUFFER (ADDRESS IS A MULTIPLE OF 20)
+2028               
+2029                       IOBUF=  3120
+2030               
+2031                       COMEIN= IOBUF+20        /COMMAND - INPUT BUFFER
+2032               
+2033                       COMEOUT=COMEIN+46
+2034               
+2035               
+2036                       *COMEOUT
+2037               
+2038               
+2039               
+2040 003206  0000  FRST,   0                       /TEXT POINTER
+2041 003207  0000          0000                    /DUMMY LINE NO.
+2042 003210  0355          "C^100+"--200           /TITLE
+2043 003211  0617          "F^100+"O-300           /FO
+2044 003212  0301          "C^100+"A-300           /CA
+2045 003213  1454          "L^100+",-200           /L,
+2046 003214  6171          "1^100+"9-200           /19
+2047 003215  6671  FRSTX,  "6^100+"9-200           /69
+2048 003216  7715          "?^100+"M-300           /DUMMY C.R.
+2049               
+2050               /       TO SAVE TEXT, SAVE C(BUFR), C(LASTV), AND C(FRST TO C(BUFR))
+2051               /       WITH ODT-JR46.  THE TAPES MAY BE TOGETHER WITH
+2052               /       THE SYMBOLIC DUMP LAST : FOCAL + FLOAT + DIALOG .
+2053               /       LOADING THE LAST SECTION MAY BE CONSIDERED OPTIONAL.
+2054               
+2055               
+2056               
+2057                       BUFBEG= .               /TEXT BUFFER STARTS HERE.
+2058                      *4400-10
+2059               
+2060 004370  2741  O1,     RECOVR+1                /STARTING ADDRESS
+2061               
+2062 004371  1370  BEGIN,  TAD     O1              /INITIALIZE ANY 8-FAMILY COMPUTER.
+2063 004372  3176          DCA     START-1
+2064 004373  6142          6142                    /CLEAR F.H.'S 8.((JMP ATES+1)-FOR TSS-8)
+2065 004374  6077          6077                    /SET INTENSITY LEVEL, 34D
+2066 004375  6152          6152                    /CLEAR LPT
+2067 004376  6762          6762                    /TC01   
+2068 004377  6012          6012                    /CLEAR PC02 FOR PDP-5
+2069 004400  6346          6346                    /CLEAR LAB-8
+2070 004401  6772          6772                    /CLEAR 552
+2071 004402  7300          CLA CLL
+2072 004403  3414          DCA I   FLTXR
+2073 004404  2057          ISZ     CNTR            /INITIALIZED BY LOAD.
+2074 004405  5203          JMP     .-2             /CLEAR INPUT BUFFER
+2075               
+2076               /       TEST FOR COMPUTER TYPE
+2077               
+2078 004406  1362          TAD     PDP             /CREATE THE VARIABLE 'PDP'
+2079 004407  4371          JMS     LOOKUP          /MUST RETURN ZERO
+2080 004410  1370          TAD     PDP5            /TEST FOR PDP-5
+2081 004411  3000          DCA     0000
+2082 004412  7040  O4,     CMA                     /LINC-8 OR PDP-12?
+2083 004413  6167          6167                    /SET LINC AC- (INITS AND KILLS 338)
+2084 004414  7200          CLA
+2085 004415  6171          6171                    /READ LINC AC
+2086 004416  7650          SNA CLA
+2087 004417  5226          JMP     T12
+2088 004420  1365          TAD     P7              /CLEAR LINC-INTERRUPTS
+2089 004421  6141          6141
+2090 004422  1366          TAD     P2
+2091 004423  6141          6141
+2092 004424  7200          CLA
+2093 004425  5310          JMP     ATES-3          /YES
+2094 004426  6141  T12,   6141                    /BECOME A LINC
+2095 004427  0017          0017                    /COMPLEMENT AC
+2096 004430  0002          0002                    /BACK TO 8 MODE
+2097 004431  7001          IAC                     /SET TO ZERO IF PDP-12
+2098 004432  7650          SNA CLA
+2099 004433  5306          JMP     ATES-5
+2100               
+2101 004434  7101          CLL IAC                 /LAB-8?
+2102 004435  6344          6344                    /"OTEN"
+2103 004436  6331          6331                    /"XRIN"
+2104 004437  7700          SMA CLA
+2105 004440  5246          JMP     .+6             /NO
+2106 004441  1350          TAD     L8A             /YES
+2107 004442  3752          DCA I   L8AY
+2108 004443  1351          TAD     L8B             /SETUP SCOPE CONTROLS
+2109 004444  3753          DCA I   L8AX
+2110 004445  5307          JMP     ATES-4
+2111               
+2112 004446  7354          7354                    /NL3776
+2113 004447  1367          TAD     PDP8I           /IS THIS A PDP-8/I OR 8/L?
+2114 004450  7650          SNA CLA
+2115 004451  5265          JMP     ATEI
+2116 004452  7344          7344                    /NL7776
+2117 004453  1366          TAD     P2
+2118 004454  7650          SNA CLA
+2119 004455  5312          JMP     ATES-1          /8
+2120 004456  1100          TAD     CCR+1           /PDP-8/S
+2121 004457  3764          DCA I   O6              /SETUP PARITY-ERROR HALT
+2122 004460  1212          TAD     O4              /CORRECT READER WAIT
+2123 004461  3763          DCA I   O5
+2124 004462  5313          JMP     ATES
+2125               
+2126 004463  2761  PDP5X,  ISZ I   O2              /INCREMENT INTERRUPT RETURN
+2127 004464  5314          JMP     ATES+1
+2128 004465  6046  ATEI,  TLS
+2129 004466  6000  G8L,    6000
+2130 004467  6000          6000
+2131 004470  6000          6000
+2132 004471  6000          6000
+2133 004472  6000          6000
+2134 004473  6000          6000
+2135 004474  6000          6000
+2136 004475  6000          6000
+2137 004476  2057          ISZ     CNTR
+2138 004477  6041          TSF
+2139 004500  5266          JMP     G8L
+2140 004501  1057          TAD     CNTR
+2141 004502  1130          TAD     FOUTPUT
+2142 004503  7710          SPA CLA
+2143 004504  5311          JMP     ATES-2          /8/I
+2144 004505  2430          ISZ I   PT1             /8/L    = 7/2^11
+2145 004506  2430          ISZ I   PT1             /PDP-12 = 6/2^11
+2146 004507  2430          ISZ I   PT1             /LAB-8  = 5/2^11
+2147 004510  2430          ISZ I   PT1             /LINC-8 = 4/2^11
+2148 004511  2430          ISZ I   PT1             /8/I    = 3/2^11
+2149 004512  2430          ISZ I   PT1             /8      = 2/2^11
+2150 004513  2430  ATES,   ISZ I   PT1             /8/S    = 1/2^11
+2151                                               /5      = 0
+2152               /      INITIALIZE THE DIALOGUE
+2153               
+2154 004514  6046          TLS
+2155 004515  6001          ION                     /ENABLE INTERRUPT
+2156 004516  4540          PUSHJ
+2157 004517  0421          DO+1
+2158 004520  6002          IOF
+2159               
+2160               /       SHALL I KEEP EXP, LOG, ATN? (256)
+2161               /       SHALL I KEEP SIN, COS? (128)
+2162               /       XF =   +1(NO) -1(YES) 0(YES)
+2163               
+2164 004521  1360          TAD     XF
+2165 004522  4371          JMS     LOOKUP
+2166 004523  7450          SNA
+2167 004524  5344          JMP     OOUT            /NO DIALOGUE EXECUTED
+2168 004525  7710          SPA CLA
+2169 004526  1366          TAD     P2
+2170 004527  1120          TAD     M5              /DELETE X-FUNCTIONS
+2171 004530  3057          DCA     CNTR
+2172 004531  1354          TAD     FNPT
+2173 004532  3011          DCA     XRT
+2174 004533  1355          TAD     ER5
+2175 004534  3411          DCA I   XRT             /SET THE TABLE
+2176 004535  2057          ISZ     CNTR
+2177 004536  5333          JMP     .-3
+2178 004537  1360          TAD     XF              /CORRECT BUFFER PROTECT
+2179 004540  4371          JMS     LOOKUP
+2180 004541  7710          SPA CLA
+2181 004542  1104          TAD     P7600           /(-200)
+2182 004543  1356          TAD     BFXX
+2183 004544  1357  OOUT,   TAD     BFX
+2184 004545  3035          DCA     BOTTOM
+2185 004546  5747          JMP I   .+1;    ERT     /GOES TO START AFTER ERASING ALL
+     004547  2214  
+2186 004550  6313  L8A,   6313
+2187 004551  6307  L8B,    6307
+2188 004552  1153  L8AY,   XDYS+11
+2189 004553  1156  L8AX,   XDYS+14
+2190 004554  0401  FNPT,   FNTABF+5
+2191 004555  2725  ER5,    ERROR5
+2192 004556  0560  BFXX,   TGO-FEXP                        /WITHOUT
+2193 004557  4617  BFX,    FEXP-1                          /WITH
+2194 004560  3006  XF,     "X^100+"F-300                   /X, F
+2195 004561  2661  O2,     EXITJ                           /INTERRUPT EXIT
+2196 004562  2004  PDP,    "P^100+"D-300                   /P, D
+2197 004563  6322  O5,     HREAD+1
+2198 004564  2654  O6,     EXIT+6
+2199 004565  0007  P7,     7
+2200 004566  0002  P2,     2
+2201 004567  4002  PDP8I,  4002                            /(-3776)
+2202 004570  4462  PDP5,   PDP5X-1
+2203               
+2204 004571  2344  LOOKUP, DDTJR+DMULT4+END+RECOVX+PSIN    /MAKE BELIEVE
+2205 004572  3061          DCA     ADD
+2206 004573  4540          PUSHJ                           /CALL THE VARIABLE SEARCH ROUTINE.
+2207 004574  1437          GS1
+2208 004575  2030          ISZ     PT1
+2209 004576  1430          TAD I   PT1
+2210 004577  5771          JMP I   LOOKUP
+2211                      *6321                   /STUCK INTO THE FLOATING POINT PACKAGE.
+2212               
+2213 006321  0000  HREAD,  0                       /HAMILTON STANDARD READER SUBROUTINE.
+2214 006322  1105          TAD     M20             /(CMA)- FOR 8/S.
+2215 006323  3343          DCA     HSWITC
+2216 006324  1037  HREAD2, TAD     HINBUF          /(RSF) -WHEN DEBUGGING
+2217 006325  7700          SMA CLA                 /(SKP)
+2218 006326  5364          JMP     HSGO
+2219 006327  2032          ISZ     T1              /SKIP IF OUT OF TAPE
+2220 006330  5324          JMP     HREAD2
+2221 006331  2343          ISZ     HSWITC
+2222 006332  5324          JMP     HREAD2
+2223 006333  4343          JMS     HSWITC          /LEAVES LINK ZERO
+2224 006334  1013          TAD     PDLXR           / < FRST?
+2225 006335  1376          TAD     HTST
+2226 006336  7620          SNL CLA
+2227 006337  5742          JMP I   .+3             /YES=DIRECT COMMAND
+2228 006340  2013          ISZ     PDLXR           /NO=OK TO DUMP CALL
+2229 006341  5541          POPJ
+2230               
+2231 006342  0212          IBAR
+2232               
+2233 006343  0000  HSWITC, 0
+2234 006344  1375          TAD     HSPSW           /INITIALIZE H.S. READER
+2235 006345  7040          CMA
+2236 006346  3375          DCA     HSPSW           /CHANGE STATUS
+2237 006347  7140          CLL CMA                 /CLEAR LINK
+2238 006350  3037          DCA     HINBUF          /CLEAR BUFFER
+2239 006351  1375          TAD     HSPSW
+2240 006352  7440          SZA 
+2241 006353  6014          RFC                     /START HARDWARE
+2242 006354  7640          SZA CLA
+2243 006355  1377          TAD     RESTR           /(HREAD)
+2244 006356  1126          TAD     PTCH
+2245 006357  3152          DCA     RDIV            /"READC"
+2246 006360  5743          JMP I   HSWITC
+2247               
+2248 006361  4343  HSPX,   JMS     HSWITC          /COMMAND "*"  - SWAP
+2249 006362  5763          JMP I   .+1;    PROC
+     006363  0611  
+2250               
+2251 006364  7040  HSGO,   CMA                     /FETCH NEXT CHARACTER
+2252 006365  3037          DCA     HINBUF
+2253 006366  6016          RFC RRB                 /PICK UP NEXT CHARACTER
+2254 006367  0106          AND     P177            /CHECK FOR LEADER-TRAILER,ETC.
+2255 006370  7450          SNA
+2256 006371  5322          JMP     HREAD+1
+2257 006372  1123          TAD     C200
+2258 006373  3066          DCA     CHAR            /SAVE INPUT
+2259 006374  5721          JMP I   HREAD
+2260               
+2261 006375  0000  HSPSW,  0
+2262 006376  4557  HTST,   -COMEOUT-13
+2263 006377  4144  RESTR,  HREAD-CHIN
+2264               /      DISK MONITOR INTERACTIVE COMMAND OPERATES VIA THE KEYBOARD.
+2265               /       THIS FITS UNDER THE 10 DIGIT FLOATING POINT OUTPUT BUFFER.
+2266               
+2267                       *7503
+2268               
+2269 007503  1133  LIBRARY,TAD     CFRS
+2270 007504  4327          JMS     PRNT8
+2271 007505  1060          TAD     BUFR            /TYPE C(CFRS), C(BUFR), C(LASTV), C(BOTTOM)
+2272 007506  4327          JMS     PRNT8           /OCTAL OUTPUT + COMMA
+2273 007507  1031          TAD     LASTV
+2274 007510  4327          JMS     PRNT8
+2275 007511  1035          TAD     BOTTOM
+2276 007512  4327          JMS     PRNT8
+2277 007513  5316          JMP     .+3
+2278               
+2279 007514  4545          GETC
+2280 007515  4551          PRINTC
+2281 007516  1066          TAD     CHAR
+2282 007517  1116          TAD     MCR
+2283 007520  7640          SZA CLA
+2284 007521  5314          JMP     .-5
+2285 007522  1016          TAD     TELSW
+2286 007523  7640          SZA CLA
+2287 007524  5322          JMP     .-2             /(NOP) - WHEN DEBUGGING
+2288 007525  6002          IOF
+2289 007526  5504          JMP I   P7600           /(7600=DISK MONITOR)
+2290               
+2291 007527  0000  PRNT8,  0
+2292 007530  3032          DCA     T1
+2293 007531  1032          TAD     T1
+2294 007532  7006          RTL
+2295 007533  7006          RTL
+2296 007534  4350          JMS     PRINTD
+2297 007535  4557          RTL6
+2298 007536  7004          RAL
+2299 007537  4350          JMS     PRINTD
+2300 007540  7012          RTR
+2301 007541  7010          RAR
+2302 007542  4350          JMS     PRINTD
+2303 007543  4350          JMS     PRINTD
+2304 007544  7200          CLA
+2305 007545  1077          TAD     CCR
+2306 007546  4551          PRINTC
+2307 007547  5727          JMP I   PRNT8
+2308               
+2309 007550  0000  PRINTD, 0
+2310 007551  0356          AND     LP7
+2311 007552  1113          TAD     C260
+2312 007553  4551          PRINTC
+2313 007554  1032          TAD     T1
+2314 007555  5750          JMP I   PRINTD
+2315               
+2316 007556  0007  LP7,    7
+2317               
+2318               /       USED BY 8K
+2319               /      FLOAT.ZZM
+2320               
+2321               
+2322               /       PAGE ZERO OF THE
+2323               /       FLOATING POINT ARITHMETIC INTERPRETER FOR FOCAL
+2324               
+2325               
+2326               /       SOURCE RECREATION, TIDYING UP BY:
+2327               
+2328               /       CHARLES J. LASNER P?S NY
+2329               
+2330               /       LAST EDIT:      08-APR-1987     23:00:00        CJL
+2331               
+2332               
+2333                       *40
+2334               
+2335 000040  0000  EX1,    0                       /OPERAND STORAGE
+2336 000041  0000  AC1H,   0
+2337 000042  0000  AC1L,   0
+2338 000043  0000  OVER1,  0
+2339               
+2340                       FLAC=   .               /FLOATING ACCUMULATOR
+2341               
+2342 000044  0000  EXP,    0                       /F.A.
+2343 000045  0000  HORD,   0
+2344 000046  0000  LORD,   0
+2345 000047  0000  OVER2,  0
+2346               
+2347 000050  0000  SIGNF,  0                       /FLOATING SIGN
+2348               
+2349 000051  6603  MINSKI, ACMINS                  /NEGATE FLAC SUBROUTINE
+2350 000052  2004  FISW,   2004                    /OUTPUT FORMAT
+2351 000053  6724  INTEGER,FIX                     /FIX FLAC
+2352               
+2353               
+2354               
+2355               /       FUNCTIONS CONTAINED IN THIS SECTION
+2356               
+2357               /       ARTN
+2358               /       FEXP
+2359               /       FLOG
+2360               /       FSIN
+2361               /       FCOS
+2362               /       XSQRT
+2363               /      FLOATING POINT PACKAGE - EXPONENTIAL
+2364               
+2365                       GETSGN= TAD     FLAC+1
+2366                       RETURN= JMP I   EFUN3I
+2367               
+2368                       *4600+20
+2369               
+2370 004620  1045  FEXP,   GETSGN                  /TAKE ABSOLUTE VALUE
+2371 004621  7710          SPA CLA
+2372 004622  4724          JMS I   NEGP
+2373 004623  3033          DCA     T3              /C(SIGN)=-1 IF I X2<0
+2374 004624  4407          FINT
+2375 004625  4313          FMUL    LG2E
+2376 004626  6675          FPUT I  X2
+2377 004627  0000          FEXT
+2378 004630  4453          JMS I   INTEGER         /TAKE INTEGER PART
+2379 004631  3325          DCA     FLAG2           /SAVE LOW ORDER DATA
+2380 004632  4407          FINT
+2381 004633  7000          FNOR
+2382 004634  6676          FPUT I  XSQ2
+2383 004635  0675          FGET I  X2
+2384 004636  2676          FSUB I  XSQ2
+2385 004637  6675          FPUT I  X2
+2386 004640  4675          FMUL I  X2
+2387 004641  6676          FPUT I  XSQ2
+2388 004642  1310          FADD    DF
+2389 004643  6326          FPUT    TEMP
+2390 004644  0305          FGET    CF
+2391 004645  3326          FDIV    TEMP
+2392 004646  2675          FSUB I  X2
+2393 004647  1277          FADD    AF
+2394 004650  6326          FPUT    TEMP
+2395 004651  0302          FGET    BF
+2396 004652  4676          FMUL I  XSQ2
+2397 004653  1326          FADD    TEMP
+2398 004654  6326          FPUT    TEMP
+2399 004655  0675          FGET I  X2
+2400 004656  3326          FDIV    TEMP
+2401 004657  4321          FMUL    TWO
+2402 004660  1316          FADD    ONE
+2403 004661  0000          FEXT
+2404 004662  1325          TAD     FLAG2
+2405 004663  1044          TAD     FLAC
+2406 004664  3044          DCA     FLAC
+2407 004665  2033          ISZ     T3
+2408 004666  5536          RETURN
+2409 004667  4407          FINT
+2410 004670  6675          FPUT I  X2
+2411 004671  0316          FGET    ONE
+2412 004672  3675          FDIV I  X2
+2413 004673  0000          FEXT
+2414 004674  5536          RETURN
+2415               /      CONSTANTS FOR FEXP
+2416               
+2417 004675  5322  X2,     X
+2418 004676  5326  XSQ2,   XSQR
+2419 004677  0004  AF,     0004
+2420 004700  2372          2372
+2421 004701  1402          1402
+2422 004702  7774  BF,     7774
+2423 004703  2157          2157
+2424 004704  5157          5157
+2425 004705  0012  CF,     0012
+2426 004706  5454          5454
+2427 004707  0343          0343
+2428 004710  0007  DF,     0007
+2429 004711  2566          2566
+2430 004712  5341          5341
+2431 004713  0001  LG2E,   0001
+2432 004714  2705          2705
+2433 004715  2435          2435
+2434 004716  0001  ONE,    0001
+2435 004717  2000          2000
+2436 004720  0000          0000
+2437 004721  0002  TWO,    0002
+2438 004722  2000          2000
+2439 004723  0000          0000
+2440 004724  5163  NEGP,   FNEG
+2441               
+2442 004725  0000  FLAG2,  0
+2443 004726  0000  TEMP,   0
+2444 004727  0000          0
+2445 004730  0000          0
+2446 004731  0000          0
+2447               /      MAIN ALGORITHM FOR ARCTANGENT
+2448               
+2449 004732  4407  ARCALG, FINT
+2450 004733  0675          FGET I  X2
+2451 004734  4675          FMUL I  X2
+2452 004735  6676          FPUT I  XSQ2
+2453 004736  4374          FMUL    BET2
+2454 004737  1371          FADD    BET1
+2455 004740  4676          FMUL I  XSQ2
+2456 004741  1366          FADD    BETZ
+2457 004742  6326          FPUT    TEMP
+2458 004743  0363          FGET    ALF2
+2459 004744  4676          FMUL I  XSQ2
+2460 004745  1360          FADD    ALF1
+2461 004746  4676          FMUL I  XSQ2
+2462 004747  1355          FADD    ALFZ
+2463 004750  4675          FMUL I  X2
+2464 004751  3326          FDIV    TEMP
+2465 004752  0000          FEXT
+2466 004753  5754          JMP I   .+1;    ARCRTN
+     004754  5024  
+2467               
+2468               
+2469               
+2470               /       CONSTANTS - FLOATING ARC TANGENT
+2471               
+2472 004755  0000  ALFZ,   0000
+2473 004756  2437          2437
+2474 004757  1643          1643
+2475 004760  7777  ALF1,   7777
+2476 004761  3304          3304
+2477 004762  4434          4434
+2478 004763  7773  ALF2,   7773
+2479 004764  3306          3306
+2480 004765  5454          5454
+2481 004766  0000  BETZ,   0000
+2482 004767  2437          2437
+2483 004770  1646          1646
+2484 004771  0000  BET1,   0000
+2485 004772  2427          2427
+2486 004773  2323          2323
+2487 004774  7775  BET2,   7775
+2488 004775  3427          3427
+2489 004776  7052          7052
+2490               /      FLOATING POINT ARC TANGENT
+2491               
+2492                       PAGE
+2493               
+2494 005000  1045  ARTN,   GETSGN                  /TAKE ABSOLUTE VALUE
+2495 005001  7710          SPA CLA
+2496 005002  4363          JMS     FNEG
+2497 005003  3033          DCA     T3
+2498 005004  4407          FINT
+2499 005005  6635          FPUT I  X1
+2500 005006  2637          FSUB I  CON1
+2501 005007  0000          FEXT
+2502 005010  1045          GETSGN
+2503 005011  7710          SPA CLA
+2504 005012  5221          JMP     GO              /LESS THAN ONE
+2505 005013  4407          FINT
+2506 005014  0637          FGET I  CON1
+2507 005015  3635          FDIV I  X1
+2508 005016  6635          FPUT I  X1
+2509 005017  0000          FEXT
+2510 005020  7240          CLA CMA
+2511 005021  3362  GO,     DCA     FLAG1           /SIGN FLAG OF RESULT
+2512 005022  5623          JMP I   .+1;    ARCALG  /CALL ALGORITHM
+     005023  4732  
+2513               
+2514 005024  2362  ARCRTN, ISZ     FLAG1           /RETURN HERE
+2515 005025  5634          JMP I   EXIT1
+2516 005026  4407          FINT
+2517 005027  6635          FPUT I  X1
+2518 005030  0636          FGET I  PI2
+2519 005031  2635          FSUB I  X1
+2520 005032  0000          FEXT
+2521 005033  5634          JMP I   .+1
+2522 005034  5302  EXIT1,  EXIT2
+2523               
+2524               /       CONSTANTS FOR ARCTANGENT
+2525               
+2526 005035  5322  X1,     X
+2527 005036  5316  PI2,    PIOT
+2528 005037  4716  CON1,   ONE
+2529 005040  1045  FLOG,  GETSGN                  /FLOATING LOGARITHM
+2530 005041  7450          SNA
+2531 005042  4566          ERROR3                  /ZERO ARGUMENT FOR LOG
+2532 005043  7710          SPA CLA
+2533 005044  4451          JMS I   MINSKI          /NEGATIVE ARGUMENT
+2534 005045  4407          FINT
+2535 005046  6756          FPUT I  TEM
+2536 005047  2637          FSUB I  CON1
+2537 005050  0000          FEXT
+2538 005051  1045          GETSGN
+2539 005052  7450          SNA
+2540 005053  5536          RETURN
+2541 005054  7700          SMA CLA
+2542 005055  5264          JMP     STARTL
+2543 005056  4407          FINT
+2544 005057  0637          FGET I  CON1
+2545 005060  3756          FDIV I  TEM
+2546 005061  6756          FPUT I  TEM
+2547 005062  0000          FEXT
+2548 005063  7240          CLA CMA
+2549 005064  3033  STARTL, DCA     T3
+2550 005065  1005          TAD     P13
+2551 005066  3044          DCA     FLAC
+2552 005067  7040          CMA
+2553 005070  1756          TAD I   TEM
+2554 005071  3045          DCA     FLAC+1
+2555 005072  3046          DCA     FLAC+2
+2556 005073  3047          DCA     FLAC+3
+2557 005074  7001          IAC
+2558 005075  3756          DCA I   TEM
+2559 005076  4407          FINT
+2560 005077  4357          FMUL    LOG2
+2561 005100  6635          FPUT I  X1
+2562 005101  0756          FGET I  TEM
+2563 005102  2637          FSUB I  CON1
+2564 005103  6756          FPUT I  TEM
+2565 005104  4353          FMUL    LOG8
+2566 005105  1350          FADD    LOG7
+2567 005106  4756          FMUL I  TEM
+2568 005107  1345          FADD    LOG6
+2569 005110  4756          FMUL I  TEM
+2570 005111  1342          FADD    LOG5
+2571 005112  4756          FMUL I  TEM
+2572 005113  1337          FADD    L4
+2573 005114  4756          FMUL I  TEM
+2574 005115  1334          FADD    L3
+2575 005116  4756          FMUL I  TEM
+2576 005117  1331          FADD    L2
+2577 005120  4756          FMUL I  TEM
+2578 005121  1326          FADD    L1
+2579 005122  4756          FMUL I  TEM
+2580 005123  1635          FADD I  X1
+2581 005124  0000          FEXT
+2582 005125  5634          JMP I   EXIT1
+2583 005126  0000  L1,    0000
+2584 005127  3777          3777
+2585 005130  7742          7742
+2586 005131  7777  L2,     7777
+2587 005132  4000          4000
+2588 005133  4100          4100
+2589 005134  7777  L3,     7777
+2590 005135  2517          2517
+2591 005136  0307          0307
+2592 005137  7776  L4,     7776
+2593 005140  4113          4113
+2594 005141  7211          7211
+2595               
+2596               /       LOGARITHM CONSTANTS
+2597               
+2598 005142  7776  LOG5,   7776
+2599 005143  2535          2535
+2600 005144  3301          3301
+2601 005145  7775  LOG6,   7775
+2602 005146  4746          4746
+2603 005147  0771          0771
+2604 005150  7774  LOG7,   7774
+2605 005151  2236          2236
+2606 005152  4304          4304
+2607 005153  7771  LOG8,   7771
+2608 005154  4544          4544
+2609 005155  1735          1735
+2610               
+2611 005156  4726  TEM,    TEMP
+2612 005157  0000  LOG2,   0
+2613 005160  2613          2613
+2614 005161  4414          4414
+2615 005162  0000  FLAG1,  0
+2616               
+2617               
+2618               
+2619               
+2620 005163  0000  FNEG,   0
+2621 005164  4451          JMS I   MINSKI
+2622 005165  7240          CLA CMA
+2623 005166  5763          JMP I   FNEG
+2624               /      FLOATING POINT SINE AND COSINE
+2625               
+2626                       PAGE
+2627               
+2628 005200  4407  FCOS,   FINT                    /COS(X)=SIN(PI/2-X)
+2629 005201  6322          FPUT    X
+2630 005202  0316          FGET    PIOT
+2631 005203  2322          FSUB    X
+2632 005204  0000          FEXT
+2633 005205  1045  FSIN,   GETSGN
+2634 005206  7740          SMA SZA CLA
+2635 005207  5215          JMP     MOD
+2636 005210  1045          GETSGN
+2637 005211  7700          SMA CLA
+2638 005212  5536          RETURN                  /YES SIN(0)=0
+2639 005213  4451          JMS I   MINSKI
+2640 005214  7040          CMA                     /NO: SIN(-X)=-SIN(X)
+2641 005215  3033  MOD,    DCA     T3
+2642               
+2643               /       REDUCE X MODULO 2 PI
+2644               
+2645 005216  4407          FINT
+2646 005217  3306          FDIV    TWOPI
+2647 005220  6326          FPUT    XSQR
+2648 005221  0000          FEXT
+2649 005222  4453          JMS I   INTEGER
+2650 005223  4407          FINT
+2651 005224  7000          FNOR
+2652 005225  6322          FPUT    X
+2653 005226  0326          FGET    XSQR
+2654 005227  2322          FSUB    X
+2655 005230  4306          FMUL    TWOPI
+2656 005231  6322          FPUT    X
+2657 005232  2312          FSUB    PI              /X<PI?
+2658 005233  0000          FEXT
+2659 005234  1045          GETSGN
+2660 005235  7710          SPA CLA
+2661 005236  5245          JMP     PCHECK          /YES
+2662 005237  4407          FINT                    /NO, SIN(X-PI)=-SIN(X)
+2663 005240  6322          FPUT    X
+2664 005241  0000          FEXT
+2665 005242  1033          TAD     T3              /INVERT THE SIGN
+2666 005243  7040          CMA
+2667 005244  3033          DCA     T3
+2668 005245  4407  PCHECK,        FINT                    /X<PI/2?
+2669 005246  0322          FGET    X
+2670 005247  2316          FSUB    PIOT
+2671 005250  0000          FEXT
+2672 005251  1045          GETSGN
+2673 005252  7710          SPA CLA
+2674 005253  5261          JMP     PALG            /YES
+2675 005254  4407          FINT                    /NO
+2676 005255  0312          FGET    PI              /SIN(X)=SIN(PI-X)
+2677 005256  2322          FSUB    X
+2678 005257  6322          FPUT    X
+2679 005260  0000          FEXT
+2680 005261  4407  PALG,   FINT
+2681 005262  0322          FGET    X
+2682 005263  3316          FDIV    PIOT
+2683 005264  6322          FPUT    X
+2684 005265  4322          FMUL    X
+2685 005266  6326          FPUT    XSQR
+2686 005267  0332          FGET    C9
+2687 005270  4326          FMUL    XSQR
+2688 005271  1336          FADD    C7
+2689 005272  4326          FMUL    XSQR
+2690 005273  1342          FADD    C5
+2691 005274  4326          FMUL    XSQR
+2692 005275  1346          FADD    C3
+2693 005276  4326          FMUL    XSQR
+2694 005277  1316          FADD    PIOT
+2695 005300  4322          FMUL    X
+2696 005301  0000          FEXT
+2697 005302  2033  EXIT2,  ISZ     T3
+2698 005303  5536          RETURN
+2699 005304  4451          JMS I   MINSKI
+2700 005305  5536          RETURN
+2701               /      CONSTANTS AND POINTERS
+2702               
+2703               
+2704               
+2705 005306  0003  TWOPI,  0003
+2706 005307  3110          3110
+2707 005310  3756          3756                    /(3755) - FOR 4-WORD
+2708 005311  3235          3235
+2709               
+2710 005312  0002  PI,     0002
+2711 005313  3110          3110
+2712 005314  3756          3756
+2713 005315  3235          3235
+2714               
+2715 005316  0001  PIOT,   0001                    /USED BY SINE AND COSINE
+2716 005317  3110          3110
+2717 005320  3756          3756
+2718 005321  3235          3235
+2719               
+2720 005322  0000  X,      0000
+2721 005323  0000          0000
+2722 005324  0000          0000
+2723 005325  0000          0000
+2724               
+2725 005326  0000  XSQR,   0000
+2726 005327  0000          0000
+2727 005330  0000          0000
+2728 005331  0000          0000
+2729               
+2730               /       SINE CONSTANTS
+2731               
+2732 005332  7764  C9,     7764
+2733 005333  2401          2401
+2734 005334  7015          7015
+2735 005335  1042          1042
+2736 005336  7771  C7,     7771
+2737 005337  5464          5464
+2738 005340  5514          5514
+2739 005341  6150          6150
+2740 005342  7775  C5,     7775
+2741 005343  2431          2431
+2742 005344  5361          5361
+2743 005345  4736          4736
+2744 005346  0000  C3,     0000
+2745 005347  5325          5325
+2746 005350  0414          0414
+2747 005351  3167          3167
+2748               
+2749               /       END OF EXTENDED FUNCTIONS.
+2750               /      PAGE 1 - INPUT/OUTPUT ROUTINES FOR THE FOCAL
+2751               /       FLOATING POINT PACKAGE.
+2752               
+2753               
+2754               /       IN THE COMMENTS BELOW:
+2755               /       F = NUMBER OF DIGITS TO BE OUTPUT       =FISW
+2756               /       D = NUMBER OF DECIMAL PLACES            =DECP
+2757               /       E = DECIMAL EXPONENT                    =BEXP
+2758               /       P = NUMBER OF PLACES REMAINING TO BE
+2759               /           PRINTED BEFORE DECIMAL POINT
+2760               
+2761                       PAGE
+2762               
+2763                       DIGITS= 6               /NUMBER OF DECIMAL DIGITS OUT
+2764               
+2765 005400  0000  TGO,    0
+2766 005401  3334          DCA     SCOUNT          /SAVE MAX. NUMBER OF DIGITS AVAILABLE - *SET COUNTS*
+2767 005402  1052          TAD     FISW
+2768 005403  4557          RTL6
+2769 005404  0122          AND     P77
+2770 005405  3032          DCA     T1
+2771 005406  1032          TAD     T1
+2772 005407  7041          CIA                     /NO, COMPUTE FIELD SIZES
+2773 005410  7450          SNA
+2774 005411  1326          TAD     MD
+2775 005412  3335          DCA     FCOUNT
+2776 005413  1052          TAD     FISW            /(JMP FPRNT) - FOR NO ROUNDING.
+2777 005414  7450          SNA                     /FLOATING OUTPUT?
+2778 005415  5241          JMP     R6              /YES, ROUND OFF TO MAX. NO. PLACES
+2779 005416  0122          AND     P77
+2780 005417  3333          DCA     DECP
+2781 005420  1335          TAD     FCOUNT
+2782 005421  1333          TAD     DECP
+2783 005422  7510          SPA                     / F-D > 0?
+2784 005423  5230          JMP     .+5             /YES
+2785 005424  7240          CLA CMA                 /NO,
+2786 005425  1032          TAD     T1
+2787 005426  3333          DCA     DECP            /MAKE D = F-1
+2788 005427  7040          CMA
+2789 005430  1033          TAD     T3              /COMPARE DECIMAL EXPONENT
+2790 005431  7500          SMA                     / F-D > E?
+2791 005432  7200          CLA                     /NO, ROUND OFF TO .F PLACES
+2792 005433  1032          TAD     T1              /YES
+2793 005434  7510          SPA                     / D+E < 0?      
+2794 005435  5263          JMP     FPRNT-2         /YES, NO ROUNDING NEEDED, GO TO PRINT
+2795 005436  1326          TAD     MD              /NO, ROUND TO D+E PLACES,
+2796 005437  7500          SMA                     /TO A MAXIMUM OF D PLACES
+2797 005440  7200          CLA
+2798 005441  1327  R6,    TAD     RND2            / *ROUND UP *
+2799 005442  3071          DCA     T2              /SAVE NUMBER+1 OF PLACES TO ROUND TO.
+2800 005443  1731          TAD I   BUFST
+2801 005444  1071          TAD     T2              /SET UP BUFFER ADDRESS AT WHICH
+2802 005445  3336          DCA     PLCE            /ROUNDING OFF SHOULD START
+2803 005446  1071          TAD     T2
+2804 005447  7041          CIA                     /SET UP COUNT OF MAXIMUM NUMBER
+2805 005450  3071          DCA     T2              /OF CARRIES ALLOWABLE
+2806 005451  1325          TAD     K5              /LITTLE EXTRA ON FIRST DIGIT.
+2807 005452  2736  RET,    ISZ I   PLCE            /ADD 1 TO DIGIT AT CURRENT POSITION
+2808 005453  1736          TAD I   PLCE
+2809 005454  1330          TAD     OM12
+2810 005455  7710          SPA CLA                 /CARRY REQUIRED?
+2811 005456  5265          JMP     FPRNT           /NO, GO TO OUTPUT
+2812 005457  3736          DCA I   PLCE            /YES, MAKE CURRENT DIGIT ZERO
+2813 005460  2071          ISZ     T2              /BEGINNING OF BUFFER REACHED?
+2814 005461  5321          JMP     DECR            /NO, DECREMENT BUFFER ADDRESS AND REPEAT
+2815 005462  2736          ISZ I   PLCE            /YES, SET MANTISSA TO 0.1
+2816 005463  2033          ISZ     T3              /COMPENSATE BY INCREMENTING EXPONENT
+2817 005464  7200          CLA
+2818 005465  1052  FPRNT,  TAD     FISW            /AUTO-INDEX REGISTER ALREADY SET. - *PRINT*
+2819 005466  7650          SNA CLA                 / F = 0?
+2820 005467  5356          JMP     FLOUT           /YES, OUTPUT AS FLOATING NUMBER
+2821 005470  1335          TAD     FCOUNT
+2822 005471  1033          TAD     T3
+2823 005472  7540          SMA SZA                 / E > F?
+2824 005473  5355          JMP     FLOUT-1         /YES, CONVERT TO E FORMAT
+2825 005474  1333          TAD     DECP
+2826 005475  7500          SMA                     / E < F-D?
+2827 005476  7200          CLA                     /NO, TAKE P = E
+2828 005477  7041          CIA                     /YES, TAKE P = F-D
+2829 005500  1033          TAD     T3
+2830 005501  7041          CIA
+2831 005502  3032          DCA     T1              /SET UP MINUS P
+2832 005503  1033  BACK,   TAD     T3              /PRINT DD.DDD
+2833 005504  1032          TAD     T1
+2834 005505  7650          SNA CLA                 / P = E?
+2835 005506  5343          JMP     DIG             /YES, PRINT DIGIT
+2836 005507  1032          TAD     T1              /NO,
+2837 005510  7001          IAC
+2838 005511  7710          SPA CLA                 / P > 1?
+2839 005512  1105          TAD     M20             /YES, TAKE SPACE (240-260); OTHERWISE ZERO
+2840 005513  4336  IN,     JMS     OUTA            /PRINT CHARACTER
+2841 005514  2032          ISZ     T1              /P CHARACTERS PRINTED?
+2842 005515  5303          JMP     BACK            /NO
+2843 005516  1102          TAD     PER             /YES,
+2844 005517  4551          PRINTC                  /PRINT DECIMAL POINT
+2845 005520  5303          JMP     BACK
+2846               
+2847 005521  7040  DECR,   CMA                     /BACKUP TO TOP OF BUFFER.
+2848 005522  1336          TAD     PLCE
+2849 005523  3336          DCA     PLCE
+2850 005524  5252          JMP     RET
+2851 005525  0005  K5,    5
+2852 005526  7772  MD,     -DIGITS
+2853 005527  0007  RND2,   DIGITS+1
+2854 005530  7766  OM12,   -12
+2855 005531  6150  BUFST,  SADR
+2856 005532  6154  OPUT,   OUTDG
+2857 005533  0000  DECP,   0                       /MODIFIABLE LOCATIONS
+2858 005534  0000  SCOUNT, 0
+2859 005535  0000  FCOUNT, 0
+2860               
+2861                       PLCE=   .
+2862               
+2863 005536  0000  OUTA,   0                       /MODIFIED REGISTERS.
+2864 005537  4732          JMS I   OPUT            /PRINT CHARACTER
+2865 005540  2335          ISZ     FCOUNT          /F CHARACTERS PRINTED?
+2866 005541  5736          JMP I   OUTA            /NO
+2867 005542  5600          JMP I   TGO             /YES, NUMBER FINSHED
+2868               
+2869 005543  7040  DIG,    CMA
+2870 005544  1033          TAD     T3              /REDUCE E, BY 1
+2871 005545  3033          DCA     T3
+2872 005546  2334          ISZ     SCOUNT          /ARE ALL SIG. FIGS. USED?
+2873 005547  5353          JMP     .+4             /NO
+2874 005550  7040          CMA                     /YES,
+2875 005551  3334          DCA     SCOUNT          /RESET COUNT TO -1
+2876 005552  5313          JMP     IN              /AND LEAVE C(AC) = 0
+2877 005553  1414          TAD I   FLTXR           /TAKE NEXT DIGIT FROM BUFFER
+2878 005554  5313          JMP     IN
+2879               
+2880               /       DO FLOATING OUTPUT
+2881               
+2882 005555  7200          CLA                     /IF OUTPUT TOO LARGE,
+2883 005556  4732  FLOUT,  JMS I   OPUT            /PRINT "0"
+2884 005557  1102          TAD     PER
+2885 005560  4551          PRINTC                  /PRINT "."
+2886 005561  2200          ISZ     TGO             /SECOND RETURN
+2887 005562  1414          TAD I   FLTXR           /TAKE NEXT DIGIT FROM BUFFER
+2888 005563  4336          JMS     OUTA            /PRINT IT
+2889 005564  2334          ISZ     SCOUNT          /TEST FOR END OF INPUT
+2890 005565  5362          JMP     .-3             /AND REPEAT
+2891 005566  7040          CMA
+2892 005567  3334          DCA     SCOUNT          /OUTPUT EXTRA ZEROS.
+2893 005570  5363          JMP     .-5
+2894               
+2895 005571  0000  ABSOLV, 0
+2896 005572  1045          TAD     HORD
+2897 005573  3050          DCA     SIGNF
+2898 005574  1045          TAD     HORD
+2899 005575  7710          SPA CLA
+2900 005576  4451          JMS I   MINSKI
+2901 005577  5771          JMP I   ABSOLV
+2902               /      DOUBLE PRECISION DECIMAL-BINARY
+2903               /       INPUT AND CONVERSION FOR + OR - XXX...
+2904               
+2905                       PAGE
+2906               
+2907 005600  0000  DECONV, 0
+2908 005601  3046          DCA     LORD
+2909 005602  3044          DCA     EXP             /ZERO THE EXPONENT AND
+2910 005603  3045          DCA     HORD            /INITIALIZE FLOATING AC.
+2911 005604  3047          DCA     OVER2
+2912 005605  3314          DCA     DNUMBR
+2913 005606  3050          DCA     SIGNF
+2914 005607  1066          TAD     CHAR            /ALLOW KEYBOARD SIGN CHECKS.
+2915 005610  1264          TAD     MPLUS
+2916 005611  7450          SNA
+2917 005612  5220          JMP     .+6             /+SIGN; GET NEXT
+2918 005613  1111          TAD     M2              /CHECK - SIGN
+2919 005614  7640          SZA CLA
+2920 005615  5221          JMP     .+4
+2921 005616  7040          CMA                     /INIT SIGN CHECK TO POS.
+2922 005617  3050          DCA     SIGNF
+2923 005620  4666          JMS I   XINPUT          /GET NEXT
+2924 005621  1066          TAD     CHAR            /A SPACE PERHAPS?
+2925 005622  1265          TAD     MSPACE
+2926 005623  7650          SNA CLA
+2927 005624  5220          JMP     .-4
+2928 005625  4227          JMS     DECON
+2929 005626  5600          JMP I   DECONV
+2930 005627  0000  DECON, 0
+2931 005630  1066          TAD     CHAR            /TEST LEAD CHARACTER FOR TERMINATOR
+2932 005631  1262          TAD     MINE
+2933 005632  7650          SNA CLA
+2934 005633  5627          JMP I   DECON           /E
+2935 005634  4561          TESTN
+2936 005635  5627          JMP I   DECON           /.
+2937 005636  5247          JMP     DTST            /OTHER
+2938 005637  1054          TAD     SORTCN          /N
+2939 005640  3313  DSAVE,  DCA     DIGIT           /YES
+2940 005641  4267          JMS     MULT10          /REMAIN MUST =0 SINCE OVERFLOW IS CHECKED
+2941 005642  2314          ISZ     DNUMBR          /COUNT DIGITS
+2942 005643  7640          SZA CLA
+2943 005644  4566          ERROR2                  /INPUT-OVERFLOW ERROR
+2944 005645  4666          JMS I   XINPUT
+2945 005646  5230          JMP     DECON+1         /CONTINUE
+2946               
+2947 005647  1066  DTST,   TAD     CHAR            /ALLOW A-Z
+2948 005650  1112          TAD     MINUSA
+2949 005651  7710          SPA CLA
+2950 005652  5627          JMP I   DECON
+2951 005653  1066          TAD     CHAR
+2952 005654  1263          TAD     MINUSZ
+2953 005655  7740          SZA SMA CLA
+2954 005656  5627          JMP I   DECON           /USE SIX BITS OF ASCII
+2955 005657  1066          TAD     CHAR
+2956 005660  0122          AND     P77
+2957 005661  5240          JMP     DSAVE
+2958               
+2959 005662  7473  MINE,   -"E                     /(7532)- FOR AMPERSAND
+2960 005663  7446  MINUSZ, -"Z
+2961 005664  7525  MPLUS,  -"+
+2962 005665  7540  MSPACE, -" 
+2963 005666  0756  XINPUT, INPUT
+2964 005667  0000  MULT10,        0                       /ROUTINE TO MULTIPLY FLAC BY TEN (10)
+2965 005670  1047          TAD     OVER2
+2966 005671  3043          DCA     OVER1
+2967 005672  1046          TAD     LORD            /DOUBLE PRECISION WORD
+2968 005673  3042          DCA     AC1L            /BY TEN (DECIMAL)
+2969 005674  1045          TAD     HORD            /REMAIN=REMAINDER
+2970 005675  3041          DCA     AC1H
+2971 005676  3312          DCA     REMAIN          /CLEAR OVERFLOW WORD
+2972 005677  4315          JMS     MULT2           /CALL SUBROUTINE TO
+2973 005700  4315          JMS     MULT2           /MULTIPLY BY TWO
+2974 005701  4333          JMS     DUBLAD          /CALL DOUBLE ADD
+2975 005702  4315          JMS     MULT2
+2976 005703  1313          TAD     DIGIT           /ADD LAST DIGIT RECEIVED
+2977 005704  3043          DCA     OVER1
+2978 005705  3042          DCA     AC1L
+2979 005706  3041          DCA     AC1H
+2980 005707  4333          JMS     DUBLAD
+2981 005710  1312          TAD     REMAIN          /EXIT WITH REMAINDER
+2982 005711  5667          JMP I   MULT10          /IN AC
+2983               
+2984 005712  0000  REMAIN, 0
+2985 005713  0000  DIGIT,  0                       /STORAGE FOR DIGIT
+2986 005714  0000  DNUMBR, 0                       /=NUMBER OF DIGITS
+2987               
+2988 005715  0000  MULT2,  0                       /MULTIPLY OVER2, LORD, HORD BY 2
+2989 005716  1047          TAD     OVER2
+2990 005717  7104          CLL RAL                 /CARRY INSERT BIT IS IN LINK
+2991 005720  3047          DCA     OVER2
+2992 005721  1046          TAD     LORD
+2993 005722  7004          RAL
+2994 005723  3046          DCA     LORD
+2995 005724  1045          TAD     HORD
+2996 005725  7004          RAL
+2997 005726  3045          DCA     HORD
+2998 005727  1312          TAD     REMAIN
+2999 005730  7004          RAL
+3000 005731  3312          DCA     REMAIN
+3001 005732  5715          JMP I   MULT2
+3002 005733  0000  DUBLAD,        0                       /TRIPLE PRECISION ADDITION
+3003 005734  7300          CLA CLL
+3004 005735  1047          TAD     OVER2
+3005 005736  1043          TAD     OVER1
+3006 005737  3047          DCA     OVER2
+3007 005740  7004          RAL
+3008 005741  1046          TAD     LORD
+3009 005742  1042          TAD     AC1L
+3010 005743  3046          DCA     LORD
+3011 005744  7004          RAL
+3012 005745  1045          TAD     HORD
+3013 005746  1041          TAD     AC1H
+3014 005747  3045          DCA     HORD
+3015 005750  7004          RAL
+3016 005751  1312          TAD     REMAIN          /WITH OVERFLOW
+3017 005752  3312          DCA     REMAIN
+3018 005753  5733          JMP I   DUBLAD
+3019               
+3020 005754  0000  DIV1,   0                       /SHIFT OPERAND RIGHT
+3021 005755  7300          CLA CLL                 /TRIPLE PRECISION
+3022 005756  1041          TAD     AC1H
+3023 005757  7510          SPA
+3024 005760  7120          CLL CML
+3025 005761  7010          RAR
+3026 005762  3041          DCA     AC1H
+3027 005763  1042          TAD     AC1L
+3028 005764  7010          RAR
+3029 005765  3042          DCA     AC1L
+3030 005766  1043          TAD     OVER1
+3031 005767  7010          RAR
+3032 005770  3043          DCA     OVER1
+3033 005771  2040          ISZ     EX1
+3034 005772  5754          JMP I   DIV1
+3035 005773  5754          JMP I   DIV1
+3036                      PAGE
+3037               
+3038               /       FLOATING OUTPUT CONVERSION ROUTINE
+3039               
+3040 006000  0000  FLOUTP, 0
+3041 006001  1335          TAD     PEQ
+3042 006002  4551          PRINTC                  /(CLA)- TO SUPPRESS "="
+3043 006003  1045          TAD     HORD            /NUMBER>0??
+3044 006004  7700          SMA CLA
+3045 006005  1334          TAD     SMSP            /PRINT "-" OR A SPACE.
+3046 006006  1336          TAD     SMIN
+3047 006007  4551          PRINTC
+3048 006010  4753          JMS I   ABSOL2
+3049 006011  3033  FGO2,   DCA     T3              /INITIALIZE DECIMAL EXPONENT
+3050 006012  1044          TAD     EXP             /IS EXP 0 TO 4?
+3051 006013  7510          SPA
+3052 006014  5227          JMP     FGO3            /TOO LARGE: MULTIPLY BY 1/10
+3053 006015  7440          SZA
+3054 006016  1341          TAD     M4
+3055 006017  7750          SPA SNA CLA
+3056 006020  5234          JMP     FGO4
+3057 006021  4407          FINT
+3058 006022  4744          FMUL I  PPTEN
+3059 006023  0000          FEXT
+3060 006024  7001          IAC
+3061 006025  1033          TAD     T3
+3062 006026  5211          JMP     FGO2
+3063               
+3064 006027  4407  FGO3,   FINT
+3065 006030  4752          FMUL I TENPT
+3066 006031  0000          FEXT
+3067 006032  7040          CMA
+3068 006033  5225          JMP     .-6
+3069 006034  3745  FGO4,  DCA I   DPT             /MULTIPLY BY TWO TO POSITION BIT0
+3070 006035  3746          DCA I   REPT            /CLEAR OVERFLOW WORD
+3071 006036  1350          TAD     SADR            /INIT BUFFER POINTER
+3072 006037  3014          DCA     FLTXR
+3073 006040  1044          TAD     EXP             /COMPUTE BITS IN 1ST DIGIT
+3074 006041  7140          CLL CMA
+3075 006042  3354          DCA     OUTDG           /TEMP COUNT
+3076 006043  1343          TAD     DCOUNT          /SETUP COUNT OF TOTAL OUTPUT
+3077 006044  3044          DCA     EXP
+3078 006045  4527          JMS I   DOUBLE          /ROTATE OUT THE 1ST 4 BITS
+3079 006046  2354          ISZ     OUTDG
+3080 006047  5245          JMP     .-2
+3081 006050  1746          TAD I   REPT            /TEST FOR 10-15, 0, 1-9
+3082 006051  7450          SNA 
+3083 006052  5270          JMP     FGO5            /IGNORE 1ST ZERO
+3084 006053  1342          TAD     FM12
+3085 006054  7710          SPA CLA
+3086 006055  5264          JMP     .+7             /0-9
+3087 006056  7001          IAC
+3088 006057  3414          DCA I   FLTXR           /OUTPUT A 1
+3089 006060  2044          ISZ     EXP             /COUNT THE DIGIT
+3090 006061  1342          TAD     FM12            /CORRECT REMAINDER
+3091 006062  2033          ISZ     T3              /BUMP DECIMAL EXPONENT
+3092 006063  7000          NOP
+3093 006064  1746          TAD I   REPT            /COMPUTE RESULTANT OR SECOND DIGIT 
+3094 006065  2033          ISZ     T3
+3095 006066  7000          NOP
+3096 006067  7410          SKP
+3097 006070  4747  FGO5,   JMS I   M10PT           /IE. .672X10=6+.72.. ETC
+3098 006071  3414          DCA I   FLTXR
+3099 006072  2044          ISZ     EXP             /ALL DIGITS OUTPUT??
+3100 006073  5270          JMP     .-3             /NO: CONTINUE
+3101 006074  1350          TAD     SADR            /INIT BUFFER POINTER
+3102 006075  3014          DCA     FLTXR
+3103 006076  1343          TAD     DCOUNT
+3104 006077  4751          JMS I   ROUND           /OUTPUT MANTISSA
+3105 006100  5600          JMP I   FLOUTP          /FIXED POINT DONE
+3106 006101  1333          TAD     CHRT            /PRINT "E"
+3107 006102  4551          PRINTC
+3108               /      OUTPUT THE EXPONENT
+3109               
+3110 006103  1033          TAD     T3              /TAKE ABSOLUTE VALUE OF EXPONENT
+3111 006104  7510          SPA
+3112 006105  7041          CIA
+3113 006106  3045          DCA     HORD            /SAVE + POWER 
+3114 006107  1033          TAD     T3              /PRINT SIGN
+3115 006110  7700          SMA CLA
+3116 006111  1111          TAD     M2
+3117 006112  1336          TAD     SMIN
+3118 006113  4551          PRINTC
+3119 006114  1045          TAD     HORD
+3120 006115  2044          ISZ     EXP
+3121 006116  1337          TAD     M144
+3122 006117  7500          SMA
+3123 006120  5315          JMP     .-3
+3124 006121  1340          TAD     C144
+3125 006122  3045          DCA     HORD            /SAVE TENS AND UNITS
+3126 006123  7040          CMA                     /OUTPUT HUNDREDS
+3127 006124  1044          TAD     EXP
+3128 006125  7440          SZA                     /UNLESS ZERO
+3129 006126  4354          JMS     OUTDG
+3130 006127  1045          TAD     HORD            /PRINT TWO DIGITS
+3131 006130  4732          JMS I   PRNTI
+3132 006131  5600          JMP I   FLOUTP
+3133               
+3134 006132  2442  PRNTI,  PRNT
+3135 006133  0305  CHRT,   "E                      /E (0246) - FOR AMPERSAND
+3136 006134  7763  SMSP,   " -"-                   /
+3137 006135  0275  PEQ,    "=
+3138 006136  0255  SMIN,   "-
+3139 006137  7634  M144,   -144                    /-100
+3140 006140  0144  C144,   0144                    /+100
+3141 006141  7774  M4,     -4
+3142 006142  7766  FM12,   -12
+3143 006143  7771  DCOUNT, -DIGITS-1               /NUMBER OF DIGITS OUTPUT
+3144 006144  6275  PPTEN,  PTEN                    /IEI
+3145 006145  5713  DPT,    DIGIT
+3146 006146  5712  REPT,   REMAIN                  /OVERFLOW FROM INTEGER MULTIPLY
+3147 006147  5667  M10PT,  MULT10
+3148 006150  7467  SADR,   BUFFER-1
+3149 006151  5400  ROUND,  TGO                     /ACTUAL OUTPUT ROUTINE
+3150 006152  6271  TENPT,  TEN
+3151 006153  5571  ABSOL2, ABSOLV
+3152               
+3153 006154  0000  OUTDG,  0                       /OUTPUT ONE DIGIT
+3154 006155  1113          TAD     C260
+3155 006156  4551          PRINTC
+3156 006157  5754          JMP I   OUTDG
+3157               
+3158               /       USED BY 8K
+3159               /      FLOATING POINT INPUT
+3160               
+3161                       PAGE
+3162               
+3163 006200  0000  FLINTP, 0                       /IF C(AC) = 0, USE CHAR
+3164 006201  7640          SZA CLA                 /IF C(AC) NON-ZERO, GET NEXT
+3165 006202  4706          JMS I   XIN             /GET FIRST CHAR
+3166 006203  1066          TAD     CHAR            /IGNORE LEADING SPACES
+3167 006204  1114          TAD     M240
+3168 006205  7650          SNA CLA
+3169 006206  5202          JMP     .-4
+3170 006207  4702          JMS I   DPCVPT          /READ FIRST DIGIT GROUP 
+3171 006210  1066          TAD     CHAR            /AND SET "SIGNF"
+3172 006211  1115          TAD     MPER
+3173 006212  7640          SZA CLA                 /ENDED BY PERIOD?
+3174 006213  5221          JMP     FIGO1
+3175 006214  4706          JMS I   XIN             /YES, READ 2AND GROUP
+3176 006215  3705          DCA I   DPN
+3177 006216  4703          JMS I   DCONP
+3178 006217  1705          TAD I   DPN             /SAVE NUMBER OF DIGITS IN T3
+3179 006220  7041          CMA IAC
+3180 006221  3033  FIGO1,  DCA     T3              /NO,
+3181 006222  1310          TAD     P43
+3182 006223  3044          DCA     EXP
+3183 006224  4704          JMS I   RESOL5
+3184 006225  4707          JMS I   INORM           /NORMALIZE FIRST, THEN
+3185 006226  4407          FINT
+3186 006227  6430          FPUT I  PT1             /SAVE NUMBER
+3187 006230  0000          FEXT
+3188 006231  1066          TAD     CHAR
+3189 006232  1301          TAD     MINUSE
+3190 006233  7640          SZA CLA                 /"E" READ IN?
+3191 006234  5246          JMP     ENDFI+3         /NO
+3192 006235  4706          JMS I   XIN             /YES, READ 3RD DIGIT GROUP
+3193 006236  4702          JMS I   DPCVPT          /I.E. CONVERT DECIMAL EXPONENT
+3194 006237  4704          JMS I   RESOL5
+3195 006240  1047          TAD     OVER2
+3196 006241  1033          TAD     T3              /C(SEXP) PLACES TO RIGHT
+3197 006242  3033          DCA     T3              /OF LAST DIGIT
+3198               /      COMPENSATE FOR DECIMAL EXPONENTS
+3199               
+3200 006243  4407  ENDFI,  FINT                    /RESTORE MANTISSA
+3201 006244  0430          FGET I  PT1
+3202 006245  0000          FEXT
+3203 006246  1033          TAD     T3              /TEST DECIMAL EXPONENT
+3204 006247  7450          SNA
+3205 006250  5600          JMP I   FLINTP          /FINISHED
+3206 006251  7700          SMA CLA
+3207 006252  5261          JMP     FIGO4
+3208 006253  4407          FINT                    /. IS TO THE LEFT:
+3209 006254  4275          FMUL    PTEN            /TIMES .1000
+3210 006255  6430          FPUT I  PT1
+3211 006256  0000          FEXT
+3212 006257  7001          IAC
+3213 006260  5266          JMP     .+6
+3214               
+3215 006261  4407  FIGO4,  FINT                    /. IS TO THE RIGHT:
+3216 006262  4271          FMUL    TEN             /MULTIPLY BY 10
+3217 006263  6430          FPUT I  PT1
+3218 006264  0000          FEXT
+3219 006265  7040          CMA
+3220 006266  1033          TAD     T3
+3221 006267  3033          DCA     T3
+3222 006270  5246          JMP     ENDFI+3
+3223               
+3224 006271  0004  TEN,    0004
+3225 006272  2400          2400
+3226 006273  0000          0000
+3227 006274  0000          0000
+3228               
+3229 006275  7775  PTEN,   7775
+3230 006276  3146          3146
+3231 006277  3147          3147                    /(3146) - FOR 4-WORD
+3232 006300  3150          3150
+3233               
+3234 006301  7473  MINUSE, -"E                     /(7532) - FOR AMPERSAND
+3235               
+3236 006302  5600  DPCVPT, DECONV
+3237 006303  5627  DCONP,  DECON
+3238 006304  7173  RESOL5, RESOLV
+3239 006305  5714  DPN,    DNUMBR
+3240 006306  0756  XIN,    INPUT
+3241 006307  7335  INORM,  DNORM
+3242 006310  0043  P43,    43
+3243               
+3244               /       END OF FLOATING POINT INPUT
+3245               
+3246               /       7 FREE
+3247               
+3248               /       USED BY H.S. READER
+3249                      PAGE
+3250               
+3251               /       FLOATING-POINT INTERPRETER FOR FOCAL.
+3252               
+3253 006400  0000  FPNT,   0
+3254 006401  7300          CLA CLL
+3255 006402  3047          DCA     OVER2           /(NOP) - FOR 4-WORD
+3256 006403  3043          DCA     OVER1           /(NOP) - FOR 4-WORD.
+3257 006404  1600          TAD I   FPNT            /GET NEXT INSTRUCTION
+3258 006405  7450          SNA
+3259 006406  5600          JMP I   FPNT            /FAST EXIT
+3260 006407  3262          DCA     JUMP
+3261 006410  1262          TAD     JUMP
+3262 006411  0123          AND     C200            /GET PAGE BIT
+3263 006412  7650          SNA CLA                 /PAGE ZERO?
+3264 006413  5216          JMP     .+3             /YES
+3265 006414  1104          TAD     P7600           /NO
+3266 006415  0200          AND     FPNT            /C(FPNT)0-4 CONTAINS PAGE BITS
+3267 006416  3040          DCA     ADDR
+3268 006417  1106          TAD     P177            /GET 7 BIT ADDRESS
+3269 006420  0262          AND     JUMP
+3270 006421  1040          TAD     ADDR
+3271 006422  3040          DCA     ADDR
+3272 006423  1263          TAD     INDRCT          /INDIRECT BIT=1?
+3273 006424  0262          AND     JUMP
+3274 006425  7650          SNA CLA
+3275 006426  5231          JMP     LOOP01          /NO-GO ON
+3276 006427  1440          TAD I   ADDR            /YES, DEFER, W/O AUTO-INDEX
+3277 006430  3040          DCA     ADDR
+3278 006431  2200  LOOP01, ISZ     FPNT
+3279 006432  7040          CMA
+3280 006433  1040          TAD     ADDR
+3281 006434  3015          DCA     FLTXR2
+3282 006435  1262          TAD     JUMP            /GET COMMAND
+3283 006436  7106          CLL RTL
+3284 006437  7006          RTL
+3285 006440  0107          AND     P17             /GET BITS 0-2, IE OPCODE
+3286 006441  7450          SNA
+3287 006442  5267          JMP     FLGT
+3288 006443  1264          TAD     TABLE           /LOOKUP IN TABLE
+3289 006444  3262          DCA     JUMP
+3290 006445  1662          TAD I   JUMP
+3291 006446  7450          SNA
+3292 006447  5265          JMP     FLPT
+3293 006450  3262          DCA     JUMP
+3294 006451  1304          TAD     CEX1            /SAVE FLOATING ARGUMENT, UNLESS 'GET' OR 'PUT'
+3295 006452  3014          DCA     FLTXR
+3296 006453  1117          TAD     MFLT
+3297 006454  3057          DCA     CNTR
+3298 006455  1415          TAD I   FLTXR2
+3299 006456  3414          DCA I   FLTXR
+3300 006457  2057          ISZ     CNTR
+3301 006460  5255          JMP     .-3
+3302 006461  5662          JMP I   JUMP            /GO THERE
+3303 006462  0000  JUMP,  0
+3304               
+3305                       ADDR=   EX1
+3306               
+3307 006463  0400  INDRCT, 0400
+3308 006464  6573  TABLE,  ITABLE
+3309               
+3310 006465  1303  FLPT,   TAD     CEXP            /EXP TO (ADDR)
+3311 006466  5273          JMP     .+5
+3312               
+3313 006467  1303  FLGT,   TAD     CEXP            /(ADDR) TO EXP
+3314 006470  3015          DCA     FLTXR2
+3315 006471  7040          CMA
+3316 006472  1040          TAD     ADDR
+3317 006473  3014          DCA     FLTXR           /SAVE 'FROM' ADDRESS
+3318 006474  1117          TAD     MFLT            /3 OR 4 WORDS
+3319 006475  3057          DCA     CNTR
+3320 006476  1414          TAD I   FLTXR
+3321 006477  3415          DCA I   FLTXR2
+3322 006500  2057          ISZ     CNTR
+3323 006501  5276          JMP     .-3
+3324 006502  5201          JMP     FPNT+1
+3325               
+3326 006503  0043  CEXP,   EXP-1
+3327 006504  0037  CEX1,   EX1-1
+3328               
+3329               
+3330 006505  4765  FLSU,   JMS I   OPMINS          /FSUB=2 - NEGATE THE OPERAND
+3331 006506  4770  FLAD,   JMS I   ALGN            /FLAD=1 - FIRST ALIGN EXPONENTS
+3332 006507  5201          JMP     FPNT+1          /RETURN IF NO ALIGNMENT IS POSSIBLE
+3333 006510  4772          JMS I   RAR2            /TRIPLE PRECISION ADDDITION
+3334 006511  4771          JMS I   RAR1            /SINCE BITS ARE SHIFTED
+3335 006512  4773          JMS I   TRAD            /RIGHT
+3336 006513  4767  NORF,   JMS I   NORM            /NORMALIZE THE RESULT
+3337 006514  5201          JMP     FPNT+1          /HINT: USE 700X FOR FUNCTIONS.
+3338               /      INTERPRETIVE POWER
+3339               
+3340 006515  1045  FLEX,   TAD     HORD            /ZERO?
+3341 006516  7640          SZA CLA
+3342 006517  5325          JMP     .+6
+3343 006520  3044  ZERO,   DCA     EXP             /YES
+3344 006521  3045          DCA     HORD
+3345 006522  3046          DCA     LORD
+3346 006523  3047          DCA     OVER2
+3347 006524  5201          JMP     FPNT+1
+3348               
+3349 006525  4543          PUSHF                   /AC TO A + POWER
+3350 006526  0044          FLAC
+3351 006527  4543          PUSHF                   /SETUP ARGUMENT (THE EXPONENT)
+3352 006530  0040          EX1
+3353 006531  4544          POPF
+3354 006532  0044          FLAC
+3355 006533  4453          JMS I   INTEGER         /ONLY POSITIVE, INTEGER  EXPONENTS
+3356 006534  7510          SPA
+3357 006535  5342          JMP     .+5             /(COULD DIVIDE)
+3358 006536  7040          CMA
+3359 006537  3262          DCA     JUMP            /TEMP STORAGE
+3360 006540  3043          DCA     OVER1           /(NOP) - FOR 4-WORD
+3361 006541  1045          TAD     HORD
+3362 006542  7640          SZA CLA
+3363 006543  4566          ERROR2                  /TOO LARGE OR NEGATIVE EXPONENT
+3364 006544  4543          PUSHF                   /INITIALIZE TO ONE.
+3365 006545  2405          FLTONE
+3366 006546  4544          POPF
+3367 006547  0044          FLAC
+3368 006550  4544          POPF
+3369 006551  7470          ITER1
+3370 006552  5360          JMP     .+6
+3371 006553  4543          PUSHF
+3372 006554  7470          ITER1
+3373 006555  4544          POPF
+3374 006556  0040          EX1
+3375 006557  4766          JMS I   MULT            /"MULT"
+3376 006560  2262          ISZ     JUMP
+3377 006561  5353          JMP     .-6
+3378 006562  5201          JMP     FPNT+1
+3379 006563  4766  FLMY,  JMS I   MULT            /MULTIPLY
+3380 006564  5201          JMP     FPNT+1
+3381               
+3382               
+3383 006565  7153  OPMINS, MINUS2
+3384 006566  7004  MULT,   DMULT
+3385 006567  7335  NORM,   DNORM
+3386 006570  6623  ALGN,   ALIGN
+3387 006571  5754  RAR1,   DIV1
+3388 006572  6757  RAR2,   DIV2
+3389 006573  5733  TRAD,   DUBLAD
+3390               
+3391                       ITABLE= .-1
+3392               
+3393 006574  6506          FLAD
+3394 006575  6505          FLSU
+3395 006576  7107          FLDV
+3396 006577  6563          FLMY
+3397 006600  6515          FLEX
+3398 006601  0000          0000
+3399 006602  6513          NORF
+3400               
+3401 006603  0000  ACMINS, 0                       /ROUTINE TO  COMPLEMENT FLAC - VIA "MINSKI"
+3402 006604  7300          CLA CLL
+3403 006605  1047          TAD     OVER2           /TRIPLE PRECISION NEGATION
+3404 006606  7041          CMA IAC                 /OF FLOATING AC
+3405 006607  3047          DCA     OVER2
+3406 006610  1046          TAD     LORD
+3407 006611  7040          CMA
+3408 006612  7430          SZL
+3409 006613  7101          CLL IAC
+3410 006614  3046          DCA     LORD
+3411 006615  1045          TAD     HORD
+3412 006616  7040          CMA
+3413 006617  7430          SZL
+3414 006620  7101          CLL IAC
+3415 006621  3045          DCA     HORD
+3416 006622  5603          JMP I   ACMINS
+3417 006623  0000  ALIGN, 0                       /SUBROUTINE TO ALIGN
+3418 006624  1045          TAD     HORD            /BINARY POINTS
+3419 006625  7450          SNA
+3420 006626  1046          TAD     LORD            /IS MANTISSA ZERO?
+3421 006627  7650          SNA CLA
+3422 006630  5311          JMP     NOX1            /YES, RESULT=OPERAND
+3423 006631  1041          TAD     AC1H            /NO, IS OPERAND ZERO?
+3424 006632  7450          SNA
+3425 006633  1042          TAD     AC1L
+3426 006634  7450          SNA
+3427 006635  1043          TAD     OVER1
+3428 006636  7650          SNA CLA
+3429 006637  5623          JMP I   ALIGN           /YES, EXIT.
+3430 006640  1040          TAD     EX1
+3431 006641  7041          CMA IAC
+3432 006642  1044          TAD     EXP
+3433 006643  7450          SNA                     /ARE EXPONENTS EQUAL?
+3434 006644  5273          JMP     ADONE           /YES
+3435 006645  3203          DCA     ACMINS
+3436 006646  1203          TAD     ACMINS
+3437 006647  7500          SMA                     /NO
+3438 006650  7041          CIA                     /NEGATE AND
+3439 006651  3322          DCA     AMOUNT          /SAVE THE DIFFERENCE
+3440 006652  1322          TAD     AMOUNT
+3441 006653  1336          TAD     TEST2
+3442 006654  7710          SPA CLA                 /CAN THE EXPONENTS BE ALIGNED?
+3443 006655  5275          JMP     NOX             /NO, USE LARGER OF THE TWO.
+3444 006656  1203          TAD     ACMINS          /YES, SHIFT THE SMALLER
+3445 006657  7700          SMA CLA
+3446 006660  5265          JMP     ASHFT
+3447 006661  4357          JMS     DIV2
+3448 006662  2322          ISZ     AMOUNT
+3449 006663  5261          JMP     .-2
+3450 006664  5273          JMP     ADONE
+3451 006665  7040  ASHFT, CMA     
+3452 006666  1040          TAD     EX1
+3453 006667  3040          DCA     EX1
+3454 006670  4723          JMS I   TAG1
+3455 006671  2322          ISZ     AMOUNT
+3456 006672  5270          JMP     .-2
+3457 006673  2223  ADONE,  ISZ     ALIGN
+3458 006674  5623          JMP I   ALIGN
+3459               
+3460 006675  1040  NOX,    TAD     EX1             /MISSION IMPOSSIBLE!
+3461 006676  7700          SMA CLA                 /CHECK FOR SIGN DIFFERENCE
+3462 006677  5304          JMP     NOX2
+3463 006700  1044          TAD     EXP
+3464 006701  7700          SMA CLA
+3465 006702  5623          JMP I   ALIGN           /-+
+3466 006703  5306          JMP     .+3             /--
+3467 006704  1044  NOX2,   TAD     EXP
+3468 006705  7700          SMA CLA
+3469 006706  1203          TAD     ACMINS          /TEMP STORAGE OF DIFFERENCE. BOTH POS EXP OR BOTH NEG.
+3470 006707  7740          SMA SZA CLA
+3471 006710  5623          JMP I   ALIGN           /OK (+-)
+3472 006711  1040  NOX1,   TAD     EX1             /USE LARGER
+3473 006712  3044          DCA     EXP
+3474 006713  1041          TAD     AC1H
+3475 006714  3045          DCA     HORD
+3476 006715  1042          TAD     AC1L
+3477 006716  3046          DCA     LORD
+3478 006717  1043          TAD     OVER1
+3479 006720  3047          DCA     OVER2
+3480 006721  5623          JMP I   ALIGN
+3481               
+3482 006722  0000  AMOUNT, 0
+3483 006723  5754  TAG1,   DIV1
+3484               /      LEAVE 12 BIT ANSWER IN AC UPON RETURN
+3485               /       LEAVE FLAC AS AN INTEGER,
+3486               
+3487 006724  0000  FIX,    0                       /VIA (INTEGER)
+3488 006725  4751          JMS I   ABSOL
+3489 006726  1044          TAD     EXP             /TEST FOR FRACTION
+3490 006727  7750          SPA SNA CLA
+3491 006730  5353          JMP     FIXM            /DOUBLE CHECK FOR MINUS ONE.
+3492 006731  7001          IAC
+3493 006732  3043          DCA     OVER1
+3494 006733  1350          TAD     P27             /INIT ALIGNMENT
+3495 006734  3040          DCA     EX1
+3496 006735  4223          JMS     ALIGN           /DO THE ALIGNMENT TO AN INTEGER
+3497 006736  0027  TEST2,  0027                    /ALREADY DONE; (43)-FOR 4-WORD
+3498 006737  2047          ISZ     OVER2
+3499 006740  5344          JMP     .+4
+3500 006741  2046          ISZ     LORD
+3501 006742  7410          SKP
+3502 006743  2045          ISZ     HORD
+3503 006744  3047          DCA     OVER2           /CLEAR THE FRACTION
+3504 006745  4752          JMS I   RESOL
+3505 006746  1046          TAD     LORD            /EXIT WITH LOW ORDER RESULT IN AC.
+3506 006747  5724          JMP I   FIX
+3507               
+3508 006750  0027  P27,    27
+3509 006751  5571  ABSOL,  ABSOLV
+3510 006752  7173  RESOL,  RESOLV
+3511               
+3512 006753  3044  FIXM,   DCA     EXP             /CLEAR EXPONENT
+3513 006754  3045          DCA     HORD
+3514 006755  3046          DCA     LORD
+3515 006756  5344          JMP     TEST2+6
+3516               
+3517 006757  0000  DIV2,   0                       /SHIFT FLAC RIGHT
+3518 006760  7300          CLA CLL
+3519 006761  1045          TAD     HORD
+3520 006762  7510          SPA
+3521 006763  7020          CML
+3522 006764  7010          RAR
+3523 006765  3045          DCA     HORD
+3524 006766  1046          TAD     LORD
+3525 006767  7010          RAR
+3526 006770  3046          DCA     LORD
+3527 006771  1047          TAD     OVER2
+3528 006772  7010          RAR
+3529 006773  3047          DCA     OVER2
+3530 006774  2044          ISZ     EXP
+3531 006775  5757          JMP I   DIV2
+3532 006776  5757          JMP I   DIV2
+3533                      SPECIAL=.               /INPUT CHARACTERS
+3534               
+3535 006777  0337          337                     /LEFT ARROW
+3536 007000  0377          377                     /RUBOUT
+3537 007001  0212          "J&237                  /L.F.
+3538 007002  0375          375                     /ALT MODE
+3539 007003  7777          -1
+3540               
+3541               /       (A+B+C)*(D+E+F)=A*D, A*E, B*D, B*E
+3542               
+3543 007004  0000  DMULT,  0                       /N- PRECISION MULTIPLY WITH
+3544 007005  7001          IAC                     /PRODUCT IN TRIPLE PRECISION
+3545 007006  1040          TAD     EX1             /ADD EXPONENTS+1
+3546 007007  4324          JMS     SIGN            /AND DETERMINE SIGN OF RESULT
+3547 007010  7710          SPA CLA
+3548 007011  4353          JMS     MINUS2
+3549 007012  3301          DCA     DATUM-1         /INITIALIZE RESULT
+3550 007013  3300          DCA     DATUM-2
+3551 007014  3277          DCA     DATUM-3
+3552 007015  3276          DCA     DATUM-4
+3553 007016  1045          TAD     A               /A*D
+3554 007017  3751          SAVE                    /STORE IN MP2
+3555 007020  1041          TAD     D               /SINGLE PRECISION MULTIPLY
+3556 007021  4752          MULTY
+3557 007022  0002          2                       /ACCUMULATE STARTING IN #2 DATA WORD
+3558 007023  1042          TAD     E               /A*E
+3559 007024  4752          MULTY
+3560 007025  0003          3
+3561 007026  1046          TAD     B               /B*D
+3562 007027  3751          SAVE
+3563 007030  1041          TAD     D
+3564 007031  4752          MULTY
+3565 007032  0003          3
+3566 007033  1042          TAD     E               /B*E
+3567 007034  4752          MULTY
+3568 007035  0004          4
+3569 007036  5263  DMULT4, JMP     DMDONE          /(DCA DATUM-5)-FOR 4-WORD
+3570 007037  3274          DCA     DATUM-6
+3571 007040  1043          TAD     F               /A*F
+3572 007041  3751          SAVE
+3573 007042  1045          TAD     A
+3574 007043  4752          MULTY
+3575 007044  0004          4
+3576 007045  1046          TAD     B               /B*F
+3577 007046  4752          MULTY
+3578 007047  0005          5
+3579 007050  1047          TAD     C               /C*D
+3580 007051  3751          SAVE
+3581 007052  1041          TAD     D
+3582 007053  4752          MULTY
+3583 007054  0004          4
+3584 007055  1042          TAD     E               /C*E
+3585 007056  4752          MULTY
+3586 007057  0005          5
+3587 007060  1043         TAD F                   /C*F
+3588 007061  4752          MULTY
+3589 007062  0006          6
+3590 007063  1301  DMDONE, TAD     DATUM-1         /COPY RESULT
+3591 007064  3045          DCA     HORD
+3592 007065  1300          TAD     DATUM-2
+3593 007066  3046          DCA     LORD
+3594 007067  1277          TAD     DATUM-3
+3595 007070  3047          DCA     OVER2
+3596 007071  4301          JMS     MULDIV
+3597 007072  3047          DCA     OVER2           /(NOP) - FOR 4-WORD
+3598 007073  5604          JMP I   DMULT
+3599               
+3600                       DATUM=  .+6             /INTERMEDIATE STORAGE
+3601               
+3602               /       #6-LOW ORDER RESULT
+3603               /       #5
+3604               /       #4
+3605               /       #3
+3606               /       #2
+3607               /       #1-HIGH ORDER RESULT
+3608               
+3609                       *DATUM-1
+3610               
+3611 007101  0000  MULDIV, 0                       /TERMINATE MULTIPLY AND DIVIDE.
+3612 007102  2050          ISZ     SIGNF           /CORRECT FOR SIGN
+3613 007103  4451          JMS I   MINSKI
+3614 007104  4747          JMS I   NORMF           /SHIFT LEFT
+3615 007105  2047          ISZ     OVER2           /ROUNDUP LAST BIT; (NOP) - FOR 4-WORD
+3616 007106  5701          JMP I   MULDIV
+3617               
+3618 007107  1041  FLDV,   TAD     AC1H            /4:DIVIDE
+3619 007110  7650          SNA CLA
+3620 007111  4566          ERROR2                  /DIVISION BY ZERO
+3621 007112  1040          TAD     EX1             /SUBTRACT EXPONENTS+1
+3622 007113  7041          CMA IAC
+3623 007114  7001          IAC
+3624 007115  4324          JMS     SIGN            /SET UP SIGNS
+3625 007116  7700          SMA CLA
+3626 007117  4353          JMS     MINUS2          /NEGATE DIVISOR
+3627 007120  4750          JMS I   DIVIDE          /DIVIDE
+3628 007121  4301          JMS     MULDIV
+3629 007122  5723          JMP I   .+1;    FPNT+1
+     007123  6401  
+3630               /      THIS SUBROUTINE PREPARES MULTIPLY AND DIVIDE
+3631               /       FOR ANY COMBINATION OF SIGNED ARGUMENTS AND FOR ZERO.
+3632               /       THE RESULT OF EITHER IS ZERO IF FLAC = 0.
+3633               /       RESULT OF MULTIPLY IS ZERO IF EITHER IS ZERO;
+3634               /       DIVISION BY ZERO IS CHECKED BEFORE THIS 
+3635               /       ROUTINE IS CALLED. 
+3636               
+3637               /       THE CALLING AC CONTAINS AN UPDATE VALUE FOR THE
+3638               /       EXPONENT. THE RETURNING AC CONTAINS THE SIGN OF 
+3639               /       THE ARGUMENT FOR FURTHER TESTING BY EACH ROUTINE.
+3640               
+3641               
+3642 007124  0000  SIGN,   0                       /TEST AND SAVE SIGN OF RESULT
+3643 007125  1044          TAD     EXP             /COMPUTE NEW EXPONENT FOR MUL-DIV.
+3644 007126  3044          DCA     EXP
+3645 007127  1124          TAD     P4000           /LOAD 4000 TO XOR THE SIGN BITS
+3646 007130  0045          AND     HORD
+3647 007131  1041          TAD     AC1H
+3648 007132  7700          SMA CLA                 /RESULT MAY BE ZERO
+3649 007133  7040          CMA
+3650 007134  3050          DCA     SIGNF
+3651 007135  1045          TAD     HORD
+3652 007136  7450          SNA
+3653 007137  5746          JMP I   REVIT           /ANSWER IS ZERO.
+3654 007140  7710          SPA CLA                 /TAKE ABSOLUTE VALUE OF FLAC
+3655 007141  4451          JMS I   MINSKI
+3656 007142  1041          TAD     AC1H
+3657 007143  7450          SNA                     /RESULT OF EITHER MAY BE ZERO
+3658 007144  5746          JMP I   REVIT
+3659 007145  5724          JMP I   SIGN
+3660               
+3661               /       SIGN OF RESULT = SIGNF
+3662               /       +=-1
+3663               /       -=0
+3664               
+3665 007146  6520  REVIT,  ZERO
+3666 007147  7335  NORMF,  DNORM
+3667 007150  7261  DIVIDE, DUBDIV
+3668               
+3669 007151  7256          SAVE=   DCA I .;MP2
+3670 007152  7200          MULTY=  JMS I .;MP4
+3671               
+3672                       A=      FLAC+1
+3673                       B=      FLAC+2
+3674                       C=      FLAC+3
+3675                       D=      AC1H
+3676                       E=      AC1L
+3677                       F=      OVER1
+3678 007153  0000  MINUS2,        0                       /NEGATE OPERAND
+3679 007154  7300          CLA CLL                 /TRIPLE PRECISION
+3680 007155  1043          TAD     OVER1
+3681 007156  7041          CMA IAC
+3682 007157  3043          DCA     OVER1
+3683 007160  1042          TAD     AC1L
+3684 007161  7040          CMA
+3685 007162  7430          SZL
+3686 007163  7101          CLL IAC
+3687 007164  3042          DCA     AC1L
+3688 007165  1041          TAD     AC1H
+3689 007166  7040          CMA
+3690 007167  7430          SZL
+3691 007170  7101          CLL IAC
+3692 007171  3041          DCA     AC1H
+3693 007172  5753          JMP I   MINUS2
+3694               
+3695 007173  0000  RESOLV, 0
+3696 007174  1050          TAD     SIGNF
+3697 007175  7710          SPA CLA
+3698 007176  4451          JMS I   MINSKI
+3699 007177  5773          JMP I   RESOLV
+3700               
+3701                       PAGE
+3702               
+3703 007200  0000  MP4,    0                       /SINGLE PRECISION, UNSIGNED MULTIPLY - "MULTY"
+3704 007201  7450          SNA                     /NO RESULT ADDED IF ZERO
+3705 007202  5600          JMP I   MP4
+3706               
+3707               /       FOR EAE INSERT THE FOLLOWING:
+3708               
+3709               /       7203  3206  DCA .+3
+3710               /       7204  1256  TAD MP2
+3711               /       7205  7425  MQL MUY
+3712               /       7206  0000  0
+3713               /       7207  3253  DCA MP5
+3714               /       7210  7501  MQA
+3715               /       7211  3255  DCA MP3
+3716               /       7212  5227  JMP .+15
+3717 007203  3254         DCA     MP1             /12 BITS BY 12 BITS
+3718 007204  3253          DCA     MP5
+3719 007205  1257          TAD     THIR
+3720 007206  3255          DCA     MP3
+3721 007207  7100          CLL
+3722 007210  1254  MP6,    TAD     MP1
+3723 007211  7010          RAR
+3724 007212  3254          DCA     MP1
+3725 007213  1253          TAD     MP5
+3726 007214  7420          SNL
+3727 007215  5220          JMP     .+3
+3728 007216  7100          CLL
+3729 007217  1256          TAD     MP2
+3730 007220  7010          RAR
+3731 007221  3253          DCA     MP5             /SAVE HIGH ORDER RESULT
+3732 007222  2255          ISZ     MP3
+3733 007223  5210          JMP     MP6
+3734 007224  1254          TAD     MP1             /CORRECT LOW ORDER RESULT
+3735 007225  7010          RAR
+3736 007226  3255          DCA     MP3
+3737 007227  1600          TAD I   MP4             /PICKUP SCALE FACTOR
+3738 007230  7041          CIA
+3739 007231  1252          TAD     DATUMA          /COMPUTE ADDRESS
+3740 007232  3254          DCA     MP1             /TEMP
+3741 007233  1255          TAD     MP3             /LOW ORDER PART
+3742 007234  7100          CLL
+3743 007235  1654          TAD I   MP1             /ACCUMULATE
+3744 007236  3654          DCA I   MP1
+3745 007237  2254          ISZ     MP1
+3746 007240  7004          RAL
+3747 007241  1253          TAD     MP5
+3748 007242  1654          TAD I   MP1
+3749 007243  3654          DCA I   MP1
+3750 007244  7420          SNL
+3751 007245  5600          JMP I   MP4             /NO CARRY
+3752 007246  2254          ISZ     MP1
+3753 007247  2654          ISZ I   MP1
+3754 007250  5600          JMP I   MP4
+3755 007251  5246          JMP     .-3             /CARRY AGAIN
+3756               
+3757 007252  7102  DATUMA, DATUM
+3758 007253  0000  MP5,    0                       /PRODUCT
+3759 007254  0000  MP1,    0                       /MULTIPLIER
+3760 007255  0000  MP3,    0
+3761 007256  0000  MP2,    0                       /MULTIPLICAND
+3762 007257  7764  THIR,   -14                     /12 BITS
+3763 007260  7751  MIF,    -27                     /(-43) - FOR 4-WORD (=7735)
+3764 007261  0000  DUBDIV,        0                       /2 OR 3  PRECISION DIVIDE
+3765 007262  3200          DCA     MP4
+3766 007263  3254          DCA     MP1
+3767 007264  1260          TAD     MIF             /INIT BIT COUNTER
+3768 007265  3255          DCA     MP3
+3769 007266  7410          SKP
+3770 007267  4527  DV3,    JMS I   DOUBLE          /SHIFT FLAC LEFT
+3771 007270  7100          CLL
+3772 007271  1042          TAD     AC1L            /COMBINE ONE POSITION AND (4-WORD)
+3773 007272  1046          TAD     LORD
+3774 007273  3256          DCA     MP2             /SAVE RESULT
+3775 007274  7004          RAL
+3776 007275  1045          TAD     HORD            /ADD OVERFLOW
+3777 007276  1041          TAD     AC1H
+3778 007277  7420          SNL                     /SKIP IF OVERFLOW
+3779 007300  5304          JMP     .+4
+3780 007301  3045          DCA     HORD            /UPDATE FLAC
+3781 007302  1256          TAD     MP2
+3782 007303  3046          DCA     LORD
+3783 007304  7200          CLA                     /CLEAR ACCUMULATOR
+3784 007305  1254          TAD     MP1             /SAVE OVERFLOW BITS CIRCULARLY
+3785 007306  7004          RAL
+3786 007307  3254          DCA     MP1     
+3787 007310  1200          TAD     MP4
+3788 007311  7004          RAL
+3789 007312  3200          DCA     MP4
+3790 007313  2255          ISZ     MP3             /TEST FOR END OF DIVIDE
+3791 007314  5267          JMP     DV3
+3792 007315  1254          TAD     MP1             /LOAD RESULTS
+3793 007316  3046          DCA     LORD
+3794 007317  1200          TAD     MP4
+3795 007320  3045          DCA     HORD
+3796 007321  5661          JMP I   DUBDIV          /(NOP)
+3797 007322  7004          RAL                     /EXTRA FOR 4-WORD
+3798 007323  3335          DCA     DNORM
+3799 007324  2255          ISZ     MP3             /TEST FOR END OF DIVIDE
+3800 007325  5267          JMP     DV3
+3801 007326  1335          TAD     DNORM
+3802 007327  3045          DCA     HORD
+3803 007330  1200          TAD     MP4
+3804 007331  3046          DCA     LORD
+3805 007332  1254          TAD     MP1
+3806 007333  3047          DCA     OVER2
+3807 007334  5661          JMP I   DUBDIV
+3808 007335  0000  DNORM, 0                       /SUBROUTINE TO NORMALIZE FLAC
+3809 007336  4775          JMS I   ABSOL3
+3810 007337  4366          JMS     TEST4
+3811 007340  1045          TAD     HORD
+3812 007341  7450          SNA                     /IS MANTISSA=0?
+3813 007342  1047          TAD     OVER2
+3814 007343  7450          SNA
+3815 007344  1046          TAD     LORD
+3816 007345  7650          SNA CLA
+3817 007346  5363          JMP     EXIT3           /YES
+3818 007347  1045          TAD     HORD
+3819 007350  7104          CLL RAL
+3820 007351  7710          SPA CLA                 /WILL SHIFT BE TOO FAR?
+3821 007352  5360          JMP     .+6
+3822 007353  4527          JMS I   DOUBLE
+3823 007354  7140          CLL CMA
+3824 007355  1044          TAD     EXP
+3825 007356  3044          DCA     EXP
+3826 007357  5347          JMP     .-10
+3827               
+3828 007360  4776          JMS I   RESOL3
+3829 007361  4366          JMS     TEST4           /DON'T LEAVE 4000
+3830 007362  5735          JMP I   DNORM
+3831               
+3832 007363  3044  EXIT3,  DCA     EXP             /SET TO ZERO
+3833 007364  5735          JMP I   DNORM           /RETURN
+3834               
+3835 007365  6757  XRAR2,  DIV2
+3836               
+3837 007366  0000  TEST4,  0
+3838 007367  1045          TAD     HORD            /TEST FOR 4000
+3839 007370  7510          SPA
+3840 007371  7041          CIA
+3841 007372  7710          SPA CLA
+3842 007373  4765          JMS I   XRAR2           /SHIFT BACK
+3843 007374  5766          JMP I   TEST4
+3844               
+3845 007375  5571  ABSOL3, ABSOLV
+3846 007376  7173  RESOL3, RESOLV
+3847                      PAGE
+3848               
+3849               /       FLOATING SQUARE ROOT FUNCTION
+3850               
+3851 007400  4407  XSQRT,  FINT
+3852 007401  6274          FPUT    FPAC1           /VALUE
+3853 007402  0000          FEXT                    /NEWTON'S METHOD IS USED
+3854 007403  1045          GETSGN
+3855 007404  7710          SPA CLA
+3856 007405  4566          ERROR2                  /NUMBER IS NEGATIVE=IMAGINARY ROOTS
+3857 007406  1044          TAD     EXP             /LINK IS =0 FROM FINT
+3858 007407  7510          SPA                     /MATCH THE SIGN WITH LINK BIT
+3859 007410  7020          CML
+3860 007411  7010          RAR
+3861 007412  3270          DCA     ITER1           /MAKE FIRST APPROXIMATION
+3862 007413  7430          SZL                     /TEST LSB OF EXP
+3863 007414  2270          ISZ     ITER1
+3864 007415  7000          NOP
+3865 007416  1267          TAD     SQCON1
+3866 007417  3271          DCA     ITER1+1
+3867 007420  3272          DCA     ITER1+2
+3868 007421  3273          DCA     ITER1+3
+3869 007422  1275          TAD     FPAC1+1
+3870 007423  7450          SNA
+3871 007424  1276          TAD     FPAC1+2
+3872 007425  7650          SNA CLA
+3873 007426  5265          JMP     SQEND           /NUMBER=0
+3874 007427  4407  CLCU,   FINT
+3875 007430  0274          FGET    FPAC1
+3876 007431  3270          FDIV    ITER1
+3877 007432  1270          FADD    ITER1
+3878 007433  0000          FEXT
+3879 007434  7240         CLA CMA
+3880 007435  1044          TAD     EXP
+3881 007436  3044          DCA     EXP
+3882 007437  1044          TAD     EXP
+3883 007440  7041          CMA IAC
+3884 007441  1270          TAD     ITER1
+3885 007442  7640          SZA CLA                 /ARE EXPONENTS EQUAL?
+3886 007443  5261          JMP     ROOTGO          /NO
+3887 007444  1045          TAD     HORD            /ARE HIGH-ORDER MANTISSAS EQUAL?
+3888 007445  7041          CMA IAC
+3889 007446  1271          TAD     ITER1+1
+3890 007447  7640          SZA CLA
+3891 007450  5261          JMP     ROOTGO          /NO
+3892 007451  1046          TAD     LORD
+3893 007452  7041          CMA IAC 
+3894 007453  1272          TAD     ITER1+2         /DO LOW-ORDER MANTISSAS AGREE
+3895 007454  7500          SMA
+3896 007455  7041          CMA IAC                 /WITHIN ONE BIT?
+3897 007456  7001          IAC
+3898 007457  7700          SMA CLA
+3899 007460  5536          RETURN
+3900 007461  4407  ROOTGO, FINT
+3901 007462  6270          FPUT    ITER1
+3902 007463  0000          FEXT
+3903 007464  5227          JMP     CLCU
+3904               
+3905 007465  3044  SQEND,  DCA     EXP
+3906 007466  5536          RETURN
+3907               
+3908 007467  3015  SQCON1, 3015
+3909               
+3910                       BUFFER= .
+3911               
+3912 007470  0000  ITER1,  0
+3913 007471  0000          0
+3914 007472  0000          0
+3915 007473  0000          0
+3916               
+3917 007474  0000  FPAC1,  0
+3918 007475  0000          0
+3919 007476  0000          0
+3920 007477  7503          BUFFER+13               /ADDRESS OF NEXT FREE LOCATION IN 10-DIGIT VERSION.
+3921               
+3922                       ENPUNCH                 /IN CASE BINARY WAS TURNED OFF BEFORE
+3923               
+3924                       $                       /THAT'S ALL FOLK!
