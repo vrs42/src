@@ -1,0 +1,212 @@
+   1               /       4-WORD OVERLAY FOR FOCAL, 1969
+   2               
+   3               /       4-WORD FLOATING POINT PACKAGE OVERLAY FOR FOCAL, 1969
+   4               
+   5               /       FROM DEC-08-AJ1E-PB.BIN
+   6               
+   7               /       HISTORY:
+   8               
+   9               /       AT ONE POINT, THE AUTHENTIC SOURCE CODE WAS AVAILABLE FROM CHARLES LASNER,
+  10               /       WHO MODIFIED IT INTO THE P?S/8 FOCAL AUTOMATED PATCH, WHICH IMPLEMENTS THE
+  11               /       SAME FOCAL MODIFICATIONS VIA THE MECHANISM DEMANDED BY P?S/8 FOCAL.
+  12               
+  13               /       THIS IS THE RECONSTRUCTION OF THE ORIGINAL FILE FROM THE P?S/8 FOCAL VERSION.
+  14               
+  15               /       LAST EDIT:      11-OCT-2026 00:00:00    VRS
+  16               
+  17               /       FIXED "*PIOT+2", WAS "*PIOT".
+  18               
+  19               /       LAST EDIT:      16-SEP-2017 00:00:00    CJL
+  20               
+  21               /       MAY BE ASSEMBLED WITH '/J' (PAL8 '/F') SWITCH SET.
+  22               
+  23               /       MODIFICATIONS TO FOCAL, 1969 TO USE 4-WORD ACCURATE FLOATING POINT.
+  24               
+  25               /       MUST BE LOADED BEFORE OTHER BINARY PATCHES TO FOCAL (OTHER THAN THE 8K PATCH).
+  26               
+  27               /       IT IS RECOMMENDED THAT THE 8K OVERLAY (IF USED) BE LOADED FIRST.
+  28               /      DEFINITIONS FROM FOCAL, 1969 (ORIGINAL PAPER-TAPE VERSION).
+  29               
+  30                       AC1H=   0041                    /HIGH-ORDER OPERAND
+  31                       AC1L=   0042                    /LOW-ORDER OPERAND
+  32                       DATUM=  7102                    /DATA AREA IN FPP
+  33                       DCOUNT= 6143                    /OUTPUT DIGIT COUNTER
+  34                       DMDONE= 7063                    /MULTIPLE PRECISION MULTIPLY ADDRESS
+  35                       DMULT4= 7036                    /MULTIPLE PRECISION MULTIPLY ADDRESS
+  36                       DNORM=  7335                    /NORMALIZE ROUTINE
+  37                       DV3=    7267                    /DIVIDE ROUTINE ADDRESS
+  38                       FISW=   0052                    /FLOATING POINT FORMAT SWITCH
+  39                       FPNT=   6400                    /FLOATING POINT INTERPRETER
+  40                       FRST=   3206                    /FIRST (DUMMY) LINE ADDESS
+  41                       GINC=   0070                    /VARIABLE UPDATE FACTOR
+  42                       HORD=   0045                    /HIGH-ORDER FLAC
+  43                       LORD=   0046                    /LOW-ORDER FLAC
+  44                       MD=     5526                    /-(DIGITS) STORED HERE
+  45                       MFLT=   0117                    /FLOATING LENGTH FACTOR
+  46                       MIF=    7260                    /DIVIDE SHIFT COUNTER
+  47                       MP1=    7254                    /QUOTIENT WORD
+  48                       MP2=    7256                    /MULTIPLICAND WORD
+  49                       MP4=    7200                    /MULTIPLY ROUTINE
+  50                       MP5=    7253                    /QUOTIENT WORD
+  51                       MULDIV= 7101                    /COMMON MULTIPLY/DIVIDE ROUTINE
+  52                       OVER1=  0043                    /EXTRA OPERAND WORD
+  53                       OVER2=  0047                    /EXTRA FLAC WORD
+  54                       PI=     5312                    /PI CONSTANT FOR SINE ROUTINE
+  55                       PIOT=   5316                    /PI/2 CONSTANT FOR SINE ROUTINE
+  56                       PTEN=   6275                    /CONSTANT .1000000000
+  57                       RND2=   5527                    /(DIGITS+1) STORED HERE
+  58                       TEST2=  6736                    /ALIGNMENT CONSTANT HERE
+  59                       TWOPI=  5306                    /PI*2 CONSTANT FOR SINE ROUTINE
+  60                       ZERO=   6520                    /INTERPRETIVE POWER ADDRESS
+  61               
+  62               /       MISCELLANEOUS DEFINITIONS.
+  63               
+  64                       DIGITS= 12                      /10 DIGIT VERSION
+  65                       WORDS=  4                       /FOUR WORD VERSION
+  66               /      DIRECT PATCHES TO 4K OR 8K FOCAL.
+  67               
+  68                       FIELD   0                       /ENSURE FIELD ZERO
+  69               
+  70                       *FISW                           /OVER FORMAT SWITCH
+  71               
+  72 000052  0000  FISW,   0                               /USE FLOATING OUTPUT FORMAT BY DEFAULT
+  73               
+  74                       *GINC                           /OVER VARIABLE INCREMENT
+  75               
+  76 000070  0006  GINC,   WORDS+2                         /WE USE LONGER VARIABLES
+  77               
+  78                       *MFLT                           /OVER FLOATING LENGTH FACTOR
+  79               
+  80 000117  7774  MFLT,   -WORDS                          /INDICATE -(FOUR) WORDS
+  81               
+  82               /       FOUR-WORD (4K) DUMMY LINE TEXT.
+  83               
+  84                       *FRST+2                         /OVER EXISTING DUMMY LINE
+  85               
+  86 003210  0355          TEXT    "C-4WORD"
+     003211  6427  
+     003212  1722  
+     003213  0400  
+  87               
+  88               /       FOUR-WORD TRIG COMPONENTS FOR MORE ACCURACY.
+  89               
+  90                       *TWOPI+2                        /OVER TWO PI CONSTANT
+  91               
+  92 005310  3755          3755                            /FOUR-WORD CONSTANT VALUE
+  93               
+  94                       *PI+2                           /OVER PI CONSTANT
+  95               
+  96 005314  3755          3755                            /FOUR-WORD CONSTANT VALUE
+  97               
+  98                       *PIOT+2                         /OVER PI/2 CONSTANT
+  99               
+ 100 005320  3755          3755                            /FOUR-WORD CONSTANT VALUE
+ 101               
+ 102               /       CHANGE DIGITS-ORIENTED CONSTANTS.
+ 103               
+ 104                       *MD                             /OVER -(DIGITS)
+ 105               
+ 106 005526  7766  MD,     -DIGITS                         /SET NEW AMOUNT
+ 107 005527  0013  RND2,   DIGITS+1                        /SET NEW ROUNDING CONSTANT
+ 108               
+ 109                       *DCOUNT                         /OVER OUTPUT DIGIT COUNT
+ 110               
+ 111 006143  7765          -DIGITS-1                       /USE 10 DIGIT VALUE
+ 112               
+ 113               /       CORRECT FLOATING CONSTANT.
+ 114               
+ 115                       *PTEN+2                         /OVER CONSTANT .100000000
+ 116               
+ 117 006277  3146          3146                            /USE FOUR WORD VALUE
+ 118               /      CHANGES TO THE FLOATING POINT PACKAGE (FPP).
+ 119               
+ 120                       *FPNT+2                         /OVER DCA OVER2
+ 121               
+ 122 006402  7410          SKP                             /DON'T CLEAR OVERFLOW WORDS
+ 123               
+ 124                       *ZERO+20                        /OVER DCA OVER1
+ 125               
+ 126 006540  7000          NOP                             /DON'T CLEAR OVERFLOW WORD
+ 127               
+ 128                       *TEST2                          /OVER 0027
+ 129               
+ 130 006736  0043  TEST2,  0043                            /USE FOUR WORD CONSTANT INSTEAD
+ 131               
+ 132                       *DMULT4                         /OVER JMP DMDONE
+ 133               
+ 134 007036  3275  DMULT4, DCA     DATUM-5                 /STORE RESULT WORD
+ 135               
+ 136                       *DMDONE+7                       /OVER DCA OVER2
+ 137               
+ 138 007072  7000          NOP                             /DON'T CLEAR OVERFLOW WORD
+ 139               
+ 140                       *MULDIV+4                       /OVER ISZ OVER2
+ 141               
+ 142 007105  7000          NOP                             /DON'T ROUND IN FOUR-WORD VERSION
+ 143               
+ 144                       *MIF                            /OVER DIVIDE SHIFT COUNTER
+ 145               
+ 146 007260  7735  MIF,    -43                             /USE FOUR WORD SHIFT VALUE
+ 147                      *DV3+2                          /OVER DIVIDE ROUTINE
+ 148               
+ 149 007271  1043          TAD     OVER1                   /GET THE
+ 150 007272  1047          TAD     OVER2                   /OVERFLOW WORDS
+ 151 007273  3253          DCA     MP5                     /SAVE RESULT
+ 152 007274  7004          RAL                             /GET CARRY
+ 153 007275  1042          TAD     AC1L                    /ADD ON LOW-ORDER
+ 154 007276  1046          TAD     LORD                    /WORDS
+ 155 007277  3256          DCA     MP2                     /SAVE RESULT
+ 156 007300  7004          RAL                             /GET CARRY
+ 157 007301  1045          TAD     HORD                    /ADD ON HIGH-ORDER
+ 158 007302  1041          TAD     AC1H                    /WORDS
+ 159 007303  7420          SNL                             /CARRY?
+ 160 007304  5312          JMP     .+6                     /NO
+ 161 007305  3045          DCA     HORD                    /YES, UPDATE THE FLAC
+ 162 007306  1253          TAD     MP5                     /GET OVERFLOW
+ 163 007307  3047          DCA     OVER2                   /UPDATE IT
+ 164 007310  1256          TAD     MP2                     /GET LOW-ORDER
+ 165 007311  3046          DCA     LORD                    /UPDATE IT
+ 166 007312  7200          CLA                             /CLEAN UP
+ 167 007313  1254          TAD     MP1                     /GET QUOTIENT
+ 168 007314  7004          RAL                             /MOVE UP
+ 169 007315  3254          DCA     MP1                     /STORE BACK
+ 170 007316  1200          TAD     MP4                     /GET NEXT
+ 171 007317  7004          RAL                             /MOVE UP
+ 172 007320  3200          DCA     MP4                     /STORE BACK
+ 173 007321  1335          TAD     DNORM                   /GET LOWEST
+ 174               
+ 175                       $                               /THAT'S ALL FOLK!
+
+AC1H    0041
+AC1L    0042
+DATUM   7102
+DCOUNT  6143
+DIGITS  0012
+DMDONE  7063
+DMULT4  7036
+DNORM   7335
+DV3     7267
+FISW    0052
+FPNT    6400
+FRST    3206
+GINC    0070
+HORD    0045
+LORD    0046
+MD      5526
+MFLT    0117
+MIF     7260
+MP1     7254
+MP2     7256
+MP4     7200
+MP5     7253
+MULDIV  7101
+OVER1   0043
+OVER2   0047
+PI      5312
+PIOT    5316
+PTEN    6275
+RND2    5527 unreferenced
+TEST2   6736
+TWOPI   5306
+WORDS   0004
+ZERO    6520
