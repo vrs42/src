@@ -1,0 +1,8 @@
+.name
+src/decus/8-862/compaf.sv
+.description
+DECUS-8-862 COMPAF: Compare All FUes Program
+.group
+src/decus/src/decus/8-862
+.partnumber
+src/decus/8-862/compaf.sv

@@ -1,0 +1,8 @@
+.name
+src/decus/8-341/Makefile
+.description
+DECUS-8-341 LISP-8
+.group
+src/decus/src/decus/8-341
+.partnumber
+src/decus/8-341/Makefile

@@ -1,0 +1,8 @@
+.name
+src/decus/8-152/never_on_sunday.ms
+.description
+DECUS-8-152 PDP-8 Music Program
+.group
+src/decus/src/decus/8-152
+.partnumber
+src/decus/8-152/never_on_sunday.ms

@@ -1,0 +1,8 @@
+.name
+src/decus/8-608/futil.sv
+.description
+DECUS-8-608 FUTIL: OS/8 File Utility
+.group
+src/decus/src/decus/8-608
+.partnumber
+src/decus/8-608/futil.sv

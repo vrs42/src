@@ -1,0 +1,8 @@
+.name
+src/decus/8-880/runoff.bi
+.description
+DECUS-8-880 RUNOFF V.6
+.group
+src/decus/src/decus/8-880
+.partnumber
+src/decus/8-880/runoff.bi
