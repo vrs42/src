@@ -1,0 +1,10 @@
+.name
+src/dec/maindec-12-d8c/maindec-12-d8cd-pb
+.description
+KW12A Clock Test
+.partnumber
+maindec-12-d8cd-pb
+.group
+maindec-12-d8c
+12-d8cd.sv
+kw12a.sv

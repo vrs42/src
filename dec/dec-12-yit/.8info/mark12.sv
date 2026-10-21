@@ -1,0 +1,9 @@
+.name
+src/dec/dec-12-yit/dec-12-yita-pb
+.description
+PDP-12 MARK12
+.partnumber
+dec-12-yita-pb
+.group
+dec-12-yit
+mark12.sv

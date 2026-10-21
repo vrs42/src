@@ -1,0 +1,9 @@
+.name
+src/dec/dec-s8-ed25/dec-s8-ed25a-pb
+.description
+Edusystem 25
+.partnumber
+dec-s8-ed25a-pb
+.group
+dec-s8-ed25
+edu25a.sv

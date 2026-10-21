@@ -1,0 +1,11 @@
+.name
+src/dec/maindec-08-dgmca/maindec-08-dgmca-a-pb
+.description
+EXTENDED MEMORY CONTROL TEST
+.partnumber
+maindec-08-dgmca-a-pb
+.group
+maindec-08-dgmca
+.alias
+ak-6175a-pb
+m08dgmca.sv
